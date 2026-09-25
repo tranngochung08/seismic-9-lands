@@ -1,0 +1,25 @@
+{
+ "objects": {
+  "bush": 7,
+  "campfire": 7,
+  "campfire_off": 7,
+  "deadtree": "L7",
+  "lantern": 23,
+  "rock": 23,
+  "rock_s": 7,
+  "sign": 7,
+  "stump": "t8",
+  "tree": "L7",
+  "wall_s": "t8"
+ },
+ "decor": {
+  "crack_g": 7,
+  "fern": 23,
+  "leaf": 7,
+  "mushroom_s": 23,
+  "tuft": 7
+ },
+ "rocky": {
+  "rocky_2": "t8"
+ }
+}

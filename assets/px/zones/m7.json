@@ -1,0 +1,187 @@
+{
+ "inherit": "village",
+ "classes": {
+  "__base": "ash",
+  "ASH": "ash",
+  "ROCK": "rock",
+  "DARK": "dark",
+  "LAVA": "lava",
+  "MARBLE": "marble",
+  "STONE": "rock",
+  "COBBLE": "rock",
+  "DIRT": "ash",
+  "GRASS": "ash",
+  "GRASS2": "rock",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled"
+ },
+ "wang": [
+  {
+   "dir": "zones/m7/wang/a",
+   "upper": "rock"
+  },
+  {
+   "dir": "zones/m7/wang/b",
+   "upper": "dark"
+  },
+  {
+   "dir": "zones/m7/wang/c",
+   "upper": "lava"
+  },
+  {
+   "dir": "zones/m7/wang/d",
+   "upper": "marble"
+  },
+  {
+   "dir": "wang/f3",
+   "upper": "tilled"
+  }
+ ],
+ "decor": {
+  "ASH": [
+   {
+    "file": "zones/m7/decor/ember_s23.png",
+    "p": 0.05,
+    "n": 1
+   },
+   {
+    "file": "zones/m7/decor/bone_s7.png",
+    "p": 0.02,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "rock": {
+   "file": "zones/m7/obj/rock_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rock_s": {
+   "file": "zones/m7/obj/rock_s_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "deadtree": {
+   "file": "zones/m7/obj/deadtree_L23.png",
+   "ox": -4,
+   "oy": 0
+  },
+  "torch": {
+   "file": "zones/m7/obj/torch_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "obsidian": {
+   "file": "zones/m7/obj/obsidian_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "wall_h": {
+   "file": "zones/m7/obj/wall_h_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "turret": {
+   "file": "zones/m7/obj/turret_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "pavilion": {
+   "file": "zones/m7/obj/pavilion_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "statue": {
+   "file": "zones/m7/obj/statue_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "fountain": {
+   "file": "zones/m7/obj/fountain_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sign": {
+   "file": "zones/m7/obj/sign_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "gate": {
+   "file": "zones/m7/obj/gate_L7.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "monument": {
+   "file": "zones/m7/obj/monument_badge.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "lantern": {
+   "file": "zones/m7/obj/lantern_s7.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "rocky": {
+  "4": "zones/m7/rocky/rocky_4_t8.png",
+  "5": "zones/m7/rocky/rocky_5_t8.png"
+ },
+ "chars": {
+  "base": [
+   {
+    "skin": "#f6d3b5",
+    "hair": "#2b1d14",
+    "file": "zones/m7/chars/m7_c0.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#1f1f1f",
+    "file": "zones/m7/chars/m7_c1.png"
+   },
+   {
+    "skin": "#8d5a3b",
+    "hair": "#b23a3a",
+    "file": "zones/m7/chars/m7_c2.png"
+   }
+  ]
+ },
+ "connect": {
+  "wall": {
+   "types": [
+    "wall_h"
+   ],
+   "post": "zones/m7/obj/wall_h_t8.png",
+   "h": "zones/m7/fence/seg_h.png",
+   "v": "zones/m7/fence/seg_v.png",
+   "postMode": "nodes",
+   "tall": 24
+  }
+ },
+ "loops": {
+  "torch": [
+   "zones/m7/loops/torch_0.png",
+   "zones/m7/loops/torch_1.png",
+   "zones/m7/loops/torch_2.png",
+   "zones/m7/loops/torch_3.png"
+  ],
+  "lantern": [
+   "zones/m7/loops/lantern_0.png",
+   "zones/m7/loops/lantern_1.png",
+   "zones/m7/loops/lantern_2.png",
+   "zones/m7/loops/lantern_3.png"
+  ],
+  "fountain": [
+   "zones/m7/loops/fountain_0.png",
+   "zones/m7/loops/fountain_1.png",
+   "zones/m7/loops/fountain_2.png",
+   "zones/m7/loops/fountain_3.png"
+  ],
+  "obsidian": [
+   "zones/m7/loops/obsidian_0.png",
+   "zones/m7/loops/obsidian_1.png",
+   "zones/m7/loops/obsidian_2.png",
+   "zones/m7/loops/obsidian_3.png"
+  ]
+ }
+}

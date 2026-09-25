@@ -1,0 +1,25 @@
+{
+ "objects": {
+  "boulder": 7,
+  "deadtree": "L7",
+  "gate": "L23",
+  "lever_off": "t8",
+  "lever_on": "t8",
+  "pavilion": "t8",
+  "pillar": 7,
+  "rock": 31,
+  "rock_s": 23,
+  "sign": 23,
+  "statue": 7,
+  "torch": 7,
+  "wall_s": "t8"
+ },
+ "decor": {
+  "dry_bush": 7,
+  "stones_r": 23,
+  "crack_l": 7
+ },
+ "rocky": {
+  "rocky_3": "t8"
+ }
+}

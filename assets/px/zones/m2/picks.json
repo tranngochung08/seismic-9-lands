@@ -1,0 +1,26 @@
+{
+ "objects": {
+  "bush": 7,
+  "crate": 7,
+  "fence_h": 23,
+  "fence_v": 7,
+  "house_b": "L23",
+  "house_g": "L23",
+  "house_r": "L23",
+  "house_y": "L23",
+  "lantern": 23,
+  "sign": 23,
+  "stall": "t8",
+  "tree": "L7",
+  "well": "t8"
+ },
+ "decor": {
+  "flower_w": 7,
+  "petals": 7,
+  "tuft": 7,
+  "crack_g": 7
+ },
+ "rocky": {
+  "rocky_1": "t8"
+ }
+}

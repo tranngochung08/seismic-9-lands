@@ -1,0 +1,186 @@
+{
+ "inherit": "village",
+ "classes": {
+  "__base": "sand",
+  "SAND": "sand",
+  "SAND2": "sand",
+  "DIRT": "dirt",
+  "WATER": "water",
+  "DEEP": "deep",
+  "STONE": "stone",
+  "GRASS": "sand",
+  "GRASS2": "sand",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled"
+ },
+ "wang": [
+  {
+   "dir": "zones/m1/wang/b",
+   "upper": "dirt"
+  },
+  {
+   "dir": "zones/m1/wang/c2",
+   "upper": "water"
+  },
+  {
+   "dir": "zones/m1/wang/d",
+   "upper": "stone"
+  },
+  {
+   "dir": "zones/m1/wang/e3",
+   "upper": "deep"
+  },
+  {
+   "dir": "wang/f3",
+   "upper": "tilled"
+  }
+ ],
+ "decor": {
+  "SAND2": [
+   {
+    "file": "zones/m1/decor/shell_d_s23.png",
+    "p": 0.35,
+    "n": 1
+   },
+   {
+    "file": "zones/m1/decor/pebble_s7.png",
+    "p": 0.3,
+    "n": 1
+   }
+  ],
+  "SAND": [
+   {
+    "file": "zones/m1/decor/grass_d_s7.png",
+    "p": 0.06,
+    "n": 1
+   },
+   {
+    "file": "zones/m1/decor/starfish_s23.png",
+    "p": 0.02,
+    "n": 1
+   },
+   {
+    "file": "zones/village/decor/shore/pebbles.png",
+    "p": 0.08,
+    "n": 1
+   },
+   {
+    "file": "zones/village/decor/shore/sandspot.png",
+    "p": 0.02,
+    "n": 1
+   }
+  ],
+  "WATER": [
+   {
+    "file": "zones/village/decor/shore/seaweed_0.png",
+    "p": 0.06,
+    "n": 1
+   },
+   {
+    "file": "zones/village/decor/shore/seaweed_1.png",
+    "p": 0.04,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "palm": {
+   "file": "zones/m1/obj/palm_L7.png",
+   "ox": -16,
+   "oy": 0
+  },
+  "rock": {
+   "file": "zones/m1/obj/rock_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rock_s": {
+   "file": "zones/m1/obj/rock_s_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "shell": {
+   "file": "zones/m1/obj/shell_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "boat": {
+   "file": "zones/m1/obj/boat_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "torch": {
+   "file": "zones/m1/obj/torch_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "fence_h": {
+   "file": "zones/m1/obj/fence_h_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "fence_v": {
+   "file": "zones/m1/obj/fence_v_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "crate": {
+   "file": "zones/m1/obj/crate_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "umbrella": {
+   "file": "zones/m1/obj/umbrella_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "monument": {
+   "file": "zones/m1/obj/monument_badge.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "rocky": {
+  "1": "zones/m1/rocky/rocky_1_t8.png"
+ },
+ "chars": {
+  "base": [
+   {
+    "skin": "#f6d3b5",
+    "hair": "#2b1d14",
+    "file": "zones/m1/chars/m1_c0.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#c98b2e",
+    "file": "zones/m1/chars/m1_c1.png"
+   },
+   {
+    "skin": "#8d5a3b",
+    "hair": "#b23a3a",
+    "file": "zones/m1/chars/m1_c2.png"
+   }
+  ]
+ },
+ "connect": {
+  "wall": {
+   "types": [
+    "fence_h",
+    "fence_v"
+   ],
+   "post": "zones/m1/fence/fk_post.png",
+   "h": "zones/m1/fence/seg_h.png",
+   "v": "zones/m1/fence/seg_v.png",
+   "postMode": "nodes",
+   "tall": 16
+  }
+ },
+ "loops": {
+  "torch": [
+   "zones/m1/loops/torch_0.png",
+   "zones/m1/loops/torch_1.png",
+   "zones/m1/loops/torch_2.png",
+   "zones/m1/loops/torch_3.png"
+  ]
+ }
+}

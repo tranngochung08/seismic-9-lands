@@ -1,0 +1,163 @@
+{
+ "inherit": "village",
+ "classes": {
+  "__base": "rock",
+  "ROCK": "rock",
+  "GRAVEL": "gravel",
+  "DARK": "dark",
+  "STONE": "stone",
+  "COBBLE": "stone",
+  "DIRT": "gravel",
+  "GRASS": "rock",
+  "GRASS2": "rock",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled"
+ },
+ "wang": [
+  {
+   "dir": "zones/m4/wang/a",
+   "upper": "gravel"
+  },
+  {
+   "dir": "zones/m4/wang/b",
+   "upper": "dark"
+  },
+  {
+   "dir": "zones/m4/wang/c",
+   "upper": "stone"
+  },
+  {
+   "dir": "wang/f3",
+   "upper": "tilled"
+  }
+ ],
+ "decor": {
+  "GRAVEL": [
+   {
+    "file": "zones/m4/decor/stones_s23.png",
+    "p": 0.3,
+    "n": 1
+   },
+   {
+    "file": "zones/m4/decor/glint_s7.png",
+    "p": 0.05,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "ore": {
+   "file": "zones/m4/obj/ore_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rock": {
+   "file": "zones/m4/obj/rock_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rock_s": {
+   "file": "zones/m4/obj/rock_s_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "boulder": {
+   "file": "zones/m4/obj/boulder_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "crate": {
+   "file": "zones/m4/obj/crate_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "torch": {
+   "file": "zones/m4/obj/torch_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "beam": {
+   "file": "zones/m4/obj/beam_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "cart": {
+   "file": "zones/m4/obj/cart_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "wall_s": {
+   "file": "zones/m4/obj/wall_s_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "lantern": {
+   "file": "zones/m4/obj/lantern_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sign": {
+   "file": "zones/m4/obj/sign_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "gate": {
+   "file": "zones/m4/obj/gate_L23.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "monument": {
+   "file": "zones/m4/obj/monument_badge.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "rocky": {
+  "2": "zones/m4/rocky/rocky_2_t8.png"
+ },
+ "chars": {
+  "base": [
+   {
+    "skin": "#f6d3b5",
+    "hair": "#2b1d14",
+    "file": "zones/m4/chars/m4_c0.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#1f1f1f",
+    "file": "zones/m4/chars/m4_c1.png"
+   },
+   {
+    "skin": "#8d5a3b",
+    "hair": "#c98b2e",
+    "file": "zones/m4/chars/m4_c2.png"
+   }
+  ]
+ },
+ "connect": {
+  "wall": {
+   "types": [
+    "wall_s"
+   ],
+   "post": "zones/m4/obj/wall_s_t8.png",
+   "h": "zones/m4/fence/seg_h.png",
+   "v": "zones/m4/fence/seg_v.png",
+   "postMode": "nodes",
+   "tall": 16
+  }
+ },
+ "loops": {
+  "torch": [
+   "zones/m4/loops/torch_0.png",
+   "zones/m4/loops/torch_1.png",
+   "zones/m4/loops/torch_2.png",
+   "zones/m4/loops/torch_3.png"
+  ],
+  "lantern": [
+   "zones/m4/loops/lantern_0.png",
+   "zones/m4/loops/lantern_1.png",
+   "zones/m4/loops/lantern_2.png",
+   "zones/m4/loops/lantern_3.png"
+  ]
+ }
+}

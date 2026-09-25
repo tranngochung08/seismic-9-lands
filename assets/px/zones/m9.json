@@ -1,0 +1,200 @@
+{
+ "inherit": "village",
+ "classes": {
+  "__base": "hex",
+  "HEX": "hex",
+  "HEXLIT": "hexlit",
+  "DARK": "dark",
+  "STONE": "hex",
+  "COBBLE": "hex",
+  "MARBLE": "hexlit",
+  "DIRT": "hex",
+  "GRASS": "hex",
+  "GRASS2": "dark",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled"
+ },
+ "wang": [
+  {
+   "dir": "zones/m9/wang/a",
+   "upper": "dark"
+  },
+  {
+   "dir": "zones/m9/wang/b",
+   "upper": "hexlit"
+  },
+  {
+   "dir": "wang/f3",
+   "upper": "tilled"
+  }
+ ],
+ "decor": {
+  "HEX": [
+   {
+    "file": "zones/m9/decor/shard_s_s7.png",
+    "p": 0.05,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "crystal_p": {
+   "file": "zones/m9/obj/crystal_p_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "crystal_b": {
+   "file": "zones/m9/obj/crystal_b_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "crystal_r": {
+   "file": "zones/m9/obj/crystal_r_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "hexpillar": {
+   "file": "zones/m9/obj/hexpillar_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "hexwall": {
+   "file": "zones/m9/obj/hexwall_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "altar": {
+   "file": "zones/m9/obj/altar_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rock_s": {
+   "file": "zones/m9/obj/rock_s_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "statue": {
+   "file": "zones/m9/obj/statue_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "fountain": {
+   "file": "zones/m9/obj/fountain_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sign": {
+   "file": "zones/m9/obj/sign_s31.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "core_gate": {
+   "file": "zones/m9/obj/core_gate_L7.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "gate": {
+   "file": "zones/m9/obj/gate_L23.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "monument": {
+   "file": "zones/m9/obj/monument_badge.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "lantern": {
+   "file": "zones/m9/obj/lantern_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "torch": {
+   "file": "zones/m9/obj/torch_s23.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "rocky": {
+  "5": "zones/m9/rocky/rocky_5_t8.png"
+ },
+ "chars": {
+  "base": [
+   {
+    "skin": "#f6d3b5",
+    "hair": "#2b1d14",
+    "file": "zones/m9/chars/m9_c0.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#1f1f1f",
+    "file": "zones/m9/chars/m9_c1.png"
+   },
+   {
+    "skin": "#8d5a3b",
+    "hair": "#e8e8e8",
+    "file": "zones/m9/chars/m9_c2.png"
+   },
+   {
+    "skin": "#f6d3b5",
+    "hair": "#b23a3a",
+    "file": "zones/m9/chars/m9_leader.png"
+   }
+  ]
+ },
+ "connect": {
+  "wall": {
+   "types": [
+    "hexwall"
+   ],
+   "post": "zones/m9/obj/hexwall_t8.png",
+   "h": "zones/m9/fence/seg_h.png",
+   "v": "zones/m9/fence/seg_v.png",
+   "postMode": "nodes",
+   "tall": 16
+  }
+ },
+ "loops": {
+  "torch": [
+   "zones/m9/loops/torch_0.png",
+   "zones/m9/loops/torch_1.png",
+   "zones/m9/loops/torch_2.png",
+   "zones/m9/loops/torch_3.png"
+  ],
+  "lantern": [
+   "zones/m9/loops/lantern_0.png",
+   "zones/m9/loops/lantern_1.png",
+   "zones/m9/loops/lantern_2.png",
+   "zones/m9/loops/lantern_3.png"
+  ],
+  "fountain": [
+   "zones/m9/loops/fountain_0.png",
+   "zones/m9/loops/fountain_1.png",
+   "zones/m9/loops/fountain_2.png",
+   "zones/m9/loops/fountain_3.png"
+  ],
+  "crystal_p": [
+   "zones/m9/loops/crystal_p_0.png",
+   "zones/m9/loops/crystal_p_1.png",
+   "zones/m9/loops/crystal_p_2.png",
+   "zones/m9/loops/crystal_p_3.png"
+  ],
+  "crystal_b": [
+   "zones/m9/loops/crystal_b_0.png",
+   "zones/m9/loops/crystal_b_1.png",
+   "zones/m9/loops/crystal_b_2.png",
+   "zones/m9/loops/crystal_b_3.png"
+  ],
+  "crystal_r": [
+   "zones/m9/loops/crystal_r_0.png",
+   "zones/m9/loops/crystal_r_1.png",
+   "zones/m9/loops/crystal_r_2.png",
+   "zones/m9/loops/crystal_r_3.png"
+  ],
+  "altar": [
+   "zones/m9/loops/altar_0.png",
+   "zones/m9/loops/altar_1.png",
+   "zones/m9/loops/altar_2.png",
+   "zones/m9/loops/altar_3.png"
+  ]
+ }
+}

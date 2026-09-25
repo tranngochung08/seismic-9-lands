@@ -1,0 +1,26 @@
+{
+ "objects": {
+  "deadtree": "L23",
+  "fountain": "t8",
+  "gate": "L7",
+  "lantern": 7,
+  "monument": 7,
+  "obsidian": 23,
+  "pavilion": "t8",
+  "rock": 23,
+  "rock_s": 7,
+  "sign": 23,
+  "statue": 7,
+  "torch": 23,
+  "turret": "t8",
+  "wall_h": "t8"
+ },
+ "decor": {
+  "bone": 7,
+  "ember": 23
+ },
+ "rocky": {
+  "rocky_4": "t8",
+  "rocky_5": "t8"
+ }
+}

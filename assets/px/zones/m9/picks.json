@@ -1,0 +1,25 @@
+{
+ "objects": {
+  "altar": "t8",
+  "core_gate": "L7",
+  "crystal_b": 23,
+  "crystal_p": 23,
+  "crystal_r": 23,
+  "fountain": "t8",
+  "gate": "L23",
+  "hexpillar": 7,
+  "hexwall": "t8",
+  "monument": 7,
+  "rock_s": 7,
+  "lantern": 7,
+  "sign": 31,
+  "statue": 7,
+  "torch": 23
+ },
+ "decor": {
+  "shard_s": 7
+ },
+ "rocky": {
+  "rocky_5": "t8"
+ }
+}

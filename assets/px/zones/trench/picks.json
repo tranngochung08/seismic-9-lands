@@ -1,0 +1,17 @@
+{
+ "objects": {
+  "cage": "t8",
+  "coral": 23,
+  "coral_t": 23,
+  "gcrystal": 7,
+  "kelp": 31,
+  "gate": "L23",
+  "sign": 23,
+  "vent": 23,
+  "wreck": 7
+ },
+ "decor": {
+  "shell_dk": 7,
+  "bubbles": 7
+ }
+}

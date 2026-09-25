@@ -1,0 +1,980 @@
+{
+ "inherit": null,
+ "classes": {
+  "__base": "grass",
+  "GRASS": "grass",
+  "FLOWER": "grass",
+  "GRASS2": "grass2",
+  "DIRT": "dirt",
+  "STONE": "stone",
+  "COBBLE": "stone",
+  "MARBLE": "stone",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled"
+ },
+ "wang": [
+  {
+   "dir": "wang/a2d",
+   "upper": "grass2"
+  },
+  {
+   "dir": "wang/b2",
+   "upper": "dirt"
+  },
+  {
+   "dir": "wang/c2",
+   "upper": "stone"
+  },
+  {
+   "dir": "wang/f3",
+   "upper": "tilled"
+  }
+ ],
+ "decor": {
+  "FLOWER": [
+   {
+    "file": "decor/dandelion_s7.png",
+    "p": 1,
+    "n": 2
+   },
+   {
+    "file": "decor/flower_y_s7.png",
+    "p": 0.5,
+    "n": 1
+   }
+  ],
+  "GRASS": [
+   {
+    "file": "decor/tuft_s23.png",
+    "p": 0.07,
+    "n": 1
+   },
+   {
+    "file": "decor/dandelion_s23.png",
+    "p": 0.04,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "tree": {
+   "file": "gen_td/tree_L7.png",
+   "ox": -16
+  },
+  "bush": "gen_td/bush_s7.png",
+  "house_r": {
+   "file": "gen_td/house_r_L23.png",
+   "ox": -8
+  },
+  "house_b": {
+   "file": "gen_td/house_b_L23.png",
+   "ox": -8
+  },
+  "house_g": {
+   "file": "gen_td/house_g_L23.png",
+   "ox": -8
+  },
+  "house_y": {
+   "file": "gen_td/house_y_L23.png",
+   "ox": -8
+  },
+  "post": "gen_td/post_s23.png",
+  "campfire": "gen_td/campfire_s7.png",
+  "campfire_off": "gen_td/campfire_off.png",
+  "board": "zones/village/obj/board_t8.png",
+  "lantern": "gen_td/lantern_s23.png",
+  "sign": "gen_td/sign_s23.png",
+  "monument": {
+   "file": "zones/village/obj/monument_badge.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "gate": {
+   "file": "gen_td/gate_L7.png",
+   "ox": -8
+  },
+  "well": "zones/village/obj/well_t8.png",
+  "crate": "gen_td/crate_s23.png",
+  "lock": "obj/lock.png",
+  "stall": "zones/village/obj/stall_t8.png",
+  "craft_bench": "zones/village/obj/craft_bench_t8.png",
+  "craft_furnace": "zones/village/obj/craft_furnace_s7.png",
+  "craft_loom": "zones/village/obj/craft_loom_s7.png",
+  "craft_forge": "zones/village/obj/craft_forge_s7.png",
+  "craft_altar": "zones/village/obj/craft_altar_s23.png",
+  "eco_coop": "zones/village/obj/eco_coop_t8.png",
+  "eco_trap": "zones/village/obj/eco_trap_s23.png",
+  "eco_trap_set": "zones/village/obj/eco_trap_set_s23.png",
+  "crystal_egg": "zones/village/obj/crystal_egg_s7.png",
+  "sumo_ring": "zones/village/obj/sumo_ring_g23.png",
+  "orevein": "zones/village/obj/orevein_s7.png",
+  "obsvein": "zones/village/obj/obsvein_s23.png",
+  "mushroom": "zones/village/obj/mushroom_s7.png",
+  "beehive": "zones/village/obj/beehive_s23.png",
+  "sapling1": "zones/village/obj/sapling1_s23.png",
+  "sapling2": "zones/village/obj/sapling2_s7.png",
+  "sapling3": "zones/village/obj/sapling3_s7.png",
+  "veh_balloon": "zones/village/obj/veh_balloon_s7.png",
+  "stump": "zones/village/rem/stump.png",
+  "scaffold": "zones/village/rem/scaffold.png",
+  "elder_mark": "zones/village/rem/elder_mark.png",
+  "medal_1": "zones/village/rem/medal_1.png",
+  "medal_2": "zones/village/rem/medal_2.png",
+  "medal_3": "zones/village/rem/medal_3.png",
+  "bed": "zones/village/obj/bed_t8.png",
+  "fountain": {
+   "file": "zones/m6/obj/fountain_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "seisvein": {
+   "file": "zones/village/obj/seisvein_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "rocky": {
+  "0": "obj/rocky_0.png"
+ },
+ "chars": {
+  "base": [
+   {
+    "skin": "#f6d3b5",
+    "hair": "#2b1d14",
+    "file": "chars/c0.png"
+   },
+   {
+    "skin": "#f6d3b5",
+    "hair": "#c98b2e",
+    "file": "chars/c1.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#1f1f1f",
+    "file": "chars/c2.png"
+   },
+   {
+    "skin": "#8d5a3b",
+    "hair": "#1f1f1f",
+    "file": "chars/c3.png"
+   },
+   {
+    "skin": "#e8b48e",
+    "hair": "#b23a3a",
+    "file": "chars/c4.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#3a4fb2",
+    "file": "chars/c5.png"
+   }
+  ],
+  "actions": {
+   "c0": {
+    "chop": {
+     "file": "chars/c0_act_chop.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "mine": {
+     "file": "chars/c0_act_mine.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "fish": {
+     "file": "chars/c0_act_fish.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "carry": {
+     "file": "chars/c0_act_carry.png",
+     "n": 3,
+     "ch": 24,
+     "cw": 32
+    },
+    "paddle": {
+     "file": "chars/c0_act_paddle.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "hammer": {
+     "file": "chars/c0_act_hammer.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    }
+   }
+  }
+ },
+ "creatures": {
+  "cow": [
+   "zones/village/creatures/cow_0.png",
+   "zones/village/creatures/cow_1.png"
+  ],
+  "chicken": [
+   "zones/village/creatures/chicken_0.png",
+   "zones/village/creatures/chicken_1.png"
+  ],
+  "bird": [
+   "zones/village/creatures/bird_0.png",
+   "zones/village/creatures/bird_1.png"
+  ],
+  "fish": [
+   "zones/village/creatures/fish_0.png",
+   "zones/village/creatures/fish_1.png"
+  ],
+  "sheep": [
+   "zones/village/creatures/sheep_0.png",
+   "zones/village/creatures/sheep_1.png"
+  ],
+  "sheepShorn": [
+   "zones/village/creatures/sheepShorn_0.png",
+   "zones/village/creatures/sheepShorn_1.png"
+  ],
+  "horse": [
+   "zones/village/creatures/horse_0.png",
+   "zones/village/creatures/horse_1.png"
+  ],
+  "rabbit": [
+   "zones/village/creatures/rabbit_0.png",
+   "zones/village/creatures/rabbit_1.png"
+  ],
+  "crab": [
+   "zones/village/creatures/crab_0.png",
+   "zones/village/creatures/crab_1.png"
+  ],
+  "bat": [
+   "zones/village/creatures/bat_0.png",
+   "zones/village/creatures/bat_1.png"
+  ],
+  "batSit": [
+   "zones/village/creatures/batSit_0.png",
+   "zones/village/creatures/batSit_1.png"
+  ],
+  "sala": [
+   "zones/village/creatures/sala_0.png",
+   "zones/village/creatures/sala_1.png"
+  ],
+  "fox": [
+   "zones/village/creatures/fox_0.png",
+   "zones/village/creatures/fox_1.png"
+  ],
+  "moth": [
+   "zones/village/creatures/moth_0.png",
+   "zones/village/creatures/moth_1.png"
+  ],
+  "rat": [
+   "zones/village/creatures/rat_0.png",
+   "zones/village/creatures/rat_1.png"
+  ],
+  "monkey": [
+   "zones/village/creatures/monkey_0.png",
+   "zones/village/creatures/monkey_1.png"
+  ],
+  "boar": [
+   "zones/village/creatures/boar_0.png",
+   "zones/village/creatures/boar_1.png"
+  ],
+  "beaver": [
+   "zones/village/creatures/beaver_0.png",
+   "zones/village/creatures/beaver_1.png"
+  ],
+  "knocker": [
+   "zones/village/creatures/knocker_0.png",
+   "zones/village/creatures/knocker_1.png"
+  ],
+  "wormHead": [
+   "zones/village/creatures/wormHead_0.png",
+   "zones/village/creatures/wormHead_1.png"
+  ],
+  "wormSeg": [
+   "zones/village/creatures/wormSeg_0.png",
+   "zones/village/creatures/wormSeg_1.png"
+  ],
+  "garg": [
+   "zones/village/creatures/garg_0.png",
+   "zones/village/creatures/garg_1.png"
+  ],
+  "drake": [
+   "zones/village/creatures/drake_0.png",
+   "zones/village/creatures/drake_1.png"
+  ],
+  "yeti": [
+   "zones/village/creatures/yeti_0.png",
+   "zones/village/creatures/yeti_1.png"
+  ],
+  "nagaHead": [
+   "zones/village/creatures/nagaHead_0.png",
+   "zones/village/creatures/nagaHead_1.png"
+  ],
+  "nagaSeg": [
+   "zones/village/creatures/nagaSeg_0.png",
+   "zones/village/creatures/nagaSeg_1.png"
+  ],
+  "whale": [
+   "zones/village/creatures/whale_0.png",
+   "zones/village/creatures/whale_1.png"
+  ],
+  "shark": [
+   "zones/village/creatures/shark_0.png",
+   "zones/village/creatures/shark_1.png"
+  ],
+  "kraken_tent": [
+   "zones/village/rem/kraken_tent_0.png",
+   "zones/village/rem/kraken_tent_1.png",
+   "zones/village/rem/kraken_tent_2.png",
+   "zones/village/rem/kraken_tent_3.png"
+  ],
+  "shark_fin": [
+   "zones/village/rem/shark_fin_0.png",
+   "zones/village/rem/shark_fin_1.png",
+   "zones/village/rem/shark_fin_2.png",
+   "zones/village/rem/shark_fin_3.png"
+  ],
+  "bottle": [
+   "zones/village/rem/bottle_0.png",
+   "zones/village/rem/bottle_1.png",
+   "zones/village/rem/bottle_2.png",
+   "zones/village/rem/bottle_3.png"
+  ],
+  "scarf": [
+   "zones/village/rem/scarf_0.png",
+   "zones/village/rem/scarf_1.png",
+   "zones/village/rem/scarf_2.png",
+   "zones/village/rem/scarf_3.png"
+  ],
+  "kraken_tent_big": [
+   "zones/village/rem/kraken_tent_0.png",
+   "zones/village/rem/kraken_tent_1.png",
+   "zones/village/rem/kraken_tent_2.png",
+   "zones/village/rem/kraken_tent_3.png"
+  ],
+  "ghost_ship": [
+   "zones/village/rem/ghost_ship.png"
+  ],
+  "batSit_idle": [
+   "zones/village/creatures/batSit_idle_0.png",
+   "zones/village/creatures/batSit_idle_1.png"
+  ],
+  "cow_ds": [
+   "zones/village/creatures/cow_ds_0.png",
+   "zones/village/creatures/cow_ds_1.png",
+   "zones/village/creatures/cow_ds_2.png",
+   "zones/village/creatures/cow_ds_3.png"
+  ],
+  "cow_de": [
+   "zones/village/creatures/cow_de_0.png",
+   "zones/village/creatures/cow_de_1.png",
+   "zones/village/creatures/cow_de_2.png",
+   "zones/village/creatures/cow_de_3.png"
+  ],
+  "cow_dn": [
+   "zones/village/creatures/cow_dn_0.png",
+   "zones/village/creatures/cow_dn_1.png",
+   "zones/village/creatures/cow_dn_2.png",
+   "zones/village/creatures/cow_dn_3.png"
+  ],
+  "chicken_ds": [
+   "zones/village/creatures/chicken_ds_0.png",
+   "zones/village/creatures/chicken_ds_1.png",
+   "zones/village/creatures/chicken_ds_2.png",
+   "zones/village/creatures/chicken_ds_3.png"
+  ],
+  "chicken_de": [
+   "zones/village/creatures/chicken_de_0.png",
+   "zones/village/creatures/chicken_de_1.png",
+   "zones/village/creatures/chicken_de_2.png",
+   "zones/village/creatures/chicken_de_3.png"
+  ],
+  "chicken_dn": [
+   "zones/village/creatures/chicken_dn_0.png",
+   "zones/village/creatures/chicken_dn_1.png",
+   "zones/village/creatures/chicken_dn_2.png",
+   "zones/village/creatures/chicken_dn_3.png"
+  ],
+  "bird_ds": [
+   "zones/village/creatures/bird_ds_0.png",
+   "zones/village/creatures/bird_ds_1.png",
+   "zones/village/creatures/bird_ds_2.png",
+   "zones/village/creatures/bird_ds_3.png"
+  ],
+  "bird_de": [
+   "zones/village/creatures/bird_de_0.png",
+   "zones/village/creatures/bird_de_1.png",
+   "zones/village/creatures/bird_de_2.png",
+   "zones/village/creatures/bird_de_3.png"
+  ],
+  "bird_dn": [
+   "zones/village/creatures/bird_dn_0.png",
+   "zones/village/creatures/bird_dn_1.png",
+   "zones/village/creatures/bird_dn_2.png",
+   "zones/village/creatures/bird_dn_3.png"
+  ],
+  "fish_ds": [
+   "zones/village/creatures/fish_ds_0.png",
+   "zones/village/creatures/fish_ds_1.png",
+   "zones/village/creatures/fish_ds_2.png",
+   "zones/village/creatures/fish_ds_3.png"
+  ],
+  "fish_de": [
+   "zones/village/creatures/fish_de_0.png",
+   "zones/village/creatures/fish_de_1.png",
+   "zones/village/creatures/fish_de_2.png",
+   "zones/village/creatures/fish_de_3.png"
+  ],
+  "fish_dn": [
+   "zones/village/creatures/fish_dn_0.png",
+   "zones/village/creatures/fish_dn_1.png",
+   "zones/village/creatures/fish_dn_2.png",
+   "zones/village/creatures/fish_dn_3.png"
+  ],
+  "sheep_ds": [
+   "zones/village/creatures/sheep_ds_0.png",
+   "zones/village/creatures/sheep_ds_1.png",
+   "zones/village/creatures/sheep_ds_2.png",
+   "zones/village/creatures/sheep_ds_3.png"
+  ],
+  "sheep_de": [
+   "zones/village/creatures/sheep_de_0.png",
+   "zones/village/creatures/sheep_de_1.png",
+   "zones/village/creatures/sheep_de_2.png",
+   "zones/village/creatures/sheep_de_3.png"
+  ],
+  "sheep_dn": [
+   "zones/village/creatures/sheep_dn_0.png",
+   "zones/village/creatures/sheep_dn_1.png",
+   "zones/village/creatures/sheep_dn_2.png",
+   "zones/village/creatures/sheep_dn_3.png"
+  ],
+  "sheepShorn_ds": [
+   "zones/village/creatures/sheepShorn_ds_0.png",
+   "zones/village/creatures/sheepShorn_ds_1.png",
+   "zones/village/creatures/sheepShorn_ds_2.png",
+   "zones/village/creatures/sheepShorn_ds_3.png"
+  ],
+  "sheepShorn_de": [
+   "zones/village/creatures/sheepShorn_de_0.png",
+   "zones/village/creatures/sheepShorn_de_1.png",
+   "zones/village/creatures/sheepShorn_de_2.png",
+   "zones/village/creatures/sheepShorn_de_3.png"
+  ],
+  "sheepShorn_dn": [
+   "zones/village/creatures/sheepShorn_dn_0.png",
+   "zones/village/creatures/sheepShorn_dn_1.png",
+   "zones/village/creatures/sheepShorn_dn_2.png",
+   "zones/village/creatures/sheepShorn_dn_3.png"
+  ],
+  "horse_ds": [
+   "zones/village/creatures/horse_ds_0.png",
+   "zones/village/creatures/horse_ds_1.png",
+   "zones/village/creatures/horse_ds_2.png",
+   "zones/village/creatures/horse_ds_3.png"
+  ],
+  "horse_de": [
+   "zones/village/creatures/horse_de_0.png",
+   "zones/village/creatures/horse_de_1.png",
+   "zones/village/creatures/horse_de_2.png",
+   "zones/village/creatures/horse_de_3.png"
+  ],
+  "horse_dn": [
+   "zones/village/creatures/horse_dn_0.png",
+   "zones/village/creatures/horse_dn_1.png",
+   "zones/village/creatures/horse_dn_2.png",
+   "zones/village/creatures/horse_dn_3.png"
+  ],
+  "rabbit_ds": [
+   "zones/village/creatures/rabbit_ds_0.png",
+   "zones/village/creatures/rabbit_ds_1.png",
+   "zones/village/creatures/rabbit_ds_2.png",
+   "zones/village/creatures/rabbit_ds_3.png"
+  ],
+  "rabbit_de": [
+   "zones/village/creatures/rabbit_de_0.png",
+   "zones/village/creatures/rabbit_de_1.png",
+   "zones/village/creatures/rabbit_de_2.png",
+   "zones/village/creatures/rabbit_de_3.png"
+  ],
+  "rabbit_dn": [
+   "zones/village/creatures/rabbit_dn_0.png",
+   "zones/village/creatures/rabbit_dn_1.png",
+   "zones/village/creatures/rabbit_dn_2.png",
+   "zones/village/creatures/rabbit_dn_3.png"
+  ],
+  "crab_ds": [
+   "zones/village/creatures/crab_ds_0.png",
+   "zones/village/creatures/crab_ds_1.png",
+   "zones/village/creatures/crab_ds_2.png",
+   "zones/village/creatures/crab_ds_3.png"
+  ],
+  "crab_de": [
+   "zones/village/creatures/crab_de_0.png",
+   "zones/village/creatures/crab_de_1.png",
+   "zones/village/creatures/crab_de_2.png",
+   "zones/village/creatures/crab_de_3.png"
+  ],
+  "crab_dn": [
+   "zones/village/creatures/crab_dn_0.png",
+   "zones/village/creatures/crab_dn_1.png",
+   "zones/village/creatures/crab_dn_2.png",
+   "zones/village/creatures/crab_dn_3.png"
+  ],
+  "bat_ds": [
+   "zones/village/creatures/bat_ds_0.png",
+   "zones/village/creatures/bat_ds_1.png",
+   "zones/village/creatures/bat_ds_2.png",
+   "zones/village/creatures/bat_ds_3.png"
+  ],
+  "bat_de": [
+   "zones/village/creatures/bat_de_0.png",
+   "zones/village/creatures/bat_de_1.png",
+   "zones/village/creatures/bat_de_2.png",
+   "zones/village/creatures/bat_de_3.png"
+  ],
+  "bat_dn": [
+   "zones/village/creatures/bat_dn_0.png",
+   "zones/village/creatures/bat_dn_1.png",
+   "zones/village/creatures/bat_dn_2.png",
+   "zones/village/creatures/bat_dn_3.png"
+  ],
+  "sala_ds": [
+   "zones/village/creatures/sala_ds_0.png",
+   "zones/village/creatures/sala_ds_1.png",
+   "zones/village/creatures/sala_ds_2.png",
+   "zones/village/creatures/sala_ds_3.png"
+  ],
+  "sala_de": [
+   "zones/village/creatures/sala_de_0.png",
+   "zones/village/creatures/sala_de_1.png",
+   "zones/village/creatures/sala_de_2.png",
+   "zones/village/creatures/sala_de_3.png"
+  ],
+  "sala_dn": [
+   "zones/village/creatures/sala_dn_0.png",
+   "zones/village/creatures/sala_dn_1.png",
+   "zones/village/creatures/sala_dn_2.png",
+   "zones/village/creatures/sala_dn_3.png"
+  ],
+  "fox_ds": [
+   "zones/village/creatures/fox_ds_0.png",
+   "zones/village/creatures/fox_ds_1.png",
+   "zones/village/creatures/fox_ds_2.png",
+   "zones/village/creatures/fox_ds_3.png"
+  ],
+  "fox_de": [
+   "zones/village/creatures/fox_de_0.png",
+   "zones/village/creatures/fox_de_1.png",
+   "zones/village/creatures/fox_de_2.png",
+   "zones/village/creatures/fox_de_3.png"
+  ],
+  "fox_dn": [
+   "zones/village/creatures/fox_dn_0.png",
+   "zones/village/creatures/fox_dn_1.png",
+   "zones/village/creatures/fox_dn_2.png",
+   "zones/village/creatures/fox_dn_3.png"
+  ],
+  "moth_ds": [
+   "zones/village/creatures/moth_ds_0.png",
+   "zones/village/creatures/moth_ds_1.png",
+   "zones/village/creatures/moth_ds_2.png",
+   "zones/village/creatures/moth_ds_3.png"
+  ],
+  "moth_de": [
+   "zones/village/creatures/moth_de_0.png",
+   "zones/village/creatures/moth_de_1.png",
+   "zones/village/creatures/moth_de_2.png",
+   "zones/village/creatures/moth_de_3.png"
+  ],
+  "moth_dn": [
+   "zones/village/creatures/moth_dn_0.png",
+   "zones/village/creatures/moth_dn_1.png",
+   "zones/village/creatures/moth_dn_2.png",
+   "zones/village/creatures/moth_dn_3.png"
+  ],
+  "rat_ds": [
+   "zones/village/creatures/rat_ds_0.png",
+   "zones/village/creatures/rat_ds_1.png",
+   "zones/village/creatures/rat_ds_2.png",
+   "zones/village/creatures/rat_ds_3.png"
+  ],
+  "rat_de": [
+   "zones/village/creatures/rat_de_0.png",
+   "zones/village/creatures/rat_de_1.png",
+   "zones/village/creatures/rat_de_2.png",
+   "zones/village/creatures/rat_de_3.png"
+  ],
+  "rat_dn": [
+   "zones/village/creatures/rat_dn_0.png",
+   "zones/village/creatures/rat_dn_1.png",
+   "zones/village/creatures/rat_dn_2.png",
+   "zones/village/creatures/rat_dn_3.png"
+  ],
+  "monkey_ds": [
+   "zones/village/creatures/monkey_ds_0.png",
+   "zones/village/creatures/monkey_ds_1.png",
+   "zones/village/creatures/monkey_ds_2.png",
+   "zones/village/creatures/monkey_ds_3.png"
+  ],
+  "monkey_de": [
+   "zones/village/creatures/monkey_de_0.png",
+   "zones/village/creatures/monkey_de_1.png",
+   "zones/village/creatures/monkey_de_2.png",
+   "zones/village/creatures/monkey_de_3.png"
+  ],
+  "monkey_dn": [
+   "zones/village/creatures/monkey_dn_0.png",
+   "zones/village/creatures/monkey_dn_1.png",
+   "zones/village/creatures/monkey_dn_2.png",
+   "zones/village/creatures/monkey_dn_3.png"
+  ],
+  "boar_ds": [
+   "zones/village/creatures/boar_ds_0.png",
+   "zones/village/creatures/boar_ds_1.png",
+   "zones/village/creatures/boar_ds_2.png",
+   "zones/village/creatures/boar_ds_3.png"
+  ],
+  "boar_de": [
+   "zones/village/creatures/boar_de_0.png",
+   "zones/village/creatures/boar_de_1.png",
+   "zones/village/creatures/boar_de_2.png",
+   "zones/village/creatures/boar_de_3.png"
+  ],
+  "boar_dn": [
+   "zones/village/creatures/boar_dn_0.png",
+   "zones/village/creatures/boar_dn_1.png",
+   "zones/village/creatures/boar_dn_2.png",
+   "zones/village/creatures/boar_dn_3.png"
+  ],
+  "beaver_ds": [
+   "zones/village/creatures/beaver_ds_0.png",
+   "zones/village/creatures/beaver_ds_1.png",
+   "zones/village/creatures/beaver_ds_2.png",
+   "zones/village/creatures/beaver_ds_3.png"
+  ],
+  "beaver_de": [
+   "zones/village/creatures/beaver_de_0.png",
+   "zones/village/creatures/beaver_de_1.png",
+   "zones/village/creatures/beaver_de_2.png",
+   "zones/village/creatures/beaver_de_3.png"
+  ],
+  "beaver_dn": [
+   "zones/village/creatures/beaver_dn_0.png",
+   "zones/village/creatures/beaver_dn_1.png",
+   "zones/village/creatures/beaver_dn_2.png",
+   "zones/village/creatures/beaver_dn_3.png"
+  ],
+  "knocker_ds": [
+   "zones/village/creatures/knocker_ds_0.png",
+   "zones/village/creatures/knocker_ds_1.png",
+   "zones/village/creatures/knocker_ds_2.png",
+   "zones/village/creatures/knocker_ds_3.png"
+  ],
+  "knocker_de": [
+   "zones/village/creatures/knocker_de_0.png",
+   "zones/village/creatures/knocker_de_1.png",
+   "zones/village/creatures/knocker_de_2.png",
+   "zones/village/creatures/knocker_de_3.png"
+  ],
+  "knocker_dn": [
+   "zones/village/creatures/knocker_dn_0.png",
+   "zones/village/creatures/knocker_dn_1.png",
+   "zones/village/creatures/knocker_dn_2.png",
+   "zones/village/creatures/knocker_dn_3.png"
+  ],
+  "yeti_ds": [
+   "zones/village/creatures/yeti_ds_0.png",
+   "zones/village/creatures/yeti_ds_1.png",
+   "zones/village/creatures/yeti_ds_2.png",
+   "zones/village/creatures/yeti_ds_3.png"
+  ],
+  "yeti_de": [
+   "zones/village/creatures/yeti_de_0.png",
+   "zones/village/creatures/yeti_de_1.png",
+   "zones/village/creatures/yeti_de_2.png",
+   "zones/village/creatures/yeti_de_3.png"
+  ],
+  "yeti_dn": [
+   "zones/village/creatures/yeti_dn_0.png",
+   "zones/village/creatures/yeti_dn_1.png",
+   "zones/village/creatures/yeti_dn_2.png",
+   "zones/village/creatures/yeti_dn_3.png"
+  ],
+  "drake_ds": [
+   "zones/village/creatures/drake_ds_0.png",
+   "zones/village/creatures/drake_ds_1.png",
+   "zones/village/creatures/drake_ds_2.png",
+   "zones/village/creatures/drake_ds_3.png"
+  ],
+  "drake_de": [
+   "zones/village/creatures/drake_de_0.png",
+   "zones/village/creatures/drake_de_1.png",
+   "zones/village/creatures/drake_de_2.png",
+   "zones/village/creatures/drake_de_3.png"
+  ],
+  "drake_dn": [
+   "zones/village/creatures/drake_dn_0.png",
+   "zones/village/creatures/drake_dn_1.png",
+   "zones/village/creatures/drake_dn_2.png",
+   "zones/village/creatures/drake_dn_3.png"
+  ],
+  "garg_ds": [
+   "zones/village/creatures/garg_ds_0.png",
+   "zones/village/creatures/garg_ds_1.png",
+   "zones/village/creatures/garg_ds_2.png",
+   "zones/village/creatures/garg_ds_3.png"
+  ],
+  "garg_de": [
+   "zones/village/creatures/garg_de_0.png",
+   "zones/village/creatures/garg_de_1.png",
+   "zones/village/creatures/garg_de_2.png",
+   "zones/village/creatures/garg_de_3.png"
+  ],
+  "garg_dn": [
+   "zones/village/creatures/garg_dn_0.png",
+   "zones/village/creatures/garg_dn_1.png",
+   "zones/village/creatures/garg_dn_2.png",
+   "zones/village/creatures/garg_dn_3.png"
+  ],
+  "shark_ds": [
+   "zones/village/creatures/shark_ds_0.png",
+   "zones/village/creatures/shark_ds_1.png",
+   "zones/village/creatures/shark_ds_2.png",
+   "zones/village/creatures/shark_ds_3.png"
+  ],
+  "shark_de": [
+   "zones/village/creatures/shark_de_0.png",
+   "zones/village/creatures/shark_de_1.png",
+   "zones/village/creatures/shark_de_2.png",
+   "zones/village/creatures/shark_de_3.png"
+  ],
+  "shark_dn": [
+   "zones/village/creatures/shark_dn_0.png",
+   "zones/village/creatures/shark_dn_1.png",
+   "zones/village/creatures/shark_dn_2.png",
+   "zones/village/creatures/shark_dn_3.png"
+  ]
+ },
+ "connect": {
+  "wall": {
+   "types": [
+    "fence_h",
+    "fence_v",
+    "post"
+   ],
+   "post": "zones/village/fence/fk_post.png",
+   "h": "zones/village/fence/seg_h.png",
+   "v": "zones/village/fence/seg_v.png",
+   "postMode": "nodes",
+   "tall": 16
+  }
+ },
+ "images": {
+  "raft": "zones/village/misc/out/raft.png",
+  "plank": "zones/village/misc/out/plank.png",
+  "sail_0_0": "zones/village/misc/out/sail_0_0.png",
+  "sail_0_1": "zones/village/misc/out/sail_0_1.png",
+  "sail_2_0": "zones/village/misc/out/sail_2_0.png",
+  "sail_2_1": "zones/village/misc/out/sail_2_1.png",
+  "sail_3_0": "zones/village/misc/out/sail_3_0.png",
+  "sail_3_1": "zones/village/misc/out/sail_3_1.png",
+  "flagpole": "zones/village/misc/out/flagpole.png",
+  "kraken_head": "zones/village/rem/kraken_head.png",
+  "kraken_head_big": "zones/village/rem/kraken_head_big.png",
+  "coil_v": "zones/village/rem/coil_v.png",
+  "coil_h": "zones/village/rem/coil_h.png",
+  "boat_0_0": "zones/village/rem/boat_south.png",
+  "boat_0_1": "zones/village/rem/boat_south.png",
+  "boat_1_0": "zones/village/rem/boat_west.png",
+  "boat_1_1": "zones/village/rem/boat_west.png",
+  "boat_2_0": "zones/village/rem/boat_east.png",
+  "boat_2_1": "zones/village/rem/boat_east.png",
+  "boat_3_0": "zones/village/rem/boat_north.png",
+  "boat_3_1": "zones/village/rem/boat_north.png",
+  "boat_park": "zones/village/rem/boat_park.png",
+  "jeep_0_0": "zones/village/rem/jeep_south.png",
+  "jeep_0_1": "zones/village/rem/jeep_south.png",
+  "jeep_1_0": "zones/village/rem/jeep_west.png",
+  "jeep_1_1": "zones/village/rem/jeep_west.png",
+  "jeep_2_0": "zones/village/rem/jeep_east.png",
+  "jeep_2_1": "zones/village/rem/jeep_east.png",
+  "jeep_3_0": "zones/village/rem/jeep_north.png",
+  "jeep_3_1": "zones/village/rem/jeep_north.png",
+  "cart_0_0": "zones/village/rem/cart_south.png",
+  "cart_0_1": "zones/village/rem/cart_south.png",
+  "cart_1_0": "zones/village/rem/cart_west.png",
+  "cart_1_1": "zones/village/rem/cart_west.png",
+  "cart_2_0": "zones/village/rem/cart_east.png",
+  "cart_2_1": "zones/village/rem/cart_east.png",
+  "cart_3_0": "zones/village/rem/cart_north.png",
+  "cart_3_1": "zones/village/rem/cart_north.png",
+  "balloon": "zones/village/rem/balloon.png",
+  "rail_v": "zones/village/rem/rail_v.png",
+  "rail_h": "zones/village/rem/rail_h.png",
+  "rail_x": "zones/village/rem/rail_x.png",
+  "rack": "zones/village/rem/rack.png",
+  "held_fish": "zones/village/rem/held_fish.png",
+  "held_fish_big": "zones/village/rem/held_fish_big.png",
+  "wood": "zones/village/rem/wood.png",
+  "item_drake": "zones/village/rem/item_drake.png",
+  "item_yeti": "zones/village/rem/item_yeti.png",
+  "item_naga": "zones/village/rem/item_naga.png",
+  "dive_shell": "zones/village/rem/dive_shell.png",
+  "dive_pearl": "zones/village/rem/dive_pearl.png",
+  "dive_seagem": "zones/village/rem/dive_seagem.png",
+  "dive_stone": "zones/village/rem/dive_stone.png",
+  "drift_board": "zones/village/rem/drift_board.png",
+  "plank_story": "zones/village/rem/plank_story.png",
+  "raft_story": "zones/village/misc/out/raft.png",
+  "sail_story_0": "zones/village/misc/out/sail_2_0.png",
+  "jeept_0_0": "zones/village/rem/jeep_south.png",
+  "jeept_1_0": "zones/village/rem/jeep_west.png",
+  "jeept_2_0": "zones/village/rem/jeep_east.png",
+  "jeept_3_0": "zones/village/rem/jeep_north.png",
+  "sail_story_1": "zones/village/misc/out/sail_2_1.png",
+  "jeept_0_1": "zones/village/rem/jeep_south.png",
+  "jeept_1_1": "zones/village/rem/jeep_west.png",
+  "jeept_2_1": "zones/village/rem/jeep_east.png",
+  "jeept_3_1": "zones/village/rem/jeep_north.png",
+  "stump": "zones/village/rem/stump.png",
+  "carry_bucket1": "zones/village/carry/bucket1.png",
+  "carry_bucket2": "zones/village/carry/bucket2.png",
+  "carry_bucket3": "zones/village/carry/bucket3.png",
+  "carry_cage1": "zones/village/carry/cage1.png",
+  "carry_cage2": "zones/village/carry/cage2.png",
+  "carry_cage3": "zones/village/carry/cage3.png",
+  "carry_cart1_s": "zones/village/carry/cart1_s.png",
+  "carry_cart1_e": "zones/village/carry/cart1_e.png",
+  "carry_cart1_n": "zones/village/carry/cart1_n.png",
+  "carry_cart2_s": "zones/village/carry/cart2_s.png",
+  "carry_cart2_e": "zones/village/carry/cart2_e.png",
+  "carry_cart2_n": "zones/village/carry/cart2_n.png",
+  "carry_cart3_s": "zones/village/carry/cart3_s.png",
+  "carry_cart3_e": "zones/village/carry/cart3_e.png",
+  "carry_cart3_n": "zones/village/carry/cart3_n.png",
+  "crate_float": "zones/village/rem/crate_float.png",
+  "fishshadow_0": "zones/village/decor/shore/fishshadow_0.png",
+  "fishshadow_1": "zones/village/decor/shore/fishshadow_1.png",
+  "farm_tilled": "zones/village/farm/tilled.png",
+  "farm_tilled_wet": "zones/village/farm/tilled_wet.png",
+  "crop_turnip_0": "zones/village/farm/crop_turnip_0.png",
+  "crop_turnip_1": "zones/village/farm/crop_turnip_1.png",
+  "crop_turnip_2": "zones/village/farm/crop_turnip_2.png",
+  "crop_turnip_3": "zones/village/farm/crop_turnip_3.png",
+  "crop_turnip_dead": "zones/village/farm/crop_turnip_dead.png",
+  "crop_strawberry_0": "zones/village/farm/crop_strawberry_0.png",
+  "crop_strawberry_1": "zones/village/farm/crop_strawberry_1.png",
+  "crop_strawberry_2": "zones/village/farm/crop_strawberry_2.png",
+  "crop_strawberry_3": "zones/village/farm/crop_strawberry_3.png",
+  "crop_strawberry_dead": "zones/village/farm/crop_strawberry_dead.png",
+  "crop_tomato_0": "zones/village/farm/crop_tomato_0.png",
+  "crop_tomato_1": "zones/village/farm/crop_tomato_1.png",
+  "crop_tomato_2": "zones/village/farm/crop_tomato_2.png",
+  "crop_tomato_3": "zones/village/farm/crop_tomato_3.png",
+  "crop_tomato_dead": "zones/village/farm/crop_tomato_dead.png",
+  "crop_corn_0": "zones/village/farm/crop_corn_0.png",
+  "crop_corn_1": "zones/village/farm/crop_corn_1.png",
+  "crop_corn_2": "zones/village/farm/crop_corn_2.png",
+  "crop_corn_3": "zones/village/farm/crop_corn_3.png",
+  "crop_corn_dead": "zones/village/farm/crop_corn_dead.png",
+  "crop_pumpkin_0": "zones/village/farm/crop_pumpkin_0.png",
+  "crop_pumpkin_1": "zones/village/farm/crop_pumpkin_1.png",
+  "crop_pumpkin_2": "zones/village/farm/crop_pumpkin_2.png",
+  "crop_pumpkin_3": "zones/village/farm/crop_pumpkin_3.png",
+  "crop_pumpkin_dead": "zones/village/farm/crop_pumpkin_dead.png",
+  "crop_yam_0": "zones/village/farm/crop_yam_0.png",
+  "crop_yam_1": "zones/village/farm/crop_yam_1.png",
+  "crop_yam_2": "zones/village/farm/crop_yam_2.png",
+  "crop_yam_3": "zones/village/farm/crop_yam_3.png",
+  "crop_yam_dead": "zones/village/farm/crop_yam_dead.png",
+  "crop_starmush_0": "zones/village/farm/crop_starmush_0.png",
+  "crop_starmush_1": "zones/village/farm/crop_starmush_1.png",
+  "crop_starmush_2": "zones/village/farm/crop_starmush_2.png",
+  "crop_starmush_3": "zones/village/farm/crop_starmush_3.png",
+  "crop_starmush_dead": "zones/village/farm/crop_starmush_dead.png",
+  "crop_quakeflower_0": "zones/village/farm/crop_quakeflower_0.png",
+  "crop_quakeflower_1": "zones/village/farm/crop_quakeflower_1.png",
+  "crop_quakeflower_2": "zones/village/farm/crop_quakeflower_2.png",
+  "crop_quakeflower_3": "zones/village/farm/crop_quakeflower_3.png",
+  "crop_quakeflower_dead": "zones/village/farm/crop_quakeflower_dead.png",
+  "scarecrow": "zones/village/farm/scarecrow.png",
+  "pen_trough": "zones/village/farm/pen_trough.png",
+  "pen_gate": "zones/village/farm/pen_gate.png",
+  "pen_sign": "zones/village/farm/pen_sign.png",
+  "pen_hay": "zones/village/farm/pen_hay.png",
+  "cursor_tile": "zones/village/farm/cursor_tile.png"
+ },
+ "flags": {
+  "Indonesian": "zones/village/flags/out/Indonesian.png",
+  "Vietnamese": "zones/village/flags/out/Vietnamese.png",
+  "Russian": "zones/village/flags/out/Russian.png",
+  "Indian": "zones/village/flags/out/Indian.png",
+  "Nigerian": "zones/village/flags/out/Nigerian.png",
+  "Ukrainian": "zones/village/flags/out/Ukrainian.png",
+  "chinese": "zones/village/flags/out/chinese.png",
+  "Pakistan": "zones/village/flags/out/Pakistan.png",
+  "Iranian": "zones/village/flags/out/Iranian.png",
+  "Turkish": "zones/village/flags/out/Turkish.png",
+  "Bangladeshi": "zones/village/flags/out/Bangladeshi.png",
+  "Thai": "zones/village/flags/out/Thai.png",
+  "Korean": "zones/village/flags/out/Korean.png",
+  "philippines": "zones/village/flags/out/philippines.png",
+  "French": "zones/village/flags/out/French.png",
+  "japanese": "zones/village/flags/out/japanese.png",
+  "Egyptian": "zones/village/flags/out/Egyptian.png",
+  "Brazilian": "zones/village/flags/out/Brazilian.png",
+  "Moroccan": "zones/village/flags/out/Moroccan.png",
+  "Arabic": "zones/village/flags/out/Arabic.png",
+  "Portugal": "zones/village/flags/out/Portugal.png",
+  "Italian": "zones/village/flags/out/Italian.png",
+  "Polish": "zones/village/flags/out/Polish.png"
+ },
+ "loops": {
+  "campfire": [
+   "zones/village/loops/campfire_0.png",
+   "zones/village/loops/campfire_1.png",
+   "zones/village/loops/campfire_2.png",
+   "zones/village/loops/campfire_3.png"
+  ],
+  "lantern": [
+   "zones/village/loops/lantern_0.png",
+   "zones/village/loops/lantern_1.png",
+   "zones/village/loops/lantern_2.png",
+   "zones/village/loops/lantern_3.png"
+  ],
+  "craft_furnace": [
+   "zones/village/loops/craft_furnace_0.png",
+   "zones/village/loops/craft_furnace_1.png",
+   "zones/village/loops/craft_furnace_2.png",
+   "zones/village/loops/craft_furnace_3.png"
+  ],
+  "craft_forge": [
+   "zones/village/loops/craft_forge_0.png",
+   "zones/village/loops/craft_forge_1.png",
+   "zones/village/loops/craft_forge_2.png",
+   "zones/village/loops/craft_forge_3.png"
+  ],
+  "craft_loom": [
+   "zones/village/loops/craft_loom_0.png",
+   "zones/village/loops/craft_loom_1.png",
+   "zones/village/loops/craft_loom_2.png",
+   "zones/village/loops/craft_loom_3.png"
+  ],
+  "craft_altar": [
+   "zones/village/loops/craft_altar_0.png",
+   "zones/village/loops/craft_altar_1.png",
+   "zones/village/loops/craft_altar_2.png",
+   "zones/village/loops/craft_altar_3.png"
+  ]
+ },
+ "tiles": {
+  "TILLED": [
+   "zones/village/farm/tilled.png"
+  ],
+  "TILLED_WET": [
+   "zones/village/farm/tilled_wet.png"
+  ]
+ }
+}

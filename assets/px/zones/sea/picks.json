@@ -1,0 +1,20 @@
+{
+ "objects": {
+  "buoy": 7,
+  "debris": 23,
+  "gate": "L23",
+  "house_y": "L7",
+  "lantern": 7,
+  "lighthouse": 7,
+  "rock": 23,
+  "sign": 23,
+  "wreck": 23
+ },
+ "decor": {
+  "coral_s": 7,
+  "shell_i": 23
+ },
+ "rocky": {
+  "rocky_0": "t8"
+ }
+}

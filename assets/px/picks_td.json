@@ -1,0 +1,50 @@
+{
+ "objects": {
+  "tree": {
+   "file": "gen_td/tree_s23.png",
+   "ox": -8
+  },
+  "bush": "gen_td/bush_s7.png",
+  "house_r": "gen_td/house_r_s23.png",
+  "house_b": "gen_td/house_b_s23.png",
+  "house_g": "gen_td/house_g_s23.png",
+  "house_y": "gen_td/house_y_s23.png",
+  "post": "gen_td/post_s23.png",
+  "campfire": "gen_td/campfire_s7.png",
+  "board": "gen_td/board_s23.png",
+  "lantern": "gen_td/lantern_s23.png",
+  "sign": "gen_td/sign_s23.png",
+  "monument": "gen_td/monument_s23.png",
+  "gate": "gen_td/gate_s7.png",
+  "well": "gen_td/well_s23.png",
+  "crate": "gen_td/crate_s23.png",
+  "stall": "gen_td/stall_s7.png",
+  "campfire_off": "gen_td/campfire_off.png"
+ },
+ "decor": {
+  "FLOWER": [
+   {
+    "file": "decor/dandelion_s7.png",
+    "p": 1,
+    "n": 2
+   },
+   {
+    "file": "decor/flower_y_s7.png",
+    "p": 0.5,
+    "n": 1
+   }
+  ],
+  "GRASS": [
+   {
+    "file": "decor/tuft_s23.png",
+    "p": 0.07,
+    "n": 1
+   },
+   {
+    "file": "decor/dandelion_s23.png",
+    "p": 0.04,
+    "n": 1
+   }
+  ]
+ }
+}

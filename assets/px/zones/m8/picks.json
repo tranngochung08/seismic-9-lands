@@ -1,0 +1,30 @@
+{
+ "objects": {
+  "boulder": 7,
+  "campfire_off": 23,
+  "campfire": 7,
+  "fountain": "t8",
+  "gate": "L23",
+  "lantern": 23,
+  "monument": 7,
+  "pavilion": "t8",
+  "pine": "L7",
+  "pine_s": 23,
+  "rock": 7,
+  "rock_s": 23,
+  "sign": 23,
+  "statue": 7,
+  "tent": "t8",
+  "turret": "t8",
+  "wall_h": "t8"
+ },
+ "decor": {
+  "footprints": 7,
+  "sparkle": 7,
+  "twig": 23
+ },
+ "rocky": {
+  "rocky_4": "t8",
+  "rocky_5": "t8"
+ }
+}

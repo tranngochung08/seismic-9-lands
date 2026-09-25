@@ -1,0 +1,23 @@
+{
+ "objects": {
+  "boat": "t8",
+  "crate": 7,
+  "fence_h": 7,
+  "fence_v": 7,
+  "palm": "L7",
+  "rock": 23,
+  "rock_s": 7,
+  "shell": 7,
+  "torch": 23,
+  "umbrella": 7
+ },
+ "decor": {
+  "grass_d": 7,
+  "pebble": 7,
+  "shell_d": 23,
+  "starfish": 23
+ },
+ "rocky": {
+  "rocky_1": "t8"
+ }
+}

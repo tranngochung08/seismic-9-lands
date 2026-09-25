@@ -1,0 +1,27 @@
+{
+ "objects": {
+  "bush": 7,
+  "fountain": "t8",
+  "gate": "L23",
+  "lantern": 23,
+  "library": "t8",
+  "monument": 23,
+  "pavilion": "t8",
+  "pillar_broken": 23,
+  "pillar": 7,
+  "rock_s": 7,
+  "sign": 23,
+  "statue": 23,
+  "tower": "f23",
+  "wall_s": "t8"
+ },
+ "decor": {
+  "ivy": 7,
+  "leaf_y": 23,
+  "rubble": 7
+ },
+ "rocky": {
+  "rocky_3": "t8",
+  "rocky_4": "t8"
+ }
+}

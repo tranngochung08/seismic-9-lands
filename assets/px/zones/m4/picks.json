@@ -1,0 +1,23 @@
+{
+ "objects": {
+  "boulder": 7,
+  "cart": "t8",
+  "crate": 7,
+  "gate": "L23",
+  "lantern": 7,
+  "ore": 7,
+  "rock": 23,
+  "rock_s": 23,
+  "sign": 23,
+  "torch": 7,
+  "wall_s": "t8",
+  "beam": "t8"
+ },
+ "decor": {
+  "glint": 7,
+  "stones": 23
+ },
+ "rocky": {
+  "rocky_2": "t8"
+ }
+}

@@ -1,0 +1,165 @@
+{
+ "inherit": "m1",
+ "classes": {
+  "__base": "water",
+  "WATER": "water",
+  "DEEP": "deep",
+  "REEF": "reef",
+  "SAND": "sand",
+  "DOCK": "dock",
+  "SAND2": "sand",
+  "DIRT": "sand",
+  "GRASS": "sand",
+  "STONE": "dock",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled"
+ },
+ "wang": [
+  {
+   "dir": "zones/sea/wang/a2",
+   "upper": "deep"
+  },
+  {
+   "dir": "zones/sea/wang/b2",
+   "upper": "reef"
+  },
+  {
+   "dir": "zones/sea/wang/c2",
+   "upper": "sand"
+  },
+  {
+   "dir": "zones/sea/wang/d2",
+   "upper": "dock"
+  },
+  {
+   "dir": "wang/f3",
+   "upper": "tilled"
+  }
+ ],
+ "decor": {
+  "SAND": [
+   {
+    "file": "zones/sea/decor/shell_i_s23.png",
+    "p": 0.3,
+    "n": 1
+   },
+   {
+    "file": "zones/village/decor/shore/pebbles.png",
+    "p": 0.08,
+    "n": 1
+   },
+   {
+    "file": "zones/village/decor/shore/sandspot.png",
+    "p": 0.02,
+    "n": 1
+   }
+  ],
+  "REEF": [
+   {
+    "file": "zones/sea/decor/coral_s_s7.png",
+    "p": 0.35,
+    "n": 1
+   }
+  ],
+  "WATER": [
+   {
+    "file": "zones/village/decor/shore/seaweed_0.png",
+    "p": 0.05,
+    "n": 1
+   },
+   {
+    "file": "zones/village/decor/shore/seaweed_1.png",
+    "p": 0.04,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "lighthouse": {
+   "file": "zones/sea/obj/lighthouse_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "wreck": {
+   "file": "zones/sea/obj/wreck_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "buoy": {
+   "file": "zones/sea/obj/buoy_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "debris": {
+   "file": "zones/sea/obj/debris_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "house_y": {
+   "file": "zones/sea/obj/house_y_t8.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "rock": {
+   "file": "zones/sea/obj/rock_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "lantern": {
+   "file": "zones/sea/obj/lantern_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sign": {
+   "file": "zones/sea/obj/sign_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "gate": {
+   "file": "zones/sea/obj/gate_t8.png",
+   "ox": -8,
+   "oy": 0
+  }
+ },
+ "rocky": {
+  "0": "zones/sea/rocky/rocky_0_t8.png"
+ },
+ "chars": {
+  "base": [
+   {
+    "skin": "#f6d3b5",
+    "hair": "#2b1d14",
+    "file": "zones/sea/chars/sea_c0.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#1f1f1f",
+    "file": "zones/sea/chars/sea_c1.png"
+   },
+   {
+    "skin": "#c98b5f",
+    "hair": "#e8e8e8",
+    "file": "zones/sea/chars/sea_hermit.png"
+   }
+  ]
+ },
+ "loops": {
+  "lantern": [
+   "zones/sea/loops/lantern_0.png",
+   "zones/sea/loops/lantern_1.png",
+   "zones/sea/loops/lantern_2.png",
+   "zones/sea/loops/lantern_3.png"
+  ],
+  "lighthouse": [
+   "zones/sea/loops/lighthouse_0.png",
+   "zones/sea/loops/lighthouse_1.png",
+   "zones/sea/loops/lighthouse_2.png",
+   "zones/sea/loops/lighthouse_3.png"
+  ]
+ },
+ "creatures": {
+  "whirl": [
+   "zones/sea/loops/whirl_base.png"
+  ]
+ }
+}

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Seismic · 9 Lands</title>
+<meta name="description" content="A pixel adventure through the 9 Magnitude lands of the Seismic community. Every NPC is a real artist.">
+<link rel="stylesheet" href="assets/fonts/vt323.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<canvas id="ui"></canvas>
+
+<div id="hud" hidden>
+  <div class="hud-tl"><span id="h-zone" class="pill"></span><div id="h-quest"></div><div id="h-task"></div><div id="h-target"></div><div id="h-story"></div><div id="h-inv"></div><div id="h-alert" hidden></div></div>
+  <div class="hud-tr"><span title="Tremor shards">◆ <b id="h-shards">0</b></span><span title="Artists met in this land">☺ <b id="h-met">0</b></span><button id="btn-codex" class="hbtn" title="Codex (C)">📖</button><button id="btn-map" class="hbtn" title="World map (M)">🗺</button><button id="btn-fs" class="hbtn" title="Fullscreen (F)">⛶</button></div>
+  <canvas id="seis" width="120" height="28"></canvas>
+  <div id="prompt" hidden></div>
+</div>
+
+<div id="touch">
+  <div class="dpad">
+    <button data-k="up">▲</button><button data-k="left">◀</button><button data-k="right">▶</button><button data-k="down">▼</button>
+  </div>
+  <button id="btn-a">A</button>
+  <button id="btn-menu">☰</button>
+  <button id="btn-photo">📷</button>
+  <div id="touch-skills" hidden><button data-skill="Digit1">1</button><button data-skill="Digit2">2</button><button data-skill="Digit3">3</button></div>
+</div>
+
+<div id="dialog" class="ov" hidden>
+  <div class="dlg">
+    <div class="dlg-plate"><span id="d-name"></span><span id="d-nick" class="dim"></span></div>
+    <div class="dlg-body">
+      <div class="dlg-port"><canvas id="d-port" width="64" height="64"></canvas><div id="d-av"></div></div>
+      <div class="dlg-main">
+        <div class="dlg-head"><div id="d-chips"></div><div id="d-badge"></div></div>
+        <div id="d-stats"></div>
+        <div id="d-text"></div>
+        <div id="d-hint" class="dim"></div>
+      </div>
+    </div>
+    <div id="d-more" hidden>▼</div>
+  </div>
+</div>
+
+<div id="hall" class="ov" hidden>
+  <div class="panel">
+    <h2 id="h-title"></h2><p id="h-desc" class="dim"></p>
+    <input id="h-q" type="search" autocomplete="off">
+    <div id="h-list" class="scroll"></div>
+    <button id="h-close" class="btn"></button>
+  </div>
+</div>
+
+<div id="map" class="ov" hidden>
+  <div class="panel wide">
+    <h2 id="m-title"></h2><p id="m-hint" class="dim"></p>
+    <div class="mapwrap"><canvas id="m-cv" width="340" height="340"></canvas><div id="m-list"></div></div>
+    <button id="m-close" class="btn"></button>
+  </div>
+</div>
+
+<div id="shop" class="ov" hidden>
+  <div class="panel">
+    <h2 id="s-title"></h2><p id="s-desc" class="dim"></p>
+    <div id="s-shards" class="shards"></div>
+    <div id="s-body" class="scroll"></div>
+    <button id="s-close" class="btn"></button>
+  </div>
+</div>
+
+<div id="quiz" class="ov" hidden>
+  <div class="panel">
+    <h2 id="q-title"></h2><p id="q-prog" class="dim"></p>
+    <div id="q-text"></div>
+    <div id="q-opts"></div>
+    <div id="q-fb"></div>
+    <button id="q-next" class="btn primary" hidden></button>
+  </div>
+</div>
+
+<div id="codex" class="ov" hidden>
+  <div class="panel wide">
+    <h2 id="c-title"></h2>
+    <div id="c-prog"></div>
+    <div class="codexwrap">
+      <div class="ccol"><div id="c-zones"></div><h3 id="c-ach-title"></h3><div id="c-ach"></div></div>
+      <div class="ccol"><h3 id="c-met-title"></h3><input id="c-q" type="search" autocomplete="off"><div id="c-list" class="scroll"></div></div>
+    </div>
+    <button id="c-close" class="btn"></button>
+  </div>
+</div>
+
+<div id="nation" class="ov" hidden>
+  <div class="panel">
+    <div class="nhead"><canvas id="n-flag" width="48" height="32"></canvas><div><h2 id="n-name"></h2><p id="n-sub" class="dim"></p></div></div>
+    <div class="scroll">
+      <div id="n-medals" class="medals"></div>
+      <div id="n-stats" class="nstats"></div>
+      <h3 id="n-top-title"></h3><div id="n-top"></div>
+      <h3 id="n-all-title"></h3><div id="n-all" class="nstats"></div>
+    </div>
+    <button id="n-close" class="btn"></button>
+  </div>
+</div>
+
+<div id="end" class="ov" hidden>
+  <div class="panel small endp">
+    <div class="logo sm">SEISMIC</div>
+    <h2 id="e-title"></h2>
+    <p id="e-body"></p>
+    <button id="e-btn" class="btn primary"></button>
+    <button id="e-credits" class="btn"></button>
+  </div>
+</div>
+
+<div id="credits" hidden><button id="cr-skip" class="btn ghost">✕</button></div>
+
+<div id="pause" class="ov" hidden>
+  <div class="panel small">
+    <h2 id="p-title"></h2>
+    <button id="p-resume" class="btn primary"></button>
+    <button id="p-lang" class="btn"></button>
+    <button id="p-music" class="btn"></button>
+    <button id="p-quit" class="btn"></button>
+  </div>
+</div>
+
+<canvas id="tbg" hidden></canvas>
+<div id="title" class="ov" hidden>
+  <div class="tt">
+    <canvas id="t-logo" width="360" height="120"></canvas>
+    <p id="t-tag" class="dim"></p>
+    <div id="t-main">
+      <input id="t-name" maxlength="24" autocomplete="off">
+      <button id="t-cont" class="btn primary"></button>
+      <button id="t-play" class="btn"></button>
+      <div class="trow"><button id="t-settings" class="btn"></button><button id="t-credits" class="btn"></button><button id="t-quit" class="btn"></button></div>
+      <div class="tsmall">
+        <div class="findrow"><label id="t-find-label" class="dim tiny" for="t-find"></label><div class="findin"><input id="t-find" autocomplete="off"><button id="t-find-btn" class="btn"></button></div></div>
+        <div id="t-discord-wrap"><button id="t-discord" class="btn discord"></button><p id="t-discord-note" class="dim tiny"></p></div>
+      </div>
+      <p id="t-ctl" class="dim tiny"></p>
+    </div>
+    <div id="t-panel-settings" hidden>
+      <div class="trow"><label id="t-vol-label" class="dim"></label><input id="t-vol" type="range" min="0" max="100"></div>
+      <button id="t-music" class="btn"></button>
+      <div class="trow"><label id="t-scale-label" class="dim"></label><select id="t-scale"><option value="0"></option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
+      <button id="t-fs" class="btn"></button>
+      <button id="t-lang" class="btn"></button>
+      <button id="t-demo" class="btn ghost"></button>
+      <button class="btn" data-back></button>
+    </div>
+    <div id="t-panel-credits" hidden><div class="tcred"><div id="t-credits-list"></div></div><button class="btn" data-back></button></div>
+    <div id="t-panel-bye" hidden><h2 id="t-bye"></h2><p id="t-bye-note" class="dim"></p><button class="btn" data-back></button></div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+<div id="loading">Loading…</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

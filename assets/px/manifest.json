@@ -1,0 +1,286 @@
+{
+ "scale": 2,
+ "chars": {
+  "fixed": {
+   "guide": {
+    "skin": "#e8b48e",
+    "hair": "#e8e8e8",
+    "shirt": "#3d6db5",
+    "file": "chars/guide.png"
+   },
+   "lyron": {
+    "skin": "#f6d3b5",
+    "hair": "#1f1f1f",
+    "shirt": "#3b2a22",
+    "file": "chars/lyron2.png",
+    "scarf": true,
+    "note": "Lyron + khăn đỏ PixelLab (bản cũ chars/lyron.png)"
+   },
+   "hung": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/hung.png",
+    "note": "px-hero A: từ chân dung avatar anh Hùng"
+   },
+   "hung_b": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/hung_b.png",
+    "note": "px-hero B: mô tả + bảng màu avatar",
+    "actions": {
+     "chop": {
+      "file": "chars/hung_b_act_chop.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "mine": {
+      "file": "chars/hung_b_act_mine.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "fish": {
+      "file": "chars/hung_b_act_fish.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "carry": {
+      "file": "chars/hung_b_act_carry.png",
+      "n": 3,
+      "ch": 24,
+      "cw": 32
+     },
+     "paddle": {
+      "file": "chars/hung_b_act_paddle.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "hammer": {
+      "file": "chars/hung_b_act_hammer.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "cast": {
+      "file": "chars/hung_b_act_cast.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "reel": {
+      "file": "chars/hung_b_act_reel.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     }
+    }
+   },
+   "noxx": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/noxx.png",
+    "note": "Noxx · CM Seismic (px-noxx.py)"
+   }
+  },
+  "shirtHue": [
+   300,
+   350
+  ],
+  "shirtSat": 0.3
+ },
+ "zones": {
+  "village": "zones/village.json",
+  "m1": "zones/m1.json",
+  "m2": "zones/m2.json",
+  "m3": "zones/m3.json",
+  "m5": "zones/m5.json",
+  "m4": "zones/m4.json",
+  "m6": "zones/m6.json",
+  "m7": "zones/m7.json",
+  "m8": "zones/m8.json",
+  "m9": "zones/m9.json",
+  "sea": "zones/sea.json",
+  "trench": "zones/trench.json"
+ },
+ "ui": {
+  "items": {
+   "wood": "ui/items/wood.png",
+   "stone": "ui/items/stone.png",
+   "rock": "ui/items/rock.png",
+   "ore": "ui/items/ore.png",
+   "charcoal": "ui/items/charcoal.png",
+   "iron": "ui/items/iron.png",
+   "sand": "ui/items/sand.png",
+   "glass": "ui/items/glass.png",
+   "rope": "ui/items/rope.png",
+   "hay": "ui/items/hay.png",
+   "leaf": "ui/items/leaf.png",
+   "resin": "ui/items/resin.png",
+   "seed": "ui/items/seed.png",
+   "flower": "ui/items/flower.png",
+   "egg": "ui/items/egg.png",
+   "milk": "ui/items/milk.png",
+   "berry": "ui/items/berry.png",
+   "mushroom": "ui/items/mushroom.png",
+   "honey": "ui/items/honey.png",
+   "meat": "ui/items/meat.png",
+   "wax": "ui/items/wax.png",
+   "wool": "ui/items/wool.png",
+   "fur": "ui/items/fur.png",
+   "feather": "ui/items/feather.png",
+   "tusk": "ui/items/tusk.png",
+   "obsidian": "ui/items/obsidian.png",
+   "ice": "ui/items/ice.png",
+   "crystal": "ui/items/crystal.png",
+   "lava": "ui/items/lava.png",
+   "wormhide": "ui/items/wormhide.png",
+   "firescale": "ui/items/firescale.png",
+   "yetifur": "ui/items/yetifur.png",
+   "greatcrystal": "ui/items/greatcrystal.png",
+   "plank": "ui/items/plank.png",
+   "sailcloth": "ui/items/sailcloth.png",
+   "pearl": "ui/items/pearl.png",
+   "shell": "ui/items/shell.png",
+   "seagem": "ui/items/seagem.png",
+   "ink": "ui/items/ink.png",
+   "bottle": "ui/items/bottle.png",
+   "squid": "ui/items/squid.png",
+   "goldfish": "ui/items/goldfish.png",
+   "divebell": "ui/items/divebell.png",
+   "trenchmap": "ui/items/trenchmap.png",
+   "seed_turnip": "ui/items/seed_turnip.png",
+   "seed_strawberry": "ui/items/seed_strawberry.png",
+   "seed_tomato": "ui/items/seed_tomato.png",
+   "seed_corn": "ui/items/seed_corn.png",
+   "seed_pumpkin": "ui/items/seed_pumpkin.png",
+   "seed_yam": "ui/items/seed_yam.png",
+   "seed_starmush": "ui/items/seed_starmush.png",
+   "seed_quakeflower": "ui/items/seed_quakeflower.png",
+   "turnip": "ui/items/turnip.png",
+   "strawberry": "ui/items/strawberry.png",
+   "tomato": "ui/items/tomato.png",
+   "corn": "ui/items/corn.png",
+   "pumpkin": "ui/items/pumpkin.png",
+   "yam": "ui/items/yam.png",
+   "starmush": "ui/items/starmush.png",
+   "quakeflower": "ui/items/quakeflower.png",
+   "fur_rabbit": "ui/items/fur_rabbit.png",
+   "pen1": "ui/items/pen1.png",
+   "pen2": "ui/items/pen2.png",
+   "scarecrow": "ui/items/scarecrow.png",
+   "fish": "ui/items/fish.png",
+   "cow": "ui/items/cow.png",
+   "chicken": "ui/items/chicken.png",
+   "bird": "ui/items/bird.png",
+   "sheep": "ui/items/sheep.png",
+   "rabbit": "ui/items/rabbit.png",
+   "crab": "ui/items/crab.png",
+   "bat": "ui/items/bat.png",
+   "axe": "ui/items/axe.png",
+   "pickaxe": "ui/items/pickaxe.png",
+   "rod": "ui/items/rod.png",
+   "shovel": "ui/items/shovel.png",
+   "scythe": "ui/items/scythe.png",
+   "knife": "ui/items/knife.png",
+   "bucket": "ui/items/bucket.png",
+   "cage": "ui/items/cage.png",
+   "cart": "ui/items/cart.png",
+   "lasso": "ui/items/lasso.png",
+   "trap": "ui/items/trap.png",
+   "saddle": "ui/items/saddle.png",
+   "torch": "ui/items/torch.png"
+  },
+  "tabs": {
+   "bag": "ui/tab_bag.png",
+   "hero": "ui/tab_hero.png",
+   "quest": "ui/tab_quest.png",
+   "gear": "ui/tab_gear.png"
+  },
+  "status": {
+   "check": "ui/st_check.png",
+   "quest": "ui/st_quest.png",
+   "play": "ui/st_play.png",
+   "up": "ui/st_up.png",
+   "down": "ui/st_down.png",
+   "lock": "ui/st_lock.png"
+  },
+  "frame": "ui/frame.png",
+  "dialog": {
+   "frame": "ui/dlg_frame.png",
+   "plate": "ui/dlg_plate.png",
+   "port": "ui/dlg_port.png",
+   "bubble": "ui/bubble.png",
+   "guide": [
+    "ui/port_noxx_0.png",
+    "ui/port_noxx_1.png"
+   ]
+  },
+  "fish": {
+   "species": {
+    "perch": "ui/fish/perch.png",
+    "carp": "ui/fish/carp.png",
+    "sardine": "ui/fish/sardine.png",
+    "mackerel": "ui/fish/mackerel.png",
+    "catfish": "ui/fish/catfish.png",
+    "salmon": "ui/fish/salmon.png",
+    "tuna": "ui/fish/tuna.png",
+    "grouper": "ui/fish/grouper.png",
+    "goldkoi": "ui/fish/goldkoi.png"
+   },
+   "card": "ui/fish_card.png",
+   "bobber": "ui/bobber.png"
+  },
+  "anger": "ui/anger.png",
+  "npick": {
+   "panel": "ui/npick/panel.png",
+   "tile": "ui/npick/tile.png",
+   "tile_on": "ui/npick/tile_on.png",
+   "input": "ui/npick/input.png",
+   "btn": "ui/npick/btn.png",
+   "banner": "ui/npick/banner.png",
+   "compass": "ui/npick/compass.png"
+  },
+  "flags": {
+   "Indonesian": "ui/flags/Indonesian.png",
+   "Vietnamese": "ui/flags/Vietnamese.png",
+   "Russian": "ui/flags/Russian.png",
+   "Indian": "ui/flags/Indian.png",
+   "Nigerian": "ui/flags/Nigerian.png",
+   "Ukrainian": "ui/flags/Ukrainian.png",
+   "chinese": "ui/flags/chinese.png",
+   "Pakistan": "ui/flags/Pakistan.png",
+   "Iranian": "ui/flags/Iranian.png",
+   "Turkish": "ui/flags/Turkish.png",
+   "Bangladeshi": "ui/flags/Bangladeshi.png",
+   "Thai": "ui/flags/Thai.png",
+   "Korean": "ui/flags/Korean.png",
+   "philippines": "ui/flags/philippines.png",
+   "French": "ui/flags/French.png",
+   "japanese": "ui/flags/japanese.png",
+   "Egyptian": "ui/flags/Egyptian.png",
+   "Brazilian": "ui/flags/Brazilian.png",
+   "Singapore/Malaysia": "ui/flags/Singapore_Malaysia.png",
+   "Moroccan": "ui/flags/Moroccan.png",
+   "Arabic": "ui/flags/Arabic.png",
+   "Portugal": "ui/flags/Portugal.png",
+   "Italian": "ui/flags/Italian.png",
+   "Polish": "ui/flags/Polish.png"
+  },
+  "title": {
+   "emblem": "ui/title/emblem.png",
+   "btn": "ui/title/btn.png",
+   "btn_hi": "ui/title/btn_hi.png",
+   "cloud_0": "ui/title/cloud_0.png",
+   "cloud_1": "ui/title/cloud_1.png",
+   "cloud_2": "ui/title/cloud_2.png",
+   "far": "ui/title/far.png",
+   "sea": "ui/title/sea.png"
+  }
+ }
+}
