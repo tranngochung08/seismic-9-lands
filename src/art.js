@@ -33,7 +33,7 @@ function maskLower(tile, lower) {
 const h2 = (a, b) => (((a * 73856093) ^ (b * 19349663) ^ 0x9e3779b9) >>> 0);
 
 export async function initArt(q) {
-  if (q.get('art') !== 'px') return false;
+  if (q.get('art') === 'code') return false;   /* 2026-09-28 (deploy): PixelLab là mặc định; ?art=code để xem bản vẽ code */
   let man; try { man = await fetch(BASE + 'manifest.json').then(r => r.json()); } catch (e) { console.warn('art: no manifest', e); return false; }
   ART.on = true; ART.hi = man.scale || 2; ART.man = man;
   installShim();
