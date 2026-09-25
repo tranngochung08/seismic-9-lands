@@ -11,7 +11,9 @@ const BASE = 'assets/px/';
 const load1 = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('art: ' + src)); i.src = src; });
 // tải ảnh: thử lại 3 lần (server tĩnh hay rớt khi nạp hàng nghìn ảnh cùng lúc); thất bại → ảnh 1×1 trong suốt, không kéo cả gói xuống
 const BLANK = mkCanvas(2, 2);
-async function load(src) { for (let a = 0; a < 3; a++) { try { return await load1(src + (a ? `?r=${a}` : '')); } catch (e) { await new Promise(r => setTimeout(r, 150 * (a + 1))); } } console.warn('art: không tải được', src); return BLANK; }
+const LOADS = new Map();   /* bộ nhớ đệm theo URL: tải trước song song (prefetchPack) rồi các bước sau lấy lại, không tải lần 2 */
+function load(src) { if (!LOADS.has(src)) LOADS.set(src, loadRaw(src)); return LOADS.get(src); }
+async function loadRaw(src) { for (let a = 0; a < 3; a++) { try { return await load1(src + (a ? `?r=${a}` : '')); } catch (e) { await new Promise(r => setTimeout(r, 150 * (a + 1))); } } console.warn('art: không tải được', src); return BLANK; }
 function toCanvas(img) { const c = mkCanvas(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); c.__hi = ART.hi; return c; }
 // Canvas 2× "giả kích thước logic": width/height trả về kích thước logic (module vẽ code dùng img.width>>1 để canh giữa), bitmap thật ở __w/__h
 function logicalCanvas(c) { c.__w = c.width; c.__h = c.height; Object.defineProperty(c, 'width', { value: c.width / ART.hi }); Object.defineProperty(c, 'height', { value: c.height / ART.hi }); return c; }
@@ -69,8 +71,14 @@ function loadWangDir(dir) {   /* tải 16 ô Wang của 1 thư mục, cache theo
     return byKey;
   })();
 }
+/* bản web: mỗi gói có ~15 bước tải nối đuôi → lần đầu chờ ~17 s. Đọc JSON xong là bắn song song mọi ảnh + mọi bộ Wang ngay. */
+function prefetchPack(j) {
+  const walk = v => { if (typeof v === 'string') { if (/\.png$/i.test(v)) load(BASE + v); } else if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  walk(j); for (const L of j.wang || []) loadWangDir(L.dir);
+}
 async function loadPack(file, id) {
   const j = await fetch(BASE + file).then(r => r.json());
+  prefetchPack(j);
   const p = { id, inherit: j.inherit || null, classes: j.classes || {}, layers: [], decor: {}, tiles: {}, objects: {}, rocky: {}, chars: [] };
   for (const L of j.wang || []) {   // { dir, upper }
     const byKey = { ...await loadWangDir(L.dir) };   /* bộ dùng chung (vd. wang/f2 đất cày ở 12 gói) chỉ tải 1 lần */
