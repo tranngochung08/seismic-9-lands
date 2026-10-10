@@ -16,7 +16,7 @@ const STR = {
   en: {
     tabs: { bag: 'Bag', hero: 'Character', quest: 'Quests', gear: 'Settings' }, foot: 'Esc · close   ·   ← → or 1-4 · tabs   ·   B bag · Q quests',
     equip: 'Equipment', progress: 'Progress', items: 'Items', load: 'Bag load', empty: 'Nothing in the bag yet — chop, mine, gather.', tipHint: 'Hover or tap a slot to read about it.',
-    locked: 'Not crafted yet', weight: 'weight', count: 'count', sell: 'Sell at the village trader', sell1: 'Sell 1', sellAll: 'Sell all', sellHere: 'sell right from the bag', material: 'Crafting / building material', story: 'Story item',
+    locked: 'Not crafted yet', weight: 'weight', count: 'count', sell: 'Sell at the village trader', sell1: 'Sell 1', sellAll: 'Sell all', eat: 'Eat', ate: n => `Yum, ${n}! You feel lively — walking faster for 30 s`, sellHere: 'sell right from the bag', material: 'Crafting / building material', story: 'Story item',
     fl: { raft: 'Raft', sail: 'Sail', wax: 'Ski wax', tires: 'Obsidian tires', cape: 'Rocky cape', armor: 'Rocky armour', coat: 'Warm coat', lamps: 'Crystal lamps', charged: 'Rocky charges' },
     stats: { str: 'Strength', agi: 'Agility', def: 'Defense', cap: 'Capacity', skill: 'Skill', rep: 'Reputation' },
     statHint: { str: 'Axe & pickaxe tiers', agi: 'Walk · ski wax · obsidian tires · sail · saddle', def: 'Rocky armour · warm coat · iron bucket', cap: 'Bag · bucket · cage · cart', skill: 'Fishing rod · crystal lamps · Rocky charges', rep: 'Artists met · badges · Rockies woken' },
@@ -36,7 +36,7 @@ const STR = {
   vi: {
     tabs: { bag: 'Túi đồ', hero: 'Nhân vật', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-4 · đổi thẻ   ·   B túi · Q nhiệm vụ',
     equip: 'Trang bị', progress: 'Tiến độ', items: 'Vật phẩm', load: 'Tải túi', empty: 'Túi chưa có gì — chặt cây, đập đá, nhặt đồ đi.', tipHint: 'Rê chuột hoặc chạm ô để xem mô tả.',
-    locked: 'Chưa chế', weight: 'nặng', count: 'số lượng', sell: 'Bán ở Thương nhân Làng', sell1: 'Bán 1', sellAll: 'Bán hết', sellHere: 'bán ngay tại túi', material: 'Nguyên liệu chế tạo / xây dựng', story: 'Vật phẩm cốt truyện',
+    locked: 'Chưa chế', weight: 'nặng', count: 'số lượng', sell: 'Bán ở Thương nhân Làng', sell1: 'Bán 1', sellAll: 'Bán hết', eat: 'Ăn', ate: n => `Ngon quá, ${n}! Thấy khoẻ khoắn — đi nhanh hơn 30 giây`, sellHere: 'bán ngay tại túi', material: 'Nguyên liệu chế tạo / xây dựng', story: 'Vật phẩm cốt truyện',
     fl: { raft: 'Bè', sail: 'Buồm', wax: 'Sáp trượt', tires: 'Lốp obsidian', cape: 'Áo choàng Rocky', armor: 'Giáp Rocky', coat: 'Áo ấm', lamps: 'Đèn tinh thể', charged: 'Pin Rocky' },
     stats: { str: 'Sức mạnh', agi: 'Nhanh nhẹn', def: 'Phòng thủ', cap: 'Sức chứa', skill: 'Kỹ năng', rep: 'Uy tín' },
     statHint: { str: 'Cấp rìu và cuốc', agi: 'Đi bộ · sáp trượt · lốp obsidian · buồm · yên ngựa', def: 'Giáp Rocky · áo ấm · xô sắt', cap: 'Túi · xô · lồng · xe chở', skill: 'Cần câu · đèn tinh thể · pin Rocky', rep: 'Nghệ sĩ đã gặp · huy hiệu · Rocky đã thức' },
@@ -73,6 +73,7 @@ export function initMenu(d) {
     const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; render(); }
     const a = e.target.closest('[data-act]'); if (a) { e.preventDefault(); act(a.dataset.act); }
     const b = e.target.closest('[data-sell]'); if (b) { e.preventDefault(); doSell(b.dataset.sell, b.dataset.w); }
+    const f = e.target.closest('[data-eat]'); if (f) { e.preventDefault(); doEat(f.dataset.eat); }
     if (s && s.dataset.id) selId = s.dataset.id;
   });
 }
@@ -80,6 +81,12 @@ let selId = null;
 function doSell(id, how) {   /* bán rồi vẽ lại túi, giữ dòng mô tả của đúng món (nếu còn) */
   if (!sellFromBag(deps.CTX, id, how)) return;
   render(); const s = el.querySelector(`[data-id="${id}"]`); setTip(s ? s.dataset.tip : ''); if (!s) selId = null;
+}
+function doEat(id) {   /* plan-19: đóng túi để thấy nhân vật ăn (clip PixelLab 'eat', hướng nam) */
+  const C = deps.CTX, p = C.S.player, t = L(); if (!C.bag.has(id, 1)) return;
+  C.bag.remove(id, 1); closeMenu();
+  if (p.hasAct && p.hasAct('eat') && !p.custom) { p.dir = 0; p.act('eat', 0); }
+  p.fedT = 30; C.sfx('pickup'); C.toast(t.ate(itemName(id, UI.lang()))); if (C.persist) C.persist();
 }
 function setTip(t) { tip = t || ''; const b = el.querySelector('#mtip'); if (b) b.innerHTML = tip; }
 function act(k) {
@@ -137,7 +144,9 @@ function bagBody() {
   const its = Object.keys(ITEMS).filter(id => (inv[id] || 0) > 0);
   const rows = its.map(id => {
     const d = ITEMS[id], n = inv[id], pr = id === 'stone' ? null : bagPrice(C, id), kind = d.tags.includes('carry') ? t.sell : d.tags.includes('sea') || /divebell|trenchmap|greatcrystal|scarf/.test(id) ? t.story : t.material;
-    const sell = pr ? ` <span class="msell"><button class="btn" data-sell="${id}" data-w="1">${esc(t.sell1)} · +${pr.one} 🪨</button>${pr.n > 1 ? `<button class="btn primary" data-sell="${id}" data-w="all">${esc(t.sellAll)} · +${pr.all} 🪨</button>` : ''}</span>` : '';
+    const eat = d.tags.includes('food') ? `<button class="btn" data-eat="${id}">🍽 ${esc(t.eat)}</button>` : '';   /* plan-19: ăn đồ ăn → clip ăn + đi nhanh 30 s */
+    const sb = pr ? `<button class="btn" data-sell="${id}" data-w="1">${esc(t.sell1)} · +${pr.one} 🪨</button>${pr.n > 1 ? `<button class="btn primary" data-sell="${id}" data-w="all">${esc(t.sellAll)} · +${pr.all} 🪨</button>` : ''}` : '';
+    const sell = pr || eat ? ` <span class="msell">${eat}${sb}</span>` : '';
     return slot(id, n, '', `<b>${esc(itemName(id, lg))}</b> ×${n}${d.w ? ` · ${t.weight} ${Math.round(d.w * n * 10) / 10}` : ''} · <span class="mhint">${esc(pr ? t.sellHere : kind)}</span>${sell}`, '', id);
   });
   const pad = Math.max(0, (its.length <= 8 ? 16 : Math.ceil(its.length / 8) * 8) - its.length);

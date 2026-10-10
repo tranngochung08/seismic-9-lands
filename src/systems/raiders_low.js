@@ -798,7 +798,7 @@ export const raidersLow = {
       if (m.gone) continue;
       const sx = m.x - cx, sy = m.y - cy;
       if (sx < -40 || sy < -60 || sx > VW + 40 || sy > VH + 40) continue;
-      const img = dirFrame(SPR[m.kind], m.face, m.ft, true) || SPR[m.kind][m.fr][m.dir < 0 ? 1 : 0];   /* plan-11 */
+      const img = dirFrame(SPR[m.kind], m.face, m.ft, true, m) || SPR[m.kind][m.fr][m.dir < 0 ? 1 : 0];   /* plan-11 */
       const dx = Math.round(m.x) - (img.width >> 1) - cx, dy = Math.round(m.y) - img.height - cy;
       const held = m.held ? ICON[kindOf(m.held)] : null;
       const hy = dy - 10 + Math.round(Math.sin(m.ft * 2) * 1);

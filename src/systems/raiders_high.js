@@ -636,7 +636,7 @@ export const raidersHigh = {
     }
     const [w, h] = SIZE[r.kind];
     const frame = r.kind === 'drake' ? Math.floor(ctx.S.time * 5) % 2 : (Math.floor(r.anim) % 2);
-    const img = dirFrame(SPR[r.kind], r.face4, r.kind === 'drake' ? ctx.S.time * 2.5 : r.anim / 2, r.moving !== false) || SPR[r.kind][frame][r.face];   /* plan-11 */
+    const img = dirFrame(SPR[r.kind], r.face4, 0, r.moving !== false, r) || SPR[r.kind][frame][r.face];   /* plan-11 */
     const sx = () => Math.round(r.x - cx) - (w >> 1), sy = () => Math.round(r.y - r.alt - cy) - h + 4;
     if (r.alt > 4) out.push({ y: r.y - 1, f: () => { g.globalAlpha = clamp(.38 - r.alt / 160, .1, .4); g.fillStyle = '#000'; g.beginPath(); g.ellipse(Math.round(r.x - cx), Math.round(r.y - cy), 13, 5, 0, 0, 7); g.fill(); g.globalAlpha = 1; } });
     out.push({

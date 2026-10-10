@@ -302,7 +302,9 @@ export const trees = {
     o.chop = (o.chop || 0) + 1;
     if (!ST.pips.includes(o)) ST.pips.push(o);
     ST.shakes.push({ o, t: SHAKE });
-    spawnChips(ctx, o, o.chop >= HITS ? 14 : 7);
+    { const cx = o.x * TS + 8, base = o.y * TS + 13, dead = o.type === 'deadtree';   /* plan-19: VFX PixelLab dăm gỗ (khung chạm của clip chặt) + lá rơi; hạt code chỉ dự phòng */
+      const okW = ctx.vfxAt && ctx.vfxAt(p, 'wood_chips', cx, base);
+      if (okW) { if (!dead && ctx.vfx) ctx.vfx('leaf_fall', cx, o.y * TS - 2, o.chop >= HITS ? 1.6 : 0.9); } else spawnChips(ctx, o, o.chop >= HITS ? 14 : 7); }
     if (o.chop < HITS) return;
     // felled
     const gain = WOOD[o.type] || 1;

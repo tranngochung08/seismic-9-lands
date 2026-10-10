@@ -75,10 +75,11 @@ function zoneData(ctx, id) {
 const tileCount = z => Object.keys(z.tiles).length;
 const cropOk = (ctx, crop) => { const it = ctx.ITEMS[crop]; const tg = it ? it.tags : []; return tg.includes('any') || tg.includes(ctx.season()); };
 const ripe = rec => !!rec.crop && !rec.dead && rec.stage >= (CROP[rec.crop] || { days: 4 }).days;
-// chỉ số khung ảnh 0..3 theo tiến độ (3 = chín)
+// khung ảnh theo tiến độ: 'seed' (vừa gieo, chưa lớn ngày nào) → 0 mầm → 1 → 2 → 3 chín (plan-19: 5 giai đoạn như luật, chỉ đổi hiển thị, save giữ nguyên)
 function frameOf(rec) {
   const d = (CROP[rec.crop] || { days: 4 }).days;
   if (rec.stage >= d) return 3;
+  if (rec.stage === 0) return 'seed';
   return Math.min(2, Math.floor(rec.stage * 3 / d));
 }
 
@@ -91,6 +92,10 @@ function cropArt(crop, stage) {
   if (stage === 'dead') {
     px(7, 8, '#6b4a2a', 2, 7); px(4, 9, '#8a6a3c', 3, 1); px(9, 7, '#8a6a3c', 3, 1); px(3, 8, '#a08050', 1, 1); px(12, 6, '#a08050', 1, 1);
     px(6, 6, '#7a5a30', 1, 2); px(10, 9, '#7a5a30', 1, 2);
+    return c;
+  }
+  if (stage === 'seed') {                              /* hạt vừa gieo: ụ đất + 3 hạt (dự phòng khi chưa có ảnh PixelLab) */
+    px(4, 11, '#6b4a2a', 8, 3); px(5, 10, '#8a6238', 6, 1); px(5, 10, '#ecdcb4', 1, 1); px(8, 10, '#ecdcb4', 1, 1); px(10, 11, '#ecdcb4', 1, 1);
     return c;
   }
   if (stage === 0) {                                   // mầm
@@ -127,6 +132,7 @@ function scareArt() {
 for (const crop of CROPS) {
   for (let i = 0; i < 4; i++) IMG[`crop_${crop}_${i}`] = HOOK.image(`crop_${crop}_${i}`, cropArt(crop, i));
   IMG[`crop_${crop}_dead`] = HOOK.image(`crop_${crop}_dead`, cropArt(crop, 'dead'));
+  IMG[`crop_${crop}_seed`] = HOOK.image(`crop_${crop}_seed`, cropArt(crop, 'seed'));   /* plan-19 */
 }
 IMG.scarecrow = HOOK.image('scarecrow', scareArt());
 IMG.cursor = HOOK.image('cursor_tile', (() => { const c = mkCanvas(16, 16), g = c.getContext('2d'); g.strokeStyle = '#e8ffb0'; g.lineWidth = 1; g.strokeRect(0.5, 0.5, 15, 15); return c; })());   /* khung chọn ô (gói: zones/village/farm/cursor_tile.png) */
@@ -192,12 +198,15 @@ function burst(ctx, wx, wy, n, cols) {
 }
 
 // ---------- hành động ----------
+/* plan-19: clip PixelLab cuốc/tưới/thu hoạch (quay mặt về ô), không có clip thì bỏ qua */
+function playAct(ctx, name, tx, ty) { const p = ctx.S.player; if (!p || !p.act || !p.hasAct || !p.hasAct(name) || p.custom) return; p.faceTo(tx * TS + 8, ty * TS + 8); p.act(name, 0); }
 function doTill(ctx, tx, ty) {
   const t = L(ctx), z = zoneData(ctx);
   if (tileCount(z) >= MAX_TILES) { ctx.toast(t.full); ctx.sfx('fail'); return false; }
   const rec = { crop: null, stage: 0, wet: false, planted: 0, waterDays: 0, q: 0, dead: false };
   z.tiles[key(tx, ty)] = rec; applyTile(ctx, tx, ty, rec);
-  ctx.sfx('hit'); burst(ctx, tx * TS + 8, ty * TS + 10, 7, [PAL.dirt, PAL.dirtD, '#8a6238']); ctx.toast(t.tilled); ctx.persist(); return true;
+  playAct(ctx, 'hoe', tx, ty);
+  ctx.sfx('hit'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'dirt_puff', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 10, 7, [PAL.dirt, PAL.dirtD, '#8a6238']);   /* plan-19: VFX PixelLab, hạt code chỉ còn là dự phòng */ ctx.toast(t.tilled); ctx.persist(); return true;
 }
 function doSow(ctx, tx, ty, seed) {
   const t = L(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || rec.crop) return false;
@@ -210,7 +219,8 @@ function doWater(ctx, tx, ty) {
   const t = L(ctx), f = root(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || rec.wet) return false;
   if (f.bucketWater <= 0) { ctx.toast(t.emptyBucket); ctx.sfx('fail'); return false; }
   f.bucketWater -= 1; rec.wet = true; applyTile(ctx, tx, ty, rec);
-  ctx.sfx('splash'); burst(ctx, tx * TS + 8, ty * TS + 8, 7, [PAL.waterL, PAL.foam, PAL.water]); ctx.persist(); return true;
+  playAct(ctx, 'water', tx, ty);
+  ctx.sfx('splash'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'water_splash', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 8, 7, [PAL.waterL, PAL.foam, PAL.water]);   /* plan-19 */ ctx.persist(); return true;
 }
 function doFill(ctx) {
   const t = L(ctx), f = root(ctx);
@@ -226,7 +236,8 @@ function doHarvest(ctx, tx, ty) {
   const name = ctx.itemName(rec.crop), icon = ctx.itemIcon(rec.crop), col = FRUIT[rec.crop][0];
   if (def.regrow) { rec.stage = Math.max(0, def.days - def.regrow); rec.waterDays = 0; }
   else { rec.crop = null; rec.stage = 0; rec.waterDays = 0; rec.dead = false; }
-  ctx.sfx('pickup'); burst(ctx, tx * TS + 8, ty * TS + 8, 8, [col, PAL.grass, '#ffd45e']);
+  playAct(ctx, 'harvest', tx, ty);
+  ctx.sfx('pickup'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'crop_sparkle', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 8, 8, [col, PAL.grass, '#ffd45e']);   /* plan-19 */
   ctx.toast(`+${got} ${icon} ${name}${t.stars[q]}`); if (ctx.pop) ctx.pop(ctx.S.player.x, ctx.S.player.y - 18, `+${got} ${icon}`);
   ctx.clock.log(t.harvested(got, name) + t.stars[q]); ctx.persist(); return true;
 }

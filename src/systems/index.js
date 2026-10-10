@@ -26,5 +26,6 @@ import { trench } from './trench.js';
 import { swim } from './swim.js';
 import { farm } from './farm.js';   /* plan-17 F02 (tác nhân A1) */
 import { pens } from './pens.js';   /* plan-17 F03 (tác nhân A2) */
+import { vfx } from './vfx.js';   /* plan-19: VFX sheet PixelLab */
 
-export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, sumo, pet, storySea, storyLand, trench].filter(Boolean);
+export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, sumo, pet, storySea, storyLand, trench, vfx].filter(Boolean);

@@ -175,13 +175,15 @@
      "file": "chars/c0_act_chop.png",
      "n": 7,
      "ch": 24,
-     "cw": 32
+     "cw": 32,
+     "impact": 3
     },
     "mine": {
      "file": "chars/c0_act_mine.png",
      "n": 7,
      "ch": 24,
-     "cw": 32
+     "cw": 32,
+     "impact": 4
     },
     "fish": {
      "file": "chars/c0_act_fish.png",
@@ -204,6 +206,45 @@
     "hammer": {
      "file": "chars/c0_act_hammer.png",
      "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "hoe": {
+     "file": "chars/c0_act_hoe.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 3
+    },
+    "water": {
+     "file": "chars/c0_act_water.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 2
+    },
+    "harvest": {
+     "file": "chars/c0_act_harvest.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 4
+    },
+    "eat": {
+     "file": "chars/c0_act_eat.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "hurt": {
+     "file": "chars/c0_act_hurt.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "idle": {
+     "file": "chars/c0_act_idle.png",
+     "n": 4,
      "ch": 24,
      "cw": 32
     }
@@ -904,7 +945,15 @@
   "pen_gate": "zones/village/farm/pen_gate.png",
   "pen_sign": "zones/village/farm/pen_sign.png",
   "pen_hay": "zones/village/farm/pen_hay.png",
-  "cursor_tile": "zones/village/farm/cursor_tile.png"
+  "cursor_tile": "zones/village/farm/cursor_tile.png",
+  "crop_turnip_seed": "zones/village/farm/crop_turnip_seed.png",
+  "crop_corn_seed": "zones/village/farm/crop_corn_seed.png",
+  "crop_pumpkin_seed": "zones/village/farm/crop_pumpkin_seed.png",
+  "crop_quakeflower_seed": "zones/village/farm/crop_quakeflower_seed.png",
+  "crop_starmush_seed": "zones/village/farm/crop_starmush_seed.png",
+  "crop_strawberry_seed": "zones/village/farm/crop_strawberry_seed.png",
+  "crop_tomato_seed": "zones/village/farm/crop_tomato_seed.png",
+  "crop_yam_seed": "zones/village/farm/crop_yam_seed.png"
  },
  "flags": {
   "Indonesian": "zones/village/flags/out/Indonesian.png",

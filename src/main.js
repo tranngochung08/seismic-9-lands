@@ -16,6 +16,7 @@ import { FRIEND, friendSheet, drawScarf, normalizeStory, storyItemsLeft, ITEMS3 
 import { initMenu, openMenu, closeMenu, toggleMenu, menuKey } from './menu.js';
 import * as TITLE from './title.js';
 import { createClock } from './clock.js';   /* F01: đồng hồ, lịch, hết ngày */
+import { FPS, loopFrame, clock } from './anim.js';   /* plan-19: FPS chung */
 
 const $ = s => document.querySelector(s);
 const cv = $('#c'), g = cv.getContext('2d');
@@ -47,7 +48,7 @@ const CTX = {
   setMode: m => setMode(m), registerCloser: (mode, fn) => { S.closers[mode] = fn; }, onAction: (mode, fn) => { (S.actions ||= {})[mode] = fn; },
   toast: (t, big) => UI.toast(t, big), bubble: (n, t, sec) => UI.bubble(n, t, sec), quake: s => quake(s), persist: () => persist(), lang: () => UI.lang(),
   openDialog: o => UI.openDialog(o), levelBadge: UI.levelBadge, avatarHTML: UI.avatarHTML,
-  pop: (x, y, text, color = '#ffd45e') => { (S.pops ||= []).push({ x, y, text, color, t: 0 }); if (S.pops.length > 12) S.pops.shift(); },   /* plan-14: số nổi '+2 🪵' */
+  pop: (x, y, text, color = '#ffd45e') => { (S.pops ||= []).push({ x, y, text, color, t: 0 }); if (S.pops.length > 12) S.pops.shift(); if (CTX.vfx) CTX.vfx('item_pickup_pop', x, y + 4, 0, true); },   /* plan-14: số nổi '+2 🪵'; plan-19: + VFX nhặt đồ */   /* plan-14: số nổi '+2 🪵' */
   panel: (id, inner) => { let el = document.getElementById('sys-' + id); if (!el) { el = document.createElement('div'); el.id = 'sys-' + id; el.className = 'ov'; el.hidden = true; el.innerHTML = `<div class="panel"></div>`; document.body.appendChild(el); el.panel = el.firstElementChild; } if (inner !== undefined) el.panel.innerHTML = inner; return el; },
   metIds: () => new Set(S.save.met),
   FLOW, dayT: () => S.dayT, darkness: () => S.dark, /* F01: theo đồng hồ game (ctx.clock): 0 ban ngày … 0,45 về khuya, đổi mượt */
@@ -319,7 +320,7 @@ function questComplete() {
 }
 function taskText() { const q = S.zone.quest; if (!q || !q.tasks) return ''; return q.tasks.map(t => UI.L.tasks[t.id](Math.min(taskVal(t.id), t.n), t.n)).join(' · '); }
 function checkQuest() {
-  if (questComplete() && !S.save.badges.includes(S.zone.lv)) { S.save.badges.push(S.zone.lv); quake(1.5); setTimeout(() => UI.toast(UI.L.badge(S.zone.lv), true), 900); }
+  if (questComplete() && !S.save.badges.includes(S.zone.lv)) { S.save.badges.push(S.zone.lv); quake(1.5); if (CTX.vfx) CTX.vfx('level_up', S.player.x, S.player.y + 2, 0, true); setTimeout(() => UI.toast(UI.L.badge(S.zone.lv), true), 900); }
   checkAchievements(); persist();
 }
 const ACH = [
@@ -537,7 +538,7 @@ function stopCredits() { credits = null; $('#credits').hidden = true; setMode('p
 // ---------- loop ----------
 let last = 0;
 function loop(t) {
-  const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t; S.time += dt;
+  const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t; S.time += dt; clock.t += dt;
   if (S.mode !== 'title') { update(dt); render(); }
   requestAnimationFrame(loop);
 }
@@ -614,7 +615,7 @@ function render() {
   for (const h of S.hazards) if (h.phase === 'warn') { const k = 1 - h.t / (h.kind === 'rock' ? 1.0 : 0.8); g.fillStyle = h.kind === 'rock' ? `rgba(0,0,0,${0.15 + k * 0.4})` : `rgba(255,80,0,${0.2 + k * 0.5})`; g.beginPath(); g.ellipse(h.x * TS + 8 - cx, h.y * TS + 10 - cy, 3 + k * 5, 2 + k * 3, 0, 0, 7); g.fill(); }
   // depth-sorted drawables
   const draws = [];
-  for (const o of m.objects) { const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; draws.push({ y: by, f: () => { const im = o.artImg || (d.frames ? d.frames[Math.floor(S.time * (d.animFlag ? 9 : 6) + o.x * 3 + o.y) % d.frames.length] : d.img); g.drawImage(im, o.x * TS - cx + (o.artImg ? 0 : (d.ox || 0)), by - (o.artImg ? im.height / ART.hi : d.h) - cy + (o.artImg ? 0 : (d.oy || 0))); } }); }
+  for (const o of m.objects) { const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; draws.push({ y: by, f: () => { const im = o.artImg || (d.frames ? d.frames[loopFrame(d.frames.length, d.animFlag ? FPS.flag : FPS.loop, o.x * 3 + o.y)] : d.img); g.drawImage(im, o.x * TS - cx + (o.artImg ? 0 : (d.ox || 0)), by - (o.artImg ? im.height / ART.hi : d.h) - cy + (o.artImg ? 0 : (d.oy || 0))); } }); }
   for (const n of allNpcs()) draws.push({ y: n.y, n });
   draws.push({ y: p.y, n: p, self: true });
   for (const h of S.hazards) {

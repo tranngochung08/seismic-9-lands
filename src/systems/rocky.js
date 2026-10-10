@@ -2,6 +2,7 @@
 // Stand in front of a district's Rocky statue. If you have met half of that nation's
 // artists in this land, 5 stones wake the statue: you *become* Rocky for 40 s,
 // stomp through rocks and crates, and the nation's artists cheer.
+import { FPS } from '../anim.js';
 
 const COST = 5, DURATION = 40, REACH = 34, TRUST = 0.5;
 // breakable decor: value = stones gained when Rocky smashes it
@@ -111,7 +112,7 @@ function start(ctx, o) {
   p.speedMul = 0.75; p.boxW = 20; p.boxH = 10; p.ghost = true; p.pilot = 'rocky';
   p.passable = (m, tx, ty) => !ctx.isSolid(m, tx, ty) || !!breakableAt(ctx, m, tx, ty);
   p.custom = (g, ent) => {
-    const bob = ent.moving && Math.floor(ent.animT / 0.16) % 2 ? 1 : 0;
+    const bob = ent.moving && Math.floor(ent.animT * FPS.walk) % 2 ? 1 : 0;
     const x = Math.round(ent.x) - (art.w >> 1), y = Math.round(ent.y) - art.h + 2 - bob;
     g.save();
     const gr = g.createRadialGradient(Math.round(ent.x), y + art.h * 0.55, 2, Math.round(ent.x), y + art.h * 0.55, art.w * 0.85);

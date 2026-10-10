@@ -34,13 +34,15 @@
       "file": "chars/hung_b_act_chop.png",
       "n": 7,
       "ch": 24,
-      "cw": 32
+      "cw": 32,
+      "impact": 3
      },
      "mine": {
       "file": "chars/hung_b_act_mine.png",
       "n": 7,
       "ch": 24,
-      "cw": 32
+      "cw": 32,
+      "impact": 4
      },
      "fish": {
       "file": "chars/hung_b_act_fish.png",
@@ -75,6 +77,45 @@
      "reel": {
       "file": "chars/hung_b_act_reel.png",
       "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "hoe": {
+      "file": "chars/hung_b_act_hoe.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32,
+      "impact": 3
+     },
+     "water": {
+      "file": "chars/hung_b_act_water.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32,
+      "impact": 2
+     },
+     "harvest": {
+      "file": "chars/hung_b_act_harvest.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32,
+      "impact": 4
+     },
+     "eat": {
+      "file": "chars/hung_b_act_eat.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32
+     },
+     "hurt": {
+      "file": "chars/hung_b_act_hurt.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32
+     },
+     "idle": {
+      "file": "chars/hung_b_act_idle.png",
+      "n": 4,
       "ch": 24,
       "cw": 32
      }
@@ -281,6 +322,98 @@
    "cloud_2": "ui/title/cloud_2.png",
    "far": "ui/title/far.png",
    "sea": "ui/title/sea.png"
+  }
+ },
+ "vfx": {
+  "dirt_puff": {
+   "file": "vfx/dirt_puff_4f_16x16.png",
+   "n": 4,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "hoe"
+  },
+  "water_splash": {
+   "file": "vfx/water_splash_5f_16x16.png",
+   "n": 5,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "water"
+  },
+  "wood_chips": {
+   "file": "vfx/wood_chips_4f_16x16.png",
+   "n": 4,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "chop"
+  },
+  "rock_debris": {
+   "file": "vfx/rock_debris_4f_16x16.png",
+   "n": 4,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "mine"
+  },
+  "crop_sparkle": {
+   "file": "vfx/crop_sparkle_4f_16x16.png",
+   "n": 4,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "harvest"
+  },
+  "leaf_fall": {
+   "file": "vfx/leaf_fall_6f_16x16.png",
+   "n": 6,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true,
+   "trigger": "env"
+  },
+  "footstep_dust": {
+   "file": "vfx/footstep_dust_3f_16x16.png",
+   "n": 3,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "walk"
+  },
+  "item_pickup_pop": {
+   "file": "vfx/item_pickup_pop_4f_16x16.png",
+   "n": 4,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "pickup"
+  },
+  "level_up": {
+   "file": "vfx/level_up_6f_32x32.png",
+   "n": 6,
+   "w": 32,
+   "h": 32,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "event"
   }
  }
 }

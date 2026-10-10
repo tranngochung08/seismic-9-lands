@@ -2,6 +2,7 @@
 // fish need a rod, live in a per-zone density field and fight back on the line. See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
 import { ART } from '../art.js';
+import { FPS, loopFrame, phase } from '../anim.js';
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -123,12 +124,12 @@ const HELD = { fish: build(14, 9, heldFishArt(false)), fishBig: build(18, 11, he
 /* ---- plan-11: thú đi 4 hướng. set.dir = { s, e, n } do art.js gắn (mỗi hàng 4 khung [khung][lật]); face 's'|'e'|'n'|'w' từ hướng đi ---- */
 export function faceOfV(vx, vy) { return Math.abs(vx) >= Math.abs(vy) ? (vx >= 0 ? 'e' : 'w') : (vy >= 0 ? 's' : 'n'); }
 export function faceOf(a) { return faceOfV(Math.cos(a.ang), Math.sin(a.ang)); }
-export function dirFrame(set0, face, ft, moving) {
+export function dirFrame(set0, face, ft, moving, who) {   /* who: đối tượng thú → lệch pha riêng (plan-19: 8 FPS chung, ft cũ không còn quyết định tốc độ khung) */
   const d = set0 && set0.dir; if (!d) return null;
   const f = face || 'e';
   if ((f === 'e' || f === 'w') && !moving && set0.idle) return null;   /* đứng nghiêng: giữ clip idle nhìn ngang sẵn có */
   const row = f === 's' ? d.s : f === 'n' ? d.n : d.e; if (!row || !row.length) return null;
-  const i = moving ? Math.floor(ft * 2) % row.length : 0;
+  const i = moving ? loopFrame(row.length, FPS.creature, who ? phase(who) : ft) : 0;
   return row[i][f === 'w' ? 1 : 0];
 }
 export const HEAD_SPR = {};
@@ -810,7 +811,7 @@ export const animals = {
       const sx = a.x - cx, sy = a.y - cy;
       if (sx < -40 || sy < -60 || sx > VW + 40 || sy > VH + 40) continue;
       const set0 = SPR[a.kind], set = (a.st === 'idle' && set0.idle) ? set0.idle : set0;   // art.js gắn clip idle (gặm/thở) nếu gói có
-      const img = dirFrame(set0, a.face, a.ft, a.st !== 'idle') || set[a.fr % set.length][a.dir < 0 ? 1 : 0];   /* plan-11: hàng theo hướng nếu có */
+      const img = dirFrame(set0, a.face, a.ft, a.st !== 'idle', a) || set[a.fr % set.length][a.dir < 0 ? 1 : 0];   /* plan-11: hàng theo hướng nếu có */
       const dx = Math.round(a.x) - (img.width >> 1) - cx;
       const dy = Math.round(a.y - (a.z || 0)) - img.height - cy;
       if (a.kind === 'bird' && a.z > 1) {

@@ -351,13 +351,14 @@ function finishAct(ctx) {
 
 function objInteract(ctx, o, def, wx, wy) {
   const t = L(ctx), map = ctx.S.map;
-  if (!toolOk(ctx, def)) { ctx.toast(t[def.need] || t.needPick); ctx.sfx('fail'); return; }
+  if (!toolOk(ctx, def)) { ctx.toast(t[def.need] || t.needPick); ctx.sfx('fail'); if (def.need === 'bees') { const p = ctx.S.player; if (p.hasAct && p.hasAct('hurt') && !p.custom) p.act('hurt', 0); } return; }   /* plan-19: ong đốt → clip bị thương */
   const hits = def.hits || 1, d0 = ctx.O[o.type];
   const bar = (o.y + d0.fh) * TS - d0.h - 14;                            // just above the sprite, clear of the hit pips
   startAct(ctx, t[def.label], def.dur || 1, wx, wy, () => {
     if (!map.objects.includes(o)) return;
     ctx.sfx(def.snd || 'hit');
-    burst(ctx, wx, wy - 4, hits > 1 ? 6 : 8, def.kind === 'ore' ? ['#ffb03a', '#c96a16', '#5f5a68']
+    const fxName = /^(ore|obs|cry|rock)$/.test(def.kind) ? 'rock_debris' : 'crop_sparkle';   /* plan-19: VFX PixelLab, hạt code chỉ dự phòng */
+    if (!(ctx.vfx && ctx.vfx(fxName, wx, wy + 2))) burst(ctx, wx, wy - 4, hits > 1 ? 6 : 8, def.kind === 'ore' ? ['#ffb03a', '#c96a16', '#5f5a68']
       : def.kind === 'obs' ? ['#8a5cff', '#2c2440', '#ffffff']
         : def.kind === 'cry' ? ['#d9c8ff', '#3fbfe6', '#ffffff']
           : def.kind === 'rock' ? [PAL.stone, PAL.stoneD, PAL.stoneL]

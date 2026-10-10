@@ -851,7 +851,7 @@ export const ecology = {
       const set0 = SPR[a.kind === 'sheep' && a.shorn ? 'sheepShorn' : a.kind === 'bat' ? (a.st === 'sit' ? 'batSit' : 'bat') : a.kind]; let set = set0;
       if (!set) continue;
       if ((a.st === 'idle' || a.st === 'sit') && set.idle) set = set.idle;   // clip idle PixelLab nếu có
-      const img = dirFrame(set0, a.face, a.ft, a.st !== 'idle' && a.st !== 'sit') || set[a.fr % set.length][a.dir < 0 ? 1 : 0];   /* plan-11 */
+      const img = dirFrame(set0, a.face, a.ft, a.st !== 'idle' && a.st !== 'sit', a) || set[a.fr % set.length][a.dir < 0 ? 1 : 0];   /* plan-11 */
       const dx = Math.round(a.x) - (img.width >> 1) - cx;
       const dy = Math.round(a.y) - img.height - cy;
       if (a.kind === 'bat' || a.kind === 'moth') {

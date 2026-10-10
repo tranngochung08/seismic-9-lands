@@ -338,7 +338,7 @@ function updateEnt(dt, pen, e) {
 function spriteOf(e) {
   const reg = HOOK.creatures[e.kind]; const set0 = reg && reg.arr; if (!set0 || !set0.length) return null;
   const set = (e.st === 'idle' && set0.idle) ? set0.idle : set0;
-  return dirFrame(set0, e.face, e.ft, e.st !== 'idle') || set[e.fr % set.length][e.dir < 0 ? 1 : 0];
+  return dirFrame(set0, e.face, e.ft, e.st !== 'idle', e) || set[e.fr % set.length][e.dir < 0 ? 1 : 0];
 }
 
 /* ---------------------------------------------------------------- near: chọn ứng viên gần nhất của mình */

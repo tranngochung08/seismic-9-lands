@@ -40,8 +40,10 @@ export async function initArt(q) {
   ART.fixed = {};
   await Promise.all(Object.entries((man.chars && man.chars.fixed) || {}).map(async ([k, c]) => {
     const img = toCanvas(await load(BASE + c.file)); ART.fixed[k] = { ...c, img };
-    if (c.actions) { img.actions = {}; for (const [n, a] of Object.entries(c.actions)) img.actions[n] = { img: toCanvas(await load(BASE + a.file)), n: a.n, ch: a.ch || 20, cw: a.cw || 16 }; }   /* px-hero: nhân vật riêng có clip động tác */
+    if (c.actions) { img.actions = {}; for (const [n, a] of Object.entries(c.actions)) img.actions[n] = { img: toCanvas(await load(BASE + a.file)), n: a.n, ch: a.ch || 20, cw: a.cw || 16, fps: a.fps, impact: a.impact }; }   /* px-hero: nhân vật riêng có clip động tác */
   }));
+  ART.vfx = {};   /* plan-19: VFX sheet (manifest vfx) */
+  await Promise.all(Object.entries(man.vfx || {}).map(async ([k, v]) => { ART.vfx[k] = { ...v, img: toCanvas(await load(BASE + v.file)) }; }));
   await Promise.all(Object.entries(man.zones || {}).map(async ([id, file]) => { try { ART.packs[id] = await loadPack(file, id); } catch (e) { console.warn('art: pack', id, e); } }));
   HOOK.charSheet = charSheetPx;
   // canvas đơn vẽ code (bè, ván, buồm): thay bitmap tại chỗ bằng ảnh gói Làng (dùng chung mọi vùng)
@@ -105,7 +107,7 @@ async function loadPack(file, id) {
   for (const [body, clips] of Object.entries((j.chars && j.chars.actions) || {})) {
     const base = p.chars.find(c => c.file.endsWith(`/${body}.png`) || c.file === `chars/${body}.png`); if (!base) continue;
     base.actions = {};
-    for (const [n, a] of Object.entries(clips)) base.actions[n] = { img: toCanvas(await load(BASE + a.file)), n: a.n, ch: a.ch || 20, cw: a.cw || 16 };
+    for (const [n, a] of Object.entries(clips)) base.actions[n] = { img: toCanvas(await load(BASE + a.file)), n: a.n, ch: a.ch || 20, cw: a.cw || 16, fps: a.fps, impact: a.impact };
   }
   // hàng rào nối liền: { fence: { types:['fence_h','fence_v'], post:'file', rail:'#hex', railDark:'#hex', railY:[12,20], railW:3 } }
   p.connect = {};
@@ -331,7 +333,7 @@ function charSheetPx(c) {
       const cfg = (ART.man.chars || {});
       out = recolorShirt(best.img, c.shirt, cfg.shirtHue || [300, 350], cfg.shirtSat || 0.3);
       const acts = best.actions;   // clip động tác của thân này (gói Làng: chars.actions[body])
-      if (acts) { out.actions = {}; for (const [n, a] of Object.entries(acts)) out.actions[n] = { img: recolorShirt(a.img, c.shirt, cfg.shirtHue || [300, 350], cfg.shirtSat || 0.3), n: a.n, ch: a.ch || 20, cw: a.cw || 16 }; }
+      if (acts) { out.actions = {}; for (const [n, a] of Object.entries(acts)) out.actions[n] = { img: recolorShirt(a.img, c.shirt, cfg.shirtHue || [300, 350], cfg.shirtSat || 0.3), n: a.n, ch: a.ch || 20, cw: a.cw || 16, fps: a.fps, impact: a.impact }; }
     }
   }
   if (out) charCache.set(key, out);

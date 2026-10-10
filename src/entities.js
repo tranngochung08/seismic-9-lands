@@ -1,5 +1,6 @@
 // entities.js — player + NPC movement, collision, animation
 import { isSolid } from './world.js';
+import { FPS, clipFps } from './anim.js';
 
 const CYCLE = [0, 1, 0, 2];
 export class Entity {
@@ -25,23 +26,33 @@ export class Entity {
     return moved;
   }
   animate(dt) {
-    this.tickAct(dt);
-    if (this.moving) { this.animT += dt; this.frame = CYCLE[Math.floor(this.animT / 0.13) % 4]; }
+    this.tickAct(dt); if (this.fedT > 0) this.fedT -= dt;
+    if (this.moving) { this.animT += dt; this.frame = CYCLE[Math.floor(this.animT * FPS.walk) % 4]; }
     else { this.frame = 0; this.animT = 0; }
+    this.idleT = this.moving || this.action ? 0 : (this.idleT || 0) + dt;   /* plan-19: clip idle (thở) khi đứng yên */
   }
   faceTo(px, py) { const dx = px - this.x, dy = py - this.y; this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 2 : 1) : (dy > 0 ? 0 : 3); }
   draw(g) {
     if (this.custom) { this.custom(g, this); return; }
     const a = this.action, sh = a && this.sheet.actions && this.sheet.actions[a.name];   // clip động tác PixelLab (art.js gắn vào sheet)
+    const idle = !a && !this.moving && this.idleT > 0 && this.sheet.actions && this.sheet.actions.idle;
+    if (idle) { const f = Math.floor(this.idleT * FPS.idle / 2) % idle.n, ch = idle.ch || 20, cw = idle.cw || 16; g.drawImage(idle.img, f * cw, this.dir * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return; }   /* 8 FPS, mỗi khung giữ 2 nhịp → 1 hơi thở ≈ 1 s */
     if (sh) {
       // walk (bế): clip AI mở đầu bằng khung giơ tay dần → chỉ dùng 3 khung cuối (tay đã giơ): đứng = khung n-3, bước = n-2/n-1 luân phiên
-      const f = a.walk ? sh.n - 3 + (this.moving ? CYCLE[Math.floor(this.animT / 0.13) % 4] : 0) : Math.min(sh.n - 1, Math.floor(a.t / a.dur * sh.n));   /* clip đi: 3 cột cuối = đứng/bước/bước như sheet đi */
+      const k = Math.floor(a.t * clipFps(a.name, sh)), f = a.walk ? sh.n - 3 + (this.moving ? CYCLE[Math.floor(this.animT * FPS.walk) % 4] : 0) : a.loop ? k % sh.n : Math.min(sh.n - 1, k);   /* plan-19: khung theo FPS chung (anim.js), không kéo giãn theo dur */   /* clip đi: 3 cột cuối = đứng/bước/bước như sheet đi */
       const ch = sh.ch || 20, cw = sh.cw || 16; g.drawImage(sh.img, f * cw, this.dir * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return;   /* cw: ô động tác rộng 24 (px-actions 2026-09-28) */
     }
     g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, Math.round(this.x) - 8, Math.round(this.y) - 18, 16, 20);
   }
   // Động tác: act('chop', 0.35) chạy 1 lần; act('fish', 1, true) lặp/giữ khung cuối tới khi endAct(). hasAct(name): có clip PixelLab không (module quyết định vẽ dụng cụ code hay không)
-  act(name, dur = 0.4, hold = false, walk = false) { if (this.action && this.action.name === name && this.action.hold) return; this.action = { name, t: 0, dur, hold, walk }; }
+  act(name, dur = 0.4, hold = false, walk = false) {
+    if (this.action && this.action.name === name && this.action.hold) return;
+    /* plan-19: clip chạy đúng FPS → dur ≥ 1 vòng clip; dur dài ≥ 2 vòng (đập búa) hoặc giữ + động tác nhanh (đào/chặt lúc thu thập) thì lặp */
+    const sh = this.sheet && this.sheet.actions && this.sheet.actions[name], one = sh ? sh.n / clipFps(name, sh) : 0;
+    const loop = !!sh && !walk && (hold ? clipFps(name, sh) > FPS.act : dur >= 2 * one);
+    if (sh && !hold && !loop) dur = Math.max(dur, one);
+    this.action = { name, t: 0, dur, hold, walk, loop };
+  }
   endAct(name) { if (this.action && (!name || this.action.name === name)) this.action = null; }
   hasAct(name) { return !!(this.sheet && this.sheet.actions && this.sheet.actions[name]); }
   tickAct(dt) { const a = this.action; if (!a) return; a.t += dt; if (a.t >= a.dur) { if (a.hold) a.t = a.dur - 0.0001; else this.action = null; } }
@@ -54,7 +65,7 @@ export class Player extends Entity {
     if (this.moving) {
       if (dx && dy) { dx *= 0.7071; dy *= 0.7071; }
       if (Math.abs(dx) >= Math.abs(dy) && dx) this.dir = dx > 0 ? 2 : 1; else if (dy) this.dir = dy > 0 ? 0 : 3;
-      const sp = 84 * dt * this.speedMul;
+      const sp = 84 * dt * this.speedMul * (this.fedT > 0 ? 1.2 : 1);   /* plan-19: ăn no → đi nhanh 20 % một lúc */
       this.tryMove(dx * sp, dy * sp, map, others);
     }
     this.animate(dt);
