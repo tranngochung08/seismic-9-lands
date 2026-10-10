@@ -1,0 +1,25 @@
+{
+ "inherit": "u1",
+ "objects": {
+  "caverock": {
+   "file": "zones/u4/obj/caverock_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "caverock2": {
+   "file": "zones/u4/obj/caverock2_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "crystal_b": {
+   "file": "zones/m9/obj/crystal_b_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "crystal_p": {
+   "file": "zones/m9/obj/crystal_p_s23.png",
+   "ox": 0,
+   "oy": 0
+  }
+ }
+}

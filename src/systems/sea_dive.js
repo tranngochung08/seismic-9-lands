@@ -1,7 +1,7 @@
 // sea_dive.js — the Sea of Origins: reef diving (oxygen, pearls, shells, sea crystals), one shark patrolling the deep,
 // and fishing from the raft (schools, hot spots, the same tug-of-war as the pond). See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
-import { canCarry, carryDeny, registerHead } from './animals.js';
+import { canCarry, carryDeny, registerHead, seaCast, headSprite } from './animals.js';
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -75,7 +75,7 @@ function goldfishArt(g, f) {
   px(g, 6, 0, GD, 3, 1); px(g, 9, 3, '#ffffff', 2, 2); px(g, 10, 3, OUT, 1, 1); px(g, 11, 5, OUT, 1, 1);             // fin, eye, mouth
 }
 const HELD = { fish: two(14, 9, heldFishArt(false)), fishBig: two(18, 11, heldFishArt(true)), squid: two(12, 14, squidArt), goldfish: two(13, 9, goldfishArt) };
-const heldOf = it => { const k = typeof it === 'string' ? it : (it && it.kind); return k === 'fish' ? HELD[it && it.big ? 'fishBig' : 'fish'] : HELD[k] || null; };
+const heldOf = it => { const k = typeof it === 'string' ? it : (it && it.kind); if (k === 'fish' && it && it.sp) { const sp = headSprite(it); if (sp) return sp; } return k === 'fish' ? HELD[it && it.big ? 'fishBig' : 'fish'] : HELD[k] || null; };   /* cá đúng loài */
 for (const [k, v] of Object.entries(HELD)) registerHead(k, v);   /* plan-9: animals.js vẽ tập trung (ghi đè cá của animals bằng bản biển) */
 
 // ---------------------------------------------------------------- state
@@ -154,7 +154,7 @@ function buildPatches(ctx) {
 }
 function pickUp(ctx, it) {
   const S = L(ctx);
-  const got = ctx.bag.add(it.id, it.n);
+  const got = ctx.give(it.id, it.n);
   if (got <= 0) return;                                         // bag full: leave it on the sea floor
   it.taken = true; it.rt = RESPAWN;
   ctx.sfx(it.id === 'pearl' || it.id === 'seagem' ? 'coin' : 'pickup');
@@ -471,12 +471,12 @@ export const seaDive = {
 
   drawUI(ug, ctx, cx, cy, scale) {
     if (!seaOK(ctx)) return;
-    const S = L(ctx), W = ug.canvas.width, H = ug.canvas.height, fs = Math.max(12, scale * 4), small = `${Math.max(10, scale * 3)}px "Segoe UI",system-ui,sans-serif`;
+    const S = L(ctx), W = ug.canvas.width, H = ug.canvas.height, fs = Math.max(12, scale * 4), small = `${Math.max(10, scale * 3)}px VT323, monospace`;
     ug.save(); ug.textAlign = 'center'; ug.textBaseline = 'middle';
     if (dive) {                                                   // oxygen bar, top centre
       const bw = Math.min(W * 0.4, 320), bh = Math.max(10, scale * 3.2), bx = (W - bw) / 2, by = Math.max(54, scale * 18), k = Math.max(0, dive.t / O2_MAX);
       ug.fillStyle = 'rgba(13,11,20,.75)'; ug.beginPath(); ug.roundRect(bx - 10, by - fs * 1.4, bw + 20, bh + fs * 1.9, 8); ug.fill();
-      ug.font = `bold ${fs * 0.9}px "Segoe UI",system-ui,sans-serif`; ug.fillStyle = '#dff6ff'; ug.fillText(`${S.air} · ${Math.ceil(dive.t)}s`, W / 2, by - fs * 0.6);
+      ug.font = `bold ${fs * 0.9}px VT323, monospace`; ug.fillStyle = '#dff6ff'; ug.fillText(`${S.air} · ${Math.ceil(dive.t)}s`, W / 2, by - fs * 0.6);
       ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, bh / 2); ug.fill();
       ug.fillStyle = k > 0.5 ? '#5cd6ff' : k > 0.25 ? '#ffb347' : '#ff4d4d'; ug.beginPath(); ug.roundRect(bx, by, Math.max(bh, bw * k), bh, bh / 2); ug.fill();
     }
@@ -484,7 +484,7 @@ export const seaDive = {
       const f = fishing;
       if (f.phase === 'wait' || f.phase === 'bite') {
         const bx = Math.round((f.bx - cx) * scale), by = Math.round((f.by - 22 - cy) * scale), bite = f.phase === 'bite';
-        ug.font = `bold ${fs * (bite ? 2 : 1.3)}px "Segoe UI",system-ui,sans-serif`;
+        ug.font = `bold ${fs * (bite ? 2 : 1.3)}px VT323, monospace`;
         ug.fillStyle = 'rgba(13,11,20,.65)'; ug.beginPath(); ug.arc(bx, by, fs * (bite ? 1.1 : 0.9), 0, TAU); ug.fill();
         ug.fillStyle = bite ? '#ffd45e' : '#cfd8e6'; ug.fillText(bite ? S.bite : '…', bx, by + 2);
       }
@@ -492,8 +492,8 @@ export const seaDive = {
       const extra = f.phase === 'reel' ? th + 6 + fs : 0, by = H - Math.max(96, scale * 34) - extra, pad = Math.max(8, scale * 3);
       ug.fillStyle = 'rgba(13,11,20,.82)'; ug.beginPath(); ug.roundRect(bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, 10); ug.fill();
       ug.strokeStyle = 'rgba(255,212,94,.35)'; ug.lineWidth = 2; ug.stroke();
-      ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`;
-      if (f.phase === 'done') { ug.fillStyle = f.ok ? '#8fe08a' : '#ff8c8c'; ug.font = `bold ${fs * 1.5}px "Segoe UI",system-ui,sans-serif`; ug.fillText(f.text, W / 2, by + bh / 2); }
+      ug.font = `bold ${fs}px VT323, monospace`;
+      if (f.phase === 'done') { ug.fillStyle = f.ok ? '#8fe08a' : '#ff8c8c'; ug.font = `bold ${fs * 1.5}px VT323, monospace`; ug.fillText(f.text, W / 2, by + bh / 2); }
       else if (f.phase === 'reel') {
         ug.fillStyle = '#f2ebe0'; ug.fillText(f.kind === 'goldfish' ? S.reelGold : f.kind === 'squid' ? S.reelSquid : f.big ? S.reelBig : S.reelTitle, W / 2, by - fs * 0.6);
         ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, bh / 2); ug.fill();
@@ -526,6 +526,9 @@ export const seaDive = {
     if (here === ctx.T.REEF) return { label: S.dive, x: p.x, y: p.y, limit: 40, priority: 0.5, data: { dive: true } };
     const t = castTarget(ctx); if (!t) return null;
     if (!hasRod(ctx)) return { label: S.needRod, x: t.x, y: t.y, limit: 44, data: { hint: true } };
+    if (ctx.holding && !ctx.holding('rod')) { const mt = ctx.mouseTile && ctx.mouseTile(), p = ctx.S.player;   /* trỏ chuột vào nước gần bè → click tự cầm cần câu */
+      if (mt && isWaterT(ctx, mt.tx, mt.ty) && Math.hypot(mt.wx - p.x, mt.wy - p.y) < 64) return { label: ctx.needHold('rod'), x: mt.wx, y: mt.wy, limit: 68, mouse: true, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };
+      return null; }
     return { label: S.cast, x: t.x, y: t.y, limit: 44, data: { cast: t } };
   },
 
@@ -534,7 +537,7 @@ export const seaDive = {
     if (d.surface) { surface(ctx, 'ok'); return; }
     if (d.dive) { if (onRaft(ctx)) startDive(ctx); return; }
     if (d.hint) { ctx.toast(L(ctx).needRod); return; }
-    if (d.cast) { if (onRaft(ctx)) startCast(ctx, d.cast); }
+    if (d.cast) { if (onRaft(ctx)) { if (!seaCast(ctx, d.cast, densityAt(d.cast.bx, d.cast.by))) startCast(ctx, d.cast); } }   /* 2026-10-10: câu từ bè = luồng câu trên bờ (animals.js) */
   },
 
   hudLines(ctx) {

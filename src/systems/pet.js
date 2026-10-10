@@ -5,16 +5,18 @@ import { mkCanvas, FLAG_COLORS, TS, HOOK } from '../gfx.js';
 // ---------------------------------------------------------------- strings
 const STR = {
   en: {
-    takeEgg: 'Take the crystal egg', needCrystals: 'Needs 3 crystals to warm it — mine crystals in M9 with Pickaxe II', eggTaken: 'The egg is warm in your bag — keep walking',
-    eggHud: p => `🥚 Egg: ${p}% warm`, hatched: 'A Rocky hatched!', nameTitle: 'A Rocky hatched!', nameHint: 'Give it a name (max 12)',
+    takeEgg: 'Take the core crystal for Rocky', needCrystals: 'Needs 3 crystals to wake it — mine crystals in M9 with Pickaxe II', eggTaken: 'The core crystal hums in your bag — keep walking, Rocky can feel it',
+    swam: 'Rocky swam ashore and found you! Lyron asked it to look after you', grown: n => `${n} grew up — a grown Rocky now! It finds rarer things`,
+    eggHud: p => `🔮 Core: ${p}%`, hatched: 'A Rocky hatched!', nameTitle: 'A Rocky hatched!', nameHint: 'Give it a name (max 12)',
     renameTitle: 'Rename your Rocky', ok: 'OK', cancel: 'Cancel', named: n => `${n} is now your buddy`, renamed: n => `Renamed to ${n}`,
     takeFrom: n => `Take from ${n}`, feed: n => `Feed ${n}`, pet: n => `Pet ${n}`,
     got: (n, s) => `${n} brought ${s}`, fed: n => `${n} munches happily`, petted: n => `${n} wiggles`,
     hud: (n, lvl, h) => `🪨 ${n} · ${lvl} · hunger ${h}%`, lv: ['Hatchling', 'Buddy', 'Best friend'], renameKey: 'N · rename'
   },
   vi: {
-    takeEgg: 'Lấy trứng tinh thể', needCrystals: 'Cần 3 tinh thể để ủ ấm — đào tinh thể ở M9 bằng Cuốc II', eggTaken: 'Trứng đang ấm trong túi — cứ đi tiếp',
-    eggHud: p => `🥚 Trứng: ấm ${p}%`, hatched: 'Một Rocky đã nở!', nameTitle: 'Một Rocky đã nở!', nameHint: 'Đặt tên cho bé (tối đa 12 ký tự)',
+    takeEgg: 'Lấy tinh thể Lõi cho Rocky', needCrystals: 'Cần 3 tinh thể để đánh thức — đào tinh thể ở M9 bằng Cuốc II', eggTaken: 'Tinh thể Lõi đang ngân trong túi — cứ đi tiếp, Rocky cảm nhận được',
+    swam: 'Rocky bơi vào bờ và tìm thấy bạn! Lyron đã dặn nó trông chừng bạn', grown: n => `${n} đã lớn — giờ là Rocky trưởng thành! Hay mang về đồ hiếm`,
+    eggHud: p => `🔮 Tinh thể Lõi: ${p}%`, hatched: 'Một Rocky đã nở!', nameTitle: 'Một Rocky đã nở!', nameHint: 'Đặt tên cho bé (tối đa 12 ký tự)',
     renameTitle: 'Đổi tên Rocky', ok: 'Xong', cancel: 'Hủy', named: n => `${n} giờ là bạn của bạn`, renamed: n => `Đã đổi tên thành ${n}`,
     takeFrom: n => `Nhận từ ${n}`, feed: n => `Cho ${n} ăn`, pet: n => `Vuốt ve ${n}`,
     got: (n, s) => `${n} mang về ${s}`, fed: n => `${n} ăn ngon lành`, petted: n => `${n} ngoáy đuôi`,
@@ -45,7 +47,7 @@ const bondLevel = b => b >= 15 ? 2 : b >= 5 ? 1 : 0;
 function sv(ctx) {
   const s = ctx.S.save; s.sys = s.sys || {};
   const p = (s.sys.pet = s.sys.pet || {});
-  if (p.pet) { if (typeof p.pet.hunger !== 'number') p.pet.hunger = 100; if (typeof p.pet.bond !== 'number') p.pet.bond = 0; if (!p.pet.name) p.pet.name = 'Pebble'; }
+  if (p.pet) { if (typeof p.pet.hunger !== 'number') p.pet.hunger = 100; if (typeof p.pet.bond !== 'number') p.pet.bond = 0; if (!p.pet.name) p.pet.name = 'Rocky'; }
   if (p.egg && typeof p.egg.walked !== 'number') p.egg.walked = 0;
   return p;
 }
@@ -166,7 +168,7 @@ function drawHeart(g, x, y, c) { px(g, x, y, c, 2, 1); px(g, x + 3, y, c, 2, 1);
 // ---------------------------------------------------------------- egg
 function placeEgg(ctx) {
   const s = sv(ctx), map = ctx.S.map; ST.eggObj = null;
-  if (s.egg || s.pet || s.eggTaken) return;
+  if (s.egg || s.eggTaken || (s.pet && s.pet.grown)) return;
   defineEgg(ctx);
   const ok = (x, y) => x > 2 && y > 2 && x < map.w - 3 && y < map.h - 3 && !ctx.isSolid(map, x, y) && !ctx.hasObjectAt(map, x, y);
   let at = s.eggAt && ok(s.eggAt.x, s.eggAt.y) ? s.eggAt : null;
@@ -192,20 +194,34 @@ function takeEgg(ctx) {
 }
 function hatch(ctx) {
   const t = L(ctx), s = sv(ctx);
-  if (s.pet) return;
+  if (s.pet) { grow(ctx); return; }   /* plan-23 D: Rocky đã đi cùng từ đầu game → tinh thể Lõi làm Rocky lớn lên */
   s.egg = null; s.eggTaken = true;
-  s.pet = { name: 'Pebble', hunger: 100, bond: 0, born: Date.now() };
+  s.pet = { name: 'Rocky', hunger: 100, bond: 0, born: Date.now() };
   const sav = ctx.S.save; sav.achievements = sav.achievements || []; if (!sav.achievements.includes('pet')) sav.achievements.push('pet');
   ctx.persist();
   spawnEnt(ctx); hearts(ST.ent.x, ST.ent.y, 8); dust(ST.ent.x, ST.ent.y, 8);
-  ctx.sfx('win'); ctx.toast(t.hatched, true);
+  ctx.sfx('rocky_happy'); ctx.toast(t.hatched, true);
   openName(ctx, false);
+}
+
+/* plan-23 D: Rocky đi cùng Lyron từ đầu game. Gặp Lyron trên biển → có Rocky; save cũ đã qua hồi 1 mà chưa có → Rocky bơi vào bờ tìm bạn. */
+function giveRocky(ctx, swamIn) {
+  const s = sv(ctx); if (s.pet) return;
+  s.pet = { name: 'Rocky', hunger: 100, bond: 0, born: Date.now(), withLyron: true };
+  const sav = ctx.S.save; sav.achievements = sav.achievements || []; if (!sav.achievements.includes('pet')) sav.achievements.push('pet');
+  ctx.persist(); spawnEnt(ctx); hearts(ST.ent.x, ST.ent.y, 6);
+  if (swamIn) { ctx.toast(L(ctx).swam, true); ctx.sfx('splash'); dust(ST.ent.x, ST.ent.y, 8); }
+}
+function grow(ctx) {
+  const t = L(ctx), s = sv(ctx); s.egg = null; s.eggTaken = true; s.pet.grown = true; s.pet.bond = Math.max(s.pet.bond, 60); ctx.persist();
+  if (ST.ent) { hearts(ST.ent.x, ST.ent.y, 10); dust(ST.ent.x, ST.ent.y, 10); if (ctx.vfx) ctx.vfx('level_up', ST.ent.x, ST.ent.y + 2, 0, true); }
+  ctx.sfx('rocky_happy'); ctx.toast(t.grown(s.pet.name), true);
 }
 
 // ---------------------------------------------------------------- naming panel (mode 'petname')
 function openName(ctx, rename) {
   const t = L(ctx), s = sv(ctx); if (!s.pet) return;
-  const cur = rename ? s.pet.name : 'Pebble';
+  const cur = rename ? s.pet.name : 'Rocky';
   const html = `<h2>🪨 ${esc(rename ? t.renameTitle : t.nameTitle)}</h2><p class="dim">${esc(t.nameHint)}</p>
     <input id="pet-nm" maxlength="12" value="${esc(cur)}" autocomplete="off" spellcheck="false">
     <div style="display:flex;gap:8px"><button class="btn primary" id="pet-ok" style="margin:6px 0">${esc(t.ok)}</button>${rename ? `<button class="btn" id="pet-cancel" style="margin:6px 0">${esc(t.cancel)}</button>` : ''}</div>`;
@@ -222,7 +238,7 @@ function openName(ctx, rename) {
 }
 function confirmName(ctx, raw, rename) {
   const t = L(ctx), s = sv(ctx);
-  const name = String(raw || '').trim().slice(0, 12) || 'Pebble';
+  const name = String(raw || '').trim().slice(0, 12) || 'Rocky';
   if (s.pet) { s.pet.name = name; ctx.persist(); ctx.toast(rename ? t.renamed(name) : t.named(name)); }
   closeName(ctx);
 }
@@ -249,6 +265,7 @@ function spawnSparkle(ctx) {
 }
 function rollLoot() {
   const r = Math.random();
+  if (rollLoot.grown && r < 0.12) return { id: ['crystal', 'pearl', 'seagem'][(Math.random() * 3) | 0], n: 1 };   /* Rocky trưởng thành: hay mang về đồ hiếm */
   if (r < 0.60) return { id: 'stone', n: 1 + (Math.random() < 0.5 ? 1 : 0) };
   if (r < 0.95) return { id: MATERIALS[(Math.random() * MATERIALS.length) | 0], n: 1 };
   return { id: 'pearl', n: 1 };
@@ -256,28 +273,28 @@ function rollLoot() {
 function cancelFetch() { ST.sparkle = null; if (ST.ent && (ST.ent.state === 'fetch' || ST.ent.state === 'dig')) ST.ent.state = 'follow'; }
 function giveLoot(ctx) {
   const t = L(ctx), s = sv(ctx), h = ST.holding; if (!h || !s.pet) return;
-  const got = ctx.bag.add(h.id, h.n);
+  const got = ctx.give(h.id, h.n, ST.ent ? ST.ent.x : undefined, ST.ent ? ST.ent.y : undefined);   /* plan-24: Rocky đặt đồ xuống đất */
   if (got <= 0) return;                                                   // bag full: the pet keeps holding it
   ST.holding = null; s.pet.bond += 1; ctx.persist();
-  ctx.sfx('pickup'); ctx.toast(t.got(s.pet.name, `+${got} ${ctx.itemIcon(h.id)} ${ctx.itemName(h.id)}`));
+  ctx.sfx('rocky_chirp'); ctx.toast(t.got(s.pet.name, `+${got} ${ctx.itemIcon(h.id)} ${ctx.itemName(h.id)}`));
   hearts(ST.ent.x, ST.ent.y, 3);
 }
 
 // ---------------------------------------------------------------- feeding / petting
-function foodInBag(ctx) { return FOODS.find(id => ctx.bag.has(id, 1)) || null; }
+function foodInBag(ctx) { if (ctx.held) { const h = ctx.held(); return FOODS.includes(h) && ctx.bag.has(h, 1) ? h : null; } return FOODS.find(id => ctx.bag.has(id, 1)) || null; }   /* plan-20: món đang CẦM */
 function feed(ctx) {
   const t = L(ctx), s = sv(ctx), id = foodInBag(ctx); if (!s.pet || !id) return false;
   ctx.bag.remove(id, 1);
   s.pet.hunger = Math.min(100, s.pet.hunger + FEED_AMOUNT); s.pet.bond += 1; ctx.persist();
   if (ST.ent) { hearts(ST.ent.x, ST.ent.y, 7); note(ST.ent.x, ST.ent.y); ST.ent.hop = 0.5; }
-  ctx.sfx('coin'); ctx.toast(t.fed(s.pet.name));
+  ctx.sfx('eat'); ctx.toast(t.fed(s.pet.name));
   return true;
 }
 function petIt(ctx) {
   const t = L(ctx), s = sv(ctx); if (!s.pet || ST.petCd > 0) return;
   s.pet.bond = Math.round((s.pet.bond + 0.2) * 10) / 10; ST.petCd = PET_CD; ctx.persist();
   if (ST.ent) { hearts(ST.ent.x, ST.ent.y, 5); ST.ent.hop = 0.4; }
-  ctx.sfx('squeak'); ctx.toast(t.petted(s.pet.name));
+  ctx.sfx('rocky_chirp'); ctx.toast(t.petted(s.pet.name));
 }
 function scarfFor(ctx) {
   const s = sv(ctx); if (!s.pet || bondLevel(s.pet.bond) < 2) return null;
@@ -302,7 +319,7 @@ function stepToward(ctx, e, tx, ty, sp, dt) {
 function updatePet(dt, ctx) {
   const s = sv(ctx), p = ctx.S.player, e = ST.ent || spawnEnt(ctx), playing = ctx.S.mode === 'play';
   const hungry = s.pet.hunger < HUNGRY_AT;
-  const riding = !!(ctx.S.sea || (ctx.S.map && ctx.S.map.sea));
+  const riding = !!(ctx.S.sea && ctx.S.sea.riding && !ctx.S.sea.diving);   /* anh báo 2026-10-10: chỉ ngồi khi đang trên bè/ván, không phải cả vùng Biển */
   if (e.ghost > 0) e.ghost -= dt;
   if (e.hop > 0) e.hop -= dt;
   if (ST.petCd > 0) ST.petCd -= dt;
@@ -314,7 +331,14 @@ function updatePet(dt, ctx) {
 
   if (riding) {                                                            // on the raft: sits next to the player, no pathing
     if (ST.sparkle) cancelFetch();
-    e.state = 'ride'; e.x = p.x + (p.dir === 2 ? -9 : 9); e.y = p.y + 1; e.dir = p.dir === 1 ? -1 : 1; e.sit = true; e.moving = false;
+    /* ngồi ở mép bè phía sau người chơi (không đè lên người); đang chèo → đứng dậy nhìn theo hướng đi; đứng yên → ngồi, nhún, ngó quanh, thỉnh thoảng nhảy */
+    const ly = ctx.S.npcs.find(n => n.m && n.m.friend && Math.hypot(n.x - p.x, n.y - p.y) < 40);   /* Lyron ngồi mép bè → Rocky ngồi phía đối diện */
+    const side = ly ? (ly.x < p.x ? 1 : -1) : p.dir === 2 ? -1 : 1, behind = p.dir === 3 ? 1 : p.dir === 0 ? -1 : 0;
+    const small = ctx.S.sea.riding === 'plank', tx = p.x + side * (small ? 9 : 14), ty = p.y + (small ? 6 : 4) + behind * 3;   /* tấm ván nhỏ: ngồi góc trước ván; bè: mép bè */
+    e.state = 'ride'; e.x += (tx - e.x) * Math.min(1, dt * 10); e.y += (ty - e.y) * Math.min(1, dt * 10); e.moving = false;
+    e.rideT = (e.rideT || 0) + dt;
+    if (p.moving) { e.sit = false; e.face = p.dir === 0 ? 'ds' : p.dir === 3 ? 'dn' : 'side'; e.dir = p.dir === 1 ? -1 : 1; e.ft += dt * 6; e.fr = 1 + ((e.ft | 0) % 2); }
+    else { e.sit = true; if ((e.lookT = (e.lookT ?? 2) - dt) <= 0) { e.lookT = 2 + Math.random() * 3; const r = Math.random(); e.face = r < 0.4 ? 'ds' : 'side'; e.dir = r < 0.7 ? -e.dir || 1 : e.dir; if (r > 0.8) { e.hop = 0.45; note(e.x, e.y); } } }
   } else {
     if (e.state === 'ride') e.state = 'follow';
     const dp = Math.hypot(p.x - e.x, p.y - e.y);
@@ -332,7 +356,7 @@ function updatePet(dt, ctx) {
     } else if (e.state === 'dig') {
       ST.digT -= dt; e.sit = false;
       if (Math.random() < dt * 9) dust(e.x, e.y, 2);
-      if (ST.digT <= 0) { ST.holding = rollLoot(); ST.sparkle = null; e.state = 'follow'; e.hop = 0.5; ctx.sfx('pickup'); note(e.x, e.y); }
+      if (ST.digT <= 0) { ST.holding = rollLoot(); ST.sparkle = null; e.state = 'follow'; e.hop = 0.5; ctx.sfx('dig'); note(e.x, e.y); }
     } else {
       e.state = 'follow';
       const tgt = behindPoint(ctx, FOLLOW_MAX - 4);
@@ -351,8 +375,15 @@ function updatePet(dt, ctx) {
   if (e.blinkT <= 0) { e.blink = 0.14; e.blinkT = (e.sit ? 1.6 : 3) + Math.random() * 3; }
   if (e.blink > 0) e.blink -= dt;
   if (e.sit) { e.bounceT -= dt; if (e.bounceT <= 0) { e.bounceT = 5 + Math.random() * 5; e.hop = 0.45; note(e.x, e.y); } }
+  // hướng nhìn: lên / xuống / ngang theo quãng vừa đi (trên bè đã tự đặt ở trên)
+  if (!riding) {
+    const mx = e.x - (e.px ?? e.x), my = e.y - (e.py ?? e.y);
+    if (e.moving && Math.hypot(mx, my) > 0.05) e.face = Math.abs(my) > Math.abs(mx) * 1.2 ? (my > 0 ? 'ds' : 'dn') : 'side';
+    else if (e.sit) e.face = 'ds';
+  }
+  e.px = e.x; e.py = e.y;
   // walk animation
-  e.ft += dt * (e.moving ? 9 : 0); e.fr = e.moving ? 1 + ((e.ft | 0) % 2) : 0;
+  if (!riding) { e.ft += dt * (e.moving ? 9 : 0); e.fr = e.moving ? 1 + ((e.ft | 0) % 2) : 0; }
   // fetch timer
   if (!riding && playing && !ST.sparkle && !ST.holding && s.pet.bond >= 1) {
     ST.fetchT -= dt;
@@ -373,11 +404,11 @@ export const pet = {
     if (s.pet) { spawnEnt(ctx); if (ST.fetchT <= 0) ST.fetchT = FETCH_MIN + Math.random() * (FETCH_MAX - FETCH_MIN); }
     else ST.ent = null;
     if (typeof window !== 'undefined') window.__pet = {
-      hatchNow: () => { const st = sv(ctx); if (st.pet) return st.pet; if (ST.eggObj) { ctx.removeObject(ctx.S.map, ST.eggObj); ST.eggObj = null; } st.egg = st.egg || { warmth: 0, walked: 0 }; hatch(ctx); return st.pet; },
-      state: () => ({ save: JSON.parse(JSON.stringify(sv(ctx))), ent: ST.ent && { x: Math.round(ST.ent.x), y: Math.round(ST.ent.y), state: ST.ent.state, sit: ST.ent.sit, ghost: ST.ent.ghost > 0 }, sparkle: ST.sparkle && { x: ST.sparkle.x, y: ST.sparkle.y }, holding: ST.holding, egg: ST.eggObj && { x: ST.eggObj.x, y: ST.eggObj.y }, mode: ctx.S.mode, petCd: ST.petCd, fetchT: ST.fetchT }),
+      hatchNow: () => { const st = sv(ctx); if (st.pet) { if (!st.pet.grown) hatch(ctx); return st.pet; } if (ST.eggObj) { ctx.removeObject(ctx.S.map, ST.eggObj); ST.eggObj = null; } st.egg = st.egg || { warmth: 0, walked: 0 }; hatch(ctx); return st.pet; },
+      state: () => ({ save: JSON.parse(JSON.stringify(sv(ctx))), ent: ST.ent && { x: Math.round(ST.ent.x), y: Math.round(ST.ent.y), state: ST.ent.state, sit: ST.ent.sit, face: ST.ent.face || 'side', ghost: ST.ent.ghost > 0 }, sparkle: ST.sparkle && { x: ST.sparkle.x, y: ST.sparkle.y }, holding: ST.holding, egg: ST.eggObj && { x: ST.eggObj.x, y: ST.eggObj.y }, mode: ctx.S.mode, petCd: ST.petCd, fetchT: ST.fetchT }),
       warp: (tx, ty) => { if (!ST.ent) return null; ST.ent.x = tx * TS + 8; ST.ent.y = ty * TS + 12; return { x: ST.ent.x, y: ST.ent.y }; },
       fetchNow: () => { if (!sv(ctx).pet) return false; ST.holding = null; return spawnSparkle(ctx); },
-      feed: () => { if (!foodInBag(ctx)) ctx.bag.add('berry', 1); return feed(ctx); },
+      feed: () => { if (!foodInBag(ctx)) { ctx.bag.add('berry', 1); if (ctx.hold) ctx.hold('berry'); } return feed(ctx); },
       name: n => confirmName(ctx, n, true)
     };
   },
@@ -402,6 +433,12 @@ export const pet = {
     }
     ST.lastP = { x: p.x, y: p.y };
     updateFx(dt);
+    if (!s.pet && ctx.story) {   /* plan-23 D: có Rocky từ lúc lên bè của Lyron; save cũ qua hồi 1 → Rocky bơi vào bờ */
+      const st = ctx.story() || {};
+      if ((st.act || 0) >= 2) { if (!(ctx.S.map && ctx.S.map.sea) && ctx.S.mode === 'play') giveRocky(ctx, true); }
+      else if ((st.step || 0) & 1) giveRocky(ctx, false);
+    }
+    rollLoot.grown = !!(s.pet && s.pet.grown);
     if (s.pet) updatePet(dt, ctx);
   },
 
@@ -413,11 +450,11 @@ export const pet = {
       if (Math.hypot(x - p.x, y - p.y) < 26) return { label: t.takeEgg, x, y, limit: 26, priority: true, data: { egg: true } };
     }
     if (!s.pet || !ST.ent) return null;
-    const e = ST.ent, d = Math.hypot(e.x - p.x, e.y - p.y); if (d > 30 || e.state === 'fetch' || e.state === 'dig') return null;
+    const e = ST.ent, d = Math.hypot(e.x - p.x, e.y - p.y); if (d > 30 || e.state === 'fetch' || e.state === 'dig' || e.state === 'ride') return null;   /* trên bè: E dành cho câu cá / bè, không vuốt ve */
     const n = s.pet.name;
     if (ST.holding) return { label: t.takeFrom(n), x: e.x, y: e.y, limit: 30, priority: true, data: { take: true } };
     if (s.pet.hunger < 100 && foodInBag(ctx)) return { label: t.feed(n), x: e.x, y: e.y, limit: 30, data: { feed: true } };
-    if (ST.petCd <= 0) return { label: t.pet(n), x: e.x, y: e.y, limit: 30, data: { pet: true } };
+    if (ST.petCd <= 0) { const hk = ctx.heldKind ? ctx.heldKind() : null; return { label: t.pet(n), x: e.x, y: e.y, limit: 30, data: { pet: true }, ...(hk === 'tool' || hk === 'seed' || hk === 'place' ? { priority: -1 } : {}) }; }   /* đang cầm công cụ/hạt: Rocky ngồi sát không được chiếm phím E của cày/đào/gieo (QA 2026-10-10) */
     return null;
   },
 
@@ -441,13 +478,22 @@ export const pet = {
     const g = ctx.g, sx = e.x - cx, sy = e.y - cy;
     if (sx < -30 || sy < -40 || sx > ctx.VW + 30 || sy > ctx.VH + 30) return [];
     const set = frames(scarfFor(ctx));
-    const fr = e.sit ? 3 : e.fr, img = set[fr][e.dir < 0 ? 1 : 0];
+    let fr = e.sit ? 3 : e.fr, img = set[fr][e.dir < 0 ? 1 : 0];
+    const dirSet = HOOK.petDir && e.face && e.face !== 'side' ? HOOK.petDir(e.face) : null;   /* plan-23: Rocky 4 hướng (PixelLab) */
+    const hopSet = HOOK.petDir && e.hop > 0 && (e.sit || e.face === 'ds') ? HOOK.petDir('hop') : null;
+    if (hopSet) img = hopSet[Math.max(0, Math.min(hopSet.length - 1, Math.floor((1 - e.hop / 0.45) * hopSet.length)))][0];   /* hop có lúc = 0.5 (vuốt ve, kẹt) → chỉ số âm → văng lỗi (QA 2026-10-10) */
+    else if (dirSet) img = dirSet[Math.min(dirSet.length - 1, e.sit ? 3 : fr)][0];
     const hop = e.hop > 0 ? Math.round(Math.abs(Math.sin(e.hop * Math.PI * 4)) * 3) : (e.moving ? Math.round(Math.abs(Math.sin(e.ft * 1.6)) * 1) : 0);
-    const x0 = Math.round(e.x) - 6, y0 = Math.round(e.y) - 14 - hop, ghost = e.ghost > 0;
+    const iw = set.px ? img.width : 12, ih = set.px ? img.height : 14;   /* logicalCanvas: width/height đã là cỡ logic */   /* ảnh PixelLab: canh giữa theo chân */
+    const x0 = Math.round(e.x - iw / 2), y0 = Math.round(e.y - ih) + (set.px ? 1 : 0) - hop, ghost = e.ghost > 0;
     return [{
       y: e.y + (e.state === 'ride' ? 0.6 : 0), f: () => {
         g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(Math.round(e.x) - cx, Math.round(e.y) - cy, 5, 2, 0, 0, TAU); g.fill();
+        const dark = ctx.isDarkPath && ctx.isDarkPath(), au = dark && ctx.ART && ctx.ART.vfx && ctx.ART.vfx.dark_aura;   /* plan-25: Rocky Bóng Tối — hào quang tím PixelLab sau lưng */
+        if (au && au.img) { const n = au.n || 8, f = Math.floor(ctx.S.time * (au.fps || 12)) % n, hi = au.img.__hi ? 1 : 2, w = au.w * 0.5, h = au.h * 0.5; g.globalAlpha = 0.45; g.drawImage(au.img, f * au.w * hi, 0, au.w * hi, au.h * hi, Math.round(e.x - w / 2) - cx, Math.round(e.y - h + 2) - cy, w, h); g.globalAlpha = 1; }
+        if (dark) g.filter = 'hue-rotate(230deg) saturate(1.3) brightness(0.75)';   /* thân Rocky ngả tím tối */
         if (ghost) g.globalAlpha = 0.55;
+        if (s.pet.grown) { const k = 1.3, w = img.width * k, h = img.height * k; g.drawImage(img, Math.round(e.x - w / 2) - cx, Math.round(e.y - h) - hop - cy, w, h); } else   /* Rocky trưởng thành: to hơn 30% */
         g.drawImage(img, x0 - cx, y0 - cy);
         // eyes: two slits (or a blink), nudged toward the way it faces
         const dy = (e.sit ? 2 : 0) + 3, ex = x0 - cx + (e.dir < 0 ? 3 : 4);
@@ -455,7 +501,9 @@ export const pet = {
         if (set.px) { /* sprite PixelLab đã có mắt */ }
         else if (e.blink > 0) { g.fillRect(ex, y0 - cy + dy + 1, 1, 1); g.fillRect(ex + 3, y0 - cy + dy + 1, 1, 1); }
         else { g.fillRect(ex, y0 - cy + dy, 1, 2); g.fillRect(ex + 3, y0 - cy + dy, 1, 2); }
-        g.globalAlpha = 1;
+        g.globalAlpha = 1; g.filter = 'none';
+        const helm = ctx.isUnderwater && ctx.isUnderwater() && ctx.ART && ctx.ART.uiImg && ctx.ART.uiImg('bubble_helm');   /* plan-26 B1: dưới nước Rocky đội mũ bong bóng (PixelLab ui.bubble_helm, kính bán trong suốt) */
+        if (helm) { const k = s.pet.grown ? 1.3 : 1, hw = Math.round(Math.max(16, iw + 5) * k), hh = Math.round(hw * helm.height / helm.width); g.drawImage(helm, Math.round(e.x - hw / 2) - cx, Math.round(e.y - hh * 0.92) - hop - cy, hw, hh); }   /* drawImage 5 tham số: an toàn với canvas __hi (bài học shim) */
         // the item it carries, held up over its head
         if (ST.holding) {
           const c = { stone: '#8a8a96', wood: '#8a5a2e', rock: '#6f6a7a', leaf: '#4caa4f', flower: '#ff8fc8', berry: '#d0304a', shell: '#f5e6d0', pearl: '#ffffff' }[ST.holding.id] || '#ffd45e';
@@ -506,7 +554,7 @@ export const pet = {
     for (const p of ST.fx) {
       if (p.k !== 'note') continue;
       const k = Math.max(0, p.t / p.life);
-      ug.globalAlpha = Math.min(1, k * 1.6); ug.fillStyle = '#ffd45e'; ug.font = `bold ${Math.max(11, scale * 4)}px "Segoe UI",system-ui,sans-serif`;
+      ug.globalAlpha = Math.min(1, k * 1.6); ug.fillStyle = '#ffd45e'; ug.font = `bold ${Math.max(11, scale * 4)}px VT323, monospace`;
       ug.fillText('♪', (p.x - cx) * scale, (p.y - cy) * scale);
     }
     ug.globalAlpha = 1;
@@ -514,7 +562,7 @@ export const pet = {
       const bx = Math.round((e.x + 8 - cx) * scale), by = Math.round((e.y - 20 - cy) * scale), r = Math.max(7, scale * 3.2);
       ug.fillStyle = 'rgba(255,255,255,.92)'; ug.beginPath(); ug.arc(bx, by, r, 0, TAU); ug.fill();
       ug.beginPath(); ug.arc(bx - r * 0.7, by + r * 0.9, r * 0.28, 0, TAU); ug.fill(); ug.beginPath(); ug.arc(bx - r * 1.05, by + r * 1.35, r * 0.16, 0, TAU); ug.fill();
-      ug.fillStyle = '#1c1a24'; ug.font = `${Math.max(10, scale * 3.6)}px "Segoe UI",system-ui,sans-serif`;
+      ug.fillStyle = '#1c1a24'; ug.font = `${Math.max(10, scale * 3.6)}px VT323, monospace`;
       ug.fillText('🍖', bx, by + 1);
     }
     ug.restore();

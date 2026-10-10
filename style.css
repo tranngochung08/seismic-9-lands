@@ -1,4 +1,4 @@
-:root{--bg:#0d0b14;--panel:#1a1626;--line:#33294a;--ink:#f2ebe0;--dim:#a79a86;--accent:#ff9426;--gold:#ffd45e;--font:"Segoe UI",system-ui,sans-serif}
+:root{--bg:#0d0b14;--panel:#1a1626;--line:#33294a;--ink:#f2ebe0;--dim:#a79a86;--accent:#ff9426;--gold:#ffd45e;--font:"VT323",monospace}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none}
@@ -206,3 +206,308 @@ input:focus{border-color:var(--accent)}
 #npick.px #np-name{border:8px solid transparent;border-image:var(--np-input) 4 / 8px round;background:#f3e6c6;background-clip:padding-box;color:#3b2412}
 #npick.px #np-go{border:12px solid transparent;border-image:var(--np-btn) 8 / 12px round;background:#e8913a;background-clip:padding-box;color:#3b1d08;font:26px VT323,monospace;border-radius:0;image-rendering:pixelated;width:100%;padding:2px}
 #npick.px #np-go:hover{filter:brightness(1.08)}
+/* plan-20: hotbar kiểu Stardew — ô PixelLab (assets/px/ui/hotbar/slot*.png), khung gỗ ui/npick/panel.png */
+#hotbar{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:6;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:auto;user-select:none}
+#hotbar[hidden]{display:none}
+#hotbar .hb-bar{display:flex;gap:2px;border:12px solid transparent;border-image:url(assets/px/ui/npick/panel.png) 12 fill / 12px round;image-rendering:pixelated;padding:0}
+#hotbar .hb-slot{position:relative;width:44px;height:44px;box-sizing:border-box;border:8px solid transparent;border-image:url(assets/px/ui/hotbar/slot.png) 8 fill / 8px;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#hotbar .hb-slot.on{border-image-source:url(assets/px/ui/hotbar/slot_on.png);transform:translateY(-2px)}
+#hotbar .hb-slot img{width:32px;height:32px;image-rendering:pixelated;margin:-6px;pointer-events:none}
+#hotbar .hb-emo{font-size:20px;line-height:1;pointer-events:none}
+#hotbar .hb-k{position:absolute;left:-5px;top:-7px;font:11px VT323,monospace;color:#3b2412;font-style:normal;pointer-events:none}
+#hotbar .hb-n{position:absolute;right:-6px;bottom:-8px;font:14px VT323,monospace;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022;pointer-events:none}
+#hotbar .hb-tip{font:18px VT323,monospace;color:#fff6c8;background:rgba(53,32,34,.85);padding:1px 10px;border-radius:4px}
+#hotbar .hb-tip[hidden]{display:none}
+@media (pointer:coarse){#hotbar{bottom:216px}}   /* trên nút cảm ứng (D-pad, A) */
+@media (max-width:640px){#hotbar .hb-slot{width:30px;height:30px;border-width:5px;border-image-width:5px} #hotbar .hb-slot img{width:22px;height:22px;margin:-4px} #hotbar .hb-k{display:none} #hotbar .hb-bar{border-width:6px;border-image-width:6px}}
+/* plan-22: máu + kinh nghiệm DỌC góc dưới phải (khung PixelLab ui/hud/hpv.png) */
+#herobar{position:fixed;right:10px;bottom:10px;z-index:6;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+#herobar[hidden]{display:none}
+#herobar .hb-lv{background:none;border:6px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 6px;color:#3b2412;padding:0 4px;font-size:18px}
+#herobar .hb-bars{position:relative;display:flex;gap:4px;align-items:flex-end}
+#herobar .hb-hp{position:relative;width:32px;height:160px;background:url(assets/px/ui/hud/hpv.png) no-repeat 0 0/100% 100%;image-rendering:pixelated}
+#herobar .hb-slot{position:absolute;left:31%;right:31%;top:13%;bottom:4%;overflow:hidden}
+#herobar .hb-slot i{position:absolute;left:0;right:0;bottom:0;display:block;background:#e84a3a;box-shadow:inset 2px 0 0 #ff8a7a,inset -2px 0 0 #a8261c}
+#herobar .hb-xp{position:relative;width:8px;height:150px;background:#352022;border:2px solid #352022;overflow:hidden}
+#herobar .hb-xp i{position:absolute;left:0;right:0;bottom:0;display:block;background:#ffd45e}
+#herobar .hb-num{position:absolute;right:46px;bottom:4px;color:#fff6c8;font-size:16px;white-space:nowrap}
+@media (pointer:coarse){#herobar{bottom:150px;right:6px} #herobar .hb-hp{height:120px} #herobar .hb-xp{height:112px}}
+.mem-list{max-height:50vh;overflow:auto;margin:6px 0 10px 18px;padding:0}
+.mem-list li{margin:3px 0}
+
+/* ===== plan-22: MỌI THỨ HIỆN RA LÀ PIXEL (anh chốt 2026-10-10) — font pixel, không bo góc, không bóng mờ, khung gỗ PixelLab ===== */
+html{font-size:18px}
+body,button,input,select,textarea,.btn,.panel{font-family:var(--font)!important}
+body{font-size:18px}
+*,*::before,*::after{border-radius:0!important;text-shadow:none}
+img,canvas{image-rendering:pixelated}
+.panel,#toast,#prompt,.pill,.hbtn,.btn:not(.px):not(.primary){box-shadow:none!important}
+.ov .panel{border:12px solid transparent!important;border-image:url(assets/px/ui/npick/panel.png) 12 fill / 12px round!important;background:#2a1f1a!important;image-rendering:pixelated}
+.btn:not(.px){border:6px solid transparent!important;border-image:url(assets/px/ui/hud/box.png) 6 fill / 6px!important;background:none!important;color:#3b2412!important;padding:2px 10px!important}
+.btn.primary:not(.px){filter:hue-rotate(-10deg) saturate(1.3)}
+.pill{border:6px solid transparent!important;border-image:url(assets/px/ui/hud/box.png) 6 fill / 6px!important;background:none!important;color:#3b2412!important}
+
+/* ===== plan-22: HUD kiểu Stardew ===== */
+#h-clock,#h-inv,#toast,#prompt{display:none!important}
+.hud-tr>span[title]{display:none!important}
+#pxhud{position:fixed;inset:0;pointer-events:none;z-index:7;font-family:var(--font)}
+#pxhud[hidden]{display:none}
+#pxhud .pxi{width:20px;height:20px;vertical-align:-4px;image-rendering:pixelated;margin:0 1px}
+#px-clock{position:absolute;right:10px;top:48px;width:192px;height:112px;background:url(assets/px/ui/hud/clock.png) no-repeat 0 0/100% 100%;image-rendering:pixelated;color:#3b2412}
+#px-clock .pc-date{position:absolute;left:84px;right:14px;top:22px;text-align:center;font-size:19px;line-height:1.05}
+#px-clock .pc-time{position:absolute;left:84px;right:14px;top:56px;text-align:center;font-size:26px}
+#px-money{position:absolute;right:10px;top:162px;width:160px;height:40px;background:url(assets/px/ui/hud/counter.png) no-repeat 0 0/100% 100%;image-rendering:pixelated;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 24px;color:#ffd45e;font-size:28px;line-height:1}
+#px-status{position:absolute;right:10px;top:206px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:3px;max-width:240px;pointer-events:auto}
+#px-status .ps{border:5px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 5px;color:#3b2412;font-size:16px;padding:0 3px;white-space:nowrap;line-height:1.1}
+#px-notes{position:absolute;left:10px;bottom:84px;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+#px-notes .pn{border:7px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 7px;color:#3b2412;font-size:19px;padding:0 6px;max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#px-banner{position:absolute;left:50%;top:26%;transform:translateX(-50%);border:14px solid transparent;border-image:url(assets/px/ui/npick/banner.png) 8 14 fill / 14px 28px;color:#fff6c8;font-size:26px;padding:2px 36px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#px-label{position:fixed;border:5px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 5px;color:#3b2412;font-size:17px;padding:0 4px;white-space:nowrap;transform:translateX(0)}
+@media (max-width:640px){#px-clock{top:44px;width:144px;height:84px} #px-clock .pc-date{left:62px;top:16px;font-size:15px} #px-clock .pc-time{left:62px;top:42px;font-size:20px} #px-money{top:130px;width:120px;height:30px;font-size:18px} #px-status{top:162px} #px-notes{bottom:auto;top:86px;left:6px} #px-notes .pn{font-size:16px}}
+
+.hbtn{background:none!important;border:0!important;padding:0!important;width:40px;height:40px}
+.hbtn img{width:36px;height:36px;image-rendering:pixelated}
+
+#px-notes .pn{display:flex;align-items:center;gap:3px;flex-wrap:nowrap}
+#px-notes .pn .pxi,#px-status .pxi,#px-label .pxi{display:inline-block;flex:none}
+#h-zone.pill,.hud-tl .pill{font-size:20px!important;font-weight:normal!important;padding:0 6px!important}
+#h-quest,#h-task,#h-target,#h-story,#h-alert{font-family:var(--font);font-size:18px}
+
+.pxi{width:20px;height:20px;vertical-align:-4px;image-rendering:pixelated;margin:0 1px;display:inline-block}
+#h-story,#h-quest,#h-task,#h-target{white-space:nowrap}
+
+/* ===== plan-22 B2: túi đồ kiểu Stardew (vô hạn, kéo-thả) ===== */
+#menu .mframe{width:min(700px,100%)}
+#menu .inv{display:flex;flex-direction:column;gap:4px;align-items:center}
+#menu .inv-grid{display:grid;grid-template-columns:repeat(12,44px);gap:2px;justify-content:center}
+#menu .inv-sep{width:100%;height:4px;background:#352022;margin:2px 0}
+#menu .slot.iv{width:44px;height:44px;border:8px solid transparent;border-image:url(assets/px/ui/hotbar/slot.png) 8 fill / 8px;background:none;box-shadow:none;touch-action:none;user-select:none}
+#menu .slot.iv:hover,#menu .slot.iv.drop{border-image-source:url(assets/px/ui/hotbar/slot_on.png)}
+#menu .slot.iv.sel{border-image-source:url(assets/px/ui/hotbar/slot_on.png);transform:translateY(-2px)}
+#menu .slot.iv.lift>*{opacity:.3}
+#menu .slot.iv .pxi{width:32px;height:32px;margin:-6px;pointer-events:none}
+#menu .slot.iv .emo{pointer-events:none}
+#menu .slot.iv .n{right:-6px;bottom:-8px;font:14px VT323,monospace;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022}
+#menu .slot.iv .tier{right:-5px;bottom:-8px;font:14px VT323,monospace}
+#menu .slot.iv .ik{position:absolute;left:-5px;top:-7px;font:11px VT323,monospace;color:#3b2412;font-style:normal;pointer-events:none}
+#menu .inv-grid.hb{padding-bottom:2px}
+#menu .inv-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:6px}
+#menu .inv-tools .mhint{flex:1}
+#menu .inv-tr{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;touch-action:none}
+#menu .inv-tr .pxi.trash{width:36px;height:36px}
+#menu .inv-tr.drop{transform:scale(1.15)}
+#menu .fl-t{font:16px VT323,monospace;color:#fff6c8}
+#inv-ghost{position:fixed;z-index:60;pointer-events:none;transform:translate(-50%,-50%)}
+#inv-ghost .pxi{width:40px;height:40px;image-rendering:pixelated}
+#inv-tt{position:fixed;z-index:59;pointer-events:none;border:8px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 8px;color:#3b2412;font:18px VT323,monospace;padding:0 6px;max-width:260px;line-height:1.1}
+#inv-tt[hidden]{display:none}
+#inv-tt b{font-size:21px;font-weight:normal}
+#inv-tt .mhint{color:#6b4a2e;font-size:16px}
+#inv-tt .tt-pr .pxi{width:18px;height:18px;vertical-align:-3px}
+@media (max-width:640px){#menu .inv-grid{grid-template-columns:repeat(12,26px);gap:1px} #menu .slot.iv{width:26px;height:26px;border-width:4px;border-image-width:4px} #menu .slot.iv .pxi{width:20px;height:20px;margin:-3px} #menu .slot.iv .ik{display:none} #menu .slot.iv .n{font-size:11px;right:-3px;bottom:-5px}}
+#menu .inv-tools .btn{width:auto;margin:0;padding:0 12px!important;font-size:19px}
+#menu .inv-tools .mhint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}
+#menu .mtip{font-size:17px}
+#menu .msell .btn{font-size:16px!important}
+
+/* ===== plan-22 B3: hộp thoại kiểu Stardew + bảng chung một kiểu ===== */
+.dlg,.dlg.px{width:min(900px,96vw)!important;margin-bottom:max(84px,env(safe-area-inset-bottom))}
+.dlg.px{border-width:24px;border-image-width:24px}
+.dlg-body{gap:16px;align-items:stretch}
+.dlg-port,.dlg.px .dlg-port{order:2;width:128px!important;height:128px!important}
+#d-port{width:128px!important;height:128px!important}
+#d-av{display:none}
+#d-text{font-size:26px!important;line-height:1.15;min-height:3.45em;color:#fff6c8}
+.dlg-plate{font-size:26px!important}
+#d-stats,#d-chips{font-size:16px} #d-hint{font-size:17px!important}
+#d-more{font-size:22px}
+@media (max-width:640px){.dlg-port,.dlg.px .dlg-port,#d-port{width:72px!important;height:72px!important} #d-text{font-size:20px!important} .dlg.px{border-width:14px;border-image-width:14px}}
+/* nút ✕ pixel trên mọi bảng */
+.ov .panel{position:relative}
+.px-x{position:absolute;right:-4px;top:-4px;z-index:3;width:36px;height:36px;padding:0;border:0;background:none;cursor:pointer}
+.px-x img{width:36px;height:36px;image-rendering:pixelated;display:block}
+.px-x:hover{transform:scale(1.08)}
+.ov .panel h2{padding-right:36px;font-size:26px!important;font-weight:normal!important;color:#ffd45e}
+.ov .panel h3{font-size:19px!important;color:#e8c99a!important;letter-spacing:0;text-transform:none}
+.ov .panel,.ov .panel p{font-size:18px}
+.ov .panel .dim{color:#c9ad88}
+.pxt .pxi,.ov .pxi{width:20px;height:20px;vertical-align:-4px}
+.ov .panel h2 .pxi{width:28px;height:28px;vertical-align:-6px}
+/* dòng hàng (quầy, chế tạo, chuồng…) = ô giấy kiểu Stardew */
+.ov .panel .hrow{border:7px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 7px;background:none!important;color:#3b2412;margin:3px 0;padding:0 6px;border-radius:0}
+.ov .panel .hrow .dim,.ov .panel .hrow .tiny{color:#7a5634!important}
+.ov .panel .hrow b{font-weight:normal;font-size:19px}
+.ov .panel .hrow[style*="opacity:.7"]{border:0;opacity:1!important;color:#ffd45e;padding:6px 2px 0}
+.ov .panel .hrow[style*="opacity:.7"] .dim{color:#c9ad88!important}
+.ov .panel .chip{background:#352022!important;color:#ffd45e!important;border:0!important;font-size:16px;padding:0 6px;border-radius:0}
+.ov .panel .hrow .btn{border-image:url(assets/px/ui/hud/counter.png) 6 fill / 6px!important;color:#ffd45e!important;font-size:17px!important;padding:0 10px!important;width:auto}
+.ov .panel .hrow .btn[disabled]{opacity:.4}
+.ov .panel.shop{width:min(900px,100%)}
+.shopw{display:flex;gap:14px;min-height:0;flex:1}
+.shop-side{flex:0 0 180px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.shop-port{border:8px solid transparent;border-image:url(assets/px/ui/dlg_port.png) 8 / 8px round;width:160px;height:160px;box-sizing:content-box}
+.shop-port img{width:160px;height:160px;image-rendering:pixelated;display:block}
+.shop-say{border:8px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 8px;color:#3b2412;font-size:18px!important;margin:0!important;padding:2px 6px;line-height:1.15}
+.shop-main{flex:1;min-width:0;overflow:auto}
+@media (max-width:640px){.shopw{flex-direction:column} .shop-side{flex:none;flex-direction:row} .shop-port,.shop-port img{width:64px;height:64px}}
+/* plan-22 B4: điện thoại — máu dọc lên phải dưới đồng hồ (không đè hotbar / nút A) */
+@media (pointer:coarse){#herobar{top:196px;bottom:auto;right:6px} #herobar .hb-hp{height:96px;width:22px} #herobar .hb-xp{height:88px;width:6px} #herobar .hb-num{display:none} #herobar .hb-lv{font-size:15px} #px-status{top:334px}}
+@media (max-width:640px){#px-clock .pc-date{font-size:14px;line-height:1} #px-clock .pc-time{font-size:19px;top:46px}}
+
+.ov .panel h2 img.face{width:64px;height:64px;image-rendering:pixelated;border:6px solid transparent;border-image:url(assets/px/ui/dlg_port.png) 8 / 6px round;flex:none}
+
+#pxhud.behind #px-clock,#pxhud.behind #px-money,#pxhud.behind #px-status{opacity:.3;transition:opacity .2s}
+#px-clock,#px-money,#px-status{transition:opacity .2s}
+
+/* phím T: thú bay vào ô (toàn pixel: ảnh PixelLab, xoay nấc 90°, không mờ/không bóng) */
+.fx-fly{position:fixed;left:0;top:0;width:40px;height:40px;z-index:70;pointer-events:none;image-rendering:pixelated}
+.fx-ghost{opacity:.45;animation:fxFade .3s steps(3) forwards}
+@keyframes fxFade{to{opacity:0}}
+.fx-burst{position:fixed;z-index:71;pointer-events:none;image-rendering:pixelated;background-repeat:no-repeat;background-position:0 0}
+@keyframes fxSheet{to{background-position:var(--fx-end) 0}}
+#hotbar .hb-slot.hb-catch{animation:hbCatch .6s steps(6)}
+@keyframes hbCatch{0%{transform:translateY(-10px) scale(1.25);border-image-source:url(assets/px/ui/hotbar/slot_on.png)}50%{transform:translateY(-4px) scale(1.1);border-image-source:url(assets/px/ui/hotbar/slot.png)}75%{border-image-source:url(assets/px/ui/hotbar/slot_on.png)}100%{transform:none}}
+.fx-fly{width:48px;height:48px}
+.fx-ghost{opacity:.7}
+.fx-plus{position:fixed;z-index:72;pointer-events:none;font:28px VT323,monospace;color:#ffd45e;text-shadow:2px 0 0 #352022,-2px 0 0 #352022,0 2px 0 #352022,0 -2px 0 #352022;animation:fxPlus .8s steps(8) forwards}
+@keyframes fxPlus{0%{transform:translateY(8px)}30%{transform:translateY(-10px)}100%{transform:translateY(-22px);opacity:0}}
+
+#hotbar .hb-bag{width:44px;height:44px;margin-left:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:8px solid transparent;border-image:url(assets/px/ui/hotbar/slot.png) 8 fill / 8px;image-rendering:pixelated;box-sizing:border-box}
+#hotbar .hb-bag img{width:32px;height:32px;margin:-6px;image-rendering:pixelated;pointer-events:none}
+#hotbar .hb-bag.hb-catch{animation:hbCatch .6s steps(6)}
+@media (max-width:640px){#hotbar .hb-bag{width:30px;height:30px;border-width:5px;border-image-width:5px} #hotbar .hb-bag img{width:22px;height:22px;margin:-4px}}
+
+/* plan-25: bảng chọn phe */
+.ov .panel.faction{width:min(820px,100%)}
+.fac-row{display:flex;gap:14px;flex-wrap:wrap}
+.fac-col{flex:1 1 300px;display:flex;flex-direction:column;align-items:center;gap:6px;border:8px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 8px;color:#3b2412;padding:6px 8px}
+.fac-col .face{width:128px;height:128px;image-rendering:pixelated;border:6px solid transparent;border-image:url(assets/px/ui/dlg_port.png) 8 / 6px round}
+.fac-col b{font-size:24px;font-weight:normal}
+.fac-col p{font-size:18px!important;margin:0!important;text-align:center;color:#3b2412}
+.fac-xealist b{color:#7a2a6a} .fac-noxx b{color:#2e6a3a}
+.fac-col .btn{width:auto!important;font-size:19px!important}
+.ov .panel.faction > .px-x{display:none}
+
+/* 2026-10-10 anh: bỏ ô đếm đá dưới đồng hồ (đá đã hiện trên thanh công cụ) */
+#px-money{display:none!important}
+#px-status{top:166px}
+@media (max-width:640px){#px-status{top:134px}}
+@media (pointer:coarse){#herobar{top:170px} #px-status{top:300px}}
+
+/* 2026-10-10 QA: thẻ Mua nhanh — nút mua gọn bên phải, không che tên công cụ (.btn mặc định width:100%) */
+#menu .shoprow .hwho{flex:1 1 auto;min-width:6em}
+#menu .shoprow .btn{width:auto;flex:0 0 auto;margin:0;padding:2px 12px!important;font-size:16px;white-space:nowrap;min-height:0}
+
+/* ===== plan-25 B5: điện thoại (dọc ~390×844, ngang ~844×390) — mọi luật nằm trong @media → desktop giữ nguyên ===== */
+#menu .m-x{display:none}   /* nút ✕ đóng túi: chỉ hiện trên màn cảm ứng (desktop có Esc) */
+/* chung cho điện thoại dọc + xoay ngang */
+@media (max-width:640px), (pointer:coarse) and (orientation:landscape) and (max-height:500px){
+  /* thanh công cụ: 2 hàng × 6 ô 40px + nút Túi bên phải (1 hàng 30px cũ tràn ra 2 mép màn, ô nhỏ khó chạm, icon 22px mờ) */
+  #hotbar .hb-bar{display:grid;grid-template-columns:repeat(6,40px) 40px;grid-auto-rows:40px;gap:2px;border-width:6px;border-image-width:6px}
+  #hotbar .hb-slot{width:40px;height:40px;border-width:8px;border-image-width:8px}
+  #hotbar .hb-slot img{width:32px;height:32px;margin:-8px}
+  #hotbar .hb-bag{grid-column:7;grid-row:1/span 2;align-self:center;width:40px;height:40px;margin-left:0;border-width:8px;border-image-width:8px}
+  #hotbar .hb-bag img{width:32px;height:32px;margin:-8px}
+  #hotbar .hb-k{display:none}
+  #menu .slot.iv .ik{display:none}   /* số phím 1–= trên ô túi: điện thoại không có bàn phím */
+  /* túi: thẻ gọn (5 thẻ còn 2 hàng), chữ mô tả 11px → 14px */
+  .mtabs{gap:4px}
+  .mtab{padding:6px 5px;gap:3px}
+  .mtab span{font-size:16px}
+  #menu .mhint{font-size:14px}
+  #menu .tiny{font-size:13px}
+  #menu .mstat{font-size:15px}   /* tên chỉ số không nhỏ hơn dòng mô tả */
+  #menu .inv-tools .mhint{white-space:normal;line-height:1.05}
+  /* băng thông báo lớn + thông báo nhỏ: xuống dòng thay vì cắt '…' / tràn khỏi màn */
+  #px-banner{white-space:normal;width:max-content;max-width:calc(100vw - 24px);font-size:19px;line-height:1.05;padding:2px 10px;text-align:center}
+  #px-notes .pn{display:block;white-space:normal;line-height:1.05}
+  /* bảng: cuộn được khi màn thấp (bảng chọn phe không có vùng cuộn → nút chọn rơi khỏi màn) */
+  .ov .panel{overflow-y:auto}
+  .ov .panel>.px-x{right:0;top:0}
+  .ov .panel .chip{display:inline-block;max-width:100%}   /* giá '2 🪨' không bị tách đôi số / icon */
+  .fac-col .face{width:96px;height:96px}
+  /* chọn quốc gia: tên dài không cách (Singapore/Malaysia) tràn ô + thanh cuộn ngang */
+  #npick .npf{min-width:0}
+  #npick .npf b{overflow-wrap:anywhere}
+  /* màn hình chính: '★ Credits' rớt 2 dòng làm hàng nút lệch */
+  #title .trow{align-items:stretch}
+  #title .trow .btn{white-space:nowrap;font-size:18px}
+  #title .tiny{font-size:14px}
+}
+/* chỉ màn hẹp (dọc) */
+@media (max-width:640px){
+  /* túi đồ: lưới 6 cột ô 44px như desktop (12 cột 26px cũ: số '300' bị cắt, ô quá nhỏ); 2 hàng đầu = thanh công cụ */
+  #menu .inv-grid{grid-template-columns:repeat(6,44px);gap:2px}
+  #menu .slot.iv{width:44px;height:44px;border-width:8px;border-image-width:8px}
+  #menu .slot.iv .pxi{width:32px;height:32px;margin:-6px}
+  #menu .slot.iv .n{font-size:14px;right:-6px;bottom:-8px}
+  #menu .mstat{grid-template-columns:24px 100px 1fr 18px}
+  /* thông báo nhỏ: cột trái dưới dòng nhiệm vụ, không đè đồng hồ / thanh máu */
+  #px-notes{top:178px;left:6px;bottom:auto}
+  #px-notes .pn{max-width:calc(100vw - 172px)}
+  /* bản đồ thế giới: canvas 80vw rộng hơn khung → thanh cuộn ngang; sổ tay: cột Thành tựu tràn đè lên ô tìm 'Nghệ sĩ đã gặp' */
+  #m-cv{width:min(300px,100%);height:auto}
+  .codexwrap .ccol{flex:none}
+}
+@media (pointer:coarse){
+  #menu .mfoot{display:none}   /* dòng phím tắt bàn phím */
+  .mtab{min-height:38px}
+  #menu .slot.iv:hover:not(.drop):not(.sel){border-image-source:url(assets/px/ui/hotbar/slot.png)}   /* chạm xong ô dưới ngón tay không bị 'dính' viền sáng như đang chọn */
+  #menu .mtabs .m-x{display:block;position:static;margin-left:auto;align-self:center}
+  .btn{min-height:40px}
+  #menu .msell .btn,#menu .shoprow .btn,#menu .inv-tools .btn{min-height:38px}
+  #title select{min-height:40px}
+  /* nhãn ô lưu test (preset): dải 1 dòng sát đáy, dưới D-pad / nút A (trước đè lên nút A) */
+  #preset-chip{left:6px!important;right:6px!important;bottom:2px!important;max-width:none!important;padding:1px 6px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;line-height:1.25}
+  #preset-chip br,#preset-chip>span{display:none}
+  #preset-chip a{margin-left:8px}
+  /* câu cá: bảng câu vẽ ở đáy màn → ẩn D-pad (không đi được khi câu), nút A nhích sát mép phải */
+  body[data-mode=fish] #touch .dpad,body[data-mode=seafish] #touch .dpad{visibility:hidden}
+  body[data-mode=fish] #btn-a,body[data-mode=seafish] #btn-a{right:8px}
+  /* máy tính bảng: ☰ / 📷 cũng bị đồng hồ (192×112) che → xuống dưới đồng hồ (điện thoại dọc / ngang có luật riêng bên dưới) */
+  #btn-menu{top:166px;right:10px}
+  #btn-photo{top:166px;right:56px}
+  #herobar{top:214px}
+  #px-status{top:348px}
+}
+@media (max-width:640px) and (pointer:fine){#preset-chip{bottom:110px!important}}   /* cửa sổ desktop hẹp: nhãn test nằm trên thanh công cụ 2 hàng */
+@media (pointer:coarse) and (max-width:640px){
+  /* nút ☰ (menu/Esc) + 📷 bị khung đồng hồ che mất → xuống ngay dưới đồng hồ; máu + trạng thái lùi xuống theo */
+  #btn-menu{top:134px;right:10px}
+  #btn-photo{top:134px;right:56px}
+  #herobar{top:182px}
+  #px-status{top:316px}
+}
+@media (pointer:coarse) and (max-width:640px) and (max-height:720px){
+  /* máy thấp (iPhone SE 375×667): hạ D-pad / nút A sát đáy hơn để thanh công cụ không lên tới giữa màn (chỗ nhân vật đứng) */
+  .dpad{bottom:26px}
+  #btn-a{bottom:46px}
+  #hotbar{bottom:192px}
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:500px){
+  /* điện thoại xoay ngang: trước đây thanh công cụ nằm sát mép trên dưới đồng hồ, thanh máu + ô trạng thái đè nút A, ☰/📷 bị đồng hồ che */
+  #px-clock{top:44px;width:144px;height:84px}
+  #px-clock .pc-date{left:62px;top:16px;font-size:14px;line-height:1}
+  #px-clock .pc-time{left:62px;top:46px;font-size:19px}
+  #btn-menu{top:52px;right:160px}
+  #btn-photo{top:52px;right:206px}
+  #herobar{top:134px;right:6px}
+  #px-status{top:134px;right:62px}
+  .dpad{bottom:24px}
+  #btn-a{bottom:30px}
+  #hotbar{bottom:6px;left:calc(50% + 43px)}   /* giữa khe D-pad ↔ nút A */
+  #seis{top:10px;bottom:auto;left:50%;right:auto;transform:translateX(-50%)}
+  #touch-skills{flex-direction:row;right:100px;bottom:30px}
+  #px-notes{top:auto;bottom:110px;left:190px}
+  #px-notes .pn{max-width:min(360px,calc(100vw - 480px))}
+  #preset-chip{right:auto!important;width:172px}
+  #menu .mframe{position:relative}
+  #menu .mtabs{padding-right:40px}
+  #menu .mtabs .m-x{position:absolute;right:2px;top:2px}
+}
+
+/* 2026-10-10: thanh âm lượng nhạc nền / hiệu ứng trong Cài đặt */
+#menu .mvol{display:flex;gap:10px;align-items:center;margin:8px 0;font-size:18px}
+#menu .mvol span{min-width:7em}
+#menu .mvol input{flex:1;accent-color:#ffd45e;min-height:28px}
+#menu .mvol b{min-width:3.2em;text-align:right;font-weight:normal}

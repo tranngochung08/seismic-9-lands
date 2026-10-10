@@ -13,7 +13,7 @@ export function runDemo(G) {
   box.innerHTML = `<div class="d-top"><span class="d-step"></span><span class="d-title"></span></div><div class="d-desc"></div><div class="d-bar"><div></div></div>
     <div class="d-btns"><button data-a="pause">⏸</button><button data-a="skip">⏭</button><button data-a="speed">1×</button><button data-a="stop">✕</button></div>`;
   const css = document.createElement('style');
-  css.textContent = `#demo{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);width:min(680px,94vw);background:rgba(13,11,20,.9);border:1px solid #ffd45e;border-radius:12px;padding:10px 14px;z-index:40;color:#f2ebe0;font:14px "Segoe UI",system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+  css.textContent = `#demo{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);width:min(680px,94vw);background:rgba(13,11,20,.9);border:1px solid #ffd45e;border-radius:12px;padding:10px 14px;z-index:40;color:#f2ebe0;font:14px VT323, monospace;box-shadow:0 8px 30px rgba(0,0,0,.6)}
   #demo .d-top{display:flex;gap:10px;align-items:baseline}#demo .d-step{color:#ffd45e;font-weight:800;font-size:12px}#demo .d-title{font-weight:800;font-size:16px}
   #demo .d-desc{color:#cfc6b8;margin:3px 0 6px;min-height:18px}#demo .d-bar{height:4px;background:#2b2440;border-radius:2px;overflow:hidden}#demo .d-bar>div{height:100%;background:#ffd45e;width:0}
   #demo .d-btns{position:absolute;right:10px;top:8px;display:flex;gap:6px}#demo .d-btns button{border:1px solid #33294a;background:#241e34;color:#f2ebe0;border-radius:6px;padding:3px 8px;cursor:pointer;font:inherit}

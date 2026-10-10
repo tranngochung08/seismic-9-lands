@@ -1,6 +1,11 @@
-// items.js — the item registry shared by every system. Bag = save.inv (id → count); weight-limited.
+// items.js — the item registry shared by every system. Bag = save.inv (id → count); UNLIMITED (anh chốt 2026-10-10: túi vô hạn, field w giữ lại nhưng không dùng).
 const I = (icon, en, vi, w, tags = '') => ({ icon, name: { en, vi }, w, tags: tags.split(' ').filter(Boolean) });
 export const ITEMS = {
+  /* plan-21: đồ rơi của quái + hồi sinh dân */
+  soul: I('✨', 'Soul spark', 'Tinh hồn', 0.1, 'material monster'), revive: I('🕯', 'Revival tinder', 'Bùi nhùi hồi sinh', 0.3, 'revive'),
+  gel: I('🟢', 'Slime gel', 'Nhựa nhầy', 0.2, 'material monster'), claw: I('🦀', 'Crab claw', 'Càng cua', 0.3, 'material monster'), fang: I('🦷', 'Wolf fang', 'Nanh sói', 0.2, 'material monster'),
+  core: I('🪨', 'Rock imp core', 'Lõi yêu đá', 0.5, 'material monster'), stinger: I('🦂', 'Scorpion stinger', 'Ngòi bọ cạp', 0.2, 'material monster'), ember: I('🔥', 'Imp ember', 'Than imp', 0.2, 'material monster'),
+  shard: I('💠', 'Glitch shard', 'Mảnh mã hoá', 0.1, 'material monster'),
   wood: I('🪵', 'Wood', 'Gỗ', 1, 'material'), stone: I('🪨', 'Seismic stone', 'Đá Seismic', 0, 'currency'), rock: I('🧱', 'Building stone', 'Đá xây', 2, 'material'),
   ore: I('⛏', 'Iron ore', 'Quặng sắt', 2, 'material'), charcoal: I('🔥', 'Charcoal', 'Than', 1, 'material fuel'), iron: I('🔩', 'Iron bar', 'Thanh sắt', 2, 'material'),
   sand: I('🏖', 'Sand', 'Cát', 1, 'material'), glass: I('🪟', 'Glass', 'Kính', 1, 'material'), rope: I('🪢', 'Rope', 'Dây thừng', 1, 'material'),
@@ -15,6 +20,8 @@ export const ITEMS = {
   plank: I('🪵', 'Driftwood plank', 'Ván gỗ trôi', 1, 'material sea'), sailcloth: I('⛵', 'Sailcloth', 'Vải buồm', 1, 'material sea'), pearl: I('🫧', 'Pearl', 'Ngọc trai', 0.2, 'material sea'),
   shell: I('🐚', 'Sea shell', 'Vỏ sò', 0.3, 'material sea'), seagem: I('🔷', 'Sea crystal', 'Tinh thể biển', 1, 'material sea'), ink: I('🦑', 'Kraken ink', 'Mực Kraken', 0, 'trophy sea'),
   bottle: I('🍾', 'Message bottle', 'Chai thư', 0.5, 'sea'), squid: I('🦑', 'Squid', 'Mực', 0, 'carry'), goldfish: I('🐠', 'Golden fish', 'Cá vàng', 0, 'carry'),
+  /* plan-26 B0: viên thở dưới nước (Heathcliff bán ở cầu tàu) — cộng giây thở, đồng hồ thở chỉ chạy khi ở dưới nước */
+  pill_s: I('💊', 'Small breath pill', 'Viên thở nhỏ', 0.1, 'pill breath'), pill_l: I('🧪', 'Large breath pill', 'Viên thở lớn', 0.2, 'pill breath'),
   // the storyline (weight 0: they never block the bag; never sold)
   scarf: I('🧣', "Lyron's scarf", 'Khăn của Lyron', 0, 'story'), divebell: I('🔔', 'Diving bell', 'Chuông lặn', 0, 'story'), trenchmap: I('🗺', 'Map of the Kraken Trench', 'Bản đồ Vực Kraken', 0, 'story'),
   // F02/F03 (plan-17 đợt 1): hạt 'seed_<crop>' + nông sản (tag crop, mùa trong 'season' + tag 'spring|summer|autumn|winter|any'), sản phẩm chuồng, vật đặt được (tag placeable — pens.js/farm.js đặt)
@@ -35,8 +42,15 @@ export const ITEMS = {
 // Tools have tiers: 0 = not owned, 1..3 = wood/iron/obsidian quality. `save.toolTier`.
 export const TOOLS = {
   axe: I('🪓', 'Axe', 'Rìu', 0), pickaxe: I('⛏', 'Pickaxe', 'Cuốc', 0), rod: I('🎣', 'Fishing rod', 'Cần câu', 0), shovel: I('🥄', 'Shovel', 'Xẻng', 0), scythe: I('🌾', 'Scythe', 'Liềm', 0),
-  knife: I('🔪', 'Knife', 'Dao', 0), bucket: I('🪣', 'Bucket', 'Xô', 0), cage: I('🧺', 'Cage', 'Lồng', 0), cart: I('🛒', 'Livestock cart', 'Xe chở vật nuôi', 0), lasso: I('🪢', 'Lasso', 'Thòng lọng', 0), trap: I('🪤', 'Trap', 'Bẫy', 0), saddle: I('🐎', 'Saddle', 'Yên ngựa', 0), torch: I('🔦', 'Torch', 'Đuốc', 0)
+  knife: I('🔪', 'Knife', 'Dao', 0), bucket: I('🪣', 'Bucket', 'Xô', 0), cage: I('🧺', 'Cage', 'Lồng', 0), cart: I('🛒', 'Livestock cart', 'Xe chở vật nuôi', 0), lasso: I('🪢', 'Lasso', 'Thòng lọng', 0), trap: I('🪤', 'Trap', 'Bẫy', 0), saddle: I('🐎', 'Saddle', 'Yên ngựa', 0), torch: I('🔦', 'Torch', 'Đuốc', 0),
+  sword: I('⚔', 'Sword', 'Kiếm', 0)   /* plan-21: 6 cấp (gỗ → đá → sắt → obsidian → pha lê → Seismic) */
 };
+/* 2026-10-10 anh yêu cầu: bắt được thú → phím T ném vào ô trống. Thú trong túi mang mã riêng 'a_<loài>' (tên + icon như thú trên đầu) */
+export const ANIMAL_KINDS = ['fish', 'cow', 'chicken', 'bird', 'sheep', 'rabbit', 'crab', 'bat', 'squid', 'goldfish'];
+for (const k of ANIMAL_KINDS) if (ITEMS[k]) ITEMS['a_' + k] = { ...ITEMS[k], tags: ['animal'], w: 0 };
 export const BAG_CAP = 60;
+/* plan-26 B0: giây thở mỗi viên + giá (đá Seismic) ở quầy Heathcliff; cộng dồn tối đa BREATH_CAP giây */
+export const PILLS = { pill_s: { secs: 60, price: 20 }, pill_l: { secs: 180, price: 50 } };
+export const BREATH_CAP = 600;
 export function itemName(id, lang) { const d = ITEMS[id] || TOOLS[id]; return d ? d.name[lang] || d.name.en : id; }
 export function itemIcon(id) { const d = ITEMS[id] || TOOLS[id]; return d ? d.icon : '▪'; }

@@ -667,7 +667,7 @@ export const raidersMid = {
     const S = L(ctx);
     ug.save();
     ug.textAlign = 'center'; ug.textBaseline = 'bottom';
-    ug.font = `bold ${Math.max(9, Math.round(scale * 2.7))}px "Segoe UI",system-ui,sans-serif`;
+    ug.font = `bold ${Math.max(9, Math.round(scale * 2.7))}px VT323, monospace`;
     for (const m of mobs) {
       if (m.st === 'wake' || m.st === 'rise' || m.st === 'dive') continue;
       const top = m.y - (m.z || 0) - (m.k === 'worm' ? 24 : m.k === 'garg' ? 28 : 24);

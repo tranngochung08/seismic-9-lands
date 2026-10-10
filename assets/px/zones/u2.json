@@ -1,0 +1,10 @@
+{
+ "inherit": "u1",
+ "objects": {
+  "tallkelp": {
+   "file": "zones/u2/obj/tallkelp_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ }
+}

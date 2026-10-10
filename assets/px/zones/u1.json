@@ -1,0 +1,30 @@
+{
+ "inherit": "trench",
+ "objects": {
+  "uchest": {
+   "file": "zones/u1/obj/uchest_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "uchest_open": {
+   "file": "zones/u1/obj/uchest_open_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "uwgate": {
+   "file": "zones/u1/obj/uwgate_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "uwgate_sealed": {
+   "file": "zones/u1/obj/uwgate_sealed_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "vent_spent": {
+   "file": "zones/trench/obj/vent_s23.png",
+   "ox": 0,
+   "oy": 0
+  }
+ }
+}

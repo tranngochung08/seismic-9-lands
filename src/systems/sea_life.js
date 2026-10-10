@@ -202,7 +202,7 @@ function deliver(ctx) {
   for (const c of list) {
     if (!s.rescued.includes(c.m.id)) s.rescued.push(c.m.id);
     if (!sv.met.includes(c.m.id)) sv.met.push(c.m.id);
-    ctx.bag.add('stone', 3);
+    ctx.give('stone', 3);
   }
   ctx.persist(); ctx.sfx('win');
   ctx.setMode('dialog');
@@ -222,7 +222,7 @@ function pickBottle(ctx, b) {
   const S = L(ctx);
   b.taken = true; b.respawn = 120;
   splash(b.x, b.y, 0.8); ctx.sfx('pickup');
-  ctx.bag.add('bottle', 1);
+  ctx.give('bottle', 1);
   const all = allMembers(ctx), m = all[(Math.random() * all.length) | 0];
   const pages = [];
   if (m) { const nat = ctx.nationOf(m); pages.push(S.note(m.k || m.n, nat ? nat.name : '', m.i, m.r, m.f)); }
@@ -354,7 +354,7 @@ function finishRace(ctx) {
   s.races = (s.races || 0) + 1;
   if (t < 150 && !s.captain) {
     s.captain = true;
-    ctx.bag.add('stone', 5);
+    ctx.give('stone', 5);
     sv.achievements = sv.achievements || []; if (!sv.achievements.includes('captain')) sv.achievements.push('captain');
     sv.cards = sv.cards || []; if (hermitM && !sv.cards.includes(hermitM.id)) sv.cards.push(hermitM.id);
     ctx.sfx('win'); ctx.toast(msg, true); setTimeout(() => ctx.toast(S.captain, true), 1900);
@@ -497,7 +497,7 @@ export const seaLife = {
     if (!ctx.S.map.sea) return;
     const S = L(ctx), fs = Math.max(10, scale * 3), near = ctx.S.near && ctx.S.near.kind === 'sys' && ctx.S.near.cand && ctx.S.near.cand.data;
     ug.save();
-    ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+    ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     const label = (text, x, y, color, mark) => {
       const sx = Math.round((x - cx) * scale), sy = Math.round((y - 20 - cy) * scale);
       if (sx < -100 || sx > ug.canvas.width + 100 || sy < -20 || sy > ug.canvas.height + 20) return;
@@ -514,11 +514,11 @@ export const seaLife = {
       const bs = buoys(ctx), b = bs[race.i];
       if (b) label(S.buoyLbl(b.buoy), b.x * TILE + 8, b.y * TILE - 18, '#ffd45e', false);
       const tf = Math.max(14, scale * 5), x0 = 16, y0 = Math.max(70, scale * 24);   // top-left, under the HUD (the toast owns the top centre)
-      ug.font = `bold ${tf}px "Segoe UI",system-ui,sans-serif`; ug.textBaseline = 'top'; ug.textAlign = 'left';
+      ug.font = `bold ${tf}px VT323, monospace`; ug.textBaseline = 'top'; ug.textAlign = 'left';
       const txt = `${race.t.toFixed(1)}s`, w = Math.max(ug.measureText(txt).width, tf * 3) + tf;
       ug.fillStyle = 'rgba(13,11,20,.75)'; ug.beginPath(); ug.roundRect(x0, y0, w, tf * 2, 8); ug.fill();
       ug.fillStyle = '#ffd45e'; ug.fillText(txt, x0 + tf * 0.5, y0 + tf * 0.15);
-      ug.font = `${Math.max(9, scale * 2.6)}px "Segoe UI",system-ui,sans-serif`; ug.fillStyle = '#a79a86';
+      ug.font = `${Math.max(9, scale * 2.6)}px VT323, monospace`; ug.fillStyle = '#a79a86';
       ug.fillText(`${S.timer} · ${race.i + 1}/${bs.length}`, x0 + tf * 0.5, y0 + tf * 1.25);
     }
     ug.restore();

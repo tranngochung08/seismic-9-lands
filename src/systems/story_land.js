@@ -64,7 +64,7 @@ const hideDlg = () => { const d = document.getElementById('dialog'); if (d) d.hi
 // ---------------------------------------------------------------- the three things
 function grant(ctx, k) {
   const s = story(ctx), t = L(ctx); if (!s || s.items[k]) return false;
-  s.items[k] = true; ctx.bag.add(k, 1); ctx.persist();
+  s.items[k] = true; ctx.give(k, 1, undefined, undefined, { beam: true });   /* đồ cốt truyện: cột sáng */ ctx.persist();
   ctx.toast(k === 'divebell' ? t.bellMade : k === 'trenchmap' ? t.mapGot : t.crystalGot, true);
   ctx.sfx(k === 'greatcrystal' ? 'win' : 'craft');
   checkAll(ctx);

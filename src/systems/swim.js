@@ -2,6 +2,7 @@
 // đưa về khu (plot) của nước người cứu trong vùng (biển: về bến). Người cứu = NPC của nước anh hay trò chuyện nhất (save.talks), không có → ngẫu nhiên.
 // Ô: T.WATER = nông (đi được, ngập tới hông), T.DEEP = sâu (bơi). Không hình phạt. Phím T: thả thú đang cầm xuống nước (chỉ cá/cua/kỳ nhông).
 import { HOOK } from '../gfx.js';
+import { WATER } from '../anim.js';
 import { getCarry, removeCarry, catOf } from './animals.js';
 import * as UI from '../ui.js';
 
@@ -117,6 +118,7 @@ function finishRescue(ctx) {
 export const swim = {
   id: 'swim',
   onZoneEnter(ctx) {
+    WATER.depth = (x, y) => { const d = depthAt(ctx, x, y); return d === 'swim' ? 11 : d === 'wade' ? 6 : 0; };   /* NPC/thú lội nước vẽ ngập như người chơi */
     st.mode = 'none'; st.rescue = null; st.fx = []; st.ownCustom = null; st.ownPass = null; ctx.S.swimming = false;
     if (typeof window !== 'undefined') window.__swim = { state: () => ({ mode: st.mode, stam: +st.stam.toFixed(2), rescue: st.rescue && { phase: st.rescue.phase, n: st.rescue.n && st.rescue.n.m.n, x: Math.round(st.rescue.x), y: Math.round(st.rescue.y) } }), drain: () => { st.stam = 0.01; }, talks: () => ctx.S.save.talks };
   },
@@ -138,8 +140,8 @@ export const swim = {
     else if (st.mode === 'swim') {
       p.speedMul = 0.5; setCustom(ctx, (g, e) => drawInWater(g, e, 11)); st.stam -= dt;
       if (p.moving && st.ripT > 0.25) { st.ripT = 0; ripple(ctx, p.x, p.y, 5); }
-      if (st.stam < STAM_MAX * 0.3 && !st.warned) { st.warned = true; ctx.toast(t.low); ctx.sfx('alarm'); }
-      if (st.stam <= 0) { st.stam = 0; st.mode = 'drown'; st.t = 0; p.speedMul = 0; p.moving = false; setCustom(ctx, drawDrowned); ctx.toast(t.tired, true); ctx.sfx('fail'); }
+      if (st.stam < STAM_MAX * 0.3 && !st.warned) { st.warned = true; ctx.toast(t.low); ctx.sfx('warn'); }
+      if (st.stam <= 0) { st.stam = 0; st.mode = 'drown'; st.t = 0; p.speedMul = 0; p.moving = false; setCustom(ctx, drawDrowned); ctx.toast(t.tired, true); ctx.sfx('faint'); }
     }
     else if (st.mode === 'drown') { p.speedMul = 0; if (st.t > DROWN_SECS) startRescue(ctx); }
     else { st.stam = Math.min(STAM_MAX, st.stam + REGEN * dt); if (st.stam >= STAM_MAX) st.warned = false; }

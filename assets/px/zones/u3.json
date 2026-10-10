@@ -1,0 +1,10 @@
+{
+ "inherit": "u1",
+ "objects": {
+  "wreckwall": {
+   "file": "zones/u3/obj/wreckwall_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ }
+}

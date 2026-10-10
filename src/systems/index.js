@@ -27,5 +27,14 @@ import { swim } from './swim.js';
 import { farm } from './farm.js';   /* plan-17 F02 (tác nhân A1) */
 import { pens } from './pens.js';   /* plan-17 F03 (tác nhân A2) */
 import { vfx } from './vfx.js';   /* plan-19: VFX sheet PixelLab */
+import { hero } from './hero.js';   /* plan-21: máu / cấp / kinh nghiệm */
+import { villagers } from './villagers.js';   /* plan-21: dân bị tấn công / chết / hồi sinh / Đài Tưởng Niệm */
+import { monsters } from './monsters.js';   /* plan-21: quái theo vùng */
+import { wreck } from './wreck.js';
+import { drops } from './drops.js';
+import { land } from './land.js';
+import { ponds } from './ponds.js';
+import { xealist } from './xealist.js';   /* plan-25 B3: phe Xealist (nhiệm vụ đen, Bóng tối, hóa đá, hối cải) */   /* plan-25: đào ao nuôi cá */   /* plan-25: phe Noxx mua đất từ Leader */   /* plan-24: mọi vật phẩm rơi ra → nhặt → ném vào túi */   /* plan-23: quái phá làng ban đêm, dân tự sửa ban ngày */
+import { underwater } from './underwater.js';   /* plan-26 B0: Heathcliff + viên thở + hơi thở + điểm lặn + tầng nước u1 (trước monsters: đặt ctx.uwGateOpen / onBossDown / stunPlayer) */
 
-export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, sumo, pet, storySea, storyLand, trench, vfx].filter(Boolean);
+export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, sumo, pet, storySea, storyLand, trench, hero, underwater, villagers, monsters, wreck, drops, land, ponds, xealist, vfx].filter(Boolean);

@@ -2,6 +2,7 @@
 import { LEVEL_COLORS, nationOf, isLeader, isBooster, membersOfLevel, byId } from './data.js';
 import { SKINS, HAIRS, O, FLAG_COLORS, hashStr } from './gfx.js';
 import * as AUDIO from './audio.js';
+import { notify as hudNotify, pxText } from './hud.js';   /* plan-22: thông báo pixel kiểu Stardew */
 
 export const STR = {
   en: {
@@ -132,8 +133,9 @@ function drawPortrait(talk) {
   const c = $('#d-port'), g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 64, 64);
   if (port.kind === 'frames' && port.frames) { const im = port.frames[talk ? 1 : 0] || port.frames[0]; if (im && im.complete) g.drawImage(im, 0, 0, 64, 64); return; }
   if (port.kind === 'avatar' && port.img && port.img.complete && port.img.naturalWidth) {
+    const px = /\/assets\/px\//.test(port.img.src);   /* chân dung PixelLab (Heathcliff, Xealist…) đã là pixel → vẽ thẳng 64×64; ảnh Discord mới thu 16×16 cho ra chất pixel */
     const t = port.tmp || (port.tmp = document.createElement('canvas')); t.width = 16; t.height = 16; const tg = t.getContext('2d'); tg.imageSmoothingEnabled = true; tg.clearRect(0, 0, 16, 16);
-    try { tg.drawImage(port.img, 0, 0, 16, 16); g.drawImage(t, 0, 0, 64, 64); } catch (e) { port.kind = 'letter'; }
+    try { if (px) g.drawImage(port.img, 0, 0, 64, 64); else { tg.drawImage(port.img, 0, 0, 16, 16); g.drawImage(t, 0, 0, 64, 64); } } catch (e) { port.kind = 'letter'; }
     if (port.kind === 'avatar') { if (talk) { g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(0, 0, 64, 64); } return; }
   }
   g.fillStyle = '#2b2440'; g.fillRect(0, 0, 64, 64); g.fillStyle = port.color || '#ffd45e'; g.font = '48px VT323, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(port.letter, 32, 36);
@@ -244,8 +246,8 @@ export function openMap(zoneList, save, currentId, onTravel) {
   for (const n of nodes) {
     g.beginPath(); g.arc(n.x, n.y, 15, 0, 7); g.fillStyle = n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'; g.fill();
     if (n.z.id === currentId) { g.lineWidth = 3; g.strokeStyle = '#fff'; g.stroke(); }
-    g.fillStyle = n.unlocked ? '#140a02' : '#6f6585'; g.font = 'bold 11px sans-serif'; g.fillText(n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv, n.x, n.y);
-    if (save.badges.includes(n.z.lv)) { g.fillStyle = '#ffd45e'; g.font = 'bold 12px sans-serif'; g.fillText('★', n.x + 14, n.y - 12); }
+    g.fillStyle = n.unlocked ? '#140a02' : '#6f6585'; g.font = 'bold 11px VT323, monospace'; g.fillText(n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv, n.x, n.y);
+    if (save.badges.includes(n.z.lv)) { g.fillStyle = '#ffd45e'; g.font = 'bold 12px VT323, monospace'; g.fillText('★', n.x + 14, n.y - 12); }
   }
   const hit = (mx, my) => nodes.find(n => Math.hypot(n.x - mx, n.y - my) < 18);
   const go = n => { if (!n) return; if (!n.unlocked) { toast(L.mapLocked(zoneList[n.i - 1].lv)); return; } if (n.z.id === currentId) { closeMap(); return; } closeMap(); onTravel(n.z.id); };
@@ -348,12 +350,13 @@ export function updateHud({ zone, shards, metInZone, totalInZone, quest, questN,
   const key = `${zone.id}|${shards}|${metInZone}|${quest}|${questN}|${done}|${tasks}|${target}|${story}|${L === STR.vi}`; if (key === lastHud) return; lastHud = key;
   $('#h-zone').textContent = zone.name[lang()]; $('#h-zone').style.background = LEVEL_COLORS[zone.lv];
   $('#h-shards').textContent = shards; $('#h-met').textContent = `${metInZone}/${totalInZone}`;
-  $('#h-quest').textContent = quest ? (done ? (zone.lv === 9 ? L.coreOpen : L.questDone) : (leaders ? L.questLeaders(questN, quest) : L.questMeet(questN, quest))) : '';
-  $('#h-task').textContent = done ? '' : tasks; $('#h-target').textContent = target || ''; $('#h-story').textContent = story || '';
+  $('#h-quest').innerHTML = pxText(quest ? (done ? (zone.lv === 9 ? L.coreOpen : L.questDone) : (leaders ? L.questLeaders(questN, quest) : L.questMeet(questN, quest))) : '');   /* plan-22: emoji → icon pixel */
+  $('#h-task').innerHTML = pxText(done ? '' : tasks || ''); $('#h-target').innerHTML = pxText(target || ''); $('#h-story').innerHTML = pxText(story || '');
 }
 export function showPrompt(text) { const p = $('#prompt'); if (!text) { p.hidden = true; return; } p.hidden = false; p.textContent = text; }
 let toastT = null;
 export function toast(text, big = false) {
+  if (hudNotify(text, big)) return;
   const t = $('#toast'); t.textContent = text; t.className = big ? 'big' : ''; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, big ? 3200 : 1800);
 }
 export function applyStaticText() {

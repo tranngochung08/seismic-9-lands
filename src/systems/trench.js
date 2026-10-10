@@ -167,7 +167,7 @@ function knock(ctx, fromX, fromY, px_ = 12) {
   const ox = dx / d * px_, oy = dy / d * px_;
   p.tryMove(ox, oy, ctx.S.map, ctx.allNpcs());
 }
-function loseAir(ctx, n, text) { o2 = Math.max(0, o2 - n); ctx.sfx('alarm'); if (text) ctx.toast(text); bubble(ctx.S.player.x, ctx.S.player.y - 14, 8, 40); }
+function loseAir(ctx, n, text) { o2 = Math.max(0, o2 - n); ctx.sfx('hurt'); if (text) ctx.toast(text); bubble(ctx.S.player.x, ctx.S.player.y - 14, 8, 40); }
 const inArena = (ctx, x, y) => { const a = ctx.S.map.arena; if (!a) return false; const tx = tileOf(x), ty = tileOf(y); return ty < 16 && tx >= a.x && tx < a.x + a.w; };
 
 // ---------------------------------------------------------------- the diver
@@ -195,7 +195,7 @@ function surface(ctx) {
   if (surfacing) return;
   surfacing = true;
   const st = ctx.story(); st.attempts = (st.attempts || 0) + 1; stats(ctx).surfaced++; ctx.persist();
-  ctx.toast(L(ctx).outOfAir, true); ctx.alert(''); ctx.sfx('splash');
+  ctx.toast(L(ctx).outOfAir, true); ctx.alert(''); ctx.sfx('surface');
   if (!ctx.travel('sea', 'back')) surfacing = false;
 }
 
@@ -268,9 +268,9 @@ function searchWreck(ctx, o) {
   searched.add(key);
   const cards = (ctx.S.save.cards ||= []);
   const pool = ctx.membersOfLevel(8).concat(ctx.membersOfLevel(9)).filter(m => !cards.includes(m.id));
-  ctx.bag.add('pearl', 3);
+  ctx.give('pearl', 3);
   if (pool.length) { const m = pool[(Math.random() * pool.length) | 0]; cards.push(m.id); ctx.toast(S.wreckCard(m.k || m.n), true); } else ctx.toast(S.wreckPearl, true);
-  ctx.sfx('coin'); ctx.persist(); bubble(o.x * TILE + 24, o.y * TILE + 16, 10, 40);
+  ctx.sfx('stone_gain'); ctx.persist(); bubble(o.x * TILE + 24, o.y * TILE + 16, 10, 40);
 }
 
 // ---------------------------------------------------------------- the Rocky ally
@@ -307,15 +307,15 @@ function useSkill(ctx, n, force) {
   if (!force && ally.cd[n - 1] > 0) return false;
   const p = ctx.S.player, a = ally;
   if (n === 1) {                                                         // Ground Pound: stuns every tentacle (Sweep dies, Whirl stops)
-    a.cd[0] = CD[0]; a.poundT = 0.5; ctx.quake(0.6); ctx.sfx('build'); dust(a.x, a.y, 16); ring(a.x, a.y, 60, 0.6, '210,200,190');
+    a.cd[0] = CD[0]; a.poundT = 0.5; ctx.quake(0.6); ctx.sfx('pound'); dust(a.x, a.y, 16); ring(a.x, a.y, 60, 0.6, '210,200,190');
     stunT = STUN_T; if (whirl) whirl = null;
     if (boss && boss.cur && (boss.cur.name === 'sweep' || boss.cur.name === 'slam' || boss.cur.name === 'whirl')) boss.cur = null;
     if (boss) { for (const t of boss.tents) if (t.st === 'wind' || t.st === 'lash') t.st = 'sway'; }
     ctx.toast(S.pound); ctx.alert('');
   } else if (n === 2) {                                                  // Stone Shield: 5 s — no darkening from ink, no hits
-    a.cd[1] = CD[1]; a.shieldT = SHIELD_T; ctx.sfx('craft'); ring(p.x, p.y - 6, 22, 0.5, '200,200,220'); ctx.toast(S.shield);
+    a.cd[1] = CD[1]; a.shieldT = SHIELD_T; ctx.sfx('shield'); ring(p.x, p.y - 6, 22, 0.5, '200,200,220'); ctx.toast(S.shield);
   } else if (n === 3) {                                                  // Crush: pops the bubble, 2 hits on the nearest tentacle, or the head
-    a.cd[2] = CD[2]; ctx.sfx('hit');
+    a.cd[2] = CD[2]; ctx.sfx('crit');
     let did = false;
     if (trapped) { popBubble(ctx, true); did = true; }
     if (boss && (boss.phase === 'fight' || boss.phase === 'thrash')) {
@@ -349,12 +349,12 @@ function startBoss(ctx, rematch) {
     head: { x: (c.x + 1) * TILE, y: (c.y + 2) * TILE + 30, rise: 0, alpha: 1, tell: 0 },
     tents: tentSpots(ctx).map(s => ({ x: s.x, y: s.y, hp: TENT_HP, rise: 0, st: 'rise', ft: Math.random() * 3, hitCd: 0, regrow: 0, a: 0 }))
   };
-  ctx.alert(L(ctx)[rematch ? 'rematch' : 'intro'], 3); ctx.sfx('roar'); ctx.hazardsOff(true);
+  ctx.alert(L(ctx)[rematch ? 'rematch' : 'intro'], 3); ctx.sfx('boss_intro'); ctx.hazardsOff(true);
 }
 const liveTents = () => boss ? boss.tents.filter(t => t.st !== 'dead') : [];
 function strike(ctx, t, n = 1, byRocky = false) {
   if (!boss || (boss.phase !== 'fight' && boss.phase !== 'thrash') || t.st === 'dead' || (!byRocky && t.hitCd > 0)) return;
-  t.hitCd = 0.35; t.hp -= n; if (!byRocky) ctx.sfx('hit');
+  t.hitCd = 0.35; t.hp -= n; if (!byRocky) ctx.sfx('boss_hit');
   ctx.S.player.faceTo(t.x, t.y); ink(t.x, t.y - 16, 5); bubble(t.x, t.y - 10, 3);
   if (t.hp <= 0) {
     t.st = 'dead'; t.regrow = REGROW_T; ink(t.x, t.y - 10, 16);
@@ -364,7 +364,7 @@ function strike(ctx, t, n = 1, byRocky = false) {
   }
 }
 function hitHead(ctx) {
-  const S = L(ctx); boss.headHp--; boss.head.tell = 0; ctx.sfx('roar'); ink(boss.head.x, boss.head.y - 20, 20); ring(boss.head.x, boss.head.y - 20, 40, 0.5, '255,212,94');
+  const S = L(ctx); boss.headHp--; boss.head.tell = 0; ctx.sfx('kraken_hurt'); ink(boss.head.x, boss.head.y - 20, 20); ring(boss.head.x, boss.head.y - 20, 40, 0.5, '255,212,94');
   ctx.toast(S.headHit(boss.headHp), true);
   if (boss.headHp <= 0 && liveTents().length === 0) winBoss(ctx);
 }
@@ -398,18 +398,18 @@ function execSkill(ctx, cur) {
   const S = L(ctx), p = ctx.S.player;
   if (cur.name === 'slam') {
     for (const t of cur.tents) if (t.st === 'wind') { t.st = 'lash'; t.a = 0; }
-    const hx = cur.tx * TILE + 8, hy = cur.ty * TILE + 8; ring(hx, hy, 22, 0.45); ink(hx, hy, 6); ctx.sfx('splash');
+    const hx = cur.tx * TILE + 8, hy = cur.ty * TILE + 8; ring(hx, hy, 22, 0.45); ink(hx, hy, 6); ctx.sfx('slam');
     const b = p.box(); const hit = b.x < hx + 10 && b.x + b.w > hx - 10 && b.y < hy + 10 && b.y + b.h > hy - 10;
     if (hit && !(ally && ally.shieldT > 0)) { loseAir(ctx, SLAM_DMG, S.slamHit); knock(ctx, hx, hy + 4, 14); }
     cur.phase = 'done'; cur.t = 0;
-  } else if (cur.name === 'sweep') { cur.phase = 'run'; cur.t = 0; for (const t of cur.tents) t.st = 'lash'; ctx.sfx('splash'); }
+  } else if (cur.name === 'sweep') { cur.phase = 'run'; cur.t = 0; for (const t of cur.tents) t.st = 'lash'; ctx.sfx('whoosh_big'); }
   else if (cur.name === 'ink') { if (ally && ally.shieldT > 0) ctx.toast(S.inkHeld); else inkT = INK_T; ink(boss.head.x, boss.head.y - 24, 30); cur.phase = 'done'; cur.t = -1.2; boss.skillT = 1.5; }   // the next skill comes fast, in the dark
   else if (cur.name === 'whirl') { whirl = { t: WHIRL_T }; cur.phase = 'run'; cur.t = 0; }
-  else if (cur.name === 'bubble') { trapped = { t: BUBBLE_T, mash: 0, slamAt: 1.5 }; cur.phase = 'run'; cur.t = 0; ctx.sfx('squeak'); ring(p.x, p.y - 6, 16, 0.4); }
+  else if (cur.name === 'bubble') { trapped = { t: BUBBLE_T, mash: 0, slamAt: 1.5 }; cur.phase = 'run'; cur.t = 0; ctx.sfx('bubble_trap'); ring(p.x, p.y - 6, 16, 0.4); }
 }
 function popBubble(ctx, byRocky) {
   if (!trapped) return;
-  const p = ctx.S.player; trapped = null; bubble(p.x, p.y - 10, 14, 45); ring(p.x, p.y - 6, 18, 0.35); ctx.sfx('splash');
+  const p = ctx.S.player; trapped = null; bubble(p.x, p.y - 10, 14, 45); ring(p.x, p.y - 6, 18, 0.35); ctx.sfx('bubble_pop');
   if (byRocky) ctx.toast(L(ctx).popped);
   if (boss && boss.cur && boss.cur.name === 'bubble') { boss.cur = null; }
 }
@@ -459,7 +459,7 @@ function updateBoss(dt, ctx) {
         else {
           trapped.t -= dt;
           if (trapped.slamAt > 0) { trapped.slamAt -= dt; if (trapped.slamAt <= 0 && liveTents().length) { cur.slam = { t: 0, tx: tileOf(p.x), ty: tileOf(p.y - 3) }; const t = liveTents()[0]; t.st = 'wind'; cur.tent = t; marks.push({ x: cur.slam.tx * TILE + 8, y: cur.slam.ty * TILE + 8, t: 0, life: TELL + 0.35, kind: 'slam' }); ctx.alert(S.slam, 1.5); } }
-          if (cur.slam) { cur.slam.t += dt; if (cur.slam.t >= TELL) { const s = cur.slam; cur.slam = null; if (cur.tent && cur.tent.st === 'wind') { cur.tent.st = 'lash'; cur.tent.a = 0; } const hx = s.tx * TILE + 8, hy = s.ty * TILE + 8; ring(hx, hy, 22, 0.45); ink(hx, hy, 6); ctx.sfx('splash'); if (trapped && !(ally && ally.shieldT > 0)) { loseAir(ctx, SLAM_DMG, S.slamHit); } popBubble(ctx, false); B.cur = null; } }
+          if (cur.slam) { cur.slam.t += dt; if (cur.slam.t >= TELL) { const s = cur.slam; cur.slam = null; if (cur.tent && cur.tent.st === 'wind') { cur.tent.st = 'lash'; cur.tent.a = 0; } const hx = s.tx * TILE + 8, hy = s.ty * TILE + 8; ring(hx, hy, 22, 0.45); ink(hx, hy, 6); ctx.sfx('slam'); if (trapped && !(ally && ally.shieldT > 0)) { loseAir(ctx, SLAM_DMG, S.slamHit); } popBubble(ctx, false); B.cur = null; } }
           if (trapped && trapped.t <= 0) { popBubble(ctx, false); B.cur = null; }
         }
       }
@@ -483,7 +483,7 @@ function beginHeadSlam(ctx) {
 function winBoss(ctx) {
   const S = L(ctx); if (!boss || boss.phase === 'win' || boss.phase === 'done') return;
   boss.phase = 'win'; boss.t = 0; boss.cur = null; whirl = null; stunT = 0; inkT = 0; if (trapped) popBubble(ctx, false);
-  ctx.alert(''); ctx.toast(S.win, true); ctx.sfx('win'); ctx.quake(0.5);
+  ctx.alert(''); ctx.toast(S.win, true); ctx.sfx('boss_win'); ctx.quake(0.5);
   for (const t of boss.tents) t.st = t.st === 'dead' ? 'dead' : 'sink';
   const st = stats(ctx); if (boss.rematch) st.rematches++; else st.wins++; ctx.persist();
   cut = { t: 0, step: 0 };
@@ -495,13 +495,13 @@ function updateWin(dt, ctx) {
   for (const t of B.tents) if (t.st === 'sink') { t.rise = Math.max(0, t.rise - dt * 0.8); if (Math.random() < dt * 4) bubble(t.x, t.y - 10, 1, 30); }
   h.y -= dt * 8; h.alpha = Math.max(0, 1 - cut.t / 2); if (Math.random() < dt * 8) bubble(h.x + rand(-30, 30), h.y - 10, 2, 40);
   if (B.rematch) {
-    if (cut.step === 0 && cut.t >= 2) { cut.step = 1; ctx.bag.add('ink', 1); ctx.bag.add('stone', 10); ctx.toast(S.rematchWin, true); ctx.sfx('coin'); ctx.persist(); B.phase = 'done'; }
+    if (cut.step === 0 && cut.t >= 2) { cut.step = 1; ctx.give('ink', 1); ctx.give('stone', 10); ctx.toast(S.rematchWin, true); ctx.sfx('stone_gain'); ctx.persist(); B.phase = 'done'; }
     return;
   }
   if (cut.step === 0 && cut.t >= 2) {                                       // the cage bursts
     cut.step = 1;
     if (cageObj) { const cx = (cageObj.x + 1) * TILE, cy = (cageObj.y + 1) * TILE; ctx.removeObject(m, cageObj); cageObj = null; bubble(cx, cy, 40, 50); ring(cx, cy, 40, 0.6); ring(cx, cy, 26, 0.45, '255,255,255'); }
-    ctx.sfx('splash'); ctx.toast(S.cage, true);
+    ctx.sfx('unstone'); ctx.toast(S.cage, true);
     const cx = m.cage ? (m.cage.x + 1) * TILE : h.x, cy = m.cage ? (m.cage.y + 2) * TILE + 2 : h.y;
     lyron = new NPC(ctx.FRIEND, cx, cy, ctx.friendSheet(), ctx.rngFrom(3));
     lyron.ghost = true; lyron.radius = 8; lyron.speedMul = 1.6;
@@ -620,8 +620,8 @@ export const trench = {
     if (d.tent) { strike(ctx, d.tent, 1, false); return; }
     if (d.pillar) {
       const q = d.pillar; if (q.st !== 'block') return;
-      if (d.tier >= 1) { if (q.hitCd > 0) return; q.hitCd = 0.3; q.hp -= d.tier; ctx.sfx('hit'); ink(q.cx, q.cy - 6, 6); ctx.S.player.faceTo(q.cx, q.cy); if (q.hp <= 0) { q.st = 'withdraw'; q.t = 0; ink(q.cx, q.cy - 6, 14); ctx.toast(S.cutDone); } }
-      else { q.squeeze++; bubble(ctx.S.player.x, ctx.S.player.y - 12, 2, 30); if (q.squeeze >= SQUEEZE_N) { q.st = 'withdraw'; q.t = 0; ctx.sfx('squeak'); ctx.toast(S.squeezed); } }
+      if (d.tier >= 1) { if (q.hitCd > 0) return; q.hitCd = 0.3; q.hp -= d.tier; ctx.sfx('sword_hit'); ink(q.cx, q.cy - 6, 6); ctx.S.player.faceTo(q.cx, q.cy); if (q.hp <= 0) { q.st = 'withdraw'; q.t = 0; ink(q.cx, q.cy - 6, 14); ctx.toast(S.cutDone); } }
+      else { q.squeeze++; bubble(ctx.S.player.x, ctx.S.player.y - 12, 2, 30); if (q.squeeze >= SQUEEZE_N) { q.st = 'withdraw'; q.t = 0; ctx.sfx('squelch'); ctx.toast(S.squeezed); } }
       return;
     }
     if (d.wreck) { searchWreck(ctx, d.wreck); return; }
@@ -738,7 +738,7 @@ export const trench = {
 
   drawUI(ug, ctx, cx, cy, scale) {
     if (!live) return;
-    const S = L(ctx), W = ug.canvas.width, H = ug.canvas.height, t = ctx.S.time, font = (s, b) => `${b ? 'bold ' : ''}${s}px "Segoe UI",system-ui,sans-serif`;
+    const S = L(ctx), W = ug.canvas.width, H = ug.canvas.height, t = ctx.S.time, font = (s, b) => `${b ? 'bold ' : ''}${s}px VT323, monospace`;
     ug.save(); ug.textAlign = 'center'; ug.textBaseline = 'middle';
     // oxygen bar (top centre, clear of the toast)
     const bw = Math.max(170, Math.min(340, Math.round(W * 0.3))), bh = Math.max(14, Math.round(scale * 5)), bx = Math.round((W - bw) / 2), by = Math.min(Math.max(122, Math.round(H * 0.17)), Math.max(60, H - 90));

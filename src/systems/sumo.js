@@ -342,7 +342,7 @@ function finish(ctx, win, forfeit = false) {
   result = win ? 'win' : 'lose';
   if (win) {
     ctx.toast(S.won(ai.name), true); ctx.sfx('win');
-    ctx.S.save.inv.stone = (ctx.S.save.inv.stone || 0) + REWARD;
+    ctx.give('stone', REWARD, undefined, undefined, { toPlayer: true });   /* plan-24 */
     s.wins[ai.key] = (s.wins[ai.key] || 0) + 1;
     const ach = ctx.S.save.achievements = ctx.S.save.achievements || [];
     const first = !ach.includes('sumo'); if (first) ach.push('sumo');
@@ -499,10 +499,10 @@ export const sumo = {
     ug.beginPath(); ug.roundRect(bx + 3, by + bh - 7, Math.max(0, (bw - 6) * k), 4, 2); ug.fill();
     ug.textBaseline = 'middle';
     const fs = Math.max(11, Math.round(scale * 3.3));
-    ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`;
+    ug.font = `bold ${fs}px VT323, monospace`;
     ug.textAlign = 'left'; ug.fillStyle = '#8fd3ff'; ug.fillText(myKey ? `${S.you} · ${fullName(ctx, myKey)}` : S.you, bx + 10, by + bh / 2 - 3);
     ug.textAlign = 'right'; ug.fillStyle = '#ffd45e'; ug.fillText(ai.name, bx + bw - 10, by + bh / 2 - 3);
-    ug.textAlign = 'center'; ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(13, Math.round(scale * 4.2))}px "Segoe UI",system-ui,sans-serif`;
+    ug.textAlign = 'center'; ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(13, Math.round(scale * 4.2))}px VT323, monospace`;
     const t = phase === 'duel' || phase === 'end' ? Math.max(0, Math.ceil(left)) : DUEL_LEN;
     ug.fillText(phase === 'walk' ? '…' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`, bx + bw / 2, by + bh / 2 - 3);
     ug.restore();

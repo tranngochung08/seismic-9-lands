@@ -96,9 +96,9 @@ function render() {
 }
 export function runShowcase(d) {
   deps = d; window.__showcase = { toWell, warp, pressFarm, pressPens };   /* cho script test */ el = document.createElement('div'); el.id = 'showcase'; document.body.appendChild(el);
-  const css = document.createElement('style'); css.textContent = `#showcase{position:fixed;left:10px;top:104px;width:300px;max-height:calc(100vh - 120px);overflow-y:auto;z-index:8;background:rgba(13,11,20,.88);border:2px solid #ffd45e;border-radius:10px;padding:8px;color:#f2ebe0;font:13px "Segoe UI",sans-serif}
+  const css = document.createElement('style'); css.textContent = `#showcase{position:fixed;left:10px;top:104px;width:300px;max-height:calc(100vh - 120px);overflow-y:auto;z-index:8;background:rgba(13,11,20,.88);border:2px solid #ffd45e;border-radius:10px;padding:8px;color:#f2ebe0;font:13px VT323, monospace}
   #showcase .sc-h{font-weight:700;color:#ffd45e;margin-bottom:4px} #showcase .sc-row{display:flex;flex-wrap:wrap;gap:4px;margin:3px 0}
-  #showcase button{font:12px "Segoe UI",sans-serif;padding:4px 7px;border-radius:6px;border:1px solid #33294a;background:#2b2440;color:#f2ebe0;cursor:pointer} #showcase button:hover{border-color:#ffd45e}
+  #showcase button{font:12px VT323, monospace;padding:4px 7px;border-radius:6px;border:1px solid #33294a;background:#2b2440;color:#f2ebe0;cursor:pointer} #showcase button:hover{border-color:#ffd45e}
   #showcase .sc-chk{margin:6px 0 0 16px;padding:0;font-size:11.5px;color:#cbd5c0} #showcase .sc-chk li{margin:2px 0} #showcase .dim{color:#a79a86} #showcase[hidden]{display:none}`;
   document.head.appendChild(css); render();
   window.addEventListener('keydown', e => { if (e.code === 'F9') { el.hidden = !el.hidden; e.preventDefault(); } });

@@ -2,7 +2,7 @@
 // fish need a rod, live in a per-zone density field and fight back on the line. See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
 import { ART } from '../art.js';
-import { FPS, loopFrame, phase } from '../anim.js';
+import { FPS, loopFrame, phase, waterDraw } from '../anim.js';
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -136,7 +136,27 @@ export const HEAD_SPR = {};
 export function registerHead(kind, set) { if (set) HEAD_SPR[kind] = set; return set; }
 if (typeof window !== 'undefined') window.__carrySpr = HEAD_SPR;   /* móc test */
 registerHead('cow', SPR.cow); registerHead('chicken', SPR.chicken); registerHead('bird', SPR.bird); registerHead('fish', HELD.fish); registerHead('fishBig', HELD.fishBig);
-const sprOf = it => (it.kind === 'fish' && it.big ? HEAD_SPR.fishBig : HEAD_SPR[it.kind]) || null;
+const sprOf = it => (it.kind === 'fish' && it.sp && speciesSet(it.sp, it.big)) || (it.kind === 'fish' && it.big ? HEAD_SPR.fishBig : HEAD_SPR[it.kind]) || null;
+/* ảnh loài cá (ui/fish/<loài>.png, 32×32 = 16 logic) → bộ 2 khung [thường, hơi co] × [phải, trái]; cá to ×1,3.
+   Ghép trên canvas KHÔNG có __hi (bài học shim 2026-09-25), chỉ đánh dấu __hi cho canvas kết quả. */
+const SP_SET = {};
+function speciesSet(sp, big) {
+  const key = sp + (big ? '+' : ''); if (SP_SET[key] !== undefined) return SP_SET[key];
+  const ui = fishUi(), f = ui && ui.species && ui.species[sp]; if (!f) return (SP_SET[key] = null);
+  const im = fimg('head_' + sp, f); if (!im.complete || !im.naturalWidth) return null;   /* chưa tải xong → khung sau thử lại */
+  const W = im.naturalWidth, H = im.naturalHeight, src = mkCanvas(W, H), sg = src.getContext('2d'); sg.drawImage(im, 0, 0);
+  const d = sg.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = 0, y1 = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 0) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < x0) return (SP_SET[key] = null);
+  const k = big ? 1.3 : 1, hi = ART.hi || 2, cw = Math.round((x1 - x0 + 1) * k / hi) * hi, ch = Math.round((y1 - y0 + 1) * k / hi) * hi;
+  const make = (squash, flip) => {
+    const c = mkCanvas(cw, ch), g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+    const sh = Math.round(ch * (squash ? 0.9 : 1)); if (flip) { g.translate(cw, 0); g.scale(-1, 1); }
+    g.drawImage(src, x0, y0, x1 - x0 + 1, y1 - y0 + 1, 0, ch - sh, cw, sh);
+    c.__w = cw; c.__h = ch; c.__hi = hi; Object.defineProperty(c, 'width', { value: cw / hi }); Object.defineProperty(c, 'height', { value: ch / hi }); return c;
+  };
+  return (SP_SET[key] = [[make(false, false), make(false, true)], [make(true, false), make(true, true)]]);
+}
 function contArt(w, h, fn) { const c = mkCanvas(w, h); fn(c.getContext('2d')); return c; }
 const CONT_IMG = {};
 for (let t = 1; t <= 3; t++) {
@@ -145,11 +165,14 @@ for (let t = 1; t <= 3; t++) {
   CONT_IMG['cage' + t] = HOOK.image('carry_cage' + t, contArt(20, 16, g => { g.fillStyle = dark; g.fillRect(0, 0, 20, 2); g.fillRect(0, 14, 20, 2); for (let x = 0; x < 20; x += 4) g.fillRect(x, 0, 1, 16); g.fillRect(19, 0, 1, 16); g.fillStyle = wood; g.fillRect(1, 1, 18, 1); }));
   for (const d of ['s', 'e', 'n']) CONT_IMG[`cart${t}_${d}`] = HOOK.image(`carry_cart${t}_${d}`, contArt(32, 22, g => { g.fillStyle = dark; g.fillRect(2, 6, 28, 12); g.fillStyle = wood; g.fillRect(4, 8, 24, 8); g.fillStyle = '#222'; g.beginPath(); g.arc(8, 18, 3.5, 0, TAU); g.arc(24, 18, 3.5, 0, TAU); g.fill(); }));
 }
+let SHOW = null;   /* 2026-10-10 anh: 'câu được cá thì cầm cá lên luôn' → con vừa câu giơ trên đầu ~2,6 s (kể cả khi có xô), rồi mới vào xô */
 function carrySlots(ctx) {   /* → [{ it, where: 'hand'|'bucket'|'cage'|'cart', i }] theo thứ tự bắt; đồ đựng đầy → tay (save cũ vượt mức chồng lên đầu) */
   const n = {}, out = []; let hand = 0;
-  for (const raw of sysS(ctx).carry) {
-    const it = normItem(raw), cat = catOf(it.kind), cap = capOf(ctx, cat), k = n[cat] || 0;
-    if (CONT[cat].tool && k < cap) out.push({ it, where: CONT[cat].tool, i: k }); else out.push({ it, where: 'hand', i: hand++ });
+  const all = sysS(ctx).carry;
+  for (let ci = 0; ci < all.length; ci++) {
+    const raw = all[ci], it = normItem(raw), cat = catOf(it.kind), cap = capOf(ctx, cat), k = n[cat] || 0;
+    const show = SHOW && SHOW.i === ci && SHOW.n === all.length && ctx.S.time < SHOW.until;
+    if (CONT[cat].tool && k < cap && !show) out.push({ it, where: CONT[cat].tool, i: k }); else out.push({ it, where: 'hand', i: hand++ });
     n[cat] = k + 1;
   }
   return out;
@@ -165,7 +188,7 @@ export function drawCarry(ctx, g, cx, cy, out) {
   /* 2026-09-28 anh chê 'cồng kềnh' → gọn kiểu Stardew: trên đầu CHỈ con bế tay; lồng đeo hông (thu 0,6, phía đối diện xô); xe nhỏ 0,75 và bám sát lưng */
   if (hd.length) out.push({ y: p.y + 0.5, f: () => {
     const lift = (p.action && p.action.name === 'carry') ? -4 : 0;   /* clip bế: tay giơ ngang tai → hạ 4 px cho chạm tay */
-    const top = py - 18 - lift;
+    const top = py - 18 - lift - (ctx.S.sea && ctx.S.sea.riding ? 8 : 0);   /* trên bè/ván người vẽ cao hơn 8 px */
     hd.forEach((s, i) => { const set = sprOf(s.it); if (!set) return; const im = frame(set, i), bob = Math.sin(t * 3.2 + i * 0.9) * 1.2, wig = Math.sin(t * 9 + i * 1.3) * 0.12;
       const yy = Math.round(top - i * 8 + bob); glow(s.it, px, yy - (im.height >> 1), im.width, im.height);
       g.save(); g.translate(px, yy); g.rotate(wig); g.drawImage(im, -(im.width >> 1), -im.height); g.restore(); });
@@ -243,7 +266,8 @@ function walkable(ctx, x, y) {
 }
 const isWater = (ctx, x, y) => ctx.getG(ctx.S.map, tileOf(x), tileOf(y)) === ctx.T.WATER;
 const isWaterT = (ctx, tx, ty) => ctx.getG(ctx.S.map, tx, ty) === ctx.T.WATER;
-const hasRod = ctx => !!(ctx.S.save.tools && ctx.S.save.tools.rod);
+const hasRod = ctx => ctx.tool.tier('rod') > 0;   /* plan-20: thống nhất theo tier */
+const holdRod = ctx => (ctx.holding ? ctx.holding('rod') : true);
 
 // ---------------------------------------------------------------- carry stack (on the player's head)
 const MAX_CARRY = 3;   /* chỉ còn là mốc cũ cho save cũ; luật thật ở CAT/CONT bên dưới (plan-9) */
@@ -291,7 +315,7 @@ export function carryDeny(ctx, kind) {
   return vi ? `${name} đã đầy mức tối đa (${c.cap[tier]} ${an}) — bán ở Thương nhân Làng rồi quay lại` : `${name} is at max (${c.cap[tier]} ${an}) — sell at the village trader and come back`;
 }
 // carry entries may be plain kinds ('cow') or objects ({kind:'fish', big:true}) — normalise on read
-const normItem = it => (typeof it === 'string' ? { kind: it, big: false } : { kind: (it && it.kind) || 'fish', big: !!(it && it.big) });
+const normItem = it => (typeof it === 'string' ? { kind: it, big: false } : { kind: (it && it.kind) || 'fish', big: !!(it && it.big), ...(it && it.sp ? { sp: it.sp, cm: it.cm } : {}) });   /* sp: loài cá câu được (anh yêu cầu: bưng đúng con đó) */
 const CARRIABLE = ['cow', 'chicken', 'bird', 'fish'];
 function syncInv(ctx) {                        // save.inv.<kind> is only a mirror of the stack, so the HUD line matches
   const inv = (ctx.S.save.inv = ctx.S.save.inv || {});
@@ -306,10 +330,25 @@ export function removeCarry(ctx, i) {
 export function clearCarry(ctx) { const out = getCarry(ctx); sysS(ctx).carry.length = 0; syncInv(ctx); ctx.persist(); return out; }
 export const carryFull = (ctx, kind = 'fish') => !canCarry(ctx, kind);
 export const CARRY_MAX = MAX_CARRY;
-function addCarry(ctx, item) {
+/* phím T: ném con trên cùng của chồng trên đầu vào ô trống của thanh công cụ (hiệu ứng bay ở hud.js) */
+export function throwTop(ctx) {
+  const c = sysS(ctx).carry; if (!c.length || ctx.S.mode !== 'play') return false;
+  const raw = removeCarry(ctx, c.length - 1); if (!raw) return false;
+  const it = normItem(raw);   /* cá vàng / mực lưu dạng chuỗi ('goldfish') → trước đây ra 'a_undefined', không ném được (QA 2026-10-10) */
+  const id = 'a_' + it.kind; if (!ctx.ITEMS[id]) { addCarry(ctx, raw); return false; }
+  const p = ctx.S.player; if (p.hasAct && p.hasAct('harvest')) p.act('harvest', 0.3);
+  if (ctx.vfx) ctx.vfx('item_pickup_pop', p.x, p.y - 26, 0, true); ctx.sfx('magnet');
+  const slot = ctx.hotbarFirstEmpty ? ctx.hotbarFirstEmpty(id) : -1;
+  const done = () => { ctx.bag.add(id, 1); if (slot >= 0 && ctx.hotbarPut) ctx.hotbarPut(slot, id); ctx.sfx('slot'); ctx.toast(`+1 ${ctx.itemIcon(it.kind)} ${ctx.itemName(it.kind)}`); };
+  if (ctx.flyToSlot) ctx.flyToSlot(it.kind, slot, done, it.sp && fishUi() && fishUi().species ? fishUi().species[it.sp] : null); else done();
+  return true;
+}
+export function addCarry(ctx, item) {   /* plan-21: export — quái bị hạ trả lại thú đã cướp */
   const c = sysS(ctx).carry;
   if (!canCarry(ctx, normItem(item).kind)) return false;
-  c.push(item); syncInv(ctx); ctx.persist(); return true;
+  c.push(item); syncInv(ctx); ctx.persist();
+  const sa = sysS(ctx); if (!sa.tHint) { sa.tHint = true; setTimeout(() => ctx.toast(ctx.lang() === 'vi' ? 'Mẹo: bấm T để ném con vật trên đầu vào ô trống của thanh công cụ' : 'Tip: press T to toss the animal on your head into an empty hotbar slot'), 900); }   /* nhắc phím T 1 lần */
+  return true;
 }
 
 // ---------------------------------------------------------------- particles
@@ -613,6 +652,15 @@ const FISH = [   /* id, tên, cỡ cm [min,max], độ hiếm 1–4, trọng s�
 const RARITY = { vi: ['', 'Thường', 'Khá hiếm', 'Hiếm', 'Huyền thoại'], en: ['', 'Common', 'Uncommon', 'Rare', 'Legendary'] }, RCOL = ['', '#8a7a5e', '#3d8a4f', '#3d6db5', '#c9851a'];
 function pickFish(big) { const k = big ? 1 : 0, tot = FISH.reduce((a, f) => a + f.w[k], 0); let x = Math.random() * tot; for (const f of FISH) { x -= f.w[k]; if (x <= 0) return f; } return FISH[0]; }
 const FIMG = {}; function fimg(k, file) { if (FIMG[k] !== undefined) return FIMG[k]; const im = new Image(); im.src = 'assets/px/' + file; FIMG[k] = im; return im; }
+/* khung giấy PixelLab 9 mảnh (ui/hud/box.png 32×32, góc 6 px) cho bảng câu cá — plan-22 'mọi thứ là pixel' */
+function nine(ug, x, y, w, h, b) {
+  const im = fimg('hudbox', 'ui/hud/box.png'); x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h); b = Math.round(b);
+  if (!im.complete || !im.naturalWidth) { ug.fillStyle = '#352022'; ug.fillRect(x, y, w, h); ug.fillStyle = '#f6e7c8'; ug.fillRect(x + 3, y + 3, w - 6, h - 6); return; }
+  const S = im.naturalWidth, c = 6, m = S - 2 * c, ss = ug.imageSmoothingEnabled; ug.imageSmoothingEnabled = false;
+  const P = [[0, c, 0, b], [c, m, b, w - 2 * b], [S - c, c, w - b, b]], Q = [[0, c, 0, b], [c, m, b, h - 2 * b], [S - c, c, h - b, b]];
+  for (const [sx, sw, dx, dw] of P) for (const [sy, sh, dy, dh] of Q) ug.drawImage(im, sx, sy, sw, sh, x + dx, y + dy, dw, dh);
+  ug.imageSmoothingEnabled = ss;
+}
 function fishUi() { const f = ART.on && ART.man && ART.man.ui && ART.man.ui.fish; return f || null; }
 function startCast(ctx, t) {
   const S = L(ctx);
@@ -634,16 +682,28 @@ function biteNow(ctx) {
   for (const a of list) { if (a.kind !== 'fish') continue; const d = Math.hypot(a.x - fishing.bx, a.y - fishing.by); if (d < bd) { bd = d; best = a; } }
   if (best) { fishing.ent = best; best.hx = fishing.bx; best.hy = fishing.by; best.hr = 10; }
 }
+export function seaCast(ctx, t, dens) {   /* sea_dive.js gọi khi thả câu từ bè: vung cần, phao, thanh kéo, thẻ loài, bưng đúng con — như trên bờ */
+  startCast(ctx, t); if (!fishing) return false;
+  const luck = 0.7 + Math.random() * 0.6; fishing.sea = true; fishing.dens = dens || 0.5; fishing.t = Math.min(20, Math.max(2, (7 / fishing.dens) * luck)); return true;
+}
+export const headSprite = it => sprOf(normItem(it));   /* sea_dive vẽ chồng trên đầu ngoài biển: cá đúng loài */
 function startReel(ctx) {
   const d = fishing.dens;
   fishing.big = Math.random() < 0.15 + d * 0.45;                 // crowded water → better odds of a big one
+  if (fishing.sea) { const r = Math.random(); fishing.special = r < 0.05 ? 'goldfish' : r < 0.2 ? 'squid' : null; if (fishing.special) fishing.big = false; }   /* biển: cá vàng / mực như trước */
   { const pl = ctx.S.player; if (pl.act && pl.hasAct('reel')) pl.act('reel', 0.6); }   /* giật kéo cá */
   fishing.phase = 'reel'; fishing.prog = 0.28; fishing.tens = 0; fishing.presses = []; fishing.life = 30;
   // the fish pulls back 0.05..0.11 of the bar per second, scaled by its size
   fishing.pull = fishing.big ? 0.085 + Math.random() * 0.025 : 0.05 + Math.random() * 0.03;
   splash(fishing.bx, fishing.by, 0.9);
 }
-function endFish(ctx) { fishing = null; if (ctx.S.player.endAct) ctx.S.player.endAct('fish'); if (ctx.S.mode === 'fish') ctx.setMode('play'); }
+function endFish(ctx) {
+  fishing = null; if (ctx.S.player.endAct) ctx.S.player.endAct('fish'); if (ctx.S.mode === 'fish') ctx.setMode('play');
+  if (SHOW && SHOW.pending) {   /* thẻ cá vừa đóng → giơ con cá lên đầu 2,6 s cho người chơi thấy rồi mới vào xô */
+    SHOW.pending = false; SHOW.until = ctx.S.time + 2.6;
+    const p = ctx.S.player; if (p.hasAct && p.hasAct('carry') && p.act) p.act('carry', 2.2);
+  }
+}
 function failFish(ctx, msg) {
   const S = L(ctx);
   if (fishing && fishing.ent) { const e = fishing.ent; e.ang = Math.random() * TAU; e.t = 2; e.hr = Math.max(e.hr, 30); }
@@ -651,14 +711,22 @@ function failFish(ctx, msg) {
   ctx.toast(msg || S.gotAway);
   fishing = { ...fishing, phase: 'done', ok: false, t: 0.9, text: msg === S.snapped ? S.snapped : S.bad };
 }
+function showCatch(ctx) {   /* con vừa câu = phần tử cuối của carry */
+  const c = sysS(ctx).carry; if (!c.length) return; SHOW = { i: c.length - 1, n: c.length, until: Infinity, pending: true };   /* theo vị trí: carry đổi (ném T, bị cướp) thì thôi khoe; giơ trong lúc thẻ cá hiện + 2,6 s sau khi đóng thẻ (endFish) */
+}
 function succeedFish(ctx) {
   const S = L(ctx);
   if (fishing.ent) { const i = list.indexOf(fishing.ent); if (i >= 0) list.splice(i, 1); }
   splash(fishing.bx, fishing.by, 1.4);
   puff(ctx.S.player.x, ctx.S.player.y - 16, 6, '#dff0ff');
-  const ok = addCarry(ctx, { kind: 'fish', big: !!fishing.big });
+  if (fishing.special) {   /* biển: mực / cá vàng (không có thẻ loài) */
+    const k = fishing.special, ok2 = addCarry(ctx, k), vi = ctx.lang() === 'vi'; if (ok2) showCatch(ctx);
+    ctx.toast(!ok2 ? carryDeny(ctx, k) : k === 'goldfish' ? (vi ? 'Cá vàng! (hiếm)' : 'A golden fish! (rare)') : (vi ? 'Câu được mực!' : 'A squid!')); ctx.sfx(k === 'goldfish' ? 'catch_rare' : 'catch');
+    fishing = { ...fishing, phase: 'done', ok: true, t: 0.9, text: S.ok }; if (ctx.S.player.endAct) ctx.S.player.endAct('reel'); return;
+  }
+  const sp = pickFish(!!fishing.big), cm = Math.round(sp.cm[0] + (sp.cm[1] - sp.cm[0]) * Math.pow(Math.random(), fishing.big ? 0.7 : 1.4));   /* chọn loài TRƯỚC → nhân vật bưng đúng con vừa câu */
+  const ok = addCarry(ctx, { kind: 'fish', big: !!fishing.big, sp: sp.id, cm }); if (ok) showCatch(ctx);
   ctx.toast(ok ? (fishing.big ? S.gotBigFish : S.gotFish) : carryDeny(ctx, 'fish')); if (ok && ctx.pop) ctx.pop(ctx.S.player.x, ctx.S.player.y - 18, '+1 🐟');
-  const sp = pickFish(!!fishing.big), cm = Math.round(sp.cm[0] + (sp.cm[1] - sp.cm[0]) * Math.pow(Math.random(), fishing.big ? 0.7 : 1.4));
   const log = ((ctx.S.save.sys ||= {}).fishLog ||= {}), rec = log[sp.id] ||= { n: 0, best: 0 }; rec.n++; const isRec = cm > rec.best; if (isRec) rec.best = cm; ctx.persist();
   fishing = { ...fishing, phase: 'done', ok: true, t: 6, text: S.ok, card: { sp, cm, n: rec.n, best: rec.best, isRec, first: rec.n === 1 } };
   if (ctx.S.player.endAct) ctx.S.player.endAct('reel');
@@ -746,6 +814,7 @@ function drawFishCard(ug, ctx, c, W, H, scale) {
 // ---------------------------------------------------------------- system
 export const animals = {
   id: 'animals',
+  key(code, ctx) { return code === 'KeyT' && throwTop(ctx); },   /* T: ném thú trên đầu vào ô trống */
 
   onZoneEnter(ctx) {
     list = []; fx = []; fishing = null; splashT = 0.6;
@@ -805,7 +874,7 @@ export const animals = {
   },
 
   drawables(ctx, cx, cy) {
-    if (ctx.S.map.sea) return [];                    // sea_dive.js draws the head stack at sea
+    if (ctx.S.map.sea) { const out = []; drawCarry(ctx, ctx.g, cx, cy, out); return out; }   /* biển: vẫn vẽ chồng trên đầu (anh: câu được là cầm cá lên luôn) — sea_dive không vẽ */
     const out = [], g = ctx.g, VW = ctx.VW, VH = ctx.VH;
     for (const a of list) {
       const sx = a.x - cx, sy = a.y - cy;
@@ -828,7 +897,7 @@ export const animals = {
         if (ctx.getG(map, tx, ty + 1) !== W) fy2 = Math.min(fy2, (ty + 1) * TILE - img.height - cy);
         out.push({ y: a.y - 200, f: () => g.drawImage(img, fx2, fy2) });
       } else {
-        out.push({ y: a.y, f: () => g.drawImage(img, dx, dy) });
+        out.push({ y: a.y, f: () => waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => g.drawImage(img, dx, dy)) });   /* thú lội nước vẽ ngập */
       }
     }
     // plan-9: đồ mang theo (tay / xô / lồng / xe) vẽ tập trung cho mọi module
@@ -848,7 +917,8 @@ export const animals = {
     g.strokeStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.ellipse(x, y + 2, 10, 4, 0, 0, TAU); g.stroke();
     const p = ctx.S.player;                                      // the line, from the player's hands
     g.strokeStyle = fishing.phase === 'reel' ? `rgba(255,${Math.round(240 - fishing.tens * 180)},${Math.round(255 - fishing.tens * 210)},.75)` : 'rgba(240,240,255,.45)';
-    g.beginPath(); g.moveTo(Math.round(p.x) - cx + (p.dir === 1 ? -5 : 5), Math.round(p.y) - 13 - cy); g.lineTo(x, y + bob); g.stroke();
+    const ry = ctx.S.sea && ctx.S.sea.riding ? 21 : 13;   /* trên bè: tay cao hơn 8 px */
+    g.beginPath(); g.moveTo(Math.round(p.x) - cx + (p.dir === 1 ? -5 : 5), Math.round(p.y) - ry - cy); g.lineTo(x, y + bob); g.stroke();
     const fa = fishUi(), bim = fa && fa.bobber ? fimg('bobber', fa.bobber) : null;
     if (bim && bim.complete && bim.naturalWidth) { const dip = fishing.phase === 'bite' ? 2 : 0; g.drawImage(bim, 0, 0, bim.naturalWidth, bim.naturalHeight, x - 4, y - 6 + bob + dip, 8, 8); }   /* phao PixelLab 8×8 logic; cắn câu thì chìm */
     else { g.fillStyle = '#1c1a24'; g.fillRect(x - 3, y - 4 + bob, 6, 7); g.fillStyle = '#e04b4b'; g.fillRect(x - 2, y - 3 + bob, 4, 3); g.fillStyle = '#ffffff'; g.fillRect(x - 2, y + bob, 4, 2); }
@@ -864,9 +934,9 @@ export const animals = {
     if (f.phase === 'wait' || f.phase === 'bite') {              // "…" then "!" over the bobber
       const bx = Math.round((f.bx - cx) * scale), by = Math.round((f.by - 22 - cy) * scale);
       const bite = f.phase === 'bite';
-      ug.font = `bold ${fs * (bite ? 2 : 1.3)}px "Segoe UI",system-ui,sans-serif`;
-      ug.fillStyle = 'rgba(13,11,20,.65)'; ug.beginPath(); ug.arc(bx, by, fs * (bite ? 1.1 : 0.9), 0, TAU); ug.fill();
-      ug.fillStyle = bite ? '#ffd45e' : '#cfd8e6';
+      ug.font = `bold ${fs * (bite ? 2 : 1.3)}px VT323, monospace`;
+      const rr = Math.round(fs * (bite ? 1.1 : 0.9)); nine(ug, bx - rr, by - rr, rr * 2, rr * 2, Math.max(4, scale * 2));   /* ô giấy PixelLab */
+      ug.fillStyle = bite ? '#c0392b' : '#3b2412';
       ug.fillText(bite ? S.bite : '…', bx, by + 2);
     }
     const bw = Math.min(W * 0.62, 460), bh = Math.max(18, scale * 7), bx = (W - bw) / 2;
@@ -874,39 +944,37 @@ export const animals = {
     const extra = f.phase === 'reel' ? th + 6 + fs : 0;         // the reel panel is taller: bar + tension + labels
     const by = H - Math.max(96, scale * 34) - extra;
     const pad = Math.max(8, scale * 3);
-    ug.fillStyle = 'rgba(13,11,20,.82)';
-    ug.beginPath(); ug.roundRect(bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, 10); ug.fill();
-    ug.strokeStyle = 'rgba(255,212,94,.35)'; ug.lineWidth = 2; ug.stroke();
-    ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`;
-    const small = `${Math.max(10, scale * 3)}px "Segoe UI",system-ui,sans-serif`;
+    nine(ug, bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, Math.max(8, scale * 3));   /* khung giấy PixelLab (ui/hud/box.png), không bo góc */
+    ug.font = `bold ${fs}px VT323, monospace`;
+    const small = `${Math.max(10, scale * 3)}px VT323, monospace`;
     if (f.phase === 'done') {
-      ug.fillStyle = f.ok ? '#8fe08a' : '#ff8c8c';
-      ug.font = `bold ${fs * 1.5}px "Segoe UI",system-ui,sans-serif`;
+      ug.fillStyle = f.ok ? '#2e7d32' : '#c0392b';
+      ug.font = `bold ${fs * 1.5}px VT323, monospace`;
       ug.fillText(f.text, W / 2, by + bh / 2);
     } else if (f.phase === 'reel') {
-      ug.fillStyle = '#f2ebe0'; ug.fillText(f.big ? S.reelBig : S.reelTitle, W / 2, by - fs * 0.6);
-      ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, bh / 2); ug.fill();
+      ug.fillStyle = '#3b2412'; ug.fillText(f.big ? S.reelBig : S.reelTitle, W / 2, by - fs * 0.6);
+      ug.fillStyle = '#352022'; ug.fillRect(bx - 2, by - 2, bw + 4, bh + 4); ug.fillStyle = '#7a5634'; ug.fillRect(bx, by, bw, bh);
       const pw = bw * Math.max(0, Math.min(1, f.prog));
-      ug.fillStyle = f.big ? '#ffb347' : '#4caa4f'; ug.beginPath(); ug.roundRect(bx, by, Math.max(bh, pw), bh, bh / 2); ug.fill();
+      ug.fillStyle = f.big ? '#ffb347' : '#4caa4f'; ug.fillRect(bx, by, Math.max(bh, pw), bh);
       const mx = bx + pw;                                        // progress marker
       ug.fillStyle = '#1c1a24'; ug.fillRect(mx - 3, by - 5, 6, bh + 10);
       ug.fillStyle = '#ffd45e'; ug.fillRect(mx - 2, by - 4, 4, bh + 8);
       // tension meter
       const ty = by + bh + 5;
-      ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, ty, bw, th, th / 2); ug.fill();
+      ug.fillStyle = '#352022'; ug.fillRect(bx - 2, ty - 2, bw + 4, th + 4); ug.fillStyle = '#7a5634'; ug.fillRect(bx, ty, bw, th);
       ug.fillStyle = f.tens > 0.66 ? '#ff4d4d' : f.tens > 0.33 ? '#ffb347' : '#6fb2e0';
-      ug.beginPath(); ug.roundRect(bx, ty, Math.max(2, bw * f.tens), th, th / 2); ug.fill();
-      ug.font = small; ug.fillStyle = '#a79a86'; ug.textAlign = 'left';
+      ug.fillRect(bx, ty, Math.max(2, bw * f.tens), th);
+      ug.font = small; ug.fillStyle = '#7a5634'; ug.textAlign = 'left';
       ug.fillText(S.tension, bx, ty + th + fs * 0.7);
       ug.textAlign = 'right'; ug.fillText(S.reelHint, bx + bw, ty + th + fs * 0.7);
       ug.textAlign = 'center';
     } else {
-      ug.fillStyle = '#f2ebe0'; ug.fillText(f.phase === 'bite' ? S.biteHint : S.waiting, W / 2, by - fs * 0.6);
-      ug.font = small; ug.fillStyle = '#a79a86';
+      ug.fillStyle = '#3b2412'; ug.fillText(f.phase === 'bite' ? S.biteHint : S.waiting, W / 2, by - fs * 0.6);
+      ug.font = small; ug.fillStyle = '#7a5634';
       ug.fillText(S.castHint, W / 2, by + bh + fs * 0.9);
-      ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, bh / 2); ug.fill();
-      if (f.phase === 'bite') { ug.fillStyle = '#ffd45e'; ug.beginPath(); ug.roundRect(bx, by, Math.max(bh, bw * Math.max(0, f.t / 1.2)), bh, bh / 2); ug.fill(); }
-      else { const k = (Math.sin(f.wob * 2) + 1) / 2; ug.fillStyle = '#3d6db5'; ug.beginPath(); ug.roundRect(bx + bw * 0.5 - bh, by, bh * 2 + bw * 0.06 * k, bh, bh / 2); ug.fill(); }
+      ug.fillStyle = '#352022'; ug.fillRect(bx - 2, by - 2, bw + 4, bh + 4); ug.fillStyle = '#7a5634'; ug.fillRect(bx, by, bw, bh);
+      if (f.phase === 'bite') { ug.fillStyle = '#ffd45e'; ug.fillRect(bx, by, Math.max(bh, bw * Math.max(0, f.t / 1.2)), bh); }
+      else { const k = (Math.sin(f.wob * 2) + 1) / 2; ug.fillStyle = '#3d6db5'; ug.fillRect(bx + bw * 0.5 - bh, by, bh * 2 + bw * 0.06 * k, bh); }
     }
     ug.restore();
   },
@@ -925,6 +993,9 @@ export const animals = {
     const t = castTarget(ctx);
     if (!t) return null;
     if (!hasRod(ctx)) return { label: S.needRod, x: t.x, y: t.y, limit: 30, data: { hint: true } };
+    if (!holdRod(ctx)) { const mt = ctx.mouseTile && ctx.mouseTile(), p = ctx.S.player;   /* có cần mà không cầm: chỉ khi TRỎ CHUỘT vào nước gần → click tự cầm cần câu */
+      if (mt && ctx.needHold && isWaterT(ctx, mt.tx, mt.ty) && Math.hypot(mt.wx - p.x, mt.wy - p.y) < 56) return { label: ctx.needHold('rod'), x: mt.wx, y: mt.wy, limit: 60, mouse: true, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };
+      return null; }
     return { label: S.cast, x: t.x, y: t.y, limit: 30, data: { cast: t } };
   },
 

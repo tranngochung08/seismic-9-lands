@@ -231,6 +231,8 @@ function buildSea(rng) {
   place(m, 'sign', CX + 3, 56, { text: { en: 'Harbor Village dock. Step off your raft here.\nThe lighthouse always points home.', vi: 'Bến cảng Làng Xuất Phát. Rời bè ở đây.\nHải đăng luôn chỉ về nhà.' } });
   m.entries = { default: { x: CX, y: 5 }, back: { x: CX, y: 56 } };       // default = adrift far out at sea, back = the dock
   m.reserved.push(m.entries.default, m.entries.back);
+  /* plan-26 B0: điểm lặn (vòng xoáy phát sáng, underwater.js vẽ + xử lý E) sát mép tây cầu tàu → tầng nước 1 (u1); từ u1 ngoi lên thì đứng trên cầu tàu cạnh nó */
+  m.dive = { x: CX - 3, y: 51 }; m.entries.whirl = { x: CX - 1, y: 51 }; m.reserved.push(m.entries.whirl, m.dive);
   m.npcArea = { x: 3, y: 50, w: W - 6, h: 8 };
   m.dock = { x: CX, y: 56 }; m.sea = true;
   return m;
@@ -286,7 +288,230 @@ function buildTrench(rng) {
   return m;
 }
 
+// ---------------- plan-26 B0: tầng nước 1 — Rạn San Hô Nông (u1). Đáy cát mở, cụm san hô / tảo bẹ, lỗ phun khí (+hơi thở), 2 rương,
+// đấu trường phía trên có Cua Hoàng Đế canh cổng xoáy xuống u2 (cổng mở khi cua bị hạ — underwater.js). Cổng dưới cùng ngoi lên Biển (entry 'whirl').
+// Vật thể mới (uwgate_sealed / uwgate / uchest / uchest_open / vent_spent) do underwater.js định nghĩa lúc nạp module; ảnh PixelLab ở zones/u1.json.
+function buildU1(rng) {
+  const W1 = 64, H1 = 48, C1 = 32;
+  const m = makeMap(W1, H1, T.SEABED); m.theme = { tier: 0 }; m.tier = 0; m.under = true;
+  for (let x = 0; x < W1; x++) for (const y of [0, 1, H1 - 2, H1 - 1]) setG(m, x, y, T.ABYSS, true);
+  for (let y = 0; y < H1; y++) for (const x of [0, 1, W1 - 2, W1 - 1]) setG(m, x, y, T.ABYSS, true);
+  const coral = (x, y, tall) => { if (inb(m, x, y) && !hasObjectAt(m, x, y)) place(m, tall ? 'coral_t' : 'coral', x, y); };
+  for (let x = 1; x < W1 - 1; x++) { if (Math.abs(x - C1) > 3) coral(x, 1, rng() < .3); if (Math.abs(x - C1) > 2) coral(x, H1 - 2, false); }   /* viền san hô; chừa chỗ cổng xoáy (trên) và cổng ra (dưới) */
+  for (let y = 2; y < H1 - 2; y++) for (const x of [1, W1 - 2]) coral(x, y, rng() < .3);
+  // đấu trường của Cua Hoàng Đế: vòng san hô quanh cổng xoáy, mở ở đáy (giữa) cho người chơi bơi vào
+  m.arena = { x: C1 - 9, y: 2, w: 19, h: 12 }; m.boss = { x: C1, y: 9 };
+  for (let y = 2; y <= 13; y++) for (let x = C1 - 9; x <= C1 + 9; x++) {
+    const k = ((x - C1) / 9) ** 2 + ((y - 6) / 7.5) ** 2; if (k < 0.82 || k > 1.12) continue;
+    if (y >= 9 && Math.abs(x - C1) <= 3) continue;   /* lối vào đấu trường */
+    coral(x, y, rng() < .25);
+  }
+  // cổng xoáy xuống tầng 2 (bị phong ấn tới khi hạ trùm canh cổng)
+  place(m, 'uwgate_sealed', C1 - 1, 3, { uwgate: 'u2' }); m.ugate = { x: C1 - 1, y: 3 };
+  // cổng ra (ngoi lên Biển, đứng trên cầu tàu cạnh điểm lặn)
+  fillG(m, C1 - 1, H1 - 3, 3, 3, T.SEABED, false);
+  gate(m, C1 - 1, H1 - 2, { x: C1 - 1, y: H1 - 1, w: 3, h: 1 }, 'sea', 'whirl');
+  m.entries = { default: { x: C1, y: H1 - 7 }, back: { x: C1, y: 6 } };   /* vào từ Biển: đứng trên cổng đá 2 ô cho khỏi chồng lên vòm */
+  m.reserved.push(m.entries.default, m.entries.back); for (let y = 14; y < H1 - 3; y++) m.reserved.push({ x: C1, y });   /* đại lộ giữa luôn thông */
+  place(m, 'sign', C1 + 3, H1 - 6, { text: { en: 'Shallow Coral Reef — water layer 1 (level 2–3).\nUnderwater your attacks deal only 50%. Air vents give extra breath.\nThe Emperor Crab guards the whirl gate down to layer 2.', vi: 'Rạn San Hô Nông — tầng nước 1 (cấp 2–3).\nDưới nước sức đánh chỉ còn 50%. Lỗ phun khí cho thêm hơi thở.\nCua Hoàng Đế canh cổng xoáy xuống tầng 2.' } });
+  // cụm san hô rải rác (không chắn đại lộ giữa, không lấn đấu trường / lối vào)
+  const keepOut = (x, y) => Math.abs(x - C1) <= 3 || (x >= m.arena.x - 1 && x < m.arena.x + m.arena.w + 1 && y < m.arena.y + m.arena.h + 2) || y > H1 - 7 && Math.abs(x - C1) <= 6;
+  for (let i = 0; i < 34; i++) {
+    const cx = 4 + ((rng() * (W1 - 8)) | 0), cy = 4 + ((rng() * (H1 - 9)) | 0); if (keepOut(cx, cy)) continue;
+    const r = 1 + ((rng() * 2) | 0);
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if (!keepOut(x, y) && x > 2 && y > 2 && x < W1 - 3 && y < H1 - 3 && Math.hypot(x - cx, y - cy) <= r + 0.3 && rng() < 0.7) coral(x, y, rng() < .2);
+  }
+  // rừng tảo nhỏ (không chắn đường)
+  scatterO(m, rng, 'kelp', .045, 3, 3, W1 - 6, H1 - 6, (x, y) => getG(m, x, y) === T.SEABED && !(Math.abs(x - C1) <= 1));
+  // ô trống gần nhất mà bơi tới được từ lối vào (lỗ phun khí, rương)
+  const reach = computeReach(m, m.entries.default);
+  const spot = (x0, y0) => { for (let r = 0; r < 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const x = x0 + dx, y = y0 + dy; if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || !inb(m, x, y) || isSolid(m, x, y) || hasObjectAt(m, x, y) || !reach[y * W1 + x] || !reach[(y + 1) * W1 + x]) continue; return { x, y }; } return null; };
+  for (const [x, y] of [[10, 37], [54, 35], [12, 19], [52, 21]]) { const s = spot(x, y); if (s) place(m, 'vent', s.x, s.y, { vent: true }); }
+  [[6, 6, 'c1'], [57, 41, 'c2']].forEach(([x, y, id]) => { const s = spot(x, y); if (s) place(m, 'uchest', s.x, s.y, { uchest: id }); });
+  m.npcArea = { x: 3, y: 3, w: W1 - 6, h: H1 - 6 }; m.specials = [];
+  m.pickups = [['pearl', 1, 9, 30], ['shell', 2, 50, 12], ['pearl', 1, 58, 30]];
+  return m;
+}
+
+// ---------------- plan-26 B1: tầng nước 2–4. Khung chung: viền vực + vật viền, cổng ra phía dưới (lên tầng trên, entry 'back' = đứng cạnh
+// cổng xoáy đã mở của tầng đó), cổng xoáy xuống tầng sau ở giữa trên (phong ấn tới khi hạ trùm canh cổng — underwater.js), lối vào ở dưới.
+// m.pickups: đồ nằm sẵn dưới đáy (underwater.js rải 1 lần / save); m.secret: góc bí mật (báo khi tới lần đầu); rương mang loot riêng (o.loot).
+function uwFrame(o) {
+  const W = 64, H = 48, C = 32, m = makeMap(W, H, T.SEABED); m.theme = { tier: 0 }; m.tier = 0; m.under = true;
+  for (let x = 0; x < W; x++) for (const y of [0, 1, H - 2, H - 1]) setG(m, x, y, T.ABYSS, true);
+  for (let y = 0; y < H; y++) for (const x of [0, 1, W - 2, W - 1]) setG(m, x, y, T.ABYSS, true);
+  const wall = (x, y, t) => { if (inb(m, x, y) && !hasObjectAt(m, x, y)) place(m, t || o.wall(x, y), x, y); };
+  for (let x = 1; x < W - 1; x++) { if (Math.abs(x - C) > 3) wall(x, 1); if (Math.abs(x - C) > 2) wall(x, H - 2); }
+  for (let y = 2; y < H - 2; y++) for (const x of [1, W - 2]) wall(x, y);
+  place(m, 'uwgate_sealed', C - 1, 3, { uwgate: o.next }); m.ugate = { x: C - 1, y: 3 };
+  fillG(m, C - 1, H - 3, 3, 3, T.SEABED, false);
+  gate(m, C - 1, H - 2, { x: C - 1, y: H - 1, w: 3, h: 1 }, o.up, 'back');
+  m.entries = { default: { x: C, y: H - 7 }, back: { x: C, y: 6 } };
+  m.reserved.push(m.entries.default, m.entries.back, { x: C, y: 5 }, { x: C - 1, y: 5 }, { x: C + 1, y: 5 });
+  m.npcArea = { x: 3, y: 3, w: W - 6, h: H - 6 }; m.specials = []; m.pickups = [];
+  // ô trống gần (x0,y0) bơi tới được từ lối vào (gọi SAU khi dựng xong tường) — cho lỗ phun khí / rương / đồ rải
+  const spot = (x0, y0, r0 = 8) => {
+    const reach = m._uwReach || (m._uwReach = computeReach(m, m.entries.default));
+    for (let r = 0; r < r0; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const x = x0 + dx, y = y0 + dy; if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || !inb(m, x, y + 1) || isSolid(m, x, y) || hasObjectAt(m, x, y) || reservedNear(m, x, y) || !reach[y * W + x] || !reach[(y + 1) * W + x]) continue;
+      return { x, y };
+    }
+    return null;
+  };
+  const vents = list => { for (const [x, y] of list) { const s = spot(x, y); if (s) place(m, 'vent', s.x, s.y, { vent: true }); } };
+  const chests = list => { for (const [x, y, id, loot] of list) { const s = spot(x, y); if (s) place(m, 'uchest', s.x, s.y, { uchest: id, loot }); } };
+  const pickups = list => { for (const [id, n, x, y] of list) { const s = spot(x, y, 5); if (s) m.pickups.push([id, n, s.x, s.y]); } };
+  return { m, W, H, C, wall, spot, vents, chests, pickups };
+}
+const uwSign = (m, x, y, en, vi) => place(m, 'sign', x, y, { text: { en, vi } });
+
+// T2 Rừng Tảo Bẹ (u2, cấp ~4–5): rừng tảo cao che người + quái (Lươn Điện núp trong tảo), Cá Kiếm húc; Lươn Mẹ canh cổng.
+// Tảo cao 'tallkelp' không chắn đường, underwater.js tự vẽ (mờ đi khi người chơi đứng sau); m.kelp = mặt nạ ô có tảo.
+function buildU2(rng) {
+  const { m, W, H, C, wall, vents, chests, pickups } = uwFrame({ wall: () => (rng() < .3 ? 'coral_t' : 'coral'), up: 'u1', next: 'u3' });
+  m.kelp = new Uint8Array(W * H);
+  m.arena = { x: C - 10, y: 2, w: 21, h: 13 }; m.boss = { x: C, y: 8 };
+  for (let y = 2; y <= 14; y++) for (let x = C - 10; x <= C + 10; x++) {
+    const k = ((x - C) / 10) ** 2 + ((y - 6) / 8.5) ** 2; if (k < 0.84 || k > 1.12) continue;
+    if (y >= 10 && Math.abs(x - C) <= 3) continue;   /* lối vào đấu trường */
+    wall(x, y);
+  }
+  // góc bí mật trên trái: hốc san hô kín, khe 1 ô ở đáy (x 6) bị rừng tảo che
+  m.secret = { x: 2, y: 2, w: 8, h: 7 };
+  for (let x = 2; x <= 10; x++) if (x !== 6) wall(x, 9);
+  for (let y = 2; y <= 9; y++) wall(10, y);
+  const keepOut = (x, y) => (x >= m.arena.x - 1 && x < m.arena.x + m.arena.w + 1 && y < m.arena.y + m.arena.h + 2) || (y > H - 9 && Math.abs(x - C) <= 4) || (x <= 10 && y <= 9);
+  // đá san hô chắn đường rải rác
+  for (let i = 0; i < 22; i++) {
+    const cx = 4 + ((rng() * (W - 8)) | 0), cy = 12 + ((rng() * (H - 18)) | 0); if (keepOut(cx, cy) || Math.abs(cx - C) <= 2) continue;
+    const r = 1 + ((rng() * 2) | 0);
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if (!keepOut(x, y) && x > 2 && y > 2 && x < W - 3 && y < H - 3 && Math.abs(x - C) > 1 && Math.hypot(x - cx, y - cy) <= r + 0.3 && rng() < 0.6) wall(x, y, rng() < .2 ? 'coral_t' : 'coral');
+  }
+  // rừng tảo cao (ellipse): đánh dấu m.kelp cả vùng, đặt tảo ~60 % số ô trống
+  const patch = (cx, cy, rx, ry, p) => {
+    for (let y = cy - ry; y <= cy + ry; y++) for (let x = cx - rx; x <= cx + rx; x++) {
+      if (!inb(m, x, y) || ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 > 1) continue;
+      if (y > H - 9 && Math.abs(x - C) <= 4) continue;
+      m.kelp[y * W + x] = 1;
+      if (!isSolid(m, x, y) && !hasObjectAt(m, x, y) && !reservedNear(m, x, y) && rng() < p) place(m, 'tallkelp', x, y, { kelp: true, ghost: true });
+    }
+  };
+  for (const [cx, cy, rx, ry] of [[6, 12, 5, 3], [13, 30, 7, 6], [51, 30, 7, 6], [20, 20, 6, 4], [45, 20, 6, 4], [33, 29, 5, 3], [55, 41, 5, 3], [9, 41, 5, 3], [58, 12, 3, 4]]) patch(cx, cy, rx, ry, 0.62);
+  uwSign(m, C + 3, H - 6, 'Kelp Forest — water layer 2 (level 4–5).\nTall kelp hides you — and the Shock Eels lurking in it.\nThe Mother Eel guards the whirl gate down to layer 3.', 'Rừng Tảo Bẹ — tầng nước 2 (cấp 4–5).\nTảo cao che bạn — và cả Lươn Điện núp trong đó.\nLươn Mẹ canh cổng xoáy xuống tầng 3.');
+  vents([[8, 26], [56, 23], [22, 39], [46, 38], [40, 16]]);
+  chests([[14, 16, 'c1', [['stone', 14], ['pill_s', 1], ['pearl', 1]]], [52, 44, 'c2', [['stone', 12], ['shell', 3], ['seagem', 1]]], [5, 5, 'c3', [['stone', 25], ['pill_l', 1], ['pearl', 2], ['seagem', 1]]]]);
+  pickups([['pearl', 1, 13, 30], ['pearl', 1, 51, 30], ['shell', 2, 20, 20], ['pearl', 1, 45, 20], ['shell', 2, 33, 29], ['pearl', 1, 55, 41], ['pearl', 2, 4, 3], ['seagem', 1, 8, 6]]);
+  return m;
+}
+
+// T3 Nghĩa Địa Tàu Đắm (u3, cấp ~6–7): mảnh xác tàu dựng thành mê cung, dòng chảy mạnh đẩy người (m.current: 1 phải · 2 trái);
+// Mực Ma phun mực (tối nhẹ ngắn), Cá Mập Răng Cưa lao cắn chảy máu; Cá Mập Bọc Giáp canh cổng (húc trúng xác tàu thì hở giáp).
+function buildU3(rng) {
+  const { m, W, H, C, wall, vents, chests, pickups } = uwFrame({ wall: () => 'wreckwall', up: 'u2', next: 'u4' });
+  m.current = new Uint8Array(W * H);
+  m.arena = { x: 3, y: 2, w: W - 6, h: 12 }; m.boss = { x: C, y: 9 };
+  for (const [bx, by] of [[C - 13, 6], [C + 12, 6], [C - 7, 10], [C + 6, 10], [C - 19, 10], [C + 18, 10]]) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) wall(bx + dx, by + dy);   /* khối xác tàu trong đấu trường: dụ cá mập húc vào */
+  // mê cung 9 × 4 ô (mỗi ô 6), tường = mảnh xác tàu; hàng tường trên cùng (y 14) cũng là đáy đấu trường
+  const COLS = 9, ROWS = 4, CS = 6, MX = 5, MY = 14;
+  for (let x = 2; x < W - 2; x++) if (x < MX || x > MX + COLS * CS) wall(x, MY);
+  for (let c = 0; c <= COLS; c++) for (let y = MY; y <= MY + ROWS * CS; y++) wall(MX + c * CS, y);
+  for (let r = 0; r <= ROWS; r++) for (let x = MX; x <= MX + COLS * CS; x++) wall(x, MY + r * CS);
+  const carve = (x, y, w, h) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) { const o = m.objects.find(o => o.x === i && o.y === j && o.type === 'wreckwall'); if (o) removeObject(m, o); } };
+  const seen = new Uint8Array(COLS * ROWS), stack = [[4, ROWS - 1]]; seen[(ROWS - 1) * COLS + 4] = 1;
+  while (stack.length) {
+    const [cx, cy] = stack[stack.length - 1];
+    const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [cx + dx, cy + dy]).filter(([x, y]) => x >= 0 && y >= 0 && x < COLS && y < ROWS && !seen[y * COLS + x]);
+    if (!nb.length) { stack.pop(); continue; }
+    const [nx, ny] = nb[(rng() * nb.length) | 0]; seen[ny * COLS + nx] = 1; stack.push([nx, ny]);
+    if (nx !== cx) carve(MX + Math.max(cx, nx) * CS, MY + cy * CS + 2, 1, 3); else carve(MX + cx * CS + 2, MY + Math.max(cy, ny) * CS, 3, 1);
+  }
+  for (let k = 0; k < 5; k++) { const c = 1 + ((rng() * (COLS - 1)) | 0), r = (rng() * ROWS) | 0; carve(MX + c * CS, MY + r * CS + 2, 1, 3); }   /* vài vòng lặp cho đỡ thành 1 hành lang */
+  carve(C - 1, MY, 3, 1); carve(C - 1, MY + ROWS * CS, 3, 1);   /* lối lên đấu trường · lối xuống bãi vào */
+  for (let y = MY; y <= MY + ROWS * CS; y++) for (let x = 2; x < W - 2; x++) if ((x < MX || x > MX + COLS * CS) && !hasObjectAt(m, x, y)) setG(m, x, y, T.ABYSS, true);   /* dải ngoài mê cung = vực (không thành hành lang vòng) */
+  // dòng chảy: nửa số ô mê cung có dòng ngang (hàng chẵn sang trái, hàng lẻ sang phải)
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (rng() < 0.45 && !(c === 0 && r === ROWS - 1)) continue;
+    const dir = (r + (c === 0 ? 1 : 0)) % 2 ? 1 : 2;
+    for (let y = MY + r * CS + 1; y < MY + (r + 1) * CS; y++) for (let x = MX + c * CS + 1; x < MX + (c + 1) * CS; x++) m.current[y * W + x] = dir;
+  }
+  // xác tàu lớn làm mốc giữa vài ô (vật chắn), ván vụn rải trang trí
+  const cells = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!(c === 4)) cells.push([c, r]);
+  cells.sort(() => rng() - .5);
+  for (const [c, r] of cells.slice(0, 3)) place(m, 'wreck', MX + c * CS + 2, MY + r * CS + 2, { wreck: true });
+  scatterO(m, rng, 'debris', .03, 3, 15, W - 6, H - 20, (x, y) => getG(m, x, y) === T.SEABED);
+  // góc bí mật dưới trái: hốc kín dưới ô (0, hàng cuối), khe 1 ô ở tường đáy mê cung (x 7) — dòng chảy trong ô đó đẩy ra xa khe
+  m.secret = { x: 2, y: MY + ROWS * CS + 1, w: 9, h: H - 3 - (MY + ROWS * CS + 1) };
+  for (let y = MY + ROWS * CS; y <= H - 3; y++) wall(11, y);
+  carve(7, MY + ROWS * CS, 1, 1);
+  uwSign(m, C + 3, H - 6, 'Shipwreck Graveyard — water layer 3 (level 6–7).\nStrong currents push you through the wreck maze.\nThe Armored Shark guards the whirl gate down to layer 4.', 'Nghĩa Địa Tàu Đắm — tầng nước 3 (cấp 6–7).\nDòng chảy mạnh đẩy bạn trong mê cung xác tàu.\nCá Mập Bọc Giáp canh cổng xoáy xuống tầng 4.');
+  vents([[MX + 1 * CS + 3, MY + 3], [MX + 7 * CS + 3, MY + 9], [MX + 3 * CS + 3, MY + 15], [MX + 6 * CS + 3, MY + 21], [12, 44]]);
+  chests([[MX + 8 * CS + 3, MY + 3, 'c1', [['stone', 18], ['pill_s', 1], ['pearl', 1]]], [MX + 1 * CS + 3, MY + 21, 'c2', [['stone', 16], ['shell', 3], ['seagem', 1]]], [4, H - 5, 'c3', [['stone', 30], ['pill_l', 1], ['pearl', 2], ['seagem', 2]]]]);
+  pickups([['pearl', 1, MX + 2 * CS + 3, MY + 3], ['pearl', 1, MX + 6 * CS + 3, MY + 3], ['shell', 3, MX + 4 * CS + 3, MY + 15], ['pearl', 1, MX + 8 * CS + 3, MY + 21], ['pearl', 2, 7, H - 4], ['seagem', 1, 9, H - 6], ['shell', 2, 50, 43]]);
+  return m;
+}
+
+// T4 Hang Phát Sáng (u4, cấp ~8–9): hang tối đen (underwater.js phủ bóng tối, chỉ sáng quanh người + pha lê / lỗ phun / mồi cá đèn lồng);
+// Cá Đèn Lồng dụ bằng ánh sáng rồi đớp, Rắn Biển uốn lượn cắn độc; Rắn Biển Khổng Lồ canh cổng (chỉ đầu là điểm yếu).
+// Cổng xoáy cuối dẫn tới Vực Kraken (B2 — chưa mở). Hang dựng bằng automat ô (cellular) + đường hầm chính bảo đảm thông.
+function buildU4(rng) {
+  const { m, W, H, C, wall, spot, vents, chests, pickups } = uwFrame({ wall: () => 'caverock', up: 'u3', next: 'kraken' });
+  m.cave = true;
+  const Y0 = 15, Y1 = H - 4, open = new Uint8Array(W * H);
+  for (let y = Y0; y <= Y1; y++) for (let x = 2; x < W - 2; x++) open[y * W + x] = rng() < 0.55 ? 1 : 0;
+  for (let it = 0; it < 4; it++) {
+    const nx = open.slice();
+    for (let y = Y0; y <= Y1; y++) for (let x = 2; x < W - 2; x++) { let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && !(open[(y + dy) * W + x + dx] && y + dy >= Y0 && y + dy <= Y1 && x + dx >= 2 && x + dx < W - 2)) n++; nx[y * W + x] = n >= 5 ? 0 : 1; }
+    open.set(nx);
+  }
+  // đấu trường: hang lớn hình bầu dục phía trên
+  for (let y = 2; y <= 14; y++) for (let x = 2; x < W - 2; x++) open[y * W + x] = ((x - C) / 22) ** 2 + ((y - 8) / 6.6) ** 2 <= 1 ? 1 : 0;
+  // đường hầm chính (rộng 3) từ lối vào lên đấu trường qua các điểm ngẫu nhiên; nhánh phụ tới rương / góc bí mật
+  const dig = (x0, y0, x1, y1, r) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2); for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, y = y0 + (y1 - y0) * i / n; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const tx = Math.round(x + dx), ty = Math.round(y + dy); if (tx > 1 && ty > 1 && tx < W - 2 && ty < H - 2 && dx * dx + dy * dy <= r * r + 0.5) open[ty * W + tx] = 1; } } };
+  const way = [[C, H - 5], [12 + ((rng() * 14) | 0), 38], [38 + ((rng() * 14) | 0), 30], [10 + ((rng() * 16) | 0), 22], [C, 14], [C, 9]];
+  for (let i = 0; i < way.length - 1; i++) dig(way[i][0], way[i][1], way[i + 1][0], way[i + 1][1], 1.5);
+  for (let y = H - 9; y <= H - 3; y++) for (let x = C - 3; x <= C + 3; x++) open[y * W + x] = 1;
+  dig(way[1][0], 38, 6, 42, 1); dig(way[2][0], 30, 57, 36, 1); dig(way[3][0], 22, 8, 18, 1);
+  // góc bí mật: hốc nhỏ trên phải, nối bằng khe 1 ô ngoằn ngoèo
+  const sx = 55, sy = 19; m.secret = { x: sx - 3, y: sy - 2, w: 7, h: 5 };
+  for (let y = sy - 2; y <= sy + 2; y++) for (let x = sx - 3; x <= sx + 3; x++) open[y * W + x] = 1;
+  dig(way[2][0], 30, 46, 27, 0); dig(46, 27, 50, 23, 0); dig(50, 23, sx - 3, sy, 0);
+  // chỉ giữ phần hang thông với lối vào (ô cô lập → đá)
+  const reach = new Uint8Array(W * H), q = [[C, H - 6]]; reach[(H - 6) * W + C] = 1;
+  while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const a = x + dx, b = y + dy, i = b * W + a; if (a < 2 || b < 2 || a >= W - 2 || b >= H - 2 || reach[i] || !open[i]) continue; reach[i] = 1; q.push([a, b]); } }
+  for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
+    if (reach[y * W + x] || (y >= H - 3 && Math.abs(x - C) <= 1)) continue;
+    if (hasObjectAt(m, x, y)) continue;
+    let edge = false; for (let dy = -1; dy <= 1 && !edge; dy++) for (let dx = -1; dx <= 1; dx++) if (reach[(y + dy) * W + x + dx]) { edge = true; break; }
+    if (edge) wall(x, y, rng() < .5 ? 'caverock' : 'caverock2'); else setG(m, x, y, T.ABYSS, true);
+  }
+  m.arena = { x: C - 22, y: 2, w: 45, h: 13 }; m.boss = { x: C, y: 8 };
+  // ánh sáng: pha lê dọc hầm (sát vách), pha lê lớn trong đấu trường
+  m._uwReach = null;
+  const lightAt = (x0, y0, t) => { const s = spot(x0, y0, 5); if (s) place(m, t, s.x, s.y, { glow: true }); };
+  for (let i = 0; i < way.length - 2; i++) { const [ax, ay] = way[i], [bx, by] = way[i + 1]; for (const k of [0.3, 0.7]) lightAt(Math.round(ax + (bx - ax) * k) + (k < 0.5 ? 2 : -2), Math.round(ay + (by - ay) * k), k < 0.5 ? 'crystal_b' : 'crystal_p'); }
+  place(m, 'gcrystal', C - 15, 5, { light: true }); place(m, 'gcrystal', C + 14, 5, { light: true });
+  m._uwReach = null;
+  uwSign(m, C + 3, H - 6, 'Glowing Cave — water layer 4 (level 8–9).\nPitch dark: only your lamp, the crystals and the vents give light.\nNever swim toward a lonely light. The Giant Sea Serpent guards the last gate.', 'Hang Phát Sáng — tầng nước 4 (cấp 8–9).\nTối đen: chỉ có đèn của bạn, pha lê và lỗ phun khí là sáng.\nĐừng bơi về phía đốm sáng lẻ loi. Rắn Biển Khổng Lồ canh cổng cuối.');
+  vents([[way[1][0], 38], [way[2][0], 30], [way[3][0], 22], [C + 8, 12]]);
+  chests([[6, 42, 'c1', [['stone', 22], ['pill_s', 2], ['pearl', 1]]], [57, 36, 'c2', [['stone', 20], ['shell', 3], ['seagem', 1]]], [sx + 1, sy, 'c3', [['stone', 40], ['pill_l', 2], ['pearl', 3], ['seagem', 2]]]]);
+  pickups([['pearl', 1, 8, 18], ['pearl', 1, way[2][0], 32], ['shell', 3, way[1][0], 40], ['pearl', 1, C - 12, 11], ['pearl', 2, sx - 1, sy + 1], ['seagem', 1, sx + 2, sy - 1]]);
+  return m;
+}
+
 export const ZONES = {
+  u1: { id: 'u1', lv: -2, order: 98, hidden: true, under: true, uLv: [2, 3], name: S('Shallow Coral Reef', 'Rạn San Hô Nông'), tremor: 0, build: buildU1,
+    systems: ['underwater', 'monsters', 'hero', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(40,170,200,.12)',   /* hero phải có trong danh sách, không thì máu/ngất không chạy (bẫy cũ của Vực Kraken) */
+    flavor: S(['The water is clear here. The crabs are not friendly.'], ['Nước ở đây trong vắt. Mấy con cua thì không thân thiện.']) },
+  /* plan-26 B1: tầng nước 2–4 (cổng xoáy nối nhau; lặn thẳng xuống tầng đã tới từ điểm lặn ở Biển) */
+  u2: { id: 'u2', lv: -2, order: 98.2, hidden: true, under: true, uLv: [4, 5], name: S('Kelp Forest', 'Rừng Tảo Bẹ'), tremor: 0, build: buildU2,
+    systems: ['underwater', 'monsters', 'hero', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(30,150,70,.13)',
+    flavor: S(['Something moves in the kelp. It is not the current.'], ['Có gì đó động đậy trong tảo. Không phải dòng nước đâu.']) },
+  u3: { id: 'u3', lv: -2, order: 98.3, hidden: true, under: true, uLv: [6, 7], name: S('Shipwreck Graveyard', 'Nghĩa Địa Tàu Đắm'), tremor: 0, build: buildU3,
+    systems: ['underwater', 'monsters', 'hero', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(40,70,70,.20)',
+    flavor: S(['Every ship down here was sunk by something with teeth.'], ['Con tàu nào dưới này cũng bị thứ có răng đánh chìm.']) },
+  u4: { id: 'u4', lv: -2, order: 98.4, hidden: true, under: true, uLv: [8, 9], name: S('Glowing Cave', 'Hang Phát Sáng'), tremor: 0, build: buildU4,
+    systems: ['underwater', 'monsters', 'hero', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(10,20,60,.18)',
+    flavor: S(['If a light blinks back at you, swim the other way.'], ['Đốm sáng nào chớp lại với bạn thì bơi hướng khác.']) },
   trench: { id: 'trench', lv: -2, order: 99, hidden: true, name: S('Kraken Trench', 'Vực Kraken'), tremor: 0, build: buildTrench, trench: true, systems: ['trench', 'storyLand', 'photo', 'pet'], tint: 'rgba(0,10,40,.35)', vignette: true,
     flavor: S(['Nothing lives down here but what the Kraken keeps.'], ['Dưới này không có gì sống ngoài thứ Kraken giữ.']) },
   sea: { id: 'sea', lv: -2, order: -1, name: S('Sea of Origins', 'Biển Khởi Nguồn'), tremor: 0, build: buildSea, sea: true,

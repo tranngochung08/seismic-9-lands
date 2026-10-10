@@ -28,7 +28,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 const FRAMES = ['none', 'pixel', 'polaroid', 'pink'], STICKERS = ['none', 'rocky', 'mark', 'land', 'me'], FILTERS = ['none', 'warm', 'cool', 'night'];
 const PINK = '#ff5aa5', GOLD = '#ffd45e', INK = '#1a1626';
-const FONT = '"Segoe UI",system-ui,sans-serif';
+const FONT = 'VT323, monospace';
 
 let CTX = null;
 const ST = { open: false, frame: 'pixel', sticker: 'none', filter: 'none', hideHud: false, wave: false, el: null, timer: null, prevSpeed: 1, busy: null, cam: null, closerSet: false, busyRender: false };

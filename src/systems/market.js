@@ -30,6 +30,7 @@ const STR = {
 const L = ctx => STR[ctx.lang() === 'vi' ? 'vi' : 'en'];
 
 const PRICE = { fish: 2, fishBig: 5, chicken: 3, bird: 4, cow: 6, sheep: 5, rabbit: 3, crab: 3, bat: 4, wood: 1, squid: 4, goldfish: 12, pearl: 8, shell: 1, seagem: 5 };
+for (const k of ['fish', 'chicken', 'bird', 'cow', 'sheep', 'rabbit', 'crab', 'bat', 'squid', 'goldfish']) PRICE['a_' + k] = PRICE[k];   /* thú đã ném vào túi (phím T) */
 const ROD_PRICE = 8;
 /* F02: Thương nhân bán hạt 2 đá/hạt, chỉ hạt đúng mùa hiện tại (tag mùa hoặc 'any') */
 const SEED_PRICE = 2;
@@ -119,7 +120,7 @@ function buySeed(ctx, id) {
   const S = L(ctx), inv = ctx.S.save.inv;
   if (!seedsOfSeason(ctx).includes(id)) return;
   if ((inv.stone || 0) < SEED_PRICE) { ctx.toast(S.poor); return; }
-  if (ctx.bag.add(id, 1) <= 0) return;   /* túi đầy: bag tự báo, không trừ đá */
+  if (ctx.give(id, 1, stall ? stall.x * TILE + 16 : undefined, stall ? (stall.y + 2) * TILE : undefined) <= 0) return;   /* plan-24: đồ mua rơi trước mặt người bán */
   inv.stone -= SEED_PRICE; ctx.persist();
   ctx.toast(S.gotSeed(`${ctx.itemIcon(id)} ${ctx.itemName(id)}`));
   render(ctx);
@@ -128,8 +129,8 @@ function render(ctx) {
   const S = L(ctx), inv = ctx.S.save.inv || {}, carry = getCarry(ctx);
   const total = carry.reduce((a, it) => a + priceOf(it), 0);
   const html = `<h2>🏪 ${S.title}<span class="chip">🪨 ${inv.stone || 0}</span></h2>
-    <p class="dim">${S.lead}</p>
-    <div class="scroll">
+    <div class="shopw"><div class="shop-side"><div class="shop-port"><img src="assets/px/ui/port_trader.png" alt=""></div><p class="shop-say">${S.lead}</p></div>   <!-- plan-22: quầy kiểu Stardew: chân dung + lời chào bên trái -->
+    <div class="scroll shop-main">
       <div class="hrow" style="opacity:.7"><span class="hwho"><b>${S.head}</b></span><span class="hnum"></span>
         <button class="btn primary" data-i="all" style="${BS}${carry.length ? '' : ';opacity:.35;cursor:default'}"${carry.length ? '' : ' disabled'}>${S.sellAll}${total ? ` · +${total} 🪨` : ''}</button></div>
       ${carry.length ? carry.map((it, i) => carryRow(ctx, it, i)).join('') : `<p class="dim" style="margin:6px 0 10px">${S.empty}</p>`}
@@ -139,9 +140,9 @@ function render(ctx) {
       ${rodRow(ctx)}
       <div class="hrow" style="opacity:.7"><span class="hwho"><b>${S.seeds}</b> <span class="dim">${S.seedNote}</span></span><span class="hnum"></span><span></span></div>
       ${seedsOfSeason(ctx).map(id => seedRow(ctx, id)).join('')}
-    </div>
+    </div></div>
     <button class="btn" id="mk-close">${S.close}</button>`;
-  el = ctx.panel('market', html);
+  el = ctx.panel('market', html); el.panel.classList.add('wide', 'shop');
   el.hidden = false;
   el.querySelector('#mk-close').onclick = () => close(ctx);
   for (const b of el.querySelectorAll('[data-i]')) b.onclick = () => sellCarry(ctx, b.dataset.i);
@@ -161,7 +162,7 @@ function sellCarry(ctx, which) {
     if (!it) return;
     earned = priceOf(it);
   }
-  inv.stone = (inv.stone || 0) + earned;
+  ctx.give('stone', earned, stall ? stall.x * TILE + 16 : undefined, stall ? (stall.y + 2) * TILE : undefined);   /* plan-24: tiền bán hàng = đá rơi trước mặt người bán */
   ctx.persist();
   ctx.toast(S.got(earned));
   render(ctx);
@@ -178,7 +179,7 @@ export function sellFromBag(ctx, id, how) {
   if (idx() >= 0) { do { const it = removeCarry(ctx, idx()); if (!it) break; earned += priceOf(it); sold++; } while (how === 'all' && idx() >= 0); }
   else { const have = inv[id] || 0; if (have <= 0 || !PRICE[id]) return 0; sold = how === 'all' ? have : 1; inv[id] = have - sold; earned = sold * PRICE[id]; }
   if (!sold) return 0;
-  inv.stone = (inv.stone || 0) + earned; ctx.persist(); ctx.sfx && ctx.sfx('coin'); ctx.toast(S.got(earned));
+  ctx.give('stone', earned, stall ? stall.x * TILE + 16 : undefined, stall ? (stall.y + 2) * TILE : undefined); ctx.persist(); ctx.sfx && ctx.sfx('sell'); ctx.toast(S.got(earned));
   return earned;
 }
 function sellGoods(ctx, id, how) {
@@ -186,7 +187,7 @@ function sellGoods(ctx, id, how) {
   if (have <= 0 || !PRICE[id]) return;
   const n = how === 'all' ? have : 1;
   inv[id] = have - n;
-  inv.stone = (inv.stone || 0) + n * PRICE[id];
+  ctx.give('stone', n * PRICE[id], stall ? stall.x * TILE + 16 : undefined, stall ? (stall.y + 2) * TILE : undefined);
   ctx.persist();
   ctx.toast(S.got(n * PRICE[id]));
   render(ctx);
@@ -239,13 +240,13 @@ export const market = {
 
   // floating "Trader" sign above the stall
   drawUI(ug, ctx, cx, cy, scale) {
-    if (!stall) return;
+    if (!stall || stall.ghost) return;   /* plan-22: quầy thành NPC → bảng tên vẽ ở staff.js */
     const S = L(ctx);
     const sx = Math.round((stall.x * TILE + TILE - cx) * scale), sy = Math.round((stall.y * TILE - 6 - cy) * scale);
     if (sx < -120 || sx > ug.canvas.width + 120 || sy < -40 || sy > ug.canvas.height + 40) return;
     ug.save();
     const fs = Math.max(10, scale * 3);
-    ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+    ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     const txt = '🏪 ' + S.sign, w = ug.measureText(txt).width + 10, h = fs + 6;
     ug.fillStyle = 'rgba(13,11,20,.72)'; ug.beginPath(); ug.roundRect(sx - w / 2, sy - h, w, h, 4); ug.fill();
     ug.strokeStyle = 'rgba(255,212,94,.5)'; ug.lineWidth = 1; ug.stroke();

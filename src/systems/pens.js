@@ -130,10 +130,10 @@ const rect = r => ({ x0: r.x * TILE + 11, x1: (r.x + wOf(r)) * TILE - 11, y0: r.
 
 /* kiểm chỗ dựng: gốc (x0,y0) = ô trên-trái, g = cột cổng; trả { ok, why } */
 function spotCheck(ctx, x0, y0, g = 1, w = PW) {
-  const map = ctx.S.map, my = ctx.myPlot(); if (!my) return { ok: false, why: 'notMine' };
+  const map = ctx.S.map, my = ctx.myPlot(), own = (x, y) => !!(ctx.ownsTile && ctx.ownsTile(x, y)); if (!my && !own(x0, y0)) return { ok: false, why: 'notMine' };   /* plan-25: + đất đã mua */
   for (let j = 0; j < PH; j++) for (let i = 0; i < w; i++) {
     const tx = x0 + i, ty = y0 + j;
-    const p = ctx.plotOf(tx, ty); if (!p || p.idx !== my.idx) return { ok: false, why: p ? 'notMine' : 'edge' };
+    const p = ctx.plotOf(tx, ty); if (!p || (!own(tx, ty) && (!my || p.idx !== my.idx))) return { ok: false, why: p ? 'notMine' : 'edge' };
     if (tx <= p.x || tx >= p.x + p.w - 1 || ty <= p.y || ty >= p.y + p.h - 1) return { ok: false, why: 'edge' };
     if (ctx.isSolid(map, tx, ty) || ctx.hasObjectAt(map, tx, ty) || badGround(ctx).has(ctx.getG(map, tx, ty))) return { ok: false, why: 'free' };
     if (map.roads && map.roads[ty * map.w + tx] === 1) return { ok: false, why: 'free' };
@@ -202,11 +202,13 @@ function release(ctx, pen) {
   puff(e.x, e.y - 6, 7); hearts(e.x, e.y - 10, 3);
   ctx.sfx('squeak'); ctx.toast(t.released(a.name)); ctx.persist();
 }
-function feed(ctx, pen) {
+function feed(ctx, pen, again) {
   const t = L(ctx), rec = pen.rec;
   if (!rec.animals.length) { ctx.toast(t.noAnimals); ctx.sfx('fail'); return; }
   const a = rec.animals.find(x => !x.fed); if (!a) { ctx.toast(t.allFed); return; }
-  const item = FEED.find(id => ctx.bag.has(id, 1)); if (!item) { ctx.toast(t.feedNeed); ctx.sfx('fail'); return; }
+  const hId = ctx.held ? ctx.held() : null, item = ctx.held ? (FEED.includes(hId) && ctx.bag.has(hId, 1) ? hId : null) : FEED.find(id => ctx.bag.has(id, 1));   /* plan-20: cho ăn bằng món đang CẦM (rơm/bắp) */
+  if (!item) { const has = FEED.find(id => ctx.bag.has(id, 1)); if (has && ctx.hold && !again) { ctx.hold(has); return feed(ctx, pen, true); }   /* bấm máng → tự cầm rơm/bắp rồi cho ăn */
+    ctx.toast(t.feedNeed); ctx.sfx('fail'); return; }
   ctx.bag.remove(item, 1); a.fed = true;
   const c = cen(troughT(rec)); bits(c.x, c.y - 6, 6, '#e3c25a');
   const n = rec.animals.filter(x => x.fed).length;
@@ -220,19 +222,20 @@ function pet(ctx, e) {
 /* lấy sản phẩm ở bảng: sữa cần xô; túi đầy → phần còn lại giữ ở chuồng */
 function collect(ctx, pen) {
   const t = L(ctx), rec = pen.rec; if (!rec.products.length) return false;
+  if (ctx.hold && ctx.tool.tier('bucket') >= 1 && !ctx.holding('bucket') && rec.products.some(p => p.id === 'milk')) ctx.hold('bucket');   /* có sữa → tự cầm xô */
   const keep = [], got = {}; let needBucket = false, full = false;
   for (const p of rec.products) {
     const k = KINDS[Object.keys(KINDS).find(x => KINDS[x].prod === p.id)] || {};
-    if (k.tool && ctx.tool.tier(k.tool) < 1) { keep.push(p); needBucket = true; continue; }
+    if (k.tool && (ctx.tool.tier(k.tool) < 1 || (ctx.holding && !ctx.holding(k.tool)))) { keep.push(p); needBucket = true; continue; }   /* plan-20: vắt sữa phải CẦM xô */
     if (full) { keep.push(p); continue; }
-    const n = p.q === 2 ? 2 : 1, add = ctx.bag.add(p.id, n);
+    const n = p.q === 2 ? 2 : 1, add = ctx.give(p.id, n);   /* plan-24: rơi ra cạnh người lấy */
     if (add < n) { full = true; if (add === 0) { keep.push(p); continue; } }
     got[p.id] = (got[p.id] || 0) + add;
   }
   rec.products = keep;
   const s = Object.entries(got).map(([id, n]) => `${ctx.itemIcon(id)} ${ctx.itemName(id)} ×${n}`).join(' · ');
   if (s) { ctx.sfx('coin'); ctx.toast(t.got(s)); const c = cen(signT(rec)); ctx.pop(c.x, c.y - 16, '+' + Object.values(got).reduce((a, b) => a + b, 0)); }
-  if (needBucket) ctx.toast(t.needBucket);
+  if (needBucket) ctx.toast(ctx.tool.tier('bucket') >= 1 && ctx.needHold ? ctx.needHold('bucket') : t.needBucket);
   if (full) ctx.toast(t.bagFull);
   ctx.persist();
   return !!s;
@@ -346,7 +349,7 @@ function candidates(ctx) {
   const t = L(ctx), p = ctx.S.player, out = [];
   const add = (label, x, y, limit, data) => { const d = Math.hypot(x - p.x, y - p.y); if (d < limit) out.push({ label, x, y, limit, data, d }); };
   /* dựng chuồng: cầm pen1/pen2, gốc chuồng = (ô người chơi −1, −2) → người chơi đứng ở ô cổng */
-  const item = ctx.bag.has('pen2') ? 'pen2' : ctx.bag.has('pen1') ? 'pen1' : null;
+  const item = ctx.held ? (['pen1', 'pen2'].includes(ctx.held()) && ctx.bag.has(ctx.held()) ? ctx.held() : null) : ctx.bag.has('pen2') ? 'pen2' : ctx.bag.has('pen1') ? 'pen1' : null;   /* plan-20: phải CẦM chuồng mới dựng */
   if (item && ctx.S.map.plots && ctx.S.map.plots.length) {
     const ptx = Math.floor(p.x / TILE), pty = Math.floor(p.y / TILE), y0 = pty - 2;
     let x0 = ptx - 1, g = 1, w = PW, chk = spotCheck(ctx, x0, y0, 1, PW);

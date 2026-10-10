@@ -193,7 +193,7 @@ function liveTents() { return K ? K.tents.filter(t => t.st !== 'dead') : []; }
 function endKraken(ctx, why) {
   if (!K) return;
   const S = L(ctx), st = stats(ctx);
-  if (why === 'win') { ctx.bag.add('ink', 1); ctx.bag.add('stone', 6); st.kills++; ctx.toast(S.win, true); ctx.sfx('win'); }
+  if (why === 'win') { ctx.give('ink', 1); ctx.give('stone', 6); st.kills++; ctx.toast(S.win, true); ctx.sfx('win'); }
   else if (why === 'fed') { st.fed++; ctx.toast(S.fed, true); ctx.sfx('splash'); }
   else if (why === 'fled') { st.fled++; ctx.toast(S.fled); }
   else if (why === 'current') { st.fled++; ctx.toast(S.current); }
@@ -353,8 +353,8 @@ function openHold(ctx) {
       if (pool.length) { const m = pool[(Math.random() * pool.length) | 0]; cards.push(m.id); text = S.prizeCard(m.k || m.n); }
       else { k = 'stone'; kinds[i] = 'stone'; }
     }
-    if (k === 'pearl') { ctx.bag.add('pearl', 3); text = S.prizePearl; }
-    else if (k === 'stone') { ctx.bag.add('stone', 10); text = S.prizeStone; }
+    if (k === 'pearl') { ctx.give('pearl', 3); text = S.prizePearl; }
+    else if (k === 'stone') { ctx.give('stone', 10); text = S.prizeStone; }
     ctx.persist(); ctx.toast(text, true); ctx.sfx('coin');
     const icon = { card: '🖼', pearl: '🫧', stone: '🪨' }, label = { card: S.cardLabel, pearl: S.pearlLabel, stone: S.stoneLabel };
     for (const bb of el.querySelectorAll('[data-c]')) { const j = +bb.getAttribute('data-c'); bb.innerHTML = `${icon[kinds[j]]}<div style="font-size:12px">${label[kinds[j]]}</div>`; bb.disabled = true; bb.style.opacity = j === i ? '1' : '.45'; if (j === i) bb.classList.add('primary'); }

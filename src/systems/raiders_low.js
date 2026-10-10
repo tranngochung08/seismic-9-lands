@@ -853,7 +853,7 @@ export const raidersLow = {
     const alive = mobs.filter(m => !m.gone && m.st !== 'flee').length;
     if (phase === 'raid' && alive) {
       const fs = Math.max(11, Math.round(scale * 3.4));
-      ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`;
+      ug.font = `bold ${fs}px VT323, monospace`;
       const txt = S.chip(CONF[kind].icon, `${S.name[kind]} ×${alive}`, Math.max(0, Math.ceil(RAID_MAX - raidT)));
       // sits between the toast (top: 60) and Rocky's timer bar (y: 122)
       const w = ug.measureText(txt).width + fs * 1.4, h = fs * 1.8, x = Math.round((W - w) / 2), y = Math.round(Math.max(96, scale * 24));

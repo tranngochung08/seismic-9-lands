@@ -346,7 +346,7 @@ function drawBoat(g, ent) {
   if (sail && d === 3) g.drawImage(SAIL[d][Math.floor(st.t * 3) & 1], x - 15, y - 44 + bob);   // sailing away: cloth behind the rower
   g.drawImage(BOAT[d][f], x - 16, y - 16 + bob);
   // rower: head + torso only, sitting on the bench — clip chèo PixelLab nếu có (khung theo thời gian khi đang đi)
-  const pad = !sail && ent.sheet.actions && ent.sheet.actions.paddle;
+  const pad = false && !sail && ent.sheet.actions && ent.sheet.actions.paddle;   /* 2026-10-10: ảnh thuyền PixelLab đã có 2 mái chèo → không dùng clip cầm chèo (bị 2 mái chèo) */
   if (pad) { const s0 = Math.max(0, pad.n - 4), pf = ent.moving ? s0 + Math.floor(st.t * 7) % (pad.n - s0) : s0, ch = pad.ch || 20, cw = pad.cw || 16, ex = ch - 20; g.drawImage(pad.img, pf * cw, d * ch, cw, 13 + ex, x - (cw >> 1), y - 22 + bob - ex, cw, 13 + ex); }
   else g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 13, x - 8, y - 22 + bob, 16, 13);
   px(g, x - 5, y - 10 + bob, C.out, 10, 2); px(g, x - 4, y - 9 + bob, C.woodD, 8, 1);   // bench in front of the rower

@@ -1,5 +1,6 @@
 // save.js — localStorage persistence
-const KEY = 'seismic9.save.v1';
+let KEY = 'seismic9.save.v1';
+export function useSlot(name) { KEY = 'seismic9.test.' + name; }   /* ?preset=<tên>: ô lưu test riêng, save thật không bị đụng */
 export function defaultSave() {
   return {
     lang: 'en', name: '', zone: 'sea', entry: 'default', // every new game starts adrift at sea

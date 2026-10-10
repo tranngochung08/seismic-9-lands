@@ -480,7 +480,7 @@ function beat(ctx) {
 function takeLoot(ctx) {
   if (!loot) return;
   const S = L(ctx), n = LOOT_STONE[loot.kind];
-  ctx.S.save.inv.stone = (ctx.S.save.inv.stone || 0) + n;
+  ctx.give('stone', n, undefined, undefined, { toPlayer: true });   /* plan-24 */
   const r = sysR(ctx); r[LOOT_FLAG[loot.kind]] = true;
   ctx.persist(); ctx.toast(S.got[loot.kind], true);
   for (let i = 0; i < 10; i++) { const a = Math.random() * 6.283; part(loot.x, loot.y - 4, Math.cos(a) * rnd(10, 40), Math.sin(a) * rnd(10, 40) - 20, rnd(.3, .7), '#ffd45e', 1, 60, .95); }
@@ -717,7 +717,7 @@ export const raidersHigh = {
       if (sx > -80 && sx < W + 80 && sy > -40 && sy < H + 40) {
         ug.save();
         ug.textAlign = 'center'; ug.textBaseline = 'alphabetic';
-        ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px "Segoe UI",system-ui,sans-serif`;
+        ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px VT323, monospace`;
         ug.fillStyle = 'rgba(13,11,20,.6)'; ug.fillText(S[r.kind], sx + 1, sy - Math.round(scale * 3) + 1);
         ug.fillStyle = '#ffd45e'; ug.fillText(S[r.kind], sx, sy - Math.round(scale * 3));
         const pw = Math.max(5, Math.round(scale * 2.2)), gap = Math.round(pw * 0.5), tot = r.max * pw + (r.max - 1) * gap;
@@ -738,7 +738,7 @@ export const raidersHigh = {
     ug.fillStyle = 'rgba(13,11,20,.86)'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, 7); ug.fill();
     ug.strokeStyle = ritual.miss > 0 ? '#ff1f4b' : '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.roundRect(bx + 1, by + 1, bw - 2, bh - 2, 7); ug.stroke();
     ug.textAlign = 'center'; ug.textBaseline = 'middle';
-    ug.font = `bold ${Math.max(12, Math.round(scale * 3.6))}px "Segoe UI",system-ui,sans-serif`;
+    ug.font = `bold ${Math.max(12, Math.round(scale * 3.6))}px VT323, monospace`;
     ug.fillStyle = '#fff'; ug.fillText(`🥁 ${S.drumTitle} ${ritual.hits}/${BEATS}`, bx + bw / 2, by + Math.round(bh * 0.28));
     // pips
     const n = BEATS, pw = Math.max(10, Math.round(scale * 4)), gap = Math.round(pw * 0.6), tot = n * pw + (n - 1) * gap;
@@ -752,7 +752,7 @@ export const raidersHigh = {
     const wx = bx + 12, ww = bw - 24, wy = by + bh - Math.max(9, Math.round(scale * 2.6)) - 5, wh = Math.max(5, Math.round(scale * 1.7));
     ug.fillStyle = 'rgba(255,255,255,.12)'; ug.fillRect(wx, wy, ww, wh);
     ug.fillStyle = k > .35 ? '#4fc7a8' : '#ff1f4b'; ug.fillRect(wx, wy, Math.round(ww * k), wh);
-    ug.font = `${Math.max(10, Math.round(scale * 2.8))}px "Segoe UI",system-ui,sans-serif`;
+    ug.font = `${Math.max(10, Math.round(scale * 2.8))}px VT323, monospace`;
     ug.fillStyle = 'rgba(255,255,255,.75)'; ug.textAlign = 'right';
     ug.fillText(S.drumHint, bx + bw - 12, by + Math.round(bh * 0.28));
     ug.restore();

@@ -163,7 +163,7 @@ function sink(ctx) {
   if (wasRiding) { restore(p); }   /* plan-15: không dịch về bờ — người chơi bơi thật (swim.js), kiệt sức thì tàu tới cứu */
   s.riding = null; st.parked = null; sv.parked = null; st.caught = null;
   st.sinkT = SINK_SECS; st.sinkAt = { x: land.x, y: land.y };
-  ripple(at.x * 16 + 8, at.y * 16 + 8); ctx.sfx('splash'); ctx.toast(L(ctx).sank, true); ctx.persist();
+  ripple(at.x * 16 + 8, at.y * 16 + 8); ctx.sfx('splash_big'); ctx.toast(L(ctx).sank, true); ctx.persist();
 }
 function respawnRaft(ctx) {
   const s = sea(ctx), sv = slot(ctx); if (!s) return;
@@ -185,12 +185,12 @@ function spawnFloats(ctx) {
 }
 function openCrate(ctx) {
   const t = L(ctx), got = [];
-  const stones = 3 + Math.floor(Math.random() * 4); ctx.bag.add('stone', stones); got.push(`${ctx.itemIcon('stone')}${stones}`);
-  if (ctx.bag.add('rope', 1)) got.push(`${ctx.itemIcon('rope')}1`);
-  const pl = ctx.bag.add('plank', 2); if (pl) got.push(`${ctx.itemIcon('plank')}${pl}`);
-  if (Math.random() < 0.2 && ctx.bag.add('sailcloth', 1)) got.push(ctx.itemIcon('sailcloth'));
-  if (Math.random() < 0.15 && ctx.bag.add('bottle', 1)) got.push(ctx.itemIcon('bottle'));
-  ctx.toast(t.crate + got.join(' ')); ctx.sfx('coin');
+  const stones = 3 + Math.floor(Math.random() * 4); ctx.give('stone', stones); got.push(`${ctx.itemIcon('stone')}${stones}`);
+  if (ctx.give('rope', 1)) got.push(`${ctx.itemIcon('rope')}1`);
+  const pl = ctx.give('plank', 2); if (pl) got.push(`${ctx.itemIcon('plank')}${pl}`);
+  if (Math.random() < 0.2 && ctx.give('sailcloth', 1)) got.push(ctx.itemIcon('sailcloth'));
+  if (Math.random() < 0.15 && ctx.give('bottle', 1)) got.push(ctx.itemIcon('bottle'));
+  ctx.toast(t.crate + got.join(' ')); ctx.sfx('stone_gain');
 }
 function updateFloats(dt, ctx) {
   const p = ctx.S.player, ride = riding(ctx) && ctx.S.mode === 'play';
@@ -222,7 +222,7 @@ function throwOut(ctx, w, ok) {
   if (!spot) spot = nearestWater(ctx, { x: w.x, y: w.y }, 4) || { x: w.x, y: w.y };
   p.x = spot.x * 16 + 8; p.y = spot.y * 16 + 14;
   st.caught = null; st.immune = WHIRL_IMMUNE; w.cool = WHIRL_IMMUNE;
-  ripple(p.x, p.y); ctx.sfx('splash');
+  ripple(p.x, p.y); ctx.sfx('splash_big');
   if (ok) { ctx.toast(t.escaped); return; }
   const carried = ctx.carry.get();
   if (carried.length) { ctx.carry.remove(carried.length - 1); ctx.toast(t.lostAnimal, true); }
@@ -238,7 +238,7 @@ function updateWhirls(dt, ctx) {
     for (const w of st.whirls) {
       if (w.cool > 0) continue;
       const d = Math.hypot(w.x * 16 + 8 - p.x, w.y * 16 + 8 - (p.y - 4));
-      if (d < WHIRL_CATCH) { st.caught = { w, meter: 0 }; ctx.sfx('alarm'); ctx.toast(L(ctx).caught, true); break; }
+      if (d < WHIRL_CATCH) { st.caught = { w, meter: 0 }; ctx.sfx('whirl'); ctx.toast(L(ctx).caught, true); break; }
     }
   }
   const c = st.caught; if (!c) return;
@@ -261,16 +261,30 @@ function drawRaft(g, ent) {
   const hp = s ? s.raft.hp : 6, max = s ? s.raft.max : 6, sail = !!(s && s.raft.sail);
   const bob = Math.round(Math.sin(st.t * 2.6)), sw = ent.moving ? Math.round(Math.sin(st.t * 6) * 2) : 0, f = Math.floor(st.t * 3) & 1;
   g.fillStyle = 'rgba(20,60,110,.28)'; g.beginPath(); g.ellipse(x, y + 3, 16, 5, 0, 0, 7); g.fill();
+  drawFoam(g, x, y + 2, ent.moving, d);   /* anh yêu cầu 2026-10-10: bỏ ô nước xanh 'ván vỡ' → bọt nước tấp vào bè (chậm, dịu) + vệt bọt phía sau khi chèo */
   g.drawImage(RAFT, x - 16, y - 13 + bob);
-  const broken = Math.round((1 - clamp(hp, 0, max) / max) * 3);            // damage: logs gone, water shows through
-  for (let i = 0; i < broken; i++) { const ly = y - 13 + bob + 4 + (3 - i) * 4; px(g, x - 14 + i * 3, ly, C.waterD, 9 - i * 2, 3); px(g, x + 3 + i * 2, ly, C.waterD, 8 - i * 2, 3); px(g, x - 14 + i * 3, ly + 1, C.water, 3, 1); }
   const sx = (d === 0 || d === 3) ? x - 5 : x - 9, sy = y - 39 + bob;      // mast foot on the raft, cloth beside the head
   if (sail && d === 3) g.drawImage(SAIL[d][f], sx, sy);
+  const act = ent.action && ent.sheet.actions && ent.sheet.actions[ent.action.name] && ent.action.name !== 'carry';   /* đang có động tác (vung cần, giữ cần, giật cần…) → vẽ clip đó trên bè, như trên bờ */
+  if (act) { const cst = ent.custom; ent.custom = null; g.save(); g.translate(0, bob - 8); ent.draw(g); g.restore(); ent.custom = cst; if (sail && d !== 3) g.drawImage(SAIL[d][f], sx, sy); return; }
   const pad = !sail && ent.sheet.actions && ent.sheet.actions.paddle;   // clip chèo PixelLab: khung theo thời gian khi đang đi, khung 0 khi đứng
   if (pad) { const s0 = Math.max(0, pad.n - 4), pf = ent.moving ? s0 + Math.floor(st.t * 7) % (pad.n - s0) : s0, ch = pad.ch || 20, cw = pad.cw || 16;   /* 3 khung đầu clip AI = đứng chưa cầm chèo → chỉ dùng 4 khung cuối; đứng yên = cầm chèo */ g.drawImage(pad.img, pf * cw, d * ch, cw, ch, x - (cw >> 1), y - 26 + bob - (ch - 20), cw, ch); }
   else g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 20, x - 8, y - 26 + bob, 16, 20);
   if (!sail && !pad) { ln(g, x + 7, y - 20 + bob, x + 12 + sw, y - 2 + bob, C.out, 2); ln(g, x + 7, y - 20 + bob, x + 12 + sw, y - 2 + bob, C.woodL, 1); }   // paddle pole (code, khi không có clip)
   if (sail && d !== 3) g.drawImage(SAIL[d][f], sx, sy);
+}
+/* bọt nước quanh bè (ảnh PixelLab village images foam_ring / foam_wake). Đứng yên: vòng bọt thở chậm (đổi 2 cỡ mỗi 0,7 s); chèo: thêm vệt bọt phía sau, quay theo hướng đi. */
+function foamImg(k) { const ctx = st.ctx, vp = ctx && ctx.ART && ctx.ART.packs && ctx.ART.packs.village; return vp && vp.images && vp.images[k] || null; }
+function drawFoam(g, x, y, moving, d) {
+  const ring = foamImg('foam_ring'); if (!ring) return;
+  const ph = Math.floor(st.t / 0.7) & 1, rw = 38 + (ph ? 2 : 0), rh = 22 + (ph ? 1 : 0);   /* ảnh 64×40 thu về sát thân bè (bè rộng 32) */
+  g.globalAlpha = 0.95; g.drawImage(ring, 0, 0, ring.width, ring.height, Math.round(x - rw / 2), Math.round(y - rh / 2), rw, rh);
+  const wake = foamImg('foam_wake');
+  if (moving && wake) {   /* vệt bọt: ảnh gốc hướng xuống (bè đi lên) → quay theo hướng */
+    const ang = [Math.PI, Math.PI / 2, -Math.PI / 2, 0][d & 3], off = 14 + (Math.floor(st.t / 0.25) & 1);
+    g.save(); g.translate(x, y); g.rotate(ang); g.drawImage(wake, 0, 0, wake.width, wake.height, -14, off - 4, 28, 28); g.restore();
+  }
+  g.globalAlpha = 1;
 }
 function drawWhirl(g, w, cx, cy) {
   const x = w.x * 16 + 8 - cx, y = w.y * 16 + 8 - cy, active = st.caught && st.caught.w === w, t = st.t * (active ? 3.2 : 1.8);
@@ -289,6 +303,7 @@ function drawWhirl(g, w, cx, cy) {
 function drawParked(g, x, y, sail) {
   const bob = Math.round(Math.sin(st.t * 2.6)), f = Math.floor(st.t * 3) & 1;
   g.fillStyle = 'rgba(20,60,110,.28)'; g.beginPath(); g.ellipse(x, y + 3, 16, 5, 0, 0, 7); g.fill();
+  drawFoam(g, x, y + 2, false, 0);   /* bè neo: vòng bọt thở chậm */
   g.drawImage(RAFT, x - 16, y - 13 + bob);
   if (sail) g.drawImage(SAIL[2][f], x - 9, y - 39 + bob);
 }
@@ -379,7 +394,7 @@ export const seaRaft = {
     if (d.patch) {
       if (!ctx.bag.has('plank', 2) || s.raft.hp >= s.raft.max) return;
       ctx.bag.remove('plank', 2); s.raft.hp = Math.min(s.raft.max, s.raft.hp + 1); slot(ctx).hp = s.raft.hp; ctx.persist();
-      ctx.toast(t.patched); ctx.sfx('build'); return;
+      ctx.toast(t.patched); ctx.sfx('hammer'); return;
     }
     if (d.sail) {
       if (s.raft.sail || !ctx.bag.has('sailcloth', 1) || !ctx.bag.has('rope', 1)) return;
@@ -388,7 +403,7 @@ export const seaRaft = {
     }
     if (d.wreck) {
       const sv = slot(ctx); if (sv.wreck) return;
-      sv.wreck = true; ctx.bag.add('sailcloth', 1); ctx.bag.add('rope', 2); ctx.persist();
+      sv.wreck = true; ctx.give('sailcloth', 1); ctx.give('rope', 2); ctx.persist();
       ctx.toast(t.wreckLoot, true); ctx.sfx('pickup');
     }
   },
@@ -437,14 +452,14 @@ export const seaRaft = {
       ug.lineTo(ox + Math.cos(a - Math.PI / 2) * 3, oy + Math.sin(a - Math.PI / 2) * 3);
       ug.closePath(); ug.fill();
       ug.fillStyle = '#f2ebe0'; ug.beginPath(); ug.arc(ox, oy, 2.5, 0, TAU); ug.fill();
-    } else { ug.font = `bold ${Math.max(12, Math.round(scale * 4))}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e'; ug.fillText('⌂', ox, oy + 1); }
-    ug.font = `bold ${Math.max(10, Math.round(scale * 2.8))}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'top'; ug.fillStyle = '#f2ebe0';
+    } else { ug.font = `bold ${Math.max(12, Math.round(scale * 4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e'; ug.fillText('⌂', ox, oy + 1); }
+    ug.font = `bold ${Math.max(10, Math.round(scale * 2.8))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'top'; ug.fillStyle = '#f2ebe0';
     ug.fillText(`⌂ ${Math.round(dist / 16)}`, ox, oy + r + 3);
     // whirlpool escape bar above the player
     const c = st.caught;
     if (c) {
       const sx = Math.round((p.x - cx) * scale), sy = Math.round((p.y - 46 - cy) * scale), bw = Math.round(scale * 30), bh = Math.round(scale * 2.2);
-      ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+      ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
       const label = L(ctx).escape, tw = ug.measureText(label).width + 10;
       ug.fillStyle = 'rgba(13,11,20,.7)'; ug.beginPath(); ug.roundRect(sx - tw / 2, sy - bh - 8 - Math.round(scale * 4) - 4, tw, Math.round(scale * 4) + 4, 4); ug.fill();
       ug.fillStyle = '#ff6b6b'; ug.fillText(label, sx, sy - bh - 8);

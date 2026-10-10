@@ -32,22 +32,22 @@ const STR = {
 const L = ctx => STR[ctx.lang()] || STR.en;
 
 // ---------- node tables ----------
-const CRY = { kind: 'cry', label: 'mineCrystal', tool: 'pickaxe', min: 2, need: 'needIron', item: 'crystal', n: 2, hits: 1, dur: 1.2, snd: 'hit', remove: true };
-const PINE = { kind: 'resin', label: 'tapResin', tool: 'knife', min: 1, need: 'needKnife', item: 'resin', n: 1, hits: 1, dur: 1.0, snd: 'chop', cd: 90, priority: true };
+const CRY = { kind: 'cry', label: 'mineCrystal', tool: 'pickaxe', min: 2, need: 'needIron', item: 'crystal', n: 2, hits: 1, dur: 1.2, snd: 'ice_crack', remove: true };
+const PINE = { kind: 'resin', label: 'tapResin', tool: 'knife', min: 1, need: 'needKnife', item: 'resin', n: 1, hits: 1, dur: 1.0, snd: 'cut_leaf', cd: 90, priority: true };
 // object nodes: map object type -> what you get from it
 const OBJ = {
-  rock: { kind: 'rock', label: 'mineStone', tool: 'pickaxe', min: 1, need: 'needPick', item: 'rock', n: 2, hits: 1, dur: 1.0, snd: 'hit', remove: true },
-  rock_s: { kind: 'rock', label: 'mineStone', tool: 'pickaxe', min: 1, need: 'needPick', item: 'rock', n: 1, hits: 1, dur: 0.8, snd: 'hit', remove: true },
-  boulder: { kind: 'rock', label: 'mineStone', tool: 'pickaxe', min: 1, need: 'needPick', item: 'rock', n: 5, hits: 3, dur: 0.7, snd: 'hit', remove: true },
-  seisvein: { kind: 'seis', label: 'mineSeis', item: 'stone', n: 2, hits: 3, dur: 0.8, snd: 'hit', remove: true },   /* plan-18: mỏ đá Seismic — tay không đào được, ra 2 🪨 */
-  orevein: { kind: 'ore', label: 'mineOre', tool: 'pickaxe', min: 1, need: 'needPick', item: 'ore', n: 2, hits: 3, dur: 0.7, snd: 'hit', remove: true, bonus: true },
-  obsvein: { kind: 'obs', label: 'mineObs', tool: 'pickaxe', min: 2, need: 'needIron', item: 'obsidian', n: 2, hits: 1, dur: 1.4, snd: 'hit', remove: true },
+  rock: { kind: 'rock', label: 'mineStone', tool: 'pickaxe', min: 1, need: 'needPick', item: 'rock', n: 2, hits: 1, dur: 1.0, snd: 'mine', remove: true },
+  rock_s: { kind: 'rock', label: 'mineStone', tool: 'pickaxe', min: 1, need: 'needPick', item: 'rock', n: 1, hits: 1, dur: 0.8, snd: 'mine', remove: true },
+  boulder: { kind: 'rock', label: 'mineStone', tool: 'pickaxe', min: 1, need: 'needPick', item: 'rock', n: 5, hits: 3, dur: 0.7, snd: 'mine', remove: true },
+  seisvein: { kind: 'seis', label: 'mineSeis', item: 'stone', n: 2, hits: 3, dur: 0.8, snd: 'mine', remove: true },   /* plan-18: mỏ đá Seismic — tay không đào được, ra 2 🪨 */
+  orevein: { kind: 'ore', label: 'mineOre', tool: 'pickaxe', min: 1, need: 'needPick', item: 'ore', n: 2, hits: 3, dur: 0.7, snd: 'mine', remove: true, bonus: true },
+  obsvein: { kind: 'obs', label: 'mineObs', tool: 'pickaxe', min: 2, need: 'needIron', item: 'obsidian', n: 2, hits: 1, dur: 1.4, snd: 'mine', remove: true },
   crystal_p: CRY, crystal_b: CRY, crystal_r: CRY,
-  palm: { kind: 'leaf', label: 'cutLeaf', tool: 'knife', min: 1, need: 'needKnife', item: 'leaf', n: 2, hits: 1, dur: 1.0, snd: 'chop', cd: 60, priority: true },
+  palm: { kind: 'leaf', label: 'cutLeaf', tool: 'knife', min: 1, need: 'needKnife', item: 'leaf', n: 2, hits: 1, dur: 1.0, snd: 'cut_leaf', cd: 60, priority: true },
   pine: PINE, pine_s: PINE,
-  bush: { kind: 'berry', label: 'pickBerries', item: 'berry', n: 2, hits: 1, dur: 1.0, snd: 'pickup', cd: 120, seed: true },
-  mushroom: { kind: 'mush', label: 'pickMush', item: 'mushroom', n: 1, hits: 1, dur: 0.9, snd: 'pickup', remove: true, seed: true, priority: true },
-  beehive: { kind: 'honey', label: 'takeHoney', tool: 'torch', min: 1, need: 'bees', pair: [['honey', 1], ['wax', 1]], hits: 1, dur: 1.4, snd: 'pickup', cd: 180, priority: true }
+  bush: { kind: 'berry', label: 'pickBerries', item: 'berry', n: 2, hits: 1, dur: 1.0, snd: 'pick_berry', cd: 120, seed: true },
+  mushroom: { kind: 'mush', label: 'pickMush', item: 'mushroom', n: 1, hits: 1, dur: 0.9, snd: 'pick_berry', remove: true, seed: true, priority: true },
+  beehive: { kind: 'honey', label: 'takeHoney', tool: 'torch', min: 1, need: 'bees', pair: [['honey', 1], ['wax', 1]], hits: 1, dur: 1.4, snd: 'honey', cd: 180, priority: true }
 };
 // tile nodes
 const CD_SAND = 90, CD_ICE = 120, CD_HAY = 60, CD_LAVA = 20;
@@ -100,7 +100,7 @@ function dropCropSeed(ctx) {
   const ok = CROP_SEEDS.filter(c => { const it = ctx.ITEMS[c]; return it && (it.tags.includes('any') || it.tags.includes(season)); });
   if (!ok.length) return;
   const id = 'seed_' + ok[(Math.random() * ok.length) | 0];
-  if (ctx.ITEMS[id] && ctx.bag.add(id, 1) > 0) ctx.toast(`+1 ${ctx.itemIcon(id)} ${ctx.itemName(id)}`);
+  if (ctx.ITEMS[id]) ctx.give(id, 1);   /* plan-24: rơi ra đất */
 }
 
 // ---------- map helpers ----------
@@ -293,7 +293,7 @@ function doPlant(ctx, tx, ty) {
   list.push(rec);
   const o = ctx.place(map, 'sapling1', tx, ty, { node: 'sapling' });
   ST.plants.push({ rec, o, st: 0 });
-  ctx.sfx('build'); ctx.toast(t.planted); ctx.persist();
+  ctx.sfx('sow'); ctx.toast(t.planted); ctx.persist();
   burst(ctx, tx * TS + 8, ty * TS + 12, 6, [PAL.leafL, PAL.leaf, PAL.dirt]);
 }
 function growPlants(ctx) {
@@ -310,7 +310,7 @@ function growPlants(ctx) {
       ctx.removeObject(map, p.o);
       p.o = ctx.place(map, 'tree', x, y, { planted: true });
       burst(ctx, x * TS + 8, y * TS + 4, 10, [PAL.leafL, PAL.leaf, '#ffd45e']);
-      ctx.sfx('craft'); ctx.toast(t.grown);
+      ctx.sfx('leaves'); ctx.toast(t.grown);
     } else if (p.o.type !== STAGES[st]) {
       p.o.type = STAGES[st];
       burst(ctx, p.o.x * TS + 8, p.o.y * TS + 8, 5, [PAL.leafL, PAL.leaf]);
@@ -329,20 +329,23 @@ function burst(ctx, wx, wy, n, cols) {
 }
 
 // ---------- gathering ----------
-function toolOk(ctx, def) { return !def.tool || ctx.tool.tier(def.tool) >= (def.min || 1); }
-function giveOut(ctx, def) {
+const H = (ctx, id) => (ctx.holding ? ctx.holding(id) : true);   /* plan-20: phải CẦM dụng cụ trên hotbar */
+const T1 = (ctx, id, min = 1) => ctx.tool.tier(id) >= min && H(ctx, id);
+const Hh = H, T1h = T1;
+function toolOk(ctx, def) { return !def.tool || T1(ctx, def.tool, def.min || 1); }
+function giveOut(ctx, def, o) {
   const list = def.pair ? def.pair.map(p => [p[0], p[1]])
     : [[def.item, def.n + (def.bonus && ctx.tool.tier(def.tool) >= 2 ? 1 : 0)]];
   let any = 0; const parts = [];
-  for (const [id, n] of list) { const got = ctx.bag.add(id, n); if (got > 0) { any += got; parts.push(`+${got} ${ctx.itemIcon(id)} ${ctx.itemName(id)}`); } }
-  if (any && def.seed && Math.random() < SEED_CHANCE && ctx.bag.add('seed', 1) > 0) parts.push(`+1 ${ctx.itemIcon('seed')} ${ctx.itemName('seed')}`);
-  if (parts.length) { ctx.toast(parts.join('  ')); if (ctx.pop) ctx.pop(ctx.S.player.x, ctx.S.player.y - 18, parts.map(s => s.split(' ').slice(0, 2).join(' ')).join('  ')); }
+  const ox = o ? o.x * 16 + 8 : undefined, oy = o ? o.y * 16 + 14 : undefined;   /* plan-24: đồ bật ra từ nút tài nguyên, nhặt rồi mới vào túi (báo '+N' khi nhặt) */
+  for (const [id, n] of list) { const got = ctx.give(id, n, ox, oy); if (got > 0) { any += got; parts.push(id); } }
+  if (any && def.seed && Math.random() < SEED_CHANCE) ctx.give('seed', 1, ox, oy);
   return any;
 }
 function startAct(ctx, label, dur, wx, wy, run, by) {
   const p = ctx.S.player;
   ST.act = { label, t: 0, dur, wx, wy, by: by === undefined ? wy - 16 : by, px: p.x, py: p.y, run };
-  if (p.act && p.faceTo) { p.faceTo(wx, wy); const clip = /mine|ore|obs|crystal|stone|đào|quặng|đá|khoáng/i.test(label) ? 'mine' : 'chop'; /* nhãn đã dịch EN/VI */ if (p.hasAct(clip)) p.act(clip, dur, true); }   // clip PixelLab (lặp tới khi xong)
+  if (p.act && p.faceTo) { p.faceTo(wx, wy); const clip = /sand|cát/i.test(label) && p.hasAct('hoe') ? 'hoe' : /mine|ore|obs|crystal|stone|đào|quặng|đá|khoáng/i.test(label) ? 'mine' : 'chop';   /* đào cát = clip cuốc (plan-20) */ /* nhãn đã dịch EN/VI */ if (p.hasAct(clip)) p.act(clip, dur, true); }   // clip PixelLab (lặp tới khi xong)
 }
 function finishAct(ctx) {
   const a = ST.act; ST.act = null; if (ctx.S.player.endAct) ctx.S.player.endAct(); if (!a) return;
@@ -365,29 +368,29 @@ function objInteract(ctx, o, def, wx, wy) {
             : [PAL.leafL, PAL.leaf, PAL.gold]);
     o.gh = (o.gh || 0) + 1;
     if (o.gh < hits) return;
-    if (!giveOut(ctx, def)) { o.gh = hits - 1; return; }                 // bag full → leave the node standing
-    ctx.sfx('pickup');
+    if (!giveOut(ctx, def, o)) { o.gh = hits - 1; return; }                 // bag full → leave the node standing
+    ctx.sfx(/^(ore|obs|cry|rock|seis)$/.test(def.kind) ? 'rock_break' : 'pop');
     if (def.remove) { dropNode(ctx, o); ctx.removeObject(map, o); }
     else { o.gh = 0; setCd(zb(ctx).o, okey(def, o), def.cd || 60); }
     ctx.persist();
   }, bar);
 }
 
-function tileNode(ctx, tx, ty) {
-  const t = L(ctx), map = ctx.S.map, id = ctx.S.zone.id, b = zb(ctx);
+function tileNode(ctx, tx, ty, any) {   /* any: chỉ cần CÓ dụng cụ (không cần đang cầm) — dùng khi trỏ chuột để click tự cầm; node.tool = món cần */
+  const t = L(ctx), map = ctx.S.map, id = ctx.S.zone.id, b = zb(ctx), T1 = any ? ((c, k) => c.tool.tier(k) >= 1) : T1h, H = any ? (() => true) : Hh;
   const g0 = ctx.getG(map, tx, ty);
-  if (id === 'm1' && (g0 === T.SAND || g0 === T.SAND2) && ctx.tool.tier('shovel') >= 1 && !cdLeft(b.t, 'sand:' + tx + ',' + ty))
-    return { kind: 'sand', label: t.digSand, tx, ty, dur: 1.2 };
-  if (id === 'm8' && g0 === T.ICE && ctx.tool.tier('pickaxe') >= 1 && !cdLeft(b.t, 'ice:' + tx + ',' + ty))
-    return { kind: 'ice', label: t.chipIce, tx, ty, dur: 1.2 };
-  if (id === 'm7' && ctx.tool.tier('bucket') >= 1 && !cdLeft(b.t, 'lava') && nextToLava(ctx, tx, ty))
-    return { kind: 'lava', label: t.scoopLava, tx, ty, dur: 1.4 };
+  if (id === 'm1' && (g0 === T.SAND || g0 === T.SAND2) && T1(ctx, 'shovel') && !cdLeft(b.t, 'sand:' + tx + ',' + ty))
+    return { kind: 'sand', label: t.digSand, tx, ty, dur: 1.2, tool: 'shovel' };
+  if (id === 'm8' && g0 === T.ICE && T1(ctx, 'pickaxe') && !cdLeft(b.t, 'ice:' + tx + ',' + ty))
+    return { kind: 'ice', label: t.chipIce, tx, ty, dur: 1.2, tool: 'pickaxe' };
+  if (id === 'm7' && T1(ctx, 'bucket') && !cdLeft(b.t, 'lava') && nextToLava(ctx, tx, ty))
+    return { kind: 'lava', label: t.scoopLava, tx, ty, dur: 1.4, tool: 'bucket' };
   if (g0 === T.FLOWER)
     return { kind: 'flower', label: t.pickFlowers, tx, ty, dur: 0.9 };
-  if ((g0 === T.GRASS || g0 === T.GRASS2) && ctx.tool.tier('scythe') >= 1 && !cdLeft(b.t, 'hay:' + tx + ',' + ty))
-    return { kind: 'hay', label: t.cutHay, tx, ty, dur: 1.0 };
-  if (ctx.bag.has('seed', 1) && plantable(ctx, tx, ty))
-    return { kind: 'plant', label: t.plant, tx, ty, dur: 0.8 };
+  if ((g0 === T.GRASS || g0 === T.GRASS2) && T1(ctx, 'scythe') && !cdLeft(b.t, 'hay:' + tx + ',' + ty))
+    return { kind: 'hay', label: t.cutHay, tx, ty, dur: 1.0, tool: 'scythe' };
+  if (ctx.bag.has('seed', 1) && H(ctx, 'seed') && plantable(ctx, tx, ty))
+    return { kind: 'plant', label: t.plant, tx, ty, dur: 0.8, tool: 'seed' };
   return null;
 }
 function nextToLava(ctx, tx, ty) {
@@ -403,23 +406,23 @@ function tileInteract(ctx, n) {
   startAct(ctx, n.label, n.dur, wx, wy, () => {
     if (n.kind === 'sand') {
       if (!giveOut(ctx, { item: 'sand', n: 2 })) return;
-      setCd(b.t, 'sand:' + n.tx + ',' + n.ty, CD_SAND); ctx.sfx('pickup');
+      setCd(b.t, 'sand:' + n.tx + ',' + n.ty, CD_SAND); ctx.sfx('sand_scoop');
       burst(ctx, wx, wy, 7, [PAL.sand, PAL.sandD, '#fff3d0']);
     } else if (n.kind === 'ice') {
       if (!giveOut(ctx, { item: 'ice', n: 1 })) return;
-      setCd(b.t, 'ice:' + n.tx + ',' + n.ty, CD_ICE); ctx.sfx('hit');
+      setCd(b.t, 'ice:' + n.tx + ',' + n.ty, CD_ICE); ctx.sfx('ice_crack');
       burst(ctx, wx, wy, 7, ['#bfe3ff', '#ffffff', '#8fd3ff']);
     } else if (n.kind === 'hay') {
       if (!giveOut(ctx, { item: 'hay', n: 2 })) return;
-      setCd(b.t, 'hay:' + n.tx + ',' + n.ty, CD_HAY); ctx.sfx('chop'); dropCropSeed(ctx);
+      setCd(b.t, 'hay:' + n.tx + ',' + n.ty, CD_HAY); ctx.sfx('cut_leaf'); dropCropSeed(ctx);
       burst(ctx, wx, wy, 7, ['#d9c07a', PAL.grassD, PAL.grass2]);
     } else if (n.kind === 'flower') {
       if (!giveOut(ctx, { item: 'flower', n: 1 })) return;
-      ctx.setG(map, n.tx, n.ty, T.GRASS, false); ctx.sfx('pickup');
+      ctx.setG(map, n.tx, n.ty, T.GRASS, false); ctx.sfx('pick_berry');
       burst(ctx, wx, wy, 7, [PAL.flowerA, PAL.flowerB, PAL.flowerC]);
     } else if (n.kind === 'lava') {
       if (!giveOut(ctx, { item: 'lava', n: 1 })) return;
-      setCd(b.t, 'lava', CD_LAVA); ctx.sfx('splash');
+      setCd(b.t, 'lava', CD_LAVA); ctx.sfx('lava_scoop');
       burst(ctx, wx, wy, 8, ['#ffb03a', '#e8541e', '#a8300e']);
     }
     ctx.persist();
@@ -482,18 +485,28 @@ export const gather = {
     const b = zb(ctx);
     for (let y = ty - 2; y <= ty + 2; y++) for (let x = tx - 2; x <= tx + 2; x++) {
       const e = ST.grid.get(tkey(x, y)); if (!e) continue;
-      const o = e.o, def = e.def, d = ctx.O[o.type]; if (!d) continue;
+      const o = e.o, def = e.def, d = ctx.O[o.type]; if (!d || o.claimed) continue;   /* plan-21: quái đang chiếm chỗ tài nguyên */
       if (def.cd && cdLeft(b.o, okey(def, o)) > 0) continue;            // cooling → leave it to trees.js / nobody
       const wx = o.x * TS + d.fw * 8, wy = (o.y + d.fh) * TS - (d.fh > 1 ? 8 : 4);
-      const dist = Math.hypot(wx - p.x, wy - p.y), lim = 22 + d.fw * 4;
-      if (dist < lim && dist < bd) { bd = dist; best = { o, def, wx, wy, lim }; }
+      const dist0 = Math.hypot(wx - p.x, wy - p.y), lim = 22 + d.fw * 4, mt0 = ctx.mouseTile && ctx.mouseTile();
+      const under = mt0 && mt0.wx >= o.x * TS && mt0.wx < (o.x + d.fw) * TS && mt0.wy >= (o.y + d.fh) * TS - Math.max(d.h, 16) && mt0.wy < (o.y + d.fh) * TS;   /* chuột trên vật này → ưu tiên */
+      const dist = under && dist0 < lim * 1.5 ? -1 : dist0;
+      if (dist < lim && dist < bd) { bd = dist; best = { o, def, wx: under ? mt0.wx : wx, wy: under ? mt0.wy : wy, lim }; }
     }
     if (best && !map.objects.includes(best.o)) { dropNode(ctx, best.o); best = null; }
+    if (best && best.def.tool && best.def.need !== 'bees' && ctx.tool.tier(best.def.tool) >= (best.def.min || 1) && !H(ctx, best.def.tool))   /* có dụng cụ nhưng chưa cầm → chỉ nhắc */
+      return { label: ctx.needHold(best.def.tool), x: best.wx, y: best.wy, limit: best.lim, need: true, needId: best.def.tool, cursor: 'tool', data: { need: true } };
     if (best) return {
       label: t[best.def.label], x: best.wx, y: best.wy, limit: best.lim,
-      priority: !!best.def.priority, data: { o: best.o, def: best.def, wx: best.wx, wy: best.wy }
+      priority: best.def.priority ? true : (!best.def.tool && ctx.heldKind && ctx.heldKind() === 'tool' ? -1 : false), data: { o: best.o, def: best.def, wx: best.wx, wy: best.wy }   /* hái tay (quả, hoa) mà đang cầm công cụ → nhường phím E cho chặt/đào cạnh đó (QA 2026-10-10) */
     };
 
+    // 1b) ô đang trỏ chuột (trong 2 ô): hiện đúng hành động; cầm sai món → click tự cầm đúng món (anh yêu cầu 2026-10-10)
+    const mt = ctx.mouseTile && ctx.mouseTile();
+    if (mt && ctx.needHold && !ctx.mouseOnSprite && Math.abs(mt.tx - tx) <= 2 && Math.abs(mt.ty - ty) <= 2) {
+      const m2 = tileNode(ctx, mt.tx, mt.ty, true);
+      if (m2 && !(m2.tool && !H(ctx, m2.tool))) return { label: m2.label, x: mt.wx, y: mt.wy, limit: 48, mouse: true, cursor: 'tool', data: { tile: m2 } };   /* mặt đất: chỉ khi ĐANG CẦM đúng dụng cụ; không thì click = đi tới */
+    }
     // 2) tile nodes — reported 25 px "away" so NPCs, signs and trees keep winning
     const n = tileNode(ctx, tx, ty);
     if (n) return { label: n.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: { tile: n } };
@@ -534,7 +547,7 @@ export const gather = {
 
     // object marks: ripe berries, fresh cuts on palms / pines, a quiet hive
     for (const e of ST.nodes) {
-      const o = e.o, def = e.def, d = ctx.O[o.type]; if (!d) continue;
+      const o = e.o, def = e.def, d = ctx.O[o.type]; if (!d || o.claimed) continue;   /* plan-21: quái đang chiếm chỗ tài nguyên */
       const ox = o.x * TS, oy = (o.y + d.fh) * TS - d.h;
       if (ox < x0 || ox > x1 || oy < y0 - 32 || oy > y1) continue;
       const sx = ox - cx, sy = oy - cy;
@@ -594,7 +607,7 @@ export const gather = {
       ug.fillStyle = '#ffd45e'; ug.fillRect(sx - w / 2, sy, Math.round(w * k), h);
       ug.fillStyle = 'rgba(255,255,255,.5)'; ug.fillRect(sx - w / 2, sy, Math.round(w * k), 1);
       const fs = Math.max(11, Math.round(scale * 3.2));
-      ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+      ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
       ug.lineWidth = Math.max(2, scale); ug.strokeStyle = 'rgba(13,11,20,.85)'; ug.lineJoin = 'round';
       ug.strokeText(a.label, sx, sy - 5); ug.fillStyle = '#f2ebe0'; ug.fillText(a.label, sx, sy - 5);
     }

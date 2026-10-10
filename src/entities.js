@@ -1,6 +1,6 @@
 // entities.js — player + NPC movement, collision, animation
 import { isSolid } from './world.js';
-import { FPS, clipFps } from './anim.js';
+import { FPS, clipFps, waterDraw } from './anim.js';
 
 const CYCLE = [0, 1, 0, 2];
 export class Entity {
@@ -42,7 +42,8 @@ export class Entity {
       const k = Math.floor(a.t * clipFps(a.name, sh)), f = a.walk ? sh.n - 3 + (this.moving ? CYCLE[Math.floor(this.animT * FPS.walk) % 4] : 0) : a.loop ? k % sh.n : Math.min(sh.n - 1, k);   /* plan-19: khung theo FPS chung (anim.js), không kéo giãn theo dur */   /* clip đi: 3 cột cuối = đứng/bước/bước như sheet đi */
       const ch = sh.ch || 20, cw = sh.cw || 16; g.drawImage(sh.img, f * cw, this.dir * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return;   /* cw: ô động tác rộng 24 (px-actions 2026-09-28) */
     }
-    g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, Math.round(this.x) - 8, Math.round(this.y) - 18, 16, 20);
+    const body = () => g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, Math.round(this.x) - 8, Math.round(this.y) - 18, 16, 20);
+    if (this instanceof Player) body(); else waterDraw(g, this.x, this.y, this.x, this.y, body);   /* NPC lội nước: che phần dưới (người chơi do swim.js lo) */
   }
   // Động tác: act('chop', 0.35) chạy 1 lần; act('fish', 1, true) lặp/giữ khung cuối tới khi endAct(). hasAct(name): có clip PixelLab không (module quyết định vẽ dụng cụ code hay không)
   act(name, dur = 0.4, hold = false, walk = false) {
@@ -61,12 +62,23 @@ export class Entity {
 export class Player extends Entity {
   update(dt, input, map, others) {
     let dx = (input.right ? 1 : 0) - (input.left ? 1 : 0), dy = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+    if (dx || dy) this.autoPath = null;   /* bấm phím di chuyển → bỏ tự đi */
+    else if (this.autoPath && this.autoPath.length) {   /* trỏ chuột + click → tự đi theo đường BFS (anh yêu cầu 2026-10-10) */
+      const t = this.autoPath[0], ex = t.x - this.x, ey = t.y - this.y, d = Math.hypot(ex, ey);
+      if (d < 2.5) { this.autoPath.shift(); if (!this.autoPath.length) this.autoPath = null; }
+      else { dx = ex / d; dy = ey / d; }
+    }
     this.moving = !!(dx || dy);
     if (this.moving) {
-      if (dx && dy) { dx *= 0.7071; dy *= 0.7071; }
-      if (Math.abs(dx) >= Math.abs(dy) && dx) this.dir = dx > 0 ? 2 : 1; else if (dy) this.dir = dy > 0 ? 0 : 3;
+      if (dx && dy && !this.autoPath) { dx *= 0.7071; dy *= 0.7071; }
+      if (this.autoPath) {   /* tự đi: đổi hướng mặt có trễ (chỉ khi trục kia trội rõ) → không lật mặt liên tục khi đi chéo */
+        const ax = Math.abs(dx), ay = Math.abs(dy), horiz = this.dir === 1 || this.dir === 2;
+        if (horiz ? ay > ax * 1.6 : ax > ay * 1.6) this.dir = ax > ay ? (dx > 0 ? 2 : 1) : (dy > 0 ? 0 : 3);
+        else if (horiz) this.dir = dx > 0 ? 2 : dx < 0 ? 1 : this.dir; else this.dir = dy > 0 ? 0 : dy < 0 ? 3 : this.dir;
+      } else if (Math.abs(dx) >= Math.abs(dy) && dx) this.dir = dx > 0 ? 2 : 1; else if (dy) this.dir = dy > 0 ? 0 : 3;
       const sp = 84 * dt * this.speedMul * (this.fedT > 0 ? 1.2 : 1);   /* plan-19: ăn no → đi nhanh 20 % một lúc */
-      this.tryMove(dx * sp, dy * sp, map, others);
+      const ok = this.tryMove(dx * sp, dy * sp, map, others);
+      if (this.autoPath) { this.autoStuck = ok ? 0 : (this.autoStuck || 0) + dt; if (this.autoStuck > 0.6) { this.autoPath = null; this.autoStuck = 0; } }   /* kẹt (NPC chắn…) → dừng */
     }
     this.animate(dt);
   }

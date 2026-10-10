@@ -161,7 +161,8 @@ export const rockyControl = {
     if (!best) return null;
     const ok = ctx.trust(best.o.nation) >= TRUST;
     const [k, n] = metCount(ctx, best.o.nation);
-    return { label: ok ? L(ctx).pilot : L(ctx).locked(k, n), x: best.x, y: best.y, limit: REACH, data: { obj: best.o, ok, k, n } };
+    const hk = ctx.heldKind ? ctx.heldKind() : null;   /* đang cầm công cụ/hạt: tượng Rocky nhường phím E cho cày/đào (QA 2026-10-10) */
+    return { label: ok ? L(ctx).pilot : L(ctx).locked(k, n), x: best.x, y: best.y, limit: REACH, data: { obj: best.o, ok, k, n }, ...(hk === 'tool' || hk === 'seed' ? { priority: -1 } : {}) };
   },
 
   interact(ctx, cand) {
@@ -195,7 +196,7 @@ export const rockyControl = {
         ctx.removeObject(map, o);
         broke++; sysStats(ctx).broken++;
         const gain = LOOT[o.type];
-        if (gain) { ctx.S.save.inv.stone = (ctx.S.save.inv.stone || 0) + gain; gained += gain; }
+        if (gain) { ctx.give('stone', gain, o.x * 16 + 8, o.y * 16 + 14); gained += gain; }   /* plan-24: đá bật ra từ vật bị phá */
         ctx.quake(0.25); saveT = 0.6;
       }
     }
@@ -219,7 +220,7 @@ export const rockyControl = {
     ug.save();
     // the nation's artists cheer
     ug.textAlign = 'center'; ug.textBaseline = 'middle';
-    ug.font = `bold ${Math.max(13, Math.round(scale * 4.2))}px "Segoe UI",system-ui,sans-serif`;
+    ug.font = `bold ${Math.max(13, Math.round(scale * 4.2))}px VT323, monospace`;
     nationNpcs(ctx, nation).forEach((n, i) => {
       const sx = Math.round((n.x - cx) * scale), sy = Math.round((n.y - 30 - cy) * scale) - Math.round(Math.abs(Math.sin(t * 3 + i)) * scale * 2.5);
       if (sx < -40 || sx > W + 40 || sy < -20 || sy > H + 20) return;
@@ -235,7 +236,7 @@ export const rockyControl = {
     ug.fillStyle = k < 0.2 ? 'rgba(255,31,75,.55)' : 'rgba(255,212,94,.45)';
     ug.beginPath(); ug.roundRect(bx + 2, by + 2, Math.max(0, (bw - 4) * k), bh - 4, 4); ug.fill();
     ug.strokeStyle = '#ffd45e'; ug.lineWidth = 1; ug.beginPath(); ug.roundRect(bx + .5, by + .5, bw - 1, bh - 1, 5); ug.stroke();
-    ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px "Segoe UI",system-ui,sans-serif`;
+    ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px VT323, monospace`;
     ug.fillText(L(ctx).bar(Math.ceil(left), ctx.S.save.inv.stone || 0), bx + bw / 2, by + bh / 2 + 1);
     ug.restore();
   }

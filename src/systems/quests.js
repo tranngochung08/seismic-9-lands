@@ -452,7 +452,7 @@ function acceptOffer(ctx, npcId) {
   st.active.push(a);
   offers.delete(npcId);
   ctx.persist();
-  ctx.sfx('craft');
+  ctx.sfx('quest_step');
   ctx.toast(t.taken, true);
   closeOffer(ctx);
 }
@@ -473,14 +473,14 @@ function handIn(ctx, q) {
   else if (q.type === 'carry') { const i = carryIndex(ctx, q); if (i < 0) { ctx.toast(t.notReady); return; } takeCarry(ctx, i); }
   const i = st.active.indexOf(q); if (i >= 0) st.active.splice(i, 1);
   st.done = (st.done || 0) + 1;
-  const paid = ctx.bag.add('stone', q.reward);           // stone weighs 0 — the bag never refuses it
+  const paid = ctx.give('stone', q.reward, undefined, undefined, { toPlayer: true });   /* plan-24: người giao việc ném thưởng */           // stone weighs 0 — the bag never refuses it
   let card = '';
   if (m && Math.random() < CARD_CHANCE) {
     const cards = (ctx.S.save.cards = ctx.S.save.cards || []);
     if (!cards.includes(m.id)) { cards.push(m.id); card = t.gotCard + m.n; }
   }
   ctx.persist();
-  ctx.sfx('win');
+  ctx.sfx('quest_done');
   ctx.toast(t.paid(paid) + (card ? ' · ' + card : ''), true);
   if (m) {
     ctx.setMode('dialog');
@@ -577,9 +577,9 @@ export const quests = {
         if (w > q.last) { q.gain = (q.gain || 0) + (w - q.last); dirty = true; }
         q.last = w;
       } else if (q.type === 'friend' && !q.ok) {
-        if (ctx.S.save.met.includes(q.friendId)) { q.ok = true; dirty = true; ctx.sfx('coin'); }
+        if (ctx.S.save.met.includes(q.friendId)) { q.ok = true; dirty = true; ctx.sfx('quest_step'); }
       } else if (q.type === 'helpDistrict' && !q.ok) {
-        if (zid === q.zone && q.plot >= 0 && districtSafe(ctx, q.plot).ruined === 0) { q.ok = true; dirty = true; ctx.sfx('coin'); }
+        if (zid === q.zone && q.plot >= 0 && districtSafe(ctx, q.plot).ruined === 0) { q.ok = true; dirty = true; ctx.sfx('quest_step'); }
       }
     }
     if (dirty) ctx.persist();
@@ -649,7 +649,7 @@ export const quests = {
     const fs = Math.max(10, scale * 3), up = fs + 4 + 10;
     const W = ug.canvas.width, H = ug.canvas.height;
     ug.save();
-    ug.font = `bold ${Math.max(13, scale * 4)}px "Segoe UI",system-ui,sans-serif`;
+    ug.font = `bold ${Math.max(13, scale * 4)}px VT323, monospace`;
     ug.textAlign = 'center'; ug.textBaseline = 'middle';
     const glyph = (sx, sy, ch, col) => {
       if (sx < -60 || sx > W + 60 || sy < -40 || sy > H + 40) return;

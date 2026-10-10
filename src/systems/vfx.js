@@ -3,13 +3,14 @@
 // Khi clip động tác có `impact` (khung va chạm), gọi ctx.vfxAt(entity, name, wx, wy): VFX bắn đúng lúc clip tới khung đó.
 import { ART } from '../art.js';
 import { FPS, clipFps } from '../anim.js';
+import { vfxSound } from '../audio.js';   /* 2026-10-10: mỗi VFX kèm tiếng tương ứng (bảng VFX_SFX trong audio.js, tự nhường tiếng cụ thể hơn) */
 
 const LIVE = [], WAIT = [];
 const sheet = name => ART.vfx && ART.vfx[name];
 
-function spawn(name, wx, wy, dur, top) {   /* top: vẽ trên mọi sprite (nhặt đồ trên đầu, lên cấp) */
-  const s = sheet(name); if (!s) return false;
-  LIVE.push({ s, x: wx, y: wy, t: 0, dur: dur || (s.loop ? 1.5 : 0), top: !!top });
+function spawn(name, wx, wy, dur, top, flip) {   /* top: vẽ trên mọi sprite (nhặt đồ trên đầu, lên cấp) */
+  const s = sheet(name); vfxSound(name, !!s, dur, wx, wy); if (!s) return false;
+  LIVE.push({ s, x: wx, y: wy, t: 0, dur: dur || (s.loop ? 1.5 : 0), top: !!top, flip: !!flip });
   if (LIVE.length > 40) LIVE.shift();
   return true;
 }
@@ -31,12 +32,12 @@ export const vfx = {
   onZoneEnter(ctx) {
     LIVE.length = 0; WAIT.length = 0;
     if (typeof window !== 'undefined') window.__vfx = { live: () => LIVE.map(e => e.s.file.split('/').pop()), wait: () => WAIT.map(w => w.name) };   /* móc test */
-    ctx.vfx = (name, wx, wy, dur, top) => spawn(name, wx, wy, dur, top);
+    ctx.vfx = (name, wx, wy, dur, top, flip) => spawn(name, wx, wy, dur, top, flip);   /* flip: lật ngang (vệt chém khi nhân vật quay trái) */
     ctx.hasVfx = name => !!sheet(name);
     ctx.vfxAt = (ent, name, wx, wy) => {   /* chờ clip của ent tới khung impact; không có clip/impact thì bắn ngay */
       const a = ent && ent.action, sh = a && ent.sheet && ent.sheet.actions && ent.sheet.actions[a.name];
       if (!sh || sh.impact == null) return spawn(name, wx, wy);
-      if (!sheet(name)) return false;
+      if (!sheet(name)) { vfxSound(name, false, 0, wx, wy); return false; }
       WAIT.push({ ent, act: a, at: sh.impact / clipFps(a.name, sh), name, x: wx, y: wy });
       return true;
     };
@@ -57,7 +58,9 @@ export const vfx = {
   drawables(ctx, cx, cy) {   /* sắp theo chiều sâu như sprite: người đứng dưới (phía trước) che VFX của ô phía trên */
     return LIVE.map(e => ({ y: e.top ? 1e9 : e.y, f: () => {
       const s = e.s, f = Math.floor(e.t * (s.fps || FPS.vfx)) % s.n;
-      ctx.g.drawImage(s.img, f * s.w, 0, s.w, s.h, Math.round(e.x - cx - s.w / 2), Math.round(e.y - cy - s.h), s.w, s.h);   /* toạ độ nguồn logic: shim __hi nhân đôi */
+      const dx = Math.round(e.x - cx - s.w / 2), dy = Math.round(e.y - cy - s.h);
+      if (e.flip) { ctx.g.save(); ctx.g.translate(dx + s.w, dy); ctx.g.scale(-1, 1); ctx.g.drawImage(s.img, f * s.w, 0, s.w, s.h, 0, 0, s.w, s.h); ctx.g.restore(); }
+      else ctx.g.drawImage(s.img, f * s.w, 0, s.w, s.h, dx, dy, s.w, s.h);   /* toạ độ nguồn logic: shim __hi nhân đôi */
     } }));
   },
 };

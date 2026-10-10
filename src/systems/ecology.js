@@ -3,6 +3,7 @@
 // rabbit traps, lava samples, a pet fox that digs, a chicken coop that lays eggs).
 // Head-carried kinds added here: 'sheep', 'rabbit', 'crab', 'bat'. See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
+import { waterDraw } from '../anim.js';
 import { getCarry, removeCarry, canCarry, carryDeny, registerHead, faceOf, dirFrame } from './animals.js';
 
 // ---------------------------------------------------------------- strings
@@ -559,7 +560,7 @@ function catchAnimal(ctx, a, kind, msg) {
 function shear(ctx, a) {
   const S = L(ctx);
   a.shorn = true; a.shearT = SHEAR_CD;
-  const n = ctx.bag.add('wool', 2);
+  const n = ctx.give('wool', 2, a.x, a.y);
   bits(a.x, a.y - 8, 10, '#f7f3e9', 30, 34);
   ctx.sfx('chop'); ctx.toast(n > 0 ? S.gotWool : L(ctx).full);
 }
@@ -593,7 +594,7 @@ function catchCrab(ctx, a) {
 function scoopLava(ctx, a) {
   const S = L(ctx);
   if (ctx.tool.tier('bucket') < 2) { ctx.toast(S.needBucket); ctx.sfx('fail'); return; }
-  const n = ctx.bag.add('lava', 1);
+  const n = ctx.give('lava', 1, a.x, a.y);
   const i = list.indexOf(a); if (i >= 0) list.splice(i, 1);
   bits(a.x, a.y - 4, 10, '#ff8c1a', 26, 30); bits(a.x, a.y - 4, 6, '#ffd45e', 20, 24);
   ctx.sfx('splash'); ctx.toast(n > 0 ? S.gotLava : L(ctx).full);
@@ -602,7 +603,7 @@ function catchMoth(ctx, a) {
   const S = L(ctx);
   const i = list.indexOf(a); if (i >= 0) list.splice(i, 1);
   if (Math.random() < 0.2) { sparkle(a.x, a.y, 6, '#a8d8f5'); ctx.sfx('fail'); ctx.toast(S.mothGone); return; }
-  const n = ctx.bag.add('crystal', 1);
+  const n = ctx.give('crystal', 1, a.x, a.y);
   sparkle(a.x, a.y, 12); ctx.sfx('coin'); ctx.toast(n > 0 ? S.gotCrystal : L(ctx).full);
 }
 function feedFox(ctx, a) {
@@ -636,7 +637,7 @@ function feedCoop(ctx) {
 }
 function foxDig(ctx) {
   const p = ctx.S.player, id = DIG_LOOT[(Math.random() * DIG_LOOT.length) | 0];
-  const n = ctx.bag.add(id, 1);
+  const n = ctx.give(id, 1, pet ? pet.x : p.x, pet ? pet.y : p.y);
   const fxx = pet ? pet.x : p.x, fxy = pet ? pet.y : p.y;
   bits(fxx, fxy, 9, '#c9a86b', 22, 26); puff(fxx, fxy - 2, 5, '#d8c9a8');
   ctx.sfx('craft');
@@ -827,7 +828,7 @@ export const ecology = {
         const eg = eggs[i]; eg.t += dt;
         if (playing && Math.hypot(eg.x - p.x, eg.y - p.y) < 10) {
           eggs.splice(i, 1);
-          const n = ctx.bag.add('egg', 1);
+          const n = ctx.give('egg', 1, eg.x, eg.y);
           puff(eg.x, eg.y - 3, 5, '#fbf8f2'); ctx.sfx('pickup');
           if (n > 0) ctx.toast(L(ctx).gotEgg);
         }
@@ -857,7 +858,7 @@ export const ecology = {
       if (a.kind === 'bat' || a.kind === 'moth') {
         push(a, img, dx, dy, 1e5 + a.y);                                     // flyers draw over everything
       } else {
-        push(a, img, dx, dy, a.y);
+        out.push({ y: a.y, f: () => waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => g.drawImage(img, dx, dy)) });   /* thú lội nước vẽ ngập */
       }
     }
     if (trap && trap.rabbit) {                                     // the catch sits in the jaws until you fetch it
@@ -896,22 +897,23 @@ export const ecology = {
     if (mount) return { label: S.off, x: p.x, y: p.y, limit: 15, data: { act: 'off' } };
     let best = null, bd = Infinity;
     // x,y = where the prompt sits (and what the core measures distance to), lim = reach for that kind
-    const take = (a, x, y, lim, label, act) => {
+    const take = (a, x, y, lim, label, act, need) => {
       const d = Math.hypot(x - p.x, y - p.y);
-      if (d < lim && d < bd) { bd = d; best = { label, x, y, limit: lim, data: { act, a } }; }
+      if (d < lim && d < bd) { bd = d; best = need ? { label: ctx.needHold(need), x, y, limit: lim, need: true, needId: need, cursor: 'tool', data: { need: true } } : { label, x, y, limit: lim, data: { act, a } }; }
     };
+    const H = id => (ctx.holding ? ctx.holding(id) : true);   /* plan-20: phải CẦM món trên hotbar */
     for (const a of list) {
       if (a.kind === 'sheep') {
-        const canShear = ctx.tool.tier('knife') >= 1 && !a.shorn;
+        const canShear = ctx.tool.tier('knife') >= 1 && H('knife') && !a.shorn;   /* không cầm dao → bắt bằng tay như cũ */
         take(a, a.x, a.y, K.sheep.lim, canShear ? S.shear : S.sheep, canShear ? 'shear' : 'catch');
       } else if (a.kind === 'horse') {
         if (e.horse.tamed && a.tame) {
           if (p.custom) continue;                                        // on a boat / jeep / Rocky: no riding
           take(a, a.x, a.y, K.horse.lim, ctx.tool.tier('saddle') >= 1 ? S.ride : S.needSaddle, 'ride');
-        } else take(a, a.x, a.y, K.horse.lim, ctx.bag.has('hay', 1) ? S.feedHay : S.needHay, 'hay');
+        } else take(a, a.x, a.y, K.horse.lim, ctx.bag.has('hay', 1) ? S.feedHay : S.needHay, 'hay', ctx.bag.has('hay', 1) && !H('hay') ? 'hay' : null);
       } else if (a.kind === 'crab') take(a, a.x, a.y, K.crab.lim, S.crab, 'crab');
       else if (a.kind === 'bat') { if (a.st === 'sit') take(a, a.x, a.y + 14, 32, S.bat, 'bat'); }
-      else if (a.kind === 'sala') take(a, a.x, a.y, K.sala.lim, ctx.tool.tier('bucket') >= 2 ? S.scoop : S.needBucket, 'sala');
+      else if (a.kind === 'sala') take(a, a.x, a.y, K.sala.lim, ctx.tool.tier('bucket') >= 2 ? S.scoop : S.needBucket, 'sala', ctx.tool.tier('bucket') >= 2 && !H('bucket') ? 'bucket' : null);
       else if (a.kind === 'fox') take(a, a.x, a.y, K.fox.lim, getCarry(ctx).some(it => it.kind === 'fish') ? S.foxFeed : S.foxNeed, 'fox');
       else if (a.kind === 'moth') take(a, a.x, a.y + 10, 26, S.moth, 'moth');
     }
@@ -922,9 +924,10 @@ export const ecology = {
     }
     if (coop) {
       const d = Math.hypot(coop.x - p.x, coop.y - p.y);
-      if (d < 34) return { label: e.coop.hay >= 3 ? S.coopOk : S.coopFeed(e.coop.hay), x: coop.x, y: coop.y - 8, limit: 34, data: { act: 'coop' } };
+      if (d < 34) { if (e.coop.hay < 3 && ctx.bag.has('hay', 1) && !H('hay')) return { label: ctx.needHold('hay'), x: coop.x, y: coop.y - 8, limit: 34, need: true, needId: 'hay', data: { need: true } };
+        return { label: e.coop.hay >= 3 ? S.coopOk : S.coopFeed(e.coop.hay), x: coop.x, y: coop.y - 8, limit: 34, data: { act: 'coop' } }; }
     }
-    if (!trap && ctx.tool.tier('trap') >= 1 && list.some(a => a.kind === 'rabbit')) {
+    if (!trap && ctx.tool.tier('trap') >= 1 && H('trap') && list.some(a => a.kind === 'rabbit')) {
       const tx = tileOf(p.x), ty = tileOf(p.y);
       if (GRASSY(ctx.getG(ctx.S.map, tx, ty)) && freeTile(ctx, tx, ty) && !objAt(ctx, tx, ty)) {
         return { label: S.setTrap, x: p.x, y: p.y, limit: 20, data: { act: 'trapSet', tx, ty } };

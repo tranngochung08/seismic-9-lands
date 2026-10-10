@@ -42,17 +42,22 @@ export async function initArt(q) {
     const img = toCanvas(await load(BASE + c.file)); ART.fixed[k] = { ...c, img };
     if (c.actions) { img.actions = {}; for (const [n, a] of Object.entries(c.actions)) img.actions[n] = { img: toCanvas(await load(BASE + a.file)), n: a.n, ch: a.ch || 20, cw: a.cw || 16, fps: a.fps, impact: a.impact }; }   /* px-hero: nhân vật riêng có clip động tác */
   }));
+  ART.ruins = {};   /* plan-23: manifest.ruins { file gốc: { dmg, ruin } } → canvas */
+  await Promise.all(Object.entries(man.ruins || {}).map(async ([f, v]) => { try { ART.ruins[f] = { dmg: toCanvas(await load(BASE + v.dmg)), ruin: toCanvas(await load(BASE + v.ruin)) }; } catch (e) { /* thiếu file → dùng đống gạch cũ */ } }));
+  ART.uiCache = {}; ART.uiImg = k => { if (ART.uiCache[k] !== undefined) return ART.uiCache[k]; ART.uiCache[k] = null; const f = man.ui && man.ui[k]; if (typeof f === 'string') load(BASE + f).then(im => { ART.uiCache[k] = toCanvas(im); }).catch(() => {}); return null; };
   ART.vfx = {};   /* plan-19: VFX sheet (manifest vfx) */
+  ART.monsters = {};   /* plan-21: sheet quái (manifest monsters.<key> = { file, n, cw, ch } — 4 hàng S, W, E, N) */
+  await Promise.all(Object.entries(man.monsters || {}).map(async ([k, v]) => { ART.monsters[k] = { ...v, img: toCanvas(await load(BASE + v.file)) }; }));
   await Promise.all(Object.entries(man.vfx || {}).map(async ([k, v]) => { ART.vfx[k] = { ...v, img: toCanvas(await load(BASE + v.file)) }; }));
   await Promise.all(Object.entries(man.zones || {}).map(async ([id, file]) => { try { ART.packs[id] = await loadPack(file, id); } catch (e) { console.warn('art: pack', id, e); } }));
   HOOK.charSheet = charSheetPx;
   // canvas đơn vẽ code (bè, ván, buồm): thay bitmap tại chỗ bằng ảnh gói Làng (dùng chung mọi vùng)
   const vp = ART.packs.village;
-  if (vp && vp.images) for (const [kind, cv] of Object.entries(HOOK.images)) {
-    const img = vp.images[kind]; if (!img) continue;
-    cv.width = img.width; cv.height = img.height; cv.getContext('2d').drawImage(img, 0, 0, img.width, img.height); cv.__hi = ART.hi; logicalCanvas(cv);
-  }
+  const applyImage = (kind, cv) => { const img = vp && vp.images && vp.images[kind]; if (!img || cv.__hi) return; cv.width = img.width; cv.height = img.height; cv.getContext('2d').drawImage(img, 0, 0, img.width, img.height); cv.__hi = ART.hi; logicalCanvas(cv); };
+  for (const [kind, cv] of Object.entries(HOOK.images)) applyImage(kind, cv);
+  HOOK.applyImage = applyImage;   /* đăng ký muộn → thay ngay */
   HOOK.petFrames = petFramesPx;
+  HOOK.petDir = k => { const vp = ART.packs.village, c = vp && vp.creatures && vp.creatures['rockypet_' + k]; return c && c.length ? c : null; };   /* plan-23: Rocky hướng xuống ('ds'), lên ('dn'), nhảy ('hop') */
   // cờ quốc gia: cột PixelLab + lá cờ sọc theo FLAG_COLORS, 6 khung phất (dịch cột theo sóng + bóng sáng/tối)
   if (vp && vp.images && vp.images.flagpole) buildFlags(vp.images.flagpole, vp.flags || {});
   HOOK.rocky = (key, tier) => packChain().map(p => p.rocky && p.rocky[tier]).find(Boolean) || null;
@@ -81,7 +86,7 @@ function prefetchPack(j) {
 async function loadPack(file, id) {
   const j = await fetch(BASE + file).then(r => r.json());
   prefetchPack(j);
-  const p = { id, inherit: j.inherit || null, classes: j.classes || {}, layers: [], decor: {}, tiles: {}, objects: {}, rocky: {}, chars: [] };
+  const p = { id, inherit: j.inherit || null, classes: j.classes || {}, layers: [], decor: {}, tiles: {}, objects: {}, files: {}, rocky: {}, chars: [] };
   for (const L of j.wang || []) {   // { dir, upper }
     const byKey = { ...await loadWangDir(L.dir) };   /* bộ dùng chung (vd. wang/f2 đất cày ở 12 gói) chỉ tải 1 lần */
     // lớp thứ 2 trở đi: làm trong suốt phần "lower" (so với ô thuần 0000) để không đè mất lớp trước (vd. đường đè cỏ đậm)
@@ -96,7 +101,7 @@ async function loadPack(file, id) {
   for (const [tile, files] of Object.entries(j.tiles || {})) { const arr = await Promise.all(files.map(f => load(BASE + f).then(toCanvas))); arr.pick = (tx, ty) => arr[h2(tx, ty) % arr.length]; p.tiles[tile] = arr; }
   await Promise.all(Object.entries(j.objects || {}).map(async ([name, spec]) => {
     const f = typeof spec === 'string' ? spec : spec.file; const img = await load(BASE + f);
-    p.objects[name] = { img: toCanvas(img), ox: (spec.ox || 0), oy: (spec.oy || 0) };
+    p.objects[name] = { img: toCanvas(img), ox: (spec.ox || 0), oy: (spec.oy || 0) }; p.files[name] = f;   /* plan-23: file gốc → tra ảnh hư hỏng/đổ nát (manifest.ruins) */
   }));
   await Promise.all(Object.entries(j.rocky || {}).map(async ([tier, f]) => { p.rocky[tier] = toCanvas(await load(BASE + f)); }));
   // clip lặp cho vật thể (lửa, đèn, đài phun…): { name: [4 file] } → O[name].frames (main.js chọn khung theo thời gian)
@@ -139,7 +144,8 @@ export function enterZone(id) {
   for (const p of chain.slice().reverse()) for (const [name, arr] of Object.entries(p.tiles)) { const id2 = T[name]; if (id2 !== undefined) { if (tiles0[id2] === undefined) tiles0[id2] = tiles[id2]; tiles[id2] = arr; } }
   // nền Wang: lớp và bảng lớp đất của gói gần nhất có wang
   const wp = chain.find(p => p.layers.length); WANG.layers = wp ? wp.layers : []; WANG.decor = wp ? wp.decor : {};
-  ART.tilled = WANG.layers.some(l => l.upper === 'tilled'); WANG.wetCache = null;   /* px-farm2: có bộ Wang đất cày → farm.js không vẽ ô cày đè nữa, chỉ phủ tối ô đã tưới */
+  ART.tilled = WANG.layers.some(l => l.upper === 'tilled'); WANG.wetCache = null; SOIL.cache = {}; SOIL.tex = {};
+  { const vp = ART.packs.village; ART.soilSq = vp && vp.images && vp.images.soil_sq ? { dry: vp.images.soil_sq, wet: vp.images.soil_sq_wet || vp.images.soil_sq } : null; ART.sqSoil = !!(ART.soilSq && WANG.layers.length); }   /* 2026-10-10 anh chọn ô vuông cho đất cày + đất phá/đào */   /* px-farm2: có bộ Wang đất cày → farm.js không vẽ ô cày đè nữa, chỉ phủ tối ô đã tưới */
   { const vp = ART.packs.village; WANG.fish = vp && vp.images && vp.images.fishshadow_0 && vp.images.fishshadow_1 ? [vp.images.fishshadow_0, vp.images.fishshadow_1] : null; }   /* plan-14: bóng cá */
   WANG.cls = {}; if (wp) for (const [name, cls] of Object.entries(wp.classes)) WANG.cls[T[name]] = cls;
   WANG.base = (wp && wp.classes.__base) || 'grass';
@@ -235,7 +241,95 @@ function installShim() {
 // Lớp theo thứ tự gói: lớp sau đè lớp trước ở ô có góc thuộc lớp đó ("lower" của mọi lớp = đất nền).
 const WANG = { layers: [], cls: {}, decor: {}, base: 'grass', pending: [], fish: null, fishQ: [], foamQ: [] };
 const isWater = c => c === 'water' || c === 'deep';
-function clsAt(m, x, y) { x = Math.max(0, Math.min(m.w - 1, x)); y = Math.max(0, Math.min(m.h - 1, y)); return WANG.cls[m.ground[y * m.w + x]] || WANG.base; }
+/* 2026-10-10 anh: ô đất cày / đất đào NỐI LIỀN nhau, viền không đen đậm.
+   Ghép từ ảnh PixelLab anh chọn (soil_sq): lấy phần đất bên trong làm vân, viền nâu sẫm vừa phải; cạnh nào có ô đất kề thì trải đất ra sát mép, bỏ viền.
+   mask: N=1 E=2 S=4 W=8, góc NE=16 SE=32 SW=64 NW=128. Ảnh 32 px (2×) → vẽ kèm cỡ đích 16×16. */
+const SOIL = { cache: {}, tex: {} };
+function soilTex(wet) {   /* vân đất 22×22 lấy từ giữa ảnh nguồn (tránh viền) */
+  const k = wet ? 'w' : 'd'; if (SOIL.tex[k]) return SOIL.tex[k];
+  const src = ART.soilSq && (wet ? ART.soilSq.wet : ART.soilSq.dry); if (!src) return null;
+  const c = mkCanvas(32, 32), g = c.getContext('2d'); g.drawImage(src, 0, 0, 32, 32);
+  const d = g.getImageData(4, 4, 22, 22); return (SOIL.tex[k] = d);
+}
+ART.soilTile = (wet, mask, wmask = 0) => {   /* wmask: ô kề cũng đã tưới (cùng bit với mask) — để bo góc vết ướt */
+  const key = wet ? 'w' + mask + '_' + wmask : 'd' + mask; if (SOIL.cache[key]) return SOIL.cache[key];
+  const tx = soilTex(wet); if (!tx) return null;
+  const c = mkCanvas(32, 32), g = c.getContext('2d'), out = g.createImageData(32, 32), o = out.data, TD = tx.data, TW = tx.width;
+  const has = b => (mask & b) !== 0, N = has(1), E = has(2), S = has(4), W = has(8);
+  const BR = wet ? [92, 60, 38] : [126, 86, 52];   /* viền nâu sẫm vừa (trước là gần đen) */
+  const cls = new Uint8Array(1024);   /* 0 trống · 1 đất · 2 viền */
+  const put = (x, y, r, gg, b) => { const i = (y * 32 + x) * 4; o[i] = r; o[i + 1] = gg; o[i + 2] = b; o[i + 3] = 255; };
+  const texAt = (D, x, y) => { const sx = ((x - 4) % TW + TW) % TW, sy = ((y - 4) % TW + TW) % TW, j = (sy * TW + sx) * 4; return [D[j], D[j + 1], D[j + 2]]; };
+  const soil = (x, y) => { const v = texAt(TD, x, y); put(x, y, v[0], v[1], v[2]); cls[y * 32 + x] = 1; };
+  const border = (x, y) => { put(x, y, BR[0], BR[1], BR[2]); cls[y * 32 + x] = 2; };
+  const lo = 4, hi = 27, fx0 = W ? 0 : lo, fx1 = E ? 31 : hi, fy0 = N ? 0 : lo, fy1 = S ? 31 : hi;
+  /* 1) phần đất: hình chữ thập (giữa + các dải cạnh có hàng xóm) + góc khi đủ 3 ô kề */
+  for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
+    const inX = x >= lo && x <= hi, inY = y >= lo && y <= hi;
+    let fill = false;
+    if (inX && inY) fill = true;
+    else if (inX) fill = (y < lo && N) || (y > hi && S);
+    else if (inY) fill = (x < lo && W) || (x > hi && E);
+    else {   /* góc */
+      const cn = y < lo ? N : S, cw = x < lo ? W : E, diag = has(y < lo ? (x < lo ? 128 : 16) : (x < lo ? 64 : 32));
+      fill = cn && cw && diag;
+    }
+    if (fill) soil(x, y);
+  }
+  /* 2) viền nâu chỉ ở cạnh không có ô đất kề (chạy dài theo phần đất), khép góc trong của hình chữ L */
+  if (!N) for (let x = fx0; x <= fx1; x++) if (x >= lo - 1 || W) border(x, lo - 1);
+  if (!S) for (let x = fx0; x <= fx1; x++) if (x >= lo - 1 || W) border(x, hi + 1);
+  if (!W) for (let y = fy0; y <= fy1; y++) border(lo - 1, y);
+  if (!E) for (let y = fy0; y <= fy1; y++) border(hi + 1, y);
+  if (!N && !W) border(lo - 1, lo - 1); if (!N && !E) border(hi + 1, lo - 1); if (!S && !W) border(lo - 1, hi + 1); if (!S && !E) border(hi + 1, hi + 1);
+  const inner = (cn, cw, diag, xs, ys, vx, hy) => { if (cn && cw && !diag) { for (const y of ys) border(vx, y); for (const x of xs) border(x, hy); } };
+  inner(N, W, has(128), [0, 1, 2, 3], [0, 1, 2, 3], lo - 1, lo - 1);
+  inner(N, E, has(16), [28, 29, 30, 31], [0, 1, 2, 3], hi + 1, lo - 1);
+  inner(S, W, has(64), [0, 1, 2, 3], [28, 29, 30, 31], lo - 1, hi + 1);
+  inner(S, E, has(32), [28, 29, 30, 31], [28, 29, 30, 31], hi + 1, hi + 1);
+  /* 3) bo tròn nhẹ các góc NGOÀI của khối đất (anh: 'bo góc tròn một tý cho thẩm mỹ'), bán kính 3 px ảnh 2× ≈ 1,5 px game */
+  const R = 3, clear = (x, y) => { o[(y * 32 + x) * 4 + 3] = 0; cls[y * 32 + x] = 0; };
+  const round = (ox, oy, sx, sy) => { for (let j = 0; j <= R; j++) for (let k = 0; k <= R; k++) { const x = ox + sx * k, y = oy + sy * j, d = Math.hypot(k, j); if (d > R + 0.5) clear(x, y); else if (d > R - 0.5) border(x, y); } };
+  if (!N && !W) round(lo - 1 + R, lo - 1 + R, -1, -1);
+  if (!N && !E) round(hi + 1 - R, lo - 1 + R, 1, -1);
+  if (!S && !W) round(lo - 1 + R, hi + 1 - R, -1, 1);
+  if (!S && !E) round(hi + 1 - R, hi + 1 - R, 1, 1);
+  /* góc TRONG (chữ L): vát nhẹ 1 bậc cho đồng bộ — điểm góc P và 2 điểm viền sát P thành đất, điểm chéo ra phía cỏ thành viền */
+  const bevel = (px, py, sx, sy) => { soil(px, py); soil(px, py + sy); soil(px + sx, py); border(px + sx, py + sy); };
+  if (N && W && !has(128)) bevel(lo - 1, lo - 1, -1, -1);
+  if (N && E && !has(16)) bevel(hi + 1, lo - 1, 1, -1);
+  if (S && W && !has(64)) bevel(lo - 1, hi + 1, -1, 1);
+  if (S && E && !has(32)) bevel(hi + 1, hi + 1, 1, 1);
+  /* 4) vết đất ƯỚT bo góc (anh: 'đất đã tưới nước bo luôn'): góc nào của ô ướt giáp đất KHÔ thì phần ngoài cung tròn trả về đất khô + viền khô */
+  if (wet && ART.soilSq) {
+    const dtx = soilTex(false), DD = dtx && dtx.data, BRd = [126, 86, 52], RW = 7, wh = b => (wmask & b) !== 0;
+    const toDry = (x, y) => { if (x < 0 || y < 0 || x > 31 || y > 31) return; const q = cls[y * 32 + x]; if (q === 1 && DD) { const v = texAt(DD, x, y); put(x, y, v[0], v[1], v[2]); } else if (q === 2) put(x, y, BRd[0], BRd[1], BRd[2]); };
+    const wcorner = (sA, wA, sB, wB, xEdge, yEdge, sx, sy) => {   /* sA/sB: có ô đất kề ở 2 cạnh của góc; wA/wB: ô kề đó cũng ướt */
+      if (wA || wB || !(sA || sB)) return;   /* ướt chạy tiếp, hoặc góc ngoài khối đất (đã bo ở bước 3) */
+      const ox = xEdge - sx * RW, oy = yEdge - sy * RW;
+      for (let j = 0; j <= RW; j++) for (let k = 0; k <= RW; k++) if (Math.hypot(k, j) > RW + 0.5) toDry(ox + sx * k, oy + sy * j);
+    };
+    wcorner(N, wh(1), W, wh(8), W ? 0 : lo - 1, N ? 0 : lo - 1, -1, -1);   /* TB */
+    wcorner(N, wh(1), E, wh(2), E ? 31 : hi + 1, N ? 0 : lo - 1, 1, -1);   /* ĐB */
+    wcorner(S, wh(4), W, wh(8), W ? 0 : lo - 1, S ? 31 : hi + 1, -1, 1);   /* TN */
+    wcorner(S, wh(4), E, wh(2), E ? 31 : hi + 1, S ? 31 : hi + 1, 1, 1);   /* ĐN */
+  }
+  g.putImageData(out, 0, 0); return (SOIL.cache[key] = c);
+};
+/* ô đất vuông hiển thị (đất cày, hoặc đất trống do phá/đào) — để tính ô kề khi nối */
+ART.isSoilCell = (m, x, y) => { if (x < 0 || y < 0 || x >= m.w || y >= m.h) return false; const i = y * m.w + x, t = m.ground[i]; return t === T.TILLED || t === T.TILLED_WET || (t === T.DIRT && !!(m.sqSoil && m.sqSoil.has(i))); };
+ART.wetMask = (m, x, y) => { const w = (dx, dy) => { const X = x + dx, Y = y + dy; return X >= 0 && Y >= 0 && X < m.w && Y < m.h && m.ground[Y * m.w + X] === T.TILLED_WET; }; return (w(0, -1) ? 1 : 0) | (w(1, 0) ? 2 : 0) | (w(0, 1) ? 4 : 0) | (w(-1, 0) ? 8 : 0) | (w(1, -1) ? 16 : 0) | (w(1, 1) ? 32 : 0) | (w(-1, 1) ? 64 : 0) | (w(-1, -1) ? 128 : 0); };
+ART.soilMask = (m, x, y) => { const s = (dx, dy) => ART.isSoilCell(m, x + dx, y + dy); return (s(0, -1) ? 1 : 0) | (s(1, 0) ? 2 : 0) | (s(0, 1) ? 4 : 0) | (s(-1, 0) ? 8 : 0) | (s(1, -1) ? 16 : 0) | (s(1, 1) ? 32 : 0) | (s(-1, 1) ? 64 : 0) | (s(-1, -1) ? 128 : 0); };
+const isSq = (m, i) => { const t = m.ground[i]; return t === T.TILLED || t === T.TILLED_WET || !!(m.sqSoil && m.sqSoil.has(i)); };
+const SQ_NB = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1], [-2, 0], [2, 0], [0, -2], [0, 2]];
+function clsAt(m, x, y) {
+  x = Math.max(0, Math.min(m.w - 1, x)); y = Math.max(0, Math.min(m.h - 1, y)); const i = y * m.w + x;
+  if (ART.sqSoil && isSq(m, i)) {   /* ô cày / ô đất đào = ô vuông PixelLab vẽ ở drawGround → nền dưới lấy theo ô bên cạnh (không lộ dải cỏ khác màu) */
+    for (const [dx, dy] of SQ_NB) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h) continue; const j = ny * m.w + nx; if (!isSq(m, j)) return WANG.cls[m.ground[j]] || WANG.base; }
+    return WANG.base;
+  }
+  return WANG.cls[m.ground[i]] || WANG.base;
+}
 /* px-farm2: ô đất cày ĐÃ TƯỚI = chính pixel đất của ô đó (4 góc phần tư từ 4 ô Wang kề) tô tối, giữ alpha → ranh ướt/khô thẳng theo ô như Stardew, mép ngoài vẫn bo tròn */
 function wetSet() {
   if (WANG.wetCache) return WANG.wetCache;
@@ -397,3 +491,6 @@ function buildFlags(pole, flags) {
     d.frames = frames; d.img = frames[0]; d.w = 24; d.h = 32; d.ox = 0; d.oy = 0; d.animFlag = true;
   }
 }
+
+/* plan-23: ảnh hư hỏng ('dmg') / đổ nát ('ruin') của 1 loại vật trong vùng đang dùng (PixelLab, tools/px-ruin-save.py) */
+ART.ruinOf = (type, stage) => { if (!ART.on || !ART.ruins) return null; const f = packChain().map(p => p.files && p.files[type]).find(Boolean); const r = f && ART.ruins[f]; return r ? r[stage] : null; };

@@ -5,7 +5,7 @@ export const HOOK = { charSheet: null, rocky: null, creatures: {} }; // art.js (
 // art.js khi vào vùng thay nội dung mảng tại chỗ bằng ảnh PixelLab (nếu gói có), không thì trả lại bản code.
 HOOK.creature = (kind, fb) => { HOOK.creatures[kind] = { arr: fb, fb: fb.map(f => Array.isArray(f) ? f.slice() : f) }; return fb; };
 // Canvas đơn vẽ code (bè, ván, buồm…): HOOK.image('raft', canvas) → art.js thay bitmap TẠI CHỖ (đổi kích thước + đánh dấu __hi) nếu gói có
-HOOK.images = {}; HOOK.image = (kind, cv) => { HOOK.images[kind] = cv; return cv; };
+HOOK.images = {}; HOOK.image = (kind, cv) => { HOOK.images[kind] = cv; if (HOOK.applyImage) HOOK.applyImage(kind, cv); return cv; };   /* 2026-10-10: hình tạo muộn (gốc cây sau lần chặt đầu…) cũng được thay ảnh PixelLab */
 HOOK.petFrames = null;   // art.js: (scarf) => [[c, flip] ×4] hoặc null
 
 export const PAL = {

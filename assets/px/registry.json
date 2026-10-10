@@ -475,6 +475,34 @@
    "manifest.chars.fixed.hung_b.actions.hurt.file"
   ]
  },
+ "chars/hung_b_act_attack.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    320,
+    192
+   ],
+   "logic": [
+    160.0,
+    96.0
+   ]
+  },
+  "frames": 5,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": 3,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.chars.fixed.hung_b.actions.attack.file"
+  ]
+ },
  "chars/hung_b_act_idle.png": {
   "id": "8c6dfe71-4ea2-40c1-a759-a960a65f22e0",
   "prompt": "animate_character template breathing-idle (group e1241ae5-d913-4e36-8b30-3ff073be9063), S/E/N, W = lật E",
@@ -2911,6 +2939,259 @@
    "manifest.ui.items.torch"
   ]
  },
+ "ui/items/sword.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.sword",
+   "manifest.ui.items.sword_t1"
+  ]
+ },
+ "ui/items/revive.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.revive"
+  ]
+ },
+ "ui/items/soul.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.soul"
+  ]
+ },
+ "ui/items/gel.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.gel"
+  ]
+ },
+ "ui/items/sword_t2.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.sword_t2"
+  ]
+ },
+ "ui/items/sword_t3.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.sword_t3"
+  ]
+ },
+ "ui/items/sword_t4.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.sword_t4"
+  ]
+ },
+ "ui/items/sword_t5.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.sword_t5"
+  ]
+ },
+ "ui/items/sword_t6.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.ui.items.sword_t6"
+  ]
+ },
  "ui/tab_bag.png": {
   "id": null,
   "prompt": null,
@@ -5067,6 +5348,3058 @@
    "manifest.vfx.level_up.file"
   ]
  },
+ "vfx/slash_t0_3f_16x16.png": {
+  "id": "8e721fe6-cb4c-4254-9c6f-9f2fe66fa36c",
+  "prompt": "vfx_workbench effect 8e721fe6-cb4c-4254-9c6f-9f2fe66fa36c",
+  "size": {
+   "file": [
+    96,
+    32
+   ],
+   "logic": [
+    48.0,
+    16.0
+   ]
+  },
+  "frames": 3,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.slash_t0.file"
+  ]
+ },
+ "vfx/slash_t1_3f_16x16.png": {
+  "id": "688cdf90-93ee-442d-910c-c6426e5d5c8b",
+  "prompt": "vfx_workbench effect 688cdf90-93ee-442d-910c-c6426e5d5c8b",
+  "size": {
+   "file": [
+    96,
+    32
+   ],
+   "logic": [
+    48.0,
+    16.0
+   ]
+  },
+  "frames": 3,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.slash_t1.file"
+  ]
+ },
+ "vfx/slash_t2_4f_16x16.png": {
+  "id": "22b91740-d1ea-4aba-bc20-3b2775584098",
+  "prompt": "vfx_workbench effect 22b91740-d1ea-4aba-bc20-3b2775584098",
+  "size": {
+   "file": [
+    128,
+    32
+   ],
+   "logic": [
+    64.0,
+    16.0
+   ]
+  },
+  "frames": 4,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.slash_t2.file"
+  ]
+ },
+ "vfx/slash_t3_4f_24x24.png": {
+  "id": "5c4d309e-5862-4a77-baa0-b38dacabbc13",
+  "prompt": "vfx_workbench effect 5c4d309e-5862-4a77-baa0-b38dacabbc13",
+  "size": {
+   "file": [
+    192,
+    48
+   ],
+   "logic": [
+    96.0,
+    24.0
+   ]
+  },
+  "frames": 4,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.slash_t3.file"
+  ]
+ },
+ "vfx/slash_t4_5f_24x24.png": {
+  "id": "8e75c303-1ba4-4def-b879-06d75d7a55ce",
+  "prompt": "vfx_workbench effect 8e75c303-1ba4-4def-b879-06d75d7a55ce",
+  "size": {
+   "file": [
+    240,
+    48
+   ],
+   "logic": [
+    120.0,
+    24.0
+   ]
+  },
+  "frames": 5,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.slash_t4.file"
+  ]
+ },
+ "vfx/slash_t5_6f_32x32.png": {
+  "id": "f4e822bb-fd57-4063-8d20-c7dc7d32a552",
+  "prompt": "vfx_workbench effect f4e822bb-fd57-4063-8d20-c7dc7d32a552",
+  "size": {
+   "file": [
+    384,
+    64
+   ],
+   "logic": [
+    192.0,
+    32.0
+   ]
+  },
+  "frames": 6,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.slash_t5.file"
+  ]
+ },
+ "vfx/slash_t6_5f_32x32.png": {
+  "id": "8d28cbbb-050c-4253-81ba-f3b180571557",
+  "prompt": "vfx_workbench effect 8d28cbbb-050c-4253-81ba-f3b180571557",
+  "size": {
+   "file": [
+    320,
+    64
+   ],
+   "logic": [
+    160.0,
+    32.0
+   ]
+  },
+  "frames": 5,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.slash_t6.file"
+  ]
+ },
+ "vfx/monster_poof_4f_24x24.png": {
+  "id": "630ed3cb-172f-4ad8-ac61-6565fe7ef6fa",
+  "prompt": "vfx_workbench effect 630ed3cb-172f-4ad8-ac61-6565fe7ef6fa",
+  "size": {
+   "file": [
+    192,
+    48
+   ],
+   "logic": [
+    96.0,
+    24.0
+   ]
+  },
+  "frames": 4,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.vfx.monster_poof.file"
+  ]
+ },
+ "ui/cursors/seed_turnip.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_turnip.on"
+  ]
+ },
+ "ui/cursors/seed_turnip_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_turnip.off"
+  ]
+ },
+ "ui/cursors/seed_strawberry.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_strawberry.on"
+  ]
+ },
+ "ui/cursors/seed_strawberry_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_strawberry.off"
+  ]
+ },
+ "ui/cursors/seed_tomato.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_tomato.on"
+  ]
+ },
+ "ui/cursors/seed_tomato_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_tomato.off"
+  ]
+ },
+ "ui/cursors/seed_corn.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_corn.on"
+  ]
+ },
+ "ui/cursors/seed_corn_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_corn.off"
+  ]
+ },
+ "ui/cursors/seed_pumpkin.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_pumpkin.on"
+  ]
+ },
+ "ui/cursors/seed_pumpkin_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_pumpkin.off"
+  ]
+ },
+ "ui/cursors/seed_yam.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_yam.on"
+  ]
+ },
+ "ui/cursors/seed_yam_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_yam.off"
+  ]
+ },
+ "ui/cursors/seed_starmush.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_starmush.on"
+  ]
+ },
+ "ui/cursors/seed_starmush_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_starmush.off"
+  ]
+ },
+ "ui/cursors/seed_quakeflower.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_quakeflower.on"
+  ]
+ },
+ "ui/cursors/seed_quakeflower_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.seed_quakeflower.off"
+  ]
+ },
+ "ui/cursors/pen1.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pen1.on"
+  ]
+ },
+ "ui/cursors/pen1_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pen1.off"
+  ]
+ },
+ "ui/cursors/pen2.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pen2.on"
+  ]
+ },
+ "ui/cursors/pen2_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pen2.off"
+  ]
+ },
+ "ui/cursors/scarecrow.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.scarecrow.on"
+  ]
+ },
+ "ui/cursors/scarecrow_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.scarecrow.off"
+  ]
+ },
+ "ui/cursors/axe.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.axe.on"
+  ]
+ },
+ "ui/cursors/axe_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.axe.off"
+  ]
+ },
+ "ui/cursors/pickaxe.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pickaxe.on"
+  ]
+ },
+ "ui/cursors/pickaxe_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pickaxe.off"
+  ]
+ },
+ "ui/cursors/rod.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.rod.on"
+  ]
+ },
+ "ui/cursors/rod_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.rod.off"
+  ]
+ },
+ "ui/cursors/shovel.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.shovel.on"
+  ]
+ },
+ "ui/cursors/shovel_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.shovel.off"
+  ]
+ },
+ "ui/cursors/scythe.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.scythe.on"
+  ]
+ },
+ "ui/cursors/scythe_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.scythe.off"
+  ]
+ },
+ "ui/cursors/knife.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.knife.on"
+  ]
+ },
+ "ui/cursors/knife_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.knife.off"
+  ]
+ },
+ "ui/cursors/bucket.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.bucket.on"
+  ]
+ },
+ "ui/cursors/bucket_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.bucket.off"
+  ]
+ },
+ "ui/cursors/trap.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.trap.on"
+  ]
+ },
+ "ui/cursors/trap_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.trap.off"
+  ]
+ },
+ "ui/cursors/torch.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.torch.on"
+  ]
+ },
+ "ui/cursors/torch_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.torch.off"
+  ]
+ },
+ "ui/cursors/egg.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.egg.on"
+  ]
+ },
+ "ui/cursors/egg_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.egg.off"
+  ]
+ },
+ "ui/cursors/milk.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.milk.on"
+  ]
+ },
+ "ui/cursors/milk_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.milk.off"
+  ]
+ },
+ "ui/cursors/berry.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.berry.on"
+  ]
+ },
+ "ui/cursors/berry_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.berry.off"
+  ]
+ },
+ "ui/cursors/mushroom.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.mushroom.on"
+  ]
+ },
+ "ui/cursors/mushroom_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.mushroom.off"
+  ]
+ },
+ "ui/cursors/honey.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.honey.on"
+  ]
+ },
+ "ui/cursors/honey_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.honey.off"
+  ]
+ },
+ "ui/cursors/meat.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.meat.on"
+  ]
+ },
+ "ui/cursors/meat_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.meat.off"
+  ]
+ },
+ "ui/cursors/turnip.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.turnip.on"
+  ]
+ },
+ "ui/cursors/turnip_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.turnip.off"
+  ]
+ },
+ "ui/cursors/strawberry.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.strawberry.on"
+  ]
+ },
+ "ui/cursors/strawberry_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.strawberry.off"
+  ]
+ },
+ "ui/cursors/tomato.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.tomato.on"
+  ]
+ },
+ "ui/cursors/tomato_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.tomato.off"
+  ]
+ },
+ "ui/cursors/corn.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.corn.on"
+  ]
+ },
+ "ui/cursors/corn_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.corn.off"
+  ]
+ },
+ "ui/cursors/pumpkin.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pumpkin.on"
+  ]
+ },
+ "ui/cursors/pumpkin_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.pumpkin.off"
+  ]
+ },
+ "ui/cursors/yam.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.yam.on"
+  ]
+ },
+ "ui/cursors/yam_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.yam.off"
+  ]
+ },
+ "ui/cursors/starmush.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.starmush.on"
+  ]
+ },
+ "ui/cursors/starmush_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.starmush.off"
+  ]
+ },
+ "ui/cursors/quakeflower.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.quakeflower.on"
+  ]
+ },
+ "ui/cursors/quakeflower_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.quakeflower.off"
+  ]
+ },
+ "ui/cursors/fish.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.fish.on"
+  ]
+ },
+ "ui/cursors/fish_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.fish.off"
+  ]
+ },
+ "ui/cursors/sword.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword.on"
+  ]
+ },
+ "ui/cursors/sword_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword.off"
+  ]
+ },
+ "ui/cursors/revive.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.revive.on"
+  ]
+ },
+ "ui/cursors/revive_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.revive.off"
+  ]
+ },
+ "ui/cursors/stone.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.stone.on"
+  ]
+ },
+ "ui/cursors/stone_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.stone.off"
+  ]
+ },
+ "ui/cursors/hay.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.hay.on"
+  ]
+ },
+ "ui/cursors/hay_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.hay.off"
+  ]
+ },
+ "ui/cursors/sword_t2.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t2.on"
+  ]
+ },
+ "ui/cursors/sword_t2_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t2.off"
+  ]
+ },
+ "ui/cursors/sword_t3.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t3.on"
+  ]
+ },
+ "ui/cursors/sword_t3_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t3.off"
+  ]
+ },
+ "ui/cursors/sword_t4.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t4.on"
+  ]
+ },
+ "ui/cursors/sword_t4_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t4.off"
+  ]
+ },
+ "ui/cursors/sword_t5.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t5.on"
+  ]
+ },
+ "ui/cursors/sword_t5_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t5.off"
+  ]
+ },
+ "ui/cursors/sword_t6.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t6.on"
+  ]
+ },
+ "ui/cursors/sword_t6_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t6.off"
+  ]
+ },
+ "ui/cursors/sword_t1.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t1.on"
+  ]
+ },
+ "ui/cursors/sword_t1_off.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16.0,
+    16.0
+   ]
+  },
+  "frames": null,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.cursors.sword_t1.off"
+  ]
+ },
+ "monsters/slime.png": {
+  "id": "63554bba-f019-452d-a9d9-d5492501fa93",
+  "prompt": "create_8_direction_object + animate_object \"hop\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    170,
+    136
+   ],
+   "logic": [
+    85.0,
+    68.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.slime.file"
+  ]
+ },
+ "monsters/crab.png": {
+  "id": "37747b93-7bc4-4ef6-bb37-041a4c4bc729",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    170,
+    136
+   ],
+   "logic": [
+    85.0,
+    68.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.crab.file"
+  ]
+ },
+ "monsters/rockimp.png": {
+  "id": "6309eb03-52b8-426e-8b04-b7f5c838d8ce",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    210,
+    168
+   ],
+   "logic": [
+    105.0,
+    84.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.rockimp.file"
+  ]
+ },
+ "monsters/inkshade.png": {
+  "id": "eacd6e08-b31a-4088-b1ed-569e4ce502d9",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    210,
+    168
+   ],
+   "logic": [
+    105.0,
+    84.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.inkshade.file"
+  ]
+ },
+ "monsters/crow.png": {
+  "id": "f53e6ed8-a0f3-4d1d-8f71-20eba1db25ff",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    170,
+    136
+   ],
+   "logic": [
+    85.0,
+    68.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.crow.file"
+  ]
+ },
+ "monsters/wolf.png": {
+  "id": "ba0eaad0-cff6-4bcc-a19f-51db974dabc5",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    240,
+    192
+   ],
+   "logic": [
+    120.0,
+    96.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.wolf.file"
+  ]
+ },
+ "monsters/imp.png": {
+  "id": "57373f5b-71bd-4157-81f1-c0d2d6805d60",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    210,
+    168
+   ],
+   "logic": [
+    105.0,
+    84.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.imp.file"
+  ]
+ },
+ "monsters/snowwolf.png": {
+  "id": "347d1721-5c15-4ef2-9d0d-52e86c3e1d8c",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    240,
+    192
+   ],
+   "logic": [
+    120.0,
+    96.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.snowwolf.file"
+  ]
+ },
+ "monsters/glitch.png": {
+  "id": "15a0ac0e-363f-48ac-b8bc-4087f305a75b",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    170,
+    136
+   ],
+   "logic": [
+    85.0,
+    68.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.glitch.file"
+  ]
+ },
+ "monsters/gull.png": {
+  "id": "53023050-6683-408c-a3b1-8c8bb8aee3c3",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    170,
+    136
+   ],
+   "logic": [
+    85.0,
+    68.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.gull.file"
+  ]
+ },
+ "monsters/scorpion.png": {
+  "id": "5b3906d0-5b80-4aab-b201-e151868936f4",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    210,
+    168
+   ],
+   "logic": [
+    105.0,
+    84.0
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "qa": {
+   "mult16": false,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "manifest.monsters.scorpion.file"
+  ]
+ },
  "decor/dandelion_s7.png": {
   "id": null,
   "prompt": null,
@@ -6468,6 +9801,62 @@
    "village.objects.seisvein.file"
   ]
  },
+ "zones/village/obj/tomb_t8.png": {
+  "id": "1326eefb-17ce-47c5-bde2-ea15ae276cdf",
+  "prompt": "create_8_direction_object high top-down, lấy hướng nam (vật tĩnh — quy tắc camera tường)",
+  "size": {
+   "file": [
+    32,
+    64
+   ],
+   "logic": [
+    16.0,
+    32.0
+   ]
+  },
+  "frames": 1,
+  "fps": null,
+  "pivot": "bottom",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "village.objects.tomb.file"
+  ]
+ },
+ "zones/village/obj/memorial_t8.png": {
+  "id": "cbbb2217-954d-487e-8105-d1b7ccc75069",
+  "prompt": "create_8_direction_object high top-down, lấy hướng nam (vật tĩnh — quy tắc camera tường)",
+  "size": {
+   "file": [
+    64,
+    96
+   ],
+   "logic": [
+    32.0,
+    48.0
+   ]
+  },
+  "frames": 1,
+  "fps": null,
+  "pivot": "bottom",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "village.objects.memorial.file"
+  ]
+ },
  "obj/rocky_0.png": {
   "id": null,
   "prompt": null,
@@ -6970,6 +10359,34 @@
   },
   "used": [
    "village.chars.actions.c0.hurt.file"
+  ]
+ },
+ "chars/c0_act_attack.png": {
+  "id": null,
+  "prompt": null,
+  "size": {
+   "file": [
+    320,
+    192
+   ],
+   "logic": [
+    160.0,
+    96.0
+   ]
+  },
+  "frames": 5,
+  "fps": null,
+  "pivot": "bottom-center",
+  "impact": 3,
+  "date": "2026-10-10",
+  "status": "approved",
+  "qa": {
+   "mult16": true,
+   "black": 0,
+   "transparent": true
+  },
+  "used": [
+   "village.chars.actions.c0.attack.file"
   ]
  },
  "chars/c0_act_idle.png": {
@@ -31430,5 +34847,760 @@
   "used": [
    "trench.loops.gcrystal[3]"
   ]
+ },
+ "ui/hotbar/slot.png": {
+  "id": "c3d11f1a-bd54-4a2f-8e74-c0b8f8aca90b",
+  "prompt": "pixflux 32x32 seed 23, STYLE LOCK + square inventory hotbar slot, color_image = ui/npick/panel.png",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "frames": 1,
+  "fps": null,
+  "pivot": "9-slice 8px",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "used": [
+   "style.css #hotbar"
+  ]
+ },
+ "ui/hotbar/slot_on.png": {
+  "id": "15093b29-5bb8-403c-ab44-5df22b78d7f3",
+  "prompt": "pixflux img2img từ slot.png (strength 120) — viền đỏ ô đang chọn",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "frames": 1,
+  "fps": null,
+  "pivot": "9-slice 8px",
+  "impact": null,
+  "date": "2026-10-10",
+  "status": "draft",
+  "used": [
+   "style.css #hotbar .on"
+  ]
+ },
+ "ui/cursors/*": {
+  "id": null,
+  "prompt": "tools/px-cursors.py: dựng từ icon PixelLab ui/items (+ bóng nâu; bản _off mờ 45 %)",
+  "size": {
+   "file": [
+    32,
+    32
+   ]
+  },
+  "frames": 1,
+  "date": "2026-10-10",
+  "status": "draft",
+  "used": [
+   "main.js heldCursor"
+  ]
+ },
+ "vfx/stone_free_5f_32x32.png": {
+  "status": "draft",
+  "id": null,
+  "prompt": "vfx_workbench effect None",
+  "size": {
+   "file": [
+    64,
+    64
+   ],
+   "logic": [
+    32,
+    32
+   ]
+  },
+  "frames": 5,
+  "fps": 16,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10"
+ },
+ "vfx/petrify_7f_56x32.png": {
+  "status": "draft",
+  "id": null,
+  "prompt": "vfx_workbench effect None",
+  "size": {
+   "file": [
+    112,
+    64
+   ],
+   "logic": [
+    56,
+    32
+   ]
+  },
+  "frames": 7,
+  "fps": 14,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10"
+ },
+ "vfx/dark_aura_8f_48x56.png": {
+  "status": "draft",
+  "id": null,
+  "prompt": "vfx_workbench effect None",
+  "size": {
+   "file": [
+    96,
+    112
+   ],
+   "logic": [
+    48,
+    56
+   ]
+  },
+  "frames": 8,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10"
+ },
+ "monsters/puffer.png": {
+  "status": "draft",
+  "id": "4fd0139b-4711-4d45-98eb-7ffd5d996934",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/jelly.png": {
+  "status": "draft",
+  "id": "3e095306-71cc-4927-88f1-022fcb1ef026",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/crabking.png": {
+  "status": "draft",
+  "id": "49aa0b96-50fc-45e4-aa41-57565c731481",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    56,
+    56
+   ],
+   "logic": [
+    28,
+    28
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/crabking_atk.png": {
+  "status": "draft",
+  "id": "49aa0b96-50fc-45e4-aa41-57565c731481",
+  "prompt": "create_8_direction_object + animate_object \"attack\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    56,
+    56
+   ],
+   "logic": [
+    28,
+    28
+   ]
+  },
+  "frames": 7,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/puffer_puff.png": {
+  "status": "draft",
+  "id": "4fd0139b-4711-4d45-98eb-7ffd5d996934",
+  "prompt": "animate_object \"puff\" (chỉ hướng nam, chép 4 hàng)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 7,
+  "fps": 10,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "zones/u1/obj/uchest_t8.png": {
+  "status": "draft",
+  "id": "a4349116-1579-4458-bc7a-efad90639219",
+  "prompt": "create_8_direction_object (high top-down) hướng nam",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "date": "2026-10-10",
+  "used": [
+   "zones/u1.json objects.uchest"
+  ]
+ },
+ "zones/u1/obj/uchest_open_t8.png": {
+  "status": "draft",
+  "id": "4e6a351f-7aae-40d7-8217-f2876c0c3e7c",
+  "prompt": "create_object_state \"lid open\" hướng nam",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "date": "2026-10-10",
+  "used": [
+   "zones/u1.json objects.uchest_open"
+  ]
+ },
+ "zones/u1/obj/uwgate_t8.png": {
+  "status": "draft",
+  "id": "90d35b40-a12e-40c1-a8cb-fd201aac09db",
+  "prompt": "create_8_direction_object (high top-down) hướng nam",
+  "size": {
+   "file": [
+    64,
+    64
+   ],
+   "logic": [
+    32,
+    32
+   ]
+  },
+  "date": "2026-10-10",
+  "used": [
+   "zones/u1.json objects.uwgate"
+  ]
+ },
+ "zones/u1/obj/uwgate_sealed_t8.png": {
+  "status": "draft",
+  "id": "90d35b40-a12e-40c1-a8cb-fd201aac09db",
+  "prompt": "pixflux img2img (k170) từ hướng nam: rune tắt",
+  "size": {
+   "file": [
+    64,
+    64
+   ],
+   "logic": [
+    32,
+    32
+   ]
+  },
+  "date": "2026-10-10",
+  "used": [
+   "zones/u1.json objects.uwgate_sealed"
+  ]
+ },
+ "ui/items/pill_s.png": {
+  "status": "draft",
+  "prompt": "pixflux 32 seed 11",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "date": "2026-10-10",
+  "used": [
+   "manifest.ui.items.pill_s"
+  ]
+ },
+ "ui/items/pill_l.png": {
+  "status": "draft",
+  "prompt": "pixflux 32 seed 7",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "date": "2026-10-10",
+  "used": [
+   "manifest.ui.items.pill_l"
+  ]
+ },
+ "ui/items/st_breath.png": {
+  "status": "draft",
+  "prompt": "pixflux 32 seed 7",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "date": "2026-10-10",
+  "used": [
+   "manifest.ui.items.st_breath"
+  ]
+ },
+ "vfx/u_bubbles_16f_11x18.png": {
+  "status": "draft",
+  "id": "3f414272-a43c-4a6c-a393-c8b00eb6b062",
+  "prompt": "vfx_workbench effect 3f414272-a43c-4a6c-a393-c8b00eb6b062",
+  "size": {
+   "file": [
+    22,
+    36
+   ],
+   "logic": [
+    11,
+    18
+   ]
+  },
+  "frames": 16,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10"
+ },
+ "vfx/u_shock_11f_22x18.png": {
+  "status": "draft",
+  "id": "e17d82b0-f6ca-4376-a6fd-5972f8b2f718",
+  "prompt": "vfx_workbench effect e17d82b0-f6ca-4376-a6fd-5972f8b2f718",
+  "size": {
+   "file": [
+    44,
+    36
+   ],
+   "logic": [
+    22,
+    18
+   ]
+  },
+  "frames": 11,
+  "fps": 16,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10"
+ },
+ "vfx/u_puff_6f_37x26.png": {
+  "status": "draft",
+  "id": "b69e15d3-2c8f-4595-82ad-6dc3ebf9119a",
+  "prompt": "vfx_workbench effect b69e15d3-2c8f-4595-82ad-6dc3ebf9119a",
+  "size": {
+   "file": [
+    74,
+    52
+   ],
+   "logic": [
+    37,
+    26
+   ]
+  },
+  "frames": 6,
+  "fps": 16,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10"
+ },
+ "vfx/u_gate_11f_37x28.png": {
+  "status": "draft",
+  "id": "2daf43ab-6b13-429d-8af8-2a96d754b89e",
+  "prompt": "vfx_workbench effect 2daf43ab-6b13-429d-8af8-2a96d754b89e",
+  "size": {
+   "file": [
+    74,
+    56
+   ],
+   "logic": [
+    37,
+    28
+   ]
+  },
+  "frames": 11,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-10"
+ },
+ "monsters/swordfish.png": {
+  "status": "draft",
+  "id": "4c29613e-c855-49ea-b5b6-84cd7209980b",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/sawshark.png": {
+  "status": "draft",
+  "id": "8bc0a742-f17c-4a3e-9bbb-b0f81db48963",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/armorshark.png": {
+  "status": "draft",
+  "id": "30b229d2-6ff1-4759-bac9-64de981e96a8",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    56,
+    56
+   ],
+   "logic": [
+    28,
+    28
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/angler.png": {
+  "status": "draft",
+  "id": "04e73002-bf51-40c0-b8ea-a8706c422816",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/seasnake.png": {
+  "status": "draft",
+  "id": "2dd6e57c-6548-496e-93bd-65c47d0c7906",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/serpent.png": {
+  "status": "draft",
+  "id": "b66c0375-0b93-44b3-b301-2b89c1b3dc2c",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    48,
+    48
+   ],
+   "logic": [
+    24,
+    24
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/eel.png": {
+  "status": "draft",
+  "id": "3958880e-a2d6-4a35-83d6-e0958ff728d1",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/momeel.png": {
+  "status": "draft",
+  "id": "70841579-1061-4ec1-ab95-92776abb0d58",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    56,
+    56
+   ],
+   "logic": [
+    28,
+    28
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "monsters/squid.png": {
+  "status": "draft",
+  "id": "aade5a34-1a9c-4848-849f-39fd4de51e83",
+  "prompt": "create_8_direction_object + animate_object \"move\" (S/E/N, W lật)",
+  "size": {
+   "file": [
+    34,
+    34
+   ],
+   "logic": [
+    17,
+    17
+   ]
+  },
+  "frames": 5,
+  "fps": 8,
+  "pivot": "feet",
+  "date": "2026-10-10"
+ },
+ "vfx/u_ink_9f_33x26.png": {
+  "status": "draft",
+  "id": "6a0d3894-f7fe-44b1-b3ab-80bf88545991",
+  "prompt": "vfx_workbench effect 6a0d3894-f7fe-44b1-b3ab-80bf88545991",
+  "size": {
+   "file": [
+    66,
+    52
+   ],
+   "logic": [
+    33,
+    26
+   ]
+  },
+  "frames": 9,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "used": [
+   "manifest.vfx.u_ink"
+  ],
+  "date": "2026-10-10"
+ },
+ "vfx/u_current_12f_44x24.png": {
+  "status": "draft",
+  "id": "aa232505-2ae8-4a6a-9668-b4614ad21e23",
+  "prompt": "vfx_workbench effect aa232505-2ae8-4a6a-9668-b4614ad21e23",
+  "size": {
+   "file": [
+    88,
+    48
+   ],
+   "logic": [
+    44,
+    24
+   ]
+  },
+  "frames": 12,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "used": [
+   "manifest.vfx.u_current"
+  ],
+  "date": "2026-10-10"
+ },
+ "zones/u2/obj/tallkelp_t8.png": {
+  "status": "draft",
+  "id": "2c9ced5e-7723-409d-b2f9-9927c8d677a9",
+  "prompt": "create_8_direction_object (high top-down) hướng nam",
+  "size": {
+   "file": [
+    48,
+    48
+   ],
+   "logic": [
+    24,
+    24
+   ]
+  },
+  "used": [
+   "zones/u2.json objects.tallkelp"
+  ],
+  "date": "2026-10-10"
+ },
+ "zones/u3/obj/wreckwall_t8.png": {
+  "status": "draft",
+  "id": "0581a39f-ac76-4f43-ad74-ed2d820481bd",
+  "prompt": "create_8_direction_object (high top-down) hướng nam",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "used": [
+   "zones/u3.json objects.wreckwall"
+  ],
+  "date": "2026-10-10"
+ },
+ "zones/u4/obj/caverock_t8.png": {
+  "status": "draft",
+  "id": "30b0bfa0-9359-43ec-b725-2605e277999c",
+  "prompt": "create_8_direction_object (high top-down) hướng nam",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "used": [
+   "zones/u4.json objects.caverock"
+  ],
+  "date": "2026-10-10"
+ },
+ "zones/u4/obj/caverock2_t8.png": {
+  "status": "draft",
+  "id": "30b0bfa0-9359-43ec-b725-2605e277999c",
+  "prompt": "create_8_direction_object (high top-down) hướng nam · lật ngang",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "used": [
+   "zones/u4.json objects.caverock2"
+  ],
+  "date": "2026-10-10"
+ },
+ "monsters/serpent_seg.png": {
+  "status": "draft",
+  "id": "b66c0375-0b93-44b3-b301-2b89c1b3dc2c",
+  "prompt": "cắt cổ rắn (rotation north) + mặt nạ bầu dục + viền nâu",
+  "size": {
+   "file": [
+    24,
+    26
+   ],
+   "logic": [
+    12,
+    13
+   ]
+  },
+  "used": [
+   "manifest.monsters.serpent_seg"
+  ],
+  "date": "2026-10-10"
+ },
+ "ui/bubble_helm.png": {
+  "status": "draft",
+  "prompt": "pixflux 32 seed 7 — kính trong làm bán trong suốt (alpha 95)",
+  "size": {
+   "file": [
+    32,
+    32
+   ],
+   "logic": [
+    16,
+    16
+   ]
+  },
+  "used": [
+   "manifest.ui.bubble_helm (pet.js)"
+  ],
+  "date": "2026-10-10"
  }
 }

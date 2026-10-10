@@ -16,6 +16,7 @@ const STR = {
     empty: 'Your bag is empty.', noTools: 'No tools yet — craft one at a workbench.',
     weight: 'weight', cap: 'Bag load', hint: 'B · bag',
     names: {
+      sword1: 'Wooden sword', sword2: 'Stone sword', sword3: 'Iron sword', sword4: 'Obsidian sword', sword5: 'Crystal sword', sword6: 'Seismic sword', revive: 'Revival tinder',
       axe1: 'Axe I', pick1: 'Pickaxe I', shovel: 'Shovel', scythe: 'Scythe', knife: 'Knife', torch: 'Torch',
       bucket1: 'Bucket', rope: 'Rope', lasso: 'Lasso', trap: 'Trap', saddle: 'Saddle', raft: 'Raft', wax: 'Ski wax',
       cage1: 'Cage I', cart1: 'Livestock cart I', cage2: 'Iron cage II', cart2: 'Iron-wheel cart II', bucket3: 'Crystal bucket III', cage3: 'Obsidian cage III', cart3: 'Obsidian cart III',
@@ -42,6 +43,7 @@ const STR = {
     empty: 'Túi đang trống.', noTools: 'Chưa có dụng cụ — chế ở bàn mộc.',
     weight: 'nặng', cap: 'Tải túi', hint: 'B · túi đồ',
     names: {
+      sword1: 'Kiếm gỗ', sword2: 'Kiếm đá', sword3: 'Kiếm sắt', sword4: 'Kiếm obsidian', sword5: 'Kiếm pha lê', sword6: 'Kiếm Seismic', revive: 'Bùi nhùi hồi sinh',
       axe1: 'Rìu I', pick1: 'Cuốc I', shovel: 'Xẻng', scythe: 'Liềm', knife: 'Dao', torch: 'Đuốc',
       bucket1: 'Xô', rope: 'Dây thừng', lasso: 'Thòng lọng', trap: 'Bẫy', saddle: 'Yên ngựa', raft: 'Bè', wax: 'Sáp trượt',
       cage1: 'Lồng I', cart1: 'Xe chở vật nuôi I', cage2: 'Lồng sắt II', cart2: 'Xe bánh sắt II', bucket3: 'Xô tinh thể III', cage3: 'Lồng obsidian III', cart3: 'Xe obsidian III',
@@ -80,6 +82,10 @@ const STATIONS = {
 const RECIPES = [
   // --- workbench ---
   { id: 'axe1', st: 'bench', icon: '🪓', tool: 'axe', tier: 1, in: { wood: 5 } },
+  /* plan-21: kiếm 6 cấp (quái càng mạnh càng cần kiếm cao) + bùi nhùi hồi sinh dân */
+  { id: 'sword1', st: 'bench', icon: '🗡', tool: 'sword', tier: 1, in: { wood: 6, rope: 1 } },
+  { id: 'sword2', st: 'bench', icon: '🗡', tool: 'sword', tier: 2, in: { rock: 6, wood: 2, gel: 2 } },
+  { id: 'revive', st: 'bench', icon: '🕯', item: 'revive', n: 1, in: { flower: 2, honey: 1, soul: 1 } },
   { id: 'pick1', st: 'bench', icon: '⛏', tool: 'pickaxe', tier: 1, in: { wood: 6, rock: 2 } },
   { id: 'shovel', st: 'bench', icon: '🥄', tool: 'shovel', tier: 1, in: { wood: 4 } },
   { id: 'scythe', st: 'bench', icon: '🌾', tool: 'scythe', tier: 1, in: { wood: 3, rock: 1 } },
@@ -102,6 +108,7 @@ const RECIPES = [
   { id: 'iron', st: 'furnace', icon: '🔩', item: 'iron', n: 1, in: { ore: 2, charcoal: 1 } },
   { id: 'glass', st: 'furnace', icon: '🪟', item: 'glass', n: 1, in: { sand: 2, charcoal: 1 } },
   { id: 'axe2', st: 'furnace', icon: '🪓', tool: 'axe', tier: 2, in: { iron: 3, wood: 2 } },
+  { id: 'sword3', st: 'furnace', icon: '⚔', tool: 'sword', tier: 3, in: { iron: 4, wood: 1, fang: 2 } },
   { id: 'pick2', st: 'furnace', icon: '⛏', tool: 'pickaxe', tier: 2, in: { iron: 3, wood: 2 } },
   { id: 'rod2', st: 'furnace', icon: '🎣', tool: 'rod', tier: 2, in: { iron: 1, rope: 2, wood: 2 } },
   { id: 'bucket2', st: 'furnace', icon: '🪣', tool: 'bucket', tier: 2, in: { iron: 2 } },
@@ -114,6 +121,7 @@ const RECIPES = [
   { id: 'coat', st: 'loom', icon: '🧥', flag: ['ecology', 'coat'], in: { yetifur: 1, wool: 4 } },
   // --- forge ---
   { id: 'axe3', st: 'forge', icon: '🪓', tool: 'axe', tier: 3, in: { obsidian: 4, iron: 2 } },
+  { id: 'sword4', st: 'forge', icon: '⚔', tool: 'sword', tier: 4, in: { obsidian: 5, iron: 2, core: 2 } },
   { id: 'pick3', st: 'forge', icon: '⛏', tool: 'pickaxe', tier: 3, in: { obsidian: 4, iron: 2 } },
   { id: 'tires', st: 'forge', icon: '🛞', flag: ['vehicles', 'tires'], in: { obsidian: 3, rope: 2 } },
   { id: 'armor', st: 'forge', icon: '🛡', flag: ['rocky', 'armor'], in: { wormhide: 1, obsidian: 4 } },
@@ -124,6 +132,8 @@ const RECIPES = [
   { id: 'lamp', st: 'altar', icon: '🏮', count: ['crafting', 'lamps'], in: { crystal: 2, glass: 1 } },
   { id: 'charge', st: 'altar', icon: '⚡', count: ['rocky', 'charged'], in: { crystal: 3 } },
   { id: 'rod3', st: 'altar', icon: '🎣', tool: 'rod', tier: 3, in: { crystal: 1, iron: 2, rope: 3 } },
+  { id: 'sword5', st: 'altar', icon: '⚔', tool: 'sword', tier: 5, in: { crystal: 4, obsidian: 2, ember: 2 } },
+  { id: 'sword6', st: 'altar', icon: '⚔', tool: 'sword', tier: 6, in: { stone: 30, crystal: 4, shard: 3 } },
   { id: 'bucket3', st: 'altar', icon: '🪣', tool: 'bucket', tier: 3, in: { crystal: 1, iron: 2 } }
 ];
 const FLAG_ROWS = [
@@ -309,7 +319,7 @@ function recipeRow(ctx, r) {
 function renderCraft(ctx) {
   const t = L(ctx), key = ST.station, s = STATIONS[key];
   const rows = RECIPES.filter(r => r.st === key).map(r => recipeRow(ctx, r)).join('');
-  ST.el = ctx.panel('crafting', `<h2>${s.icon} ${esc(t.st[key])}<span class="chip">⚖ ${nw(ctx.bag.weight())}/${ctx.bag.cap()}</span></h2>
+  ST.el = ctx.panel('crafting', `<h2>${s.icon} ${esc(t.st[key])}</h2>
     <div class="scroll" id="cf-body">${rows}</div>
     <button class="btn" id="cf-close">${t.close}</button>`);
   ST.el.hidden = false;
@@ -324,7 +334,7 @@ function doCraft(ctx, id) {
   if (stateOf(ctx, r) !== 'ok') { ctx.sfx('fail'); return; }
   for (const [k, n] of Object.entries(r.in)) ctx.bag.remove(k, n);
   let msg = `${r.icon} ${rName(ctx, r)}`;
-  if (r.item) { const got = ctx.bag.add(r.item, r.n); msg = `+${got} ${ctx.itemIcon(r.item)} ${ctx.itemName(r.item)}`; }
+  if (r.item) { const got = ctx.give(r.item, r.n, undefined, undefined, { toPlayer: true });   /* plan-24: đồ chế xong bật ra */ msg = `+${got} ${ctx.itemIcon(r.item)} ${ctx.itemName(r.item)}`; }
   else if (r.tool) ctx.tool.set(r.tool, r.tier);
   else if (r.flag) { sysOf(ctx, r.flag[0])[r.flag[1]] = true; msg += ' ✓'; }
   else if (r.count) { const s = sysOf(ctx, r.count[0]); s[r.count[1]] = (s[r.count[1]] || 0) + 1; msg += ` ×${s[r.count[1]]}`; }
@@ -354,8 +364,8 @@ function bagHTML(ctx) {
     const d = ctx.ITEMS[id], tot = d.w * n;
     rows.push(`<div class="hrow">
       <span style="font-size:18px;width:22px;text-align:center">${d.icon}</span>
-      <span class="hwho"><b>${esc(ctx.itemName(id))}</b>${d.w ? ` <span class="dim tiny">${nw(d.w)} ${t.weight}</span>` : ''}</span>
-      <span class="hnum"><b>×${n}</b><small>${d.w ? '⚖ ' + nw(tot) : '—'}</small></span></div>`);
+      <span class="hwho"><b>${esc(ctx.itemName(id))}</b></span>
+      <span class="hnum"><b>×${n}</b></span></div>`);
   }
   const tools = [];
   for (const id of Object.keys(ctx.TOOLS)) {
@@ -367,10 +377,7 @@ function bagHTML(ctx) {
     const on = isCount ? v > 0 : v;
     return `<span class="chip" style="font-size:13px;${on ? 'color:#8ee07a' : 'opacity:.45'}">${icon} ${esc(t.fl[b])} ${on ? (isCount ? '×' + v : '✓') : '–'}</span>`;
   }).join(' ');
-  const w = ctx.bag.weight(), cap = ctx.bag.cap(), pct = Math.min(100, Math.round(w / cap * 100));
-  return `<h2>🎒 ${t.bag}<span class="chip">⚖ ${nw(w)}/${cap}</span></h2>
-    <div style="height:8px;border-radius:5px;background:#241e34;overflow:hidden;margin:2px 0 6px">
-      <div style="height:100%;width:${pct}%;background:${pct > 90 ? '#ff6b84' : '#ffd45e'}"></div></div>
+  return `<h2>🎒 ${t.bag}</h2>
     <div class="scroll">
       <h3>${t.items}</h3>
       ${rows.length ? rows.join('') : `<p class="dim" style="padding:8px 2px">${t.empty}</p>`}
@@ -488,7 +495,7 @@ export const crafting = {
     const t = L(ctx), map = ctx.S.map;
     ug.save();
     const fs = Math.max(10, scale * 3);
-    ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+    ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     for (const s of ST.list) {
       if (!map || !map.objects.includes(s.o)) continue;
       const sx = Math.round((s.o.x * TS + 16 - cx) * scale), sy = Math.round((s.o.y * TS - 18 - cy) * scale);

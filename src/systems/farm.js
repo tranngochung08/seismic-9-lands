@@ -76,6 +76,7 @@ const tileCount = z => Object.keys(z.tiles).length;
 const cropOk = (ctx, crop) => { const it = ctx.ITEMS[crop]; const tg = it ? it.tags : []; return tg.includes('any') || tg.includes(ctx.season()); };
 const ripe = rec => !!rec.crop && !rec.dead && rec.stage >= (CROP[rec.crop] || { days: 4 }).days;
 // khung ảnh theo tiến độ: 'seed' (vừa gieo, chưa lớn ngày nào) → 0 mầm → 1 → 2 → 3 chín (plan-19: 5 giai đoạn như luật, chỉ đổi hiển thị, save giữ nguyên)
+const CROP_LIFT = 3;   /* px: nhấc gốc cây khỏi mép dưới ô → gốc ở giữa-dưới ô vuông */
 function frameOf(rec) {
   const d = (CROP[rec.crop] || { days: 4 }).days;
   if (rec.stage >= d) return 3;
@@ -163,14 +164,15 @@ function tillable(ctx, tx, ty) {   // ô trống có thể cày (chưa xét plot
   if (!plainGround(g0) || isRoad(m, tx, ty) || ctx.isSolid(m, tx, ty) || ctx.hasObjectAt(m, tx, ty)) return false;
   return !(m.reserved || []).some(r => r.x === tx && r.y === ty);
 }
-function inFarmPlot(ctx, tx, ty) { const p = farmPlot(ctx), q = ctx.plotOf(tx, ty); return !!(q && ((p && p.idx === q.idx) || (q.nation && ctx.canWorkPlot && ctx.canWorkPlot(tx, ty) && ctx.myNation() !== q.nation))); }   /* + khu nước thân thiện (nói chuyện ≥ 5 lần) */
+function inFarmPlot(ctx, tx, ty) { if (ctx.ownsTile && ctx.ownsTile(tx, ty)) return true;   /* plan-25: đất đã mua */
+  const p = farmPlot(ctx), q = ctx.plotOf(tx, ty); return !!(q && ((p && p.idx === q.idx) || (q.nation && ctx.canWorkPlot && ctx.canWorkPlot(tx, ty) && ctx.myNation() !== q.nation))); }   /* + khu nước thân thiện (nói chuyện ≥ 5 lần) */
 function nearWater(ctx) {
   const m = ctx.S.map, p = ctx.S.player, tx = Math.floor(p.x / TS), ty = Math.floor(p.y / TS);
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const g0 = ctx.getG(m, tx + dx, ty + dy); if (g0 === T.WATER || g0 === T.REEF || g0 === T.DEEP) return { x: (tx + dx) * TS + 8, y: (ty + dy) * TS + 8 }; }
   for (const o of m.objects) {
     if (o.type !== 'well' || o.ruined) continue;
     const d = ctx.O[o.type], wx = o.x * TS + d.fw * 8, wy = (o.y + d.fh) * TS - 4;
-    if (Math.hypot(wx - p.x, wy - p.y) < 30) return { x: wx, y: wy };
+    if (Math.hypot(wx - p.x, wy - p.y) < 30) return { x: wx, y: wy, well: true };
   }
   return null;
 }
@@ -206,89 +208,96 @@ function doTill(ctx, tx, ty) {
   const rec = { crop: null, stage: 0, wet: false, planted: 0, waterDays: 0, q: 0, dead: false };
   z.tiles[key(tx, ty)] = rec; applyTile(ctx, tx, ty, rec);
   playAct(ctx, 'hoe', tx, ty);
-  ctx.sfx('hit'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'dirt_puff', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 10, 7, [PAL.dirt, PAL.dirtD, '#8a6238']);   /* plan-19: VFX PixelLab, hạt code chỉ còn là dự phòng */ ctx.toast(t.tilled); ctx.persist(); return true;
+  ctx.sfx('till'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'dirt_puff', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 10, 7, [PAL.dirt, PAL.dirtD, '#8a6238']);   /* plan-19: VFX PixelLab, hạt code chỉ còn là dự phòng */ ctx.toast(t.tilled); ctx.persist(); return true;
 }
 function doSow(ctx, tx, ty, seed) {
   const t = L(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || rec.crop) return false;
   if (!ctx.bag.has(seed.id, 1)) return false;
   ctx.bag.remove(seed.id, 1);
   rec.crop = seed.crop; rec.stage = 0; rec.planted = ctx.clock.dayIndex; rec.waterDays = 0; rec.q = 0; rec.dead = false;
-  ctx.sfx('build'); burst(ctx, tx * TS + 8, ty * TS + 10, 5, [PAL.grass, PAL.grassD]); ctx.toast(`${t.sown}: ${ctx.itemIcon(seed.id)} ${ctx.itemName(seed.id)}`); ctx.persist(); return true;
+  ctx.sfx('sow'); burst(ctx, tx * TS + 8, ty * TS + 10, 5, [PAL.grass, PAL.grassD]); ctx.toast(`${t.sown}: ${ctx.itemIcon(seed.id)} ${ctx.itemName(seed.id)}`); ctx.persist(); return true;
 }
 function doWater(ctx, tx, ty) {
   const t = L(ctx), f = root(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || rec.wet) return false;
   if (f.bucketWater <= 0) { ctx.toast(t.emptyBucket); ctx.sfx('fail'); return false; }
   f.bucketWater -= 1; rec.wet = true; applyTile(ctx, tx, ty, rec);
   playAct(ctx, 'water', tx, ty);
-  ctx.sfx('splash'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'water_splash', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 8, 7, [PAL.waterL, PAL.foam, PAL.water]);   /* plan-19 */ ctx.persist(); return true;
+  ctx.sfx('water'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'water_splash', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 8, 7, [PAL.waterL, PAL.foam, PAL.water]);   /* plan-19 */ ctx.persist(); return true;
 }
 function doFill(ctx) {
   const t = L(ctx), f = root(ctx);
   if (f.bucketWater >= BUCKET_MAX) { ctx.toast(t.bucketFull); return false; }
-  f.bucketWater = BUCKET_MAX; ctx.sfx('splash'); ctx.toast(`${t.filled} ${t.hud(f.bucketWater, BUCKET_MAX)}`); ctx.persist(); return true;
+  f.bucketWater = BUCKET_MAX; ctx.sfx('bucket_fill'); ctx.toast(`${t.filled} ${t.hud(f.bucketWater, BUCKET_MAX)}`); ctx.persist(); return true;
 }
 function doHarvest(ctx, tx, ty) {
   const t = L(ctx), f = root(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || !ripe(rec)) return false;
   const def = CROP[rec.crop], n = 2 + ((Math.random() * 3) | 0);
   const q = rec.waterDays >= def.days ? 2 : rec.waterDays * 2 >= def.days ? 1 : 0;
-  const got = ctx.bag.add(rec.crop, n); if (got <= 0) return false;   /* túi đầy: bag.add đã toast, cây giữ nguyên */
+  const got = ctx.give(rec.crop, n, tx * TS + 8, ty * TS + 12); if (got <= 0) return false;   /* plan-24: quả rơi ra ô ruộng */
   f.harvested += got; f.quality[q] = (f.quality[q] || 0) + got; rec.q = q;
   const name = ctx.itemName(rec.crop), icon = ctx.itemIcon(rec.crop), col = FRUIT[rec.crop][0];
   if (def.regrow) { rec.stage = Math.max(0, def.days - def.regrow); rec.waterDays = 0; }
   else { rec.crop = null; rec.stage = 0; rec.waterDays = 0; rec.dead = false; }
   playAct(ctx, 'harvest', tx, ty);
-  ctx.sfx('pickup'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'crop_sparkle', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 8, 8, [col, PAL.grass, '#ffd45e']);   /* plan-19 */
+  ctx.sfx('harvest'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'crop_sparkle', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 8, 8, [col, PAL.grass, '#ffd45e']);   /* plan-19 */
   ctx.toast(`+${got} ${icon} ${name}${t.stars[q]}`); if (ctx.pop) ctx.pop(ctx.S.player.x, ctx.S.player.y - 18, `+${got} ${icon}`);
   ctx.clock.log(t.harvested(got, name) + t.stars[q]); ctx.persist(); return true;
 }
 function doPull(ctx, tx, ty) {
   const t = L(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || !rec.dead) return false;
   rec.crop = null; rec.stage = 0; rec.dead = false; rec.waterDays = 0;
-  ctx.sfx('chop'); burst(ctx, tx * TS + 8, ty * TS + 8, 6, ['#8a6a3c', '#6b4a2a']); ctx.toast(t.pulled); ctx.persist(); return true;
+  ctx.sfx('pull'); burst(ctx, tx * TS + 8, ty * TS + 8, 6, ['#8a6a3c', '#6b4a2a']); ctx.toast(t.pulled); ctx.persist(); return true;
 }
 function doPlaceScare(ctx, tx, ty) {
   const t = L(ctx), z = zoneData(ctx); if (!ctx.bag.has('scarecrow', 1)) return false;
   const o = placeScare(ctx, tx, ty); if (!o) return false;
   ctx.bag.remove('scarecrow', 1); z.scarecrows.push({ x: tx, y: ty });
-  ctx.sfx('build'); burst(ctx, tx * TS + 8, ty * TS + 12, 6, [PAL.dirt, '#d9c07a']); ctx.toast(t.placed); ctx.persist(); return true;
+  ctx.sfx('place'); burst(ctx, tx * TS + 8, ty * TS + 12, 6, [PAL.dirt, '#d9c07a']); ctx.toast(t.placed); ctx.persist(); return true;
 }
 function doTakeScare(ctx, s) {
   const t = L(ctx), z = zoneData(ctx);
-  if (ctx.bag.add('scarecrow', 1) <= 0) return false;
+  if (ctx.give('scarecrow', 1, s.o.x * TS + 8, s.o.y * TS + 14) <= 0) return false;
   ctx.removeObject(ctx.S.map, s.o); ST.scare = ST.scare.filter(e => e !== s);
   z.scarecrows = z.scarecrows.filter(e => !(e.x === s.x && e.y === s.y));
   ctx.sfx('pickup'); ctx.toast(t.taken); ctx.persist(); return true;
 }
 
 // ---------- ứng viên hành động cho 1 ô ----------
-function tileCand(ctx, tx, ty) {
+/* plan-20: MÓN ĐANG CẦM quyết định (hotbar kiểu Stardew). Tay không: thu hoạch, nhổ cây héo. Cầm hạt X → gieo X; xô → tưới; xẻng → cày; bù nhìn → đặt.
+   Cầm sai món → kind 'need' (chỉ nhắc). aim = ô đang trỏ chuột: chỉ khi đó mới nhắc "cần cầm xẻng" trên ô cỏ trống (không spam khi đi ngang). */
+const holds = (ctx, id) => (ctx.holding ? ctx.holding(id) : ctx.tool.tier(id) >= 1 || ctx.bag.has(id, 1));
+const need = (ctx, id, tx, ty) => ({ kind: 'need', label: ctx.needHold ? ctx.needHold(id) : id, tx, ty, needId: id });
+function anySeed(ctx) { for (const crop of CROPS) if (ctx.bag.has('seed_' + crop, 1)) return 'seed_' + crop; return null; }
+function tileCand(ctx, tx, ty, aim) {
   const t = L(ctx), f = root(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)];
-  const shovel = ctx.tool.tier('shovel') >= 1, bucket = ctx.tool.tier('bucket') >= 1;
+  const shovel = holds(ctx, 'shovel'), bucket = holds(ctx, 'bucket'), hs = ctx.heldSeed ? ctx.heldSeed() : null;
   if (rec) {
     if (rec.crop && rec.dead) return { kind: 'pull', label: t.pull, tx, ty };
     if (rec.crop && ripe(rec)) return { kind: 'harvest', label: t.harvest, tx, ty };
     if (!rec.crop) {
-      const { pick, any } = pickSeed(ctx);
-      if (pick) return { kind: 'sow', label: t.sow(ctx.itemName(pick.id)), tx, ty, seed: pick };
-      if (any) return { kind: 'deny', label: t.wrongSeason, tx, ty, why: t.wrongSeason };
+      if (hs) { const crop = hs.slice(5); if (!ctx.bag.has(hs, 1)) return null; return cropOk(ctx, crop) ? { kind: 'sow', label: t.sow(ctx.itemName(hs)), tx, ty, seed: { crop, id: hs } } : { kind: 'deny', label: t.wrongSeason, tx, ty, why: t.wrongSeason }; }
+      if (!ctx.heldSeed) { const { pick, any } = pickSeed(ctx); if (pick) return { kind: 'sow', label: t.sow(ctx.itemName(pick.id)), tx, ty, seed: pick }; if (any) return { kind: 'deny', label: t.wrongSeason, tx, ty, why: t.wrongSeason }; }
     }
     if (!rec.wet) {
-      if (!bucket) return { kind: 'deny', label: t.water, tx, ty, why: t.needBucket };
-      if (f.bucketWater <= 0) return { kind: 'deny', label: t.emptyBucket, tx, ty, why: t.emptyBucket };
-      return { kind: 'water', label: t.water, tx, ty };
+      if (bucket) return f.bucketWater <= 0 ? { kind: 'deny', label: t.emptyBucket, tx, ty, why: t.emptyBucket } : { kind: 'water', label: t.water, tx, ty };
+      if (rec.crop && ctx.tool.tier('bucket') >= 1) return need(ctx, 'bucket', tx, ty);
+      if (!rec.crop && aim) { const sd = anySeed(ctx); if (sd) return need(ctx, sd, tx, ty); }
+      if (rec.crop && !ctx.holding) return { kind: 'deny', label: t.water, tx, ty, why: t.needBucket };
     }
     return null;
   }
   const mine = inFarmPlot(ctx, tx, ty), free = tillable(ctx, tx, ty);
   if (!free) return null;
+  const scare = ctx.bag.has('scarecrow', 1) && (ctx.holding ? ctx.holding('scarecrow') : true);
   if (mine) {
-    if (ctx.bag.has('scarecrow', 1)) return { kind: 'scare', label: t.placeScare, tx, ty };
+    if (scare) return { kind: 'scare', label: t.placeScare, tx, ty };
     if (shovel) return { kind: 'till', label: t.till, tx, ty };
-    if (pickSeed(ctx).any) return { kind: 'deny', label: t.till, tx, ty, why: t.needShovel };
+    /* ô cỏ trống: không cầm xẻng → để click = đi tới (không tự chọn xẻng, kẻo đi đâu cũng cày) */
+    if (!ctx.holding && pickSeed(ctx).any) return { kind: 'deny', label: t.till, tx, ty, why: t.needShovel };
     return null;
   }
-  // trong khu nước KHÁC với xẻng (hoặc cầm bù nhìn) → nhãn từ chối rõ; ngoài mọi khu → im lặng (không spam nhãn khắp làng, gather giữ nhãn cắt cỏ/trồng cây)
-  if (ctx.plotOf(tx, ty) && (shovel || ctx.bag.has('scarecrow', 1))) return ctx.trespass ? { kind: 'trespass', label: t.till, tx, ty } : { kind: 'deny', label: t.notMine, tx, ty, why: t.notMine };   /* plan-18: cày khu nước khác = xâm phạm → nations.js cảnh báo/đuổi */
+  // trong khu nước KHÁC khi đang cầm xẻng (hoặc bù nhìn) → nhãn từ chối rõ; ngoài mọi khu → im lặng
+  if (ctx.plotOf(tx, ty) && (shovel || scare)) return ctx.trespass ? { kind: 'trespass', label: t.till, tx, ty } : { kind: 'deny', label: t.notMine, tx, ty, why: t.notMine };   /* plan-18: cày khu nước khác = xâm phạm */
   return null;
 }
 
@@ -346,10 +355,26 @@ function checkIntegrity(ctx) {   // mỗi ~1 s: khu nâng cấp/lát lại nền
 }
 
 // ---------- module ----------
+function drawSoilSquares(g, ctx, cx, cy) {   /* ô cày = 1 ô vuông PixelLab (anh chọn 2026-10-10); lớp nền nên người/cây đứng trên không bị che */
+  if (!ART.sqSoil) return; const z = zoneData(ctx), m = ctx.S.map, S0 = ART.soilSq;
+  const x0 = cx - 16, y0 = cy - 16, x1 = cx + ctx.VW + 16, y1 = cy + ctx.VH + 16;
+  for (const k of Object.keys(z.tiles)) {
+    const rec = z.tiles[k]; if (!rec) continue; const [tx, ty] = k.split(',').map(Number), wx = tx * TS, wy = ty * TS;
+    if (wx < x0 || wx > x1 || wy < y0 || wy > y1) continue;
+    const gnd = ctx.getG(m, tx, ty); if (gnd !== T.TILLED && gnd !== T.TILLED_WET) continue;   /* đã thành ao / đổi nền → thôi */
+    const im = ART.soilTile ? ART.soilTile(!!rec.wet, ART.soilMask(m, tx, ty), rec.wet && ART.wetMask ? ART.wetMask(m, tx, ty) : 0) : null;   /* nối liền với ô đất kề; vết ướt bo góc (anh yêu cầu) */
+    g.drawImage(im || (rec.wet ? S0.wet : S0.dry), wx - cx, wy - cy, TS, TS);   /* ảnh 32 px (2×) → đúng 1 ô 16×16 */
+  }
+}
 export const farm = {
+  drawGround(g, ctx, cx, cy) { drawSoilSquares(g, ctx, cx, cy); },
   id: 'farm',
 
   onZoneEnter(ctx) {
+    /* plan-21: quái gặm cây trồng — danh sách ô có cây + lấy mất 1 cây (trả id nông sản để quái ôm chạy) */
+    ctx.farmUntill = (tx, ty) => { const z = zoneData(ctx); delete z.tiles[key(tx, ty)]; ctx.persist(); };   /* plan-25: ô ruộng thành ao */
+    ctx.farmCrops = () => Object.entries(zoneData(ctx).tiles).filter(([, r]) => r.crop && !r.dead).map(([k]) => { const [tx, ty] = k.split(',').map(Number); return { tx, ty }; });
+    ctx.farmSteal = (tx, ty) => { const z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || !rec.crop) return null; const crop = rec.crop; rec.crop = null; rec.stage = 0; rec.waterDays = 0; rec.dead = false; ctx.persist(); return crop; };
     ST.ctx = ctx; ST.scare.length = 0; ST.parts.length = 0; ST.chk = 0; ST.zone = ctx.S.zone ? ctx.S.zone.id : null;
     if (ctx.clock) { ctx.clock.onDayEnd(dayEnd); ctx.clock.onDayStart(dayStart); }
     root(ctx);
@@ -384,19 +409,20 @@ export const farm = {
     const tx = Math.floor(p.x / TS), ty = Math.floor(p.y / TS), [dx, dy] = DIRV[p.dir] || [0, 1];
     /* 0) ô dưới con trỏ chuột (kiểu Stardew): trong tầm 1 ô quanh người → thắng ô dưới chân/trước mặt; khung con trỏ hiện ở ô đó */
     HOVER = null; const mt = ctx.mouseTile && ctx.mouseTile();
-    if (mt && Math.abs(mt.tx - tx) <= 1 && Math.abs(mt.ty - ty) <= 1 && mt.tx >= 0 && mt.ty >= 0 && mt.tx < m.w && mt.ty < m.h) {
-      const h = tileCand(ctx, mt.tx, mt.ty);
-      if (h) { HOVER = { tx: mt.tx, ty: mt.ty, ok: h.kind !== 'deny' }; return { label: h.label, x: p.x + 6, y: p.y, limit: 30, data: h, mouse: true, cursor: 'tool' }; }   /* chủ ý trỏ chuột → ưu tiên hơn NPC/vật thể kề (≤ 22); con trỏ nông cụ */
+    if (mt && !ctx.mouseOnSprite && Math.abs(mt.tx - tx) <= 1 && Math.abs(mt.ty - ty) <= 1 && mt.tx >= 0 && mt.ty >= 0 && mt.tx < m.w && mt.ty < m.h) {
+      const h = tileCand(ctx, mt.tx, mt.ty, true);
+      if (h) { HOVER = { tx: mt.tx, ty: mt.ty, ok: h.kind !== 'deny' && h.kind !== 'need' }; return { label: h.label, x: p.x + 6, y: p.y, limit: 30, data: h, mouse: true, cursor: 'tool', need: h.kind === 'need', needId: h.needId }; }   /* chủ ý trỏ chuột → ưu tiên hơn NPC/vật thể kề (≤ 22); con trỏ nông cụ */
     }
     /* 0b) trỏ chuột vào giếng / ô nước khi xô chưa đầy → múc nước (thắng ô dưới chân) */
-    if (mt && ctx.tool.tier('bucket') >= 1 && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w && Math.hypot(mt.wx - w.x, mt.wy - w.y) < 30) return { label: t.fill, x: p.x + 6, y: p.y, limit: 30, data: { kind: 'fill' }, mouse: true, cursor: 'tool' }; }
+    if (mt && !holds(ctx, 'bucket') && ctx.tool.tier('bucket') >= 1 && ctx.needHold && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w && (w.well || ctx.tool.tier('rod') < 1) && Math.hypot(mt.wx - w.x, mt.wy - w.y) < 30)   /* nước tự nhiên + có cần câu → để câu cá (cầm xô rồi click mới múc) */ return { label: ctx.needHold('bucket'), x: mt.wx, y: mt.wy, limit: 30, data: { kind: 'need' }, mouse: true, cursor: 'tool', need: true, needId: 'bucket' }; }   /* trỏ giếng/nước khi chưa cầm xô → click tự cầm xô */
+    if (mt && holds(ctx, 'bucket') && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w && Math.hypot(mt.wx - w.x, mt.wy - w.y) < 30) return { label: t.fill, x: p.x + 6, y: p.y, limit: 30, data: { kind: 'fill' }, mouse: true, cursor: 'tool' }; }
     const c = tileCand(ctx, tx, ty) || tileCand(ctx, tx + dx, ty + dy);
-    if (c && c.kind !== 'deny') return { label: c.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: c };
+    if (c && c.kind !== 'deny' && c.kind !== 'need') return { label: c.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: c };
     // 2) bù nhìn cạnh người chơi → gỡ
     for (const s of ST.scare) { const wx = s.x * TS + 8, wy = s.y * TS + 12; const d = Math.hypot(wx - p.x, wy - p.y); if (d < 20) return { label: t.takeScare, x: wx, y: wy, limit: 20, data: { kind: 'takeScare', s } }; }
     // 3) múc nước (giếng / ô nước) khi có xô — thắng nhãn từ chối
-    if (ctx.tool.tier('bucket') >= 1 && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w) return { label: t.fill, x: w.x, y: w.y, limit: 34, data: { kind: 'fill' } }; }
-    if (c) return { label: c.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: c };
+    if (holds(ctx, 'bucket') && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w) return { label: t.fill, x: w.x, y: w.y, limit: 34, data: { kind: 'fill' } }; }
+    if (c) return { label: c.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: c, need: c.kind === 'need', needId: c.needId };
     return null;
   },
 
@@ -428,11 +454,13 @@ export const farm = {
       const [tx, ty] = k.split(',').map(Number), wx = tx * TS, wy = ty * TS;
       if (wx < x0 || wx > x1 || wy < y0 || wy > y1) continue;
       /* chế độ px: nền Wang xếp T.TILLED vào lớp cỏ nền nên không hiện ảnh tiles TILLED của gói → vẽ đè ô cày ngay trên nền (y = mép trên + 1, dưới mọi vật/người đứng trên ô) */
-      if (ART.on && ART.tilled) { if (rec.wet) out.push({ y: wy + 1, f: () => { ART.tilledWet(g, m, tx, ty, wx - cx, wy - cy); } }); }
+      if (ART.sqSoil) { /* ô vuông vẽ ở drawGround */ }
+      else if (ART.on && ART.tilled) { if (rec.wet) out.push({ y: wy + 1, f: () => { ART.tilledWet(g, m, tx, ty, wx - cx, wy - cy); } }); }
       else if (ART.on) { const fr = tiles[rec.wet ? T.TILLED_WET : T.TILLED]; if (fr && fr.length) { const im = fr.pick ? fr.pick(tx, ty) : fr[0]; out.push({ y: wy + 1, f: () => { g.drawImage(im, wx - cx, wy - cy); } }); } }
       if (!rec.crop) continue;
       const img = rec.dead ? IMG[`crop_${rec.crop}_dead`] : IMG[`crop_${rec.crop}_${frameOf(rec)}`]; if (!img) continue;
-      out.push({ y: wy + TS, f: () => { g.drawImage(img, wx - cx + ((TS - img.width) >> 1), wy + TS - img.height - cy); } });
+      const lift = frameOf(rec) === 'seed' ? 0 : CROP_LIFT;   /* anh yêu cầu 2026-10-10: hạt và cây mọc lên ở TRUNG TÂM ô đất */
+      out.push({ y: wy + TS, f: () => { g.drawImage(img, wx - cx + ((TS - img.width) >> 1), wy + TS - img.height - lift - cy); } });
     }
     return out;
   },

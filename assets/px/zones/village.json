@@ -84,11 +84,7 @@
   "board": "zones/village/obj/board_t8.png",
   "lantern": "gen_td/lantern_s23.png",
   "sign": "gen_td/sign_s23.png",
-  "monument": {
-   "file": "zones/village/obj/monument_badge.png",
-   "ox": 0,
-   "oy": 0
-  },
+  "monument": "zones/village/obj/monument_t8.png",
   "gate": {
    "file": "gen_td/gate_L7.png",
    "ox": -8
@@ -131,7 +127,17 @@
    "file": "zones/village/obj/seisvein_t8.png",
    "ox": 0,
    "oy": 0
-  }
+  },
+  "tomb": {
+   "file": "zones/village/obj/tomb_t8.png",
+   "ox": 0
+  },
+  "memorial": {
+   "file": "zones/village/obj/memorial_t8.png",
+   "ox": 0
+  },
+  "land_post": "zones/village/obj/land_post_t8.png",
+  "land_sign": "zones/village/obj/land_sign_t8.png"
  },
  "rocky": {
   "0": "obj/rocky_0.png"
@@ -241,6 +247,13 @@
      "n": 5,
      "ch": 24,
      "cw": 32
+    },
+    "attack": {
+     "file": "chars/c0_act_attack.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 3
     },
     "idle": {
      "file": "chars/c0_act_idle.png",
@@ -796,6 +809,29 @@
    "zones/village/creatures/shark_dn_1.png",
    "zones/village/creatures/shark_dn_2.png",
    "zones/village/creatures/shark_dn_3.png"
+  ],
+  "rockypet": [
+   "zones/village/creatures/rockypet_0.png",
+   "zones/village/creatures/rockypet_1.png",
+   "zones/village/creatures/rockypet_2.png",
+   "zones/village/creatures/rockypet_3.png"
+  ],
+  "rockypet_ds": [
+   "zones/village/creatures/rockypet_ds_0.png",
+   "zones/village/creatures/rockypet_ds_1.png",
+   "zones/village/creatures/rockypet_ds_2.png",
+   "zones/village/creatures/rockypet_ds_3.png"
+  ],
+  "rockypet_dn": [
+   "zones/village/creatures/rockypet_dn_0.png",
+   "zones/village/creatures/rockypet_dn_1.png",
+   "zones/village/creatures/rockypet_dn_2.png"
+  ],
+  "rockypet_hop": [
+   "zones/village/creatures/rockypet_hop_0.png",
+   "zones/village/creatures/rockypet_hop_1.png",
+   "zones/village/creatures/rockypet_hop_2.png",
+   "zones/village/creatures/rockypet_hop_3.png"
   ]
  },
  "connect": {
@@ -953,7 +989,12 @@
   "crop_starmush_seed": "zones/village/farm/crop_starmush_seed.png",
   "crop_strawberry_seed": "zones/village/farm/crop_strawberry_seed.png",
   "crop_tomato_seed": "zones/village/farm/crop_tomato_seed.png",
-  "crop_yam_seed": "zones/village/farm/crop_yam_seed.png"
+  "crop_yam_seed": "zones/village/farm/crop_yam_seed.png",
+  "pond_tile": "zones/village/obj/pond_tile.png",
+  "foam_ring": "zones/village/decor/shore/foam_ring.png",
+  "foam_wake": "zones/village/decor/shore/foam_wake.png",
+  "soil_sq": "zones/village/obj/soil_sq.png",
+  "soil_sq_wet": "zones/village/obj/soil_sq_wet.png"
  },
  "flags": {
   "Indonesian": "zones/village/flags/out/Indonesian.png",

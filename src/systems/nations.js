@@ -42,6 +42,7 @@ let CTXR = null, warned = {}, chase = null, anger = null, friendToast = {};
 function plotRect(p) { return { x0: p.x, y0: p.y, x1: p.x + p.w, y1: p.y + p.h }; }
 function friendly(ctx, key) { return ((ctx.S.save.talks || {})[key] || 0) >= FRIEND_TALKS; }
 export function canWork(ctx, tx, ty) {
+  if (ctx.ownsTile && ctx.ownsTile(tx, ty)) return true;                     // plan-25: đất đã mua
   const q = ctx.plotOf(tx, ty); if (!q || !q.nation) return true;           // đất chung
   const mine = ctx.myNation(); if (mine && q.nation === mine) return true;
   return friendly(ctx, q.nation);
@@ -49,6 +50,7 @@ export function canWork(ctx, tx, ty) {
 function npcsOf(ctx, key) { return ctx.S.npcs.filter(n => n.m && !n.m.guide && !n.m.friend && (nationOf(n.m) || {}).key === key); }
 
 function trespass(ctx, tx, ty, what) {
+  if (ctx.ownsTile && ctx.ownsTile(tx, ty)) return true;   /* plan-25: đất đã mua — không bị đuổi */
   const q = ctx.plotOf(tx, ty); if (!q || !q.nation) return true;
   const mine = ctx.myNation(); if (mine && q.nation === mine) return true;
   const t = L(ctx), nm = nName(ctx, q.nation);

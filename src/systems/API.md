@@ -36,7 +36,7 @@ export const mySystem = {
 
 ## Items, bag, tools (src/items.js)
 - `ctx.ITEMS` registry: `{ id: {icon, name:{en,vi}, w (weight), tags[]} }` — ids: wood stone rock ore charcoal iron sand glass rope hay leaf resin seed flower egg milk berry mushroom honey meat wax wool fur feather tusk obsidian ice crystal lava wormhide firescale yetifur greatcrystal (+ head-carry mirrors fish cow chicken bird). Use ONLY these ids; if you need a new one, report it.
-- `ctx.bag.add(id, n)` → number actually added (weight-limited, toasts "Bag is full"); `ctx.bag.remove(id, n)`; `ctx.bag.count(id)`; `ctx.bag.has(id, n)`; `ctx.bag.weight()`, `ctx.bag.cap()` (40 base); `ctx.bag.setBonus(v)` (a mount/vehicle may raise the cap while active — reset to 0 when it ends). The bag is `save.inv`; the HUD line is drawn by the core from it.
+- `ctx.bag.add(id, n)` → number actually added (bag is unlimited since 2026-10-10 — always returns n); `ctx.bag.remove(id, n)`; `ctx.bag.count(id)`; `ctx.bag.has(id, n)`; `ctx.bag.weight()`, `ctx.bag.cap()` (40 base); `ctx.bag.setBonus(v)` (a mount/vehicle may raise the cap while active — reset to 0 when it ends). The bag is `save.inv`; the HUD line is drawn by the core from it.
 - `ctx.itemName(id)`, `ctx.itemIcon(id)`.
 - `ctx.TOOLS` (axe pickaxe rod shovel scythe knife bucket lasso trap saddle torch). `ctx.tool.tier(id)` → 0 (none) / 1 wood / 2 iron / 3 obsidian; `ctx.tool.set(id, tier)`.
 - `ctx.defineObject(name, w, h, fw, fh, drawFn(g, rng), {solid})` → registers a new map-object sprite you can `ctx.place(...)` (same helper style as gfx.js; draw with g.fillRect). Returns the name; idempotent.

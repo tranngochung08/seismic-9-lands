@@ -104,7 +104,8 @@ const saveOf = ctx => ctx.S.save;
 const cardsOf = ctx => (saveOf(ctx).cards ||= []);
 const woodOf = ctx => { const s = saveOf(ctx); s.inv ||= {}; return s.inv.wood || 0; };
 const priceOf = (ctx, m) => ctx.isLeader(m) ? PRICE_LEADER : PRICE;
-const hasAxe = ctx => { const t = saveOf(ctx).tools; return !t || t.axe !== false; };
+const hasAxe = ctx => ctx.tool.tier('axe') >= 1;   /* plan-20: thống nhất theo tier (trước đọc save.tools.axe) */
+const holdAxe = ctx => (ctx.holding ? ctx.holding('axe') : true);   /* plan-20: phải CẦM rìu trên hotbar */
 
 function objAt(map, ctx, x, y) { // any object whose footprint covers this tile
   for (const o of map.objects) { const d = ctx.O[o.type]; if (x >= o.x && x < o.x + d.fw && y >= o.y && y < o.y + d.fh) return o; }
@@ -195,7 +196,7 @@ function renderPanel(ctx) {
 }
 function openPanel(ctx) {
   const t = L(ctx);
-  ST.panel = ctx.panel('gallery', `<h2 style="justify-content:space-between">🖼 <span id="gl-head" style="flex:1;font-size:18px"></span></h2>
+  ST.panel = ctx.panel('gallery', `<h2 style="justify-content:space-between"><img class="face" src="assets/px/ui/port_dealer.png" alt=""><span id="gl-head" style="flex:1;font-size:18px"></span></h2>
     <div style="display:flex;gap:6px;margin:2px 0 4px"><button class="btn" id="gl-t0" style="margin:0">${t.tabDealer}</button><button class="btn" id="gl-t1" style="margin:0"></button></div>
     <div class="scroll" id="gl-body"></div>
     <p class="tiny dim" style="margin:6px 0 2px">${t.note}</p>
@@ -273,9 +274,12 @@ export const trees = {
     if (hasAxe(ctx)) {
       const tx = Math.floor(p.x / TS), ty = Math.floor(p.y / TS);
       for (let y = ty - 2; y <= ty + 2; y++) for (let x = tx - 2; x <= tx + 2; x++) {
-        const o = ST.grid.get(key(x, y)); if (!o) continue;
-        const wx = o.x * TS + 8, wy = o.y * TS + 12, d = Math.hypot(wx - p.x, wy - p.y);
-        if (d < REACH && d < bd) { bd = d; best = { label: t.chop, x: wx, y: wy, limit: REACH, data: { kind: 'tree', o } }; }
+        const o = ST.grid.get(key(x, y)); if (!o || o.claimed) continue;   /* plan-21: quái đang chiếm */
+        const wx = o.x * TS + 8, wy = o.y * TS + 12, d0 = Math.hypot(wx - p.x, wy - p.y);
+        const mt = ctx.mouseTile && ctx.mouseTile(), od = ctx.O[o.type], lx = o.x * TS + ((od && od.ox) || 0), by = (o.y + ((od && od.fh) || 1)) * TS;
+        const under = mt && od && mt.wx >= lx && mt.wx < lx + od.w && mt.wy >= by - od.h && mt.wy < by;   /* đúng khung hình cây */   /* chuột trên cây này (thân/tán) → ưu tiên, kể cả khi xa hơn một chút */
+        const d = under && d0 < REACH * 1.5 ? -1 : d0;
+        if (d < REACH && d < bd) { bd = d; best = holdAxe(ctx) ? { label: t.chop, x: under ? mt.wx : wx, y: under ? mt.wy : wy, limit: REACH, data: { kind: 'tree', o } } : { label: ctx.needHold('axe'), x: under ? mt.wx : wx, y: under ? mt.wy : wy, limit: REACH, need: true, needId: 'axe', cursor: 'tool', data: { kind: 'need' } }; }
       }
     }
     const s = ST.dealer;
@@ -314,14 +318,14 @@ export const trees = {
     ST.falls.push({ type: o.type, x: o.x, y: o.y, face: ST.swingFace, t: FALL });   // cây đổ về phía rìu vung tới (xoay dần 0→80°)
     for (let i = ST.shakes.length - 1; i >= 0; i--) if (ST.shakes[i].o === o) ST.shakes.splice(i, 1);
     ctx.removeObject(map, o);
-    const s = ctx.S.save; s.inv ||= {}; s.inv.wood = (s.inv.wood || 0) + gain;
-    ctx.toast(t.got(gain));
+    if (ctx.give) ctx.give('wood', gain, o.x * TS + 8, o.y * TS + 14); else { const s = ctx.S.save; s.inv ||= {}; s.inv.wood = (s.inv.wood || 0) + gain; ctx.toast(t.got(gain)); }   /* plan-24: gỗ rơi ra gốc cây, nhặt rồi mới vào túi (anh báo chặt cây không rơi gỗ) */
     ctx.persist();
   },
 
   drawables(ctx, cx, cy) {
     const out = [], img = stumpSprite();
-    for (const s of ST.stumps) out.push({ y: (s.y + 1) * TS, f: () => ctx.g.drawImage(img, s.x * TS - cx, (s.y + 1) * TS - 16 - cy) });
+    const SW = 11;   /* anh chê gốc to hơn cây: thu về ~10 px (thân cây 5–9 px, rễ 12 px), canh giữa thân, chạm đất */
+    for (const s of ST.stumps) out.push({ y: (s.y + 1) * TS, f: () => ctx.g.drawImage(img, s.x * TS + 8 - SW / 2 - cx, (s.y + 1) * TS - 2 - SW - cy, SW, SW) });
     const g = ctx.g;
     for (const sh of ST.shakes) {   // rung: gốc đứng yên, tán nghiêng qua lại (shear) thay vì cả cây trượt ngang
       const o = sh.o, d = ctx.O[o.type]; if (!d) continue;
@@ -376,12 +380,12 @@ export const trees = {
     }
     // floating dealer sign
     const s = ST.dealer;
-    if (s && ctx.S.map && ctx.S.map.objects.includes(s)) {
+    if (s && !s.ghost && ctx.S.map && ctx.S.map.objects.includes(s)) {   /* plan-22: quầy thành NPC → bảng tên vẽ ở staff.js */
       const t = L(ctx), text = t.dealer;
       const sx = Math.round((s.x * TS + 16 - cx) * scale), sy = Math.round((s.y * TS - 18 - cy) * scale);
       if (sx > -160 && sx < ug.canvas.width + 160 && sy > -40 && sy < ug.canvas.height + 40) {
         const fs = Math.max(10, scale * 3);
-        ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+        ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
         const w = ug.measureText('🖼 ' + text).width + 10, h = fs + 5;
         ug.fillStyle = 'rgba(13,11,20,.72)'; ug.beginPath(); ug.roundRect(sx - w / 2, sy - h, w, h, 4); ug.fill();
         ug.strokeStyle = 'rgba(255,212,94,.55)'; ug.lineWidth = 1; ug.stroke();

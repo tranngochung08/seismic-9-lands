@@ -11,8 +11,8 @@ import { mkCanvas, HOOK } from '../gfx.js';
 // ---------------------------------------------------------------- strings
 const STR = {
   en: {
-    wake: 'You wake on a plank… adrift on the Sea of Origins', noPaddle: 'No paddle. Only the current carries you.', sail: 'A sail on the horizon!',
-    meet: ['Hey! Hold on! Grab my hand!', "I'm Lyron. Seismic never leaves anyone at sea.", "Two on one raft, then. You paddle — I know these waters. Let's get you ashore!"],
+    wake: 'You wake on a plank… adrift on the Sea of Origins', noPaddle: 'No paddle — paddle with your hands (arrow keys / WASD), the current helps.', sail: 'A sail on the horizon!',
+    meet: ['Hey! Hold on! Grab my hand!', "I'm Lyron. Seismic never leaves anyone at sea.", 'And this little rock is Rocky — my buddy. Say hi, Rocky!', "Two on one raft, then. You paddle — I know these waters. Let's get you ashore!"],
     goal: {
       whirl: 'Ride the current east — mind the whirlpool!', reef: 'Careful, the reefs here are sharp. Keep an eye on the logs.',
       hermit: 'The hermit on the middle island trades sailcloth for 2 shells. Dive the bright reef for shells!',
@@ -26,13 +26,13 @@ const STR = {
     ghostGone: 'It gave up. Ghosts hate currents.',
     bottleToast: 'Lyron fishes a bottle out of the water',
     bottle: ['See this bottle? Notes from artists all over the world. Seismic is an encrypted blockchain — but the #artwork channel is where the people live.', 'Every artist you meet ashore is real. They posted, they cheered each other on. Go find them — and tell them Lyron sent you.'],
-    kraken: 'Something is rising from the deep!', taken: 'The raft goes down with Lyron…', scarfUp: 'A red scarf floats up…', pushed: 'Lyron pushes you onto a plank',
-    cut: ['Go! Find help — the trench… it keeps what it takes!', 'Take the plank. Seismic never leaves anyone at sea. Not even me. GO!'],
+    kraken: 'Something is rising from the deep!', taken: "The Kraken's light turns Lyron to stone… the statue is dragged into the deep", scarfUp: 'A red scarf floats up…', pushed: 'Lyron pushes you and Rocky onto a plank',
+    cut: ['Go! Find help — the trench… it keeps what it takes!', 'Rocky — look after them! Take the plank, both of you. Seismic never leaves anyone at sea. Not even me. GO!'],
     pier: 'You reach the pier', scarfPick: "Pick up Lyron's scarf", scarfGot: "Lyron's scarf 🧣 — a keepsake", skip: 'E · skip', hud: '♥ Lyron', drifting: '🪵 drifting to the pier'
   },
   vi: {
-    wake: 'Bạn tỉnh dậy trên một mảnh ván… trôi giữa Biển Khởi Nguồn', noPaddle: 'Không có mái chèo. Chỉ có dòng nước đưa đi.', sail: 'Một cánh buồm ở chân trời!',
-    meet: ['Này! Bám chắc! Nắm lấy tay tôi!', 'Tôi là Lyron. Seismic không bỏ ai lại giữa biển.', 'Vậy là hai người một bè. Bạn chèo — tôi rành vùng nước này. Đưa bạn vào bờ thôi!'],
+    wake: 'Bạn tỉnh dậy trên một mảnh ván… trôi giữa Biển Khởi Nguồn', noPaddle: 'Không có mái chèo — khua tay mà chèo (phím mũi tên / WASD), dòng nước sẽ đẩy thêm.', sail: 'Một cánh buồm ở chân trời!',
+    meet: ['Này! Bám chắc! Nắm lấy tay tôi!', 'Tôi là Lyron. Seismic không bỏ ai lại giữa biển.', 'Còn hòn đá nhỏ này là Rocky — bạn đồng hành của tôi. Chào bạn mới đi, Rocky!', 'Vậy là hai người một bè. Bạn chèo — tôi rành vùng nước này. Đưa bạn vào bờ thôi!'],
     goal: {
       whirl: 'Đi theo dòng chảy về phía đông — coi chừng xoáy nước!', reef: 'Cẩn thận, đá ngầm ở đây sắc lắm. Để ý mấy khúc gỗ.',
       hermit: 'Ẩn sĩ ở đảo giữa đổi vải buồm lấy 2 vỏ sò. Lặn xuống rạn san hô sáng mà nhặt sò!',
@@ -46,8 +46,8 @@ const STR = {
     ghostGone: 'Nó bỏ cuộc rồi. Ma ghét hải lưu.',
     bottleToast: 'Lyron vớt một cái chai dưới nước lên',
     bottle: ['Thấy cái chai này không? Thư của nghệ sĩ khắp thế giới. Seismic là một blockchain mã hóa — nhưng kênh #artwork mới là nơi mọi người sống.', 'Mỗi nghệ sĩ bạn gặp trên bờ đều là người thật. Họ đăng tranh, cổ vũ nhau. Đi tìm họ đi — và nói là Lyron gửi bạn tới.'],
-    kraken: 'Có thứ gì đang trồi lên từ vực sâu!', taken: 'Chiếc bè chìm xuống cùng Lyron…', scarfUp: 'Một chiếc khăn đỏ nổi lên…', pushed: 'Lyron đẩy bạn lên một mảnh ván',
-    cut: ['Đi đi! Tìm người giúp — vực sâu… nó giữ những gì nó bắt!', 'Bám lấy ván. Seismic không bỏ ai lại giữa biển. Kể cả tôi. ĐI ĐI!'],
+    kraken: 'Có thứ gì đang trồi lên từ vực sâu!', taken: 'Tia sáng của Kraken hóa đá Lyron… tượng đá bị kéo xuống biển sâu', scarfUp: 'Một chiếc khăn đỏ nổi lên…', pushed: 'Lyron đẩy bạn và Rocky lên một mảnh ván',
+    cut: ['Đi đi! Tìm người giúp — vực sâu… nó giữ những gì nó bắt!', 'Rocky — trông chừng bạn ấy nhé! Cả hai bám lấy ván. Seismic không bỏ ai lại giữa biển. Kể cả tôi. ĐI ĐI!'],
     pier: 'Bạn đã tới bến tàu', scarfPick: 'Nhặt khăn của Lyron', scarfGot: 'Khăn của Lyron 🧣 — kỷ vật', skip: 'E · bỏ qua', hud: '♥ Lyron', drifting: '🪵 trôi về bến tàu'
   }
 };
@@ -188,7 +188,7 @@ function drawNothing() { }
 // where Lyron sits: the bow seat of the raft you ride (facing your way), or the raft's resting spot when you are ashore / diving
 function seatOf(ctx) {
   const p = ctx.S.player, s = ctx.S.sea;
-  if (onRaft(ctx)) return { x: p.x + (p.dir === 1 ? -11 : 11), y: p.y + 0.3, dir: p.dir, on: 'raft' };
+  if (onRaft(ctx)) return { x: p.x + (p.dir === 2 ? -9 : 9), y: p.y - 2, dir: p.dir, on: 'raft' };   /* 2026-10-10: ngồi phía đuôi, trong lòng bè (bè PixelLab rộng 25 px, lệch 11 thì lòi ra nước) */
   const i = raftInfo(), sunk = !!(i && i.sinkT > 0);
   return { x: s.x, y: s.y + (sunk ? 0.3 : 2.3), dir: 0, on: sunk ? 'water' : (i && i.parked ? 'parked' : 'water') };
 }
@@ -236,9 +236,10 @@ function drawPlank(g, ent) {
   g.drawImage(ent.sheet, 0, 0, 16, 14, x - 8, y - 17 + bob, 16, 14);          // kneeling: head + torso from your own sheet
   g.fillStyle = 'rgba(223,243,255,.6)'; g.fillRect(x - 12, y + 1 + bob, 4, 1); g.fillRect(x + 9, y + bob, 3, 1);
 }
+const PLANK_HAND = 0.45;   /* anh yêu cầu 2026-10-10: trên ván vẫn tự khua tay chèo được (chậm), dòng nước vẫn đẩy thêm */
 function toPlank(ctx) {
   const p = ctx.S.player, s = ctx.S.sea;
-  s.riding = 'plank'; s.diving = false; p.custom = drawPlank; p.passable = waterPass(ctx); p.speedMul = 0; p.boxW = 10; p.boxH = 6; p.ghost = false; p.dir = 0;
+  s.riding = 'plank'; s.diving = false; p.custom = drawPlank; p.passable = waterPass(ctx); p.speedMul = PLANK_HAND; p.boxW = 10; p.boxH = 6; p.ghost = false; p.dir = 0;
 }
 // the current carries the plank (~1 tile/s); still water drifts it gently south, or towards `target` when given
 function driftPlank(dt, ctx, target) {
@@ -365,7 +366,7 @@ function updateRide(dt, ctx) {
   if (!has(ctx, F.BOTTLE) && cur === 'bottle' && riding && !caught) {
     st.bottleT += dt;
     if (st.bottleT > 2.5 && !st.bottleShown) {
-      st.bottleShown = true; st.bubble = null; ctx.toast(t.bottleToast); ctx.bag.add('bottle', 1); ctx.sfx('pickup');
+      st.bottleShown = true; st.bubble = null; ctx.toast(t.bottleToast); ctx.give('bottle', 1); ctx.sfx('pickup');
       ctx.setMode('dialog');
       ctx.openDialog({ m: ctx.FRIEND, pages: t.bottle.slice(), onClose: () => { ctx.setMode('play'); finishGoal(ctx, 'bottle', null); } });
       return;
@@ -396,7 +397,7 @@ function startClimax(ctx) {
   st.phase = 'cut'; st.bubble = null;
   ctx.setMode('cutscene');
   ctx.onAction('cutscene', () => skipClimax(ctx)); ctx.registerCloser('cutscene', () => skipClimax(ctx));
-  ctx.quake(1); ctx.sfx('roar'); ctx.toast(t.kraken, true); ctx.alert('');
+  ctx.quake(1); ctx.sfx('kraken_roar'); ctx.toast(t.kraken, true); ctx.alert('');
   for (const tt of st.cut.tents) ring(tt.x, tt.y, 1.5);
 }
 function pushTarget(ctx) {   // a water tile ~1.8 tiles from the raft, away from the tentacle ring's tightest side
@@ -426,7 +427,7 @@ function updateCut(dt, ctx) {
   if (c.sub === 'push') {
     const k = Math.min(1, c.t / 0.7), e = 1 - (1 - k) * (1 - k);
     p.x = c.push.x0 + (c.push.to.x - c.push.x0) * e; p.y = c.push.y0 + (c.push.to.y - c.push.y0) * e;
-    if (k >= 1) { c.sub = 'sink'; c.t = 0; ctx.sfx('splash'); ctx.toast(t.taken, true); ring(c.rx, c.ry, 2); }
+    if (k >= 1) { c.sub = 'sink'; c.t = 0; ctx.sfx('splash'); ctx.toast(t.taken, true); ring(c.rx, c.ry, 2); if (ctx.vfx) ctx.vfx('petrify', c.rx, c.ry + 2, 0, true); ctx.sfx('roar'); }   /* plan-25: tia Kraken hóa đá Lyron */
     return;
   }
   if (c.sub === 'sink') {
@@ -484,7 +485,40 @@ function land(ctx) {
   s.raft.hp = 1; s.x = p.x; s.y = p.y;
   st.phase = 'landed'; st.drift = null;
   ctx.toast(t.pier, true); ctx.sfx('splash'); ctx.persist();
+  if (!story(ctx).path) setTimeout(() => openFaction(ctx), 1400);   /* plan-25: lên bến → chọn phe */
 }
+
+/* ---------------------------------------------------------------- plan-25: chọn phe Noxx / Xealist (bắt buộc chọn, không đóng bằng Esc) */
+const FACTION = {
+  vi: { title: 'Lyron đã hóa đá dưới vực sâu…', noxx: 'Noxx', xea: 'Xealist',
+    noxxSay: 'Lyron chưa mất đâu — lớp đá có thể giải được. Đi cùng tôi và Rocky: nhờ mọi người giúp, rèn luyện, rồi quay lại cứu cậu ấy.',
+    xeaSay: 'Kraken vừa cho cậu thấy sức mạnh thật sự. Theo tôi — cậu sẽ có sức mạnh, tiền bạc, và năng lực hóa đá bất kỳ ai cản đường.',
+    noxxBtn: 'Theo Noxx — cứu Lyron', xeaBtn: 'Theo Xealist — lấy sức mạnh',
+    noxxDone: 'Bạn chọn phe Noxx. Rocky vẫy tay vui vẻ — cùng nhau cứu Lyron!', xeaDone: 'Bạn chọn phe Xealist… Rocky cúi đầu, nhưng vẫn đi theo bạn.' },
+  en: { title: 'Lyron has been turned to stone in the deep…', noxx: 'Noxx', xea: 'Xealist',
+    noxxSay: "Lyron isn't lost — stone can be broken. Come with me and Rocky: ask everyone for help, grow stronger, then go back for him.",
+    xeaSay: 'The Kraken just showed you real power. Follow me — you will have strength, wealth, and the power to turn anyone in your way to stone.',
+    noxxBtn: 'Follow Noxx — save Lyron', xeaBtn: 'Follow Xealist — take the power',
+    noxxDone: 'You side with Noxx. Rocky waves happily — let\'s save Lyron together!', xeaDone: 'You side with Xealist… Rocky lowers its head, but still follows you.' },
+};
+function openFaction(ctx) {
+  const s = story(ctx); if (s.path) return;
+  const t = FACTION[ctx.lang() === 'vi' ? 'vi' : 'en'];
+  const col = (who, port, say, btn) => `<div class="fac-col fac-${who}"><img class="face" src="assets/px/ui/${port}" alt=""><b>${who === 'noxx' ? t.noxx : t.xea}</b><p>${say}</p><button class="btn" data-fac="${who}">${btn}</button></div>`;
+  const el = ctx.panel('faction', `<h2>${t.title}</h2><div class="fac-row">${col('noxx', 'port_noxx_0.png', t.noxxSay, t.noxxBtn)}${col('xealist', 'port_xealist.png', t.xeaSay, t.xeaBtn)}</div>`);
+  el.panel.classList.add('wide', 'faction');
+  ctx.setMode('faction'); ctx.registerCloser('faction', () => {});   /* bắt buộc chọn */
+  el.hidden = false; ctx.sfx('roar');
+  el.panel.onclick = e => {
+    const b = e.target.closest('[data-fac]'); if (!b) return;
+    const who = b.dataset.fac; s.path = who; ctx.persist();
+    el.hidden = true; ctx.setMode('play');
+    const p = ctx.S.player;
+    if (who === 'noxx') { if (ctx.vfx) ctx.vfx('stone_free', p.x, p.y + 2, 0, true); if (ctx.vfx) ctx.vfx('level_up', p.x, p.y + 2, 0, true); ctx.sfx('win'); ctx.toast(t.noxxDone, true); }
+    else { if (ctx.vfx) ctx.vfx('petrify', p.x, p.y + 4, 0, true); ctx.quake && ctx.quake(0.6); ctx.sfx('roar'); ctx.toast(t.xeaDone, true); }
+  };
+}
+
 
 // ---------------------------------------------------------------- the scarf (the keepsake)
 function scarfHome(ctx) { const d = ctx.S.map.dock; return { x: (d.x + 2) * TILE + 8, y: (d.y - 3) * TILE + 8 }; }
@@ -518,14 +552,21 @@ function drawTent(g, tt, sx, sy) {
 function drawSinkingRaft(g, c, cx, cy) {
   const x = Math.round(c.rx) - cx, y = Math.round(c.ry) - cy, k = c.sub === 'sink' ? c.sinkK : c.sub === 'scarf' ? 1 : 0, bob = Math.round(Math.sin(st.t * 2.6));
   if (k >= 1) return;
-  const dy = Math.round(30 * k * k), tilt = Math.round(k * 6);
+  const ks = Math.min(1, k / 0.42), kd = Math.max(0, (k - 0.45) / 0.55);   /* plan-25: hóa đá trước (tia Kraken) rồi mới bị kéo chìm */
+  const dy = Math.round(30 * kd * kd), tilt = Math.round(kd * 6);
   g.fillStyle = 'rgba(20,60,110,.28)'; g.beginPath(); g.ellipse(x, y + 3, 16 * (1 - k * 0.6), 5, 0, 0, TAU); g.fill();
   g.save(); g.beginPath(); g.rect(x - 24, y - 50, 48, 54); g.clip();
   g.drawImage(RAFT, x - 16, y - 13 + bob + dy + tilt);
-  const dir = ctx_dirTo(c);
-  drawFriendFrame(g, x - 8, y - 26 + bob + dy, dir, false, st.t);
-  if (c.sub !== 'scarf') drawWave(g, x - 8, y - 26 + bob + dy, st.t * 2);
+  const dir = ctx_dirTo(c), stoneBob = ks > 0.9 ? 0 : bob;
+  if (ks > 0) g.filter = `grayscale(${ks.toFixed(2)}) brightness(${(1 - 0.12 * ks).toFixed(2)}) contrast(${(1 + 0.15 * ks).toFixed(2)})`;   /* Lyron xám dần thành tượng đá */
+  drawFriendFrame(g, x - 8, y - 26 + stoneBob + dy, dir, false, ks >= 1 ? 0 : st.t);
+  g.filter = 'none';
+  if (c.sub !== 'scarf' && ks < 0.5) drawWave(g, x - 8, y - 26 + bob + dy, st.t * 2);
   g.restore();
+  if (c.sub === 'sink' && k < 0.46 && c.tents && c.tents[0]) {   /* tia hóa đá từ xúc tu Kraken (pixel, nhấp nháy) */
+    const tt = c.tents[0], tx0 = Math.round(tt.x) - cx, ty0 = Math.round(tt.y) - 24 - cy, tx1 = x, ty1 = y - 16 + dy, n = 14;
+    for (let i = 0; i <= n; i++) { const u = i / n, px = Math.round(tx0 + (tx1 - tx0) * u), py = Math.round(ty0 + (ty1 - ty0) * u); g.fillStyle = (i + Math.floor(st.t * 20)) % 3 ? '#b58cff' : '#fff6c8'; g.fillRect(px - 1, py - 1, 3, 3); }
+  }
   g.fillStyle = 'rgba(223,243,255,.8)'; for (let i = -14; i <= 14; i += 4) g.fillRect(x + i, y + 3 + ((i / 4) & 1), 2, 1);
 }
 function ctx_dirTo(c) { const p = st.ctx.S.player, dx = p.x - c.rx, dy = p.y - c.ry; return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 2 : 1) : (dy > 0 ? 0 : 3); }
@@ -548,6 +589,7 @@ export const storySea = {
     buildOpenReef(ctx);
     if (s.act !== 1 || s.seaDone) {                                    // after the prologue: only the scarf, if it was never picked up
       st.on = true; st.phase = 'landed';
+      if (s.seaDone && !s.path) setTimeout(() => { if (!story(ctx).path && ctx.S.map && ctx.S.map.sea) openFaction(ctx); }, 1600);   /* tắt game giữa lúc ván trôi vào bến → vào lại vẫn được chọn phe */
       if (!s.keepsake) { const h = scarfHome(ctx); spawnScarf(ctx, h.x, h.y); st.scarf.home = h; }
       return;
     }
@@ -608,7 +650,7 @@ export const storySea = {
     const t = L(ctx);
     if (d.trade) {
       if (!ctx.bag.has('shell', 2) || has(ctx, F.HERMIT)) return;
-      ctx.bag.remove('shell', 2); ctx.bag.add('sailcloth', 1); ctx.persist(); ctx.sfx('coin'); ctx.toast(t.traded, true);
+      ctx.bag.remove('shell', 2); ctx.give('sailcloth', 1); ctx.persist(); ctx.sfx('coin'); ctx.toast(t.traded, true);
       const h = ctx.S.npcs.find(n => n.hermit); if (h) ctx.S.player.faceTo(h.x, h.y);
       finishGoal(ctx, 'hermit', t.hermitDone);
       return;
@@ -650,7 +692,7 @@ export const storySea = {
     const b = st.bubble;
     if (b && (st.phase === 'ride' || st.phase === 'arrive')) {          // Lyron's speech bubble above the raft (crisp text, ≤ 2 lines)
       const p = ctx.S.player, n = st.lyron, ax = Math.round(((n ? n.x : p.x) - cx) * scale), ay = Math.round(((n ? n.y : p.y) - 30 - cy) * scale);
-      const fs = Math.max(11, Math.round(scale * 3.4)); ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`;
+      const fs = Math.max(11, Math.round(scale * 3.4)); ug.font = `bold ${fs}px VT323, monospace`;
       const lines = wrapLines(ug, b.text, Math.max(180, scale * 110)), lh = fs + 3;
       const w = Math.max(...lines.map(l => ug.measureText(l).width)) + fs * 1.4, h = lines.length * lh + fs * 0.9;
       let bx = ax - w / 2; bx = Math.max(6, Math.min(W - w - 6, bx)); const by = ay - h - 10;
@@ -664,7 +706,7 @@ export const storySea = {
       ug.globalAlpha = 1;
     }
     if (st.phase === 'cut' && ctx.S.mode === 'cutscene') {
-      const fs = Math.max(11, Math.round(scale * 3)); ug.font = `bold ${fs}px "Segoe UI",system-ui,sans-serif`; ug.textAlign = 'right'; ug.textBaseline = 'bottom';
+      const fs = Math.max(11, Math.round(scale * 3)); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'right'; ug.textBaseline = 'bottom';
       ug.fillStyle = 'rgba(13,11,20,.6)'; const tw = ug.measureText(t.skip).width + 12; ug.beginPath(); ug.roundRect(W - tw - 12, H - fs - 22, tw, fs + 8, 5); ug.fill();
       ug.fillStyle = '#f2ebe0'; ug.fillText(t.skip, W - 18, H - 16);
     }
@@ -694,6 +736,8 @@ if (typeof window !== 'undefined') {
         scarf: st.scarf ? { x: Math.round(st.scarf.x), y: Math.round(st.scarf.y), taken: st.scarf.taken, free: st.scarf.free } : null, wait: +st.wait.toFixed(1) };
     },
     skipWait: () => { if (st.phase === 'plank') { st.wait = 0; return 'arriving'; } return st.phase; },
+    faction: () => { const ctx = st.ctx; if (!ctx) return null; delete story(ctx).path; openFaction(ctx); return 'open'; },
+    plank: () => { const ctx = st.ctx; if (!ctx || !ctx.S.sea) return null; startPlank(ctx); ctx.setMode('play'); return st.phase; },   /* test: vào thẳng cảnh trôi trên ván */
     completeStep: name => { const ctx = st.ctx; if (!ctx || !GOAL_FLAG[name]) return 'unknown'; finishGoal(ctx, name, null); return curGoal(ctx); },
     completeAll: () => { const ctx = st.ctx; if (!ctx) return null; persistStep(ctx, ALL5); st.goalDelay = 0.2; return story(ctx).step; },
     climax: () => { const ctx = st.ctx; if (!ctx || st.phase !== 'ride') return st.phase; startClimax(ctx); return st.phase; },

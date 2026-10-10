@@ -113,9 +113,22 @@
       "ch": 24,
       "cw": 32
      },
+     "attack": {
+      "file": "chars/hung_b_act_attack.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32,
+      "impact": 3
+     },
      "idle": {
       "file": "chars/hung_b_act_idle.png",
       "n": 4,
+      "ch": 24,
+      "cw": 32
+     },
+     "swim": {
+      "file": "chars/hung_b_act_swim.png",
+      "n": 7,
       "ch": 24,
       "cw": 32
      }
@@ -127,6 +140,69 @@
     "shirt": "hero",
     "file": "chars/noxx.png",
     "note": "Noxx · CM Seismic (px-noxx.py)"
+   },
+   "trader": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "trader",
+    "file": "chars/trader.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "dealer": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "dealer",
+    "file": "chars/dealer.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "v_farmer": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "v_farmer",
+    "file": "chars/v_farmer.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "v_baker": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "v_baker",
+    "file": "chars/v_baker.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "v_fisher": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "v_fisher",
+    "file": "chars/v_fisher.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "v_kid": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "v_kid",
+    "file": "chars/v_kid.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "tailor": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "tailor",
+    "file": "chars/tailor.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "xealist": {
+    "skin": "staff",
+    "hair": "staff",
+    "shirt": "xealist",
+    "file": "chars/xealist.png",
+    "note": "plan-22: NPC thay quầy/nhà"
+   },
+   "heathcliff": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/heathcliff.png",
+    "note": "Heathcliff · CM Seismic (plan-26, thiết kế riêng)"
    }
   },
   "shirtHue": [
@@ -147,7 +223,11 @@
   "m8": "zones/m8.json",
   "m9": "zones/m9.json",
   "sea": "zones/sea.json",
-  "trench": "zones/trench.json"
+  "trench": "zones/trench.json",
+  "u1": "zones/u1.json",
+  "u2": "zones/u2.json",
+  "u3": "zones/u3.json",
+  "u4": "zones/u4.json"
  },
  "ui": {
   "items": {
@@ -235,7 +315,42 @@
    "lasso": "ui/items/lasso.png",
    "trap": "ui/items/trap.png",
    "saddle": "ui/items/saddle.png",
-   "torch": "ui/items/torch.png"
+   "torch": "ui/items/torch.png",
+   "sword": "ui/items/sword.png",
+   "revive": "ui/items/revive.png",
+   "soul": "ui/items/soul.png",
+   "gel": "ui/items/gel.png",
+   "sword_t2": "ui/items/sword_t2.png",
+   "sword_t3": "ui/items/sword_t3.png",
+   "sword_t4": "ui/items/sword_t4.png",
+   "sword_t5": "ui/items/sword_t5.png",
+   "sword_t6": "ui/items/sword_t6.png",
+   "sword_t1": "ui/items/sword.png",
+   "fl_raft": "ui/items/fl_raft.png",
+   "fl_sail": "ui/items/fl_sail.png",
+   "fl_tires": "ui/items/fl_tires.png",
+   "fl_cape": "ui/items/fl_cape.png",
+   "fl_armor": "ui/items/fl_armor.png",
+   "fl_coat": "ui/items/fl_coat.png",
+   "fl_lamps": "ui/items/fl_lamps.png",
+   "fl_charged": "ui/items/fl_charged.png",
+   "st_boots": "ui/items/st_boots.png",
+   "st_medal": "ui/items/st_medal.png",
+   "st_rocky": "ui/items/st_rocky.png",
+   "a_fish": "ui/items/fish.png",
+   "a_cow": "ui/items/cow.png",
+   "a_chicken": "ui/items/chicken.png",
+   "a_bird": "ui/items/bird.png",
+   "a_sheep": "ui/items/sheep.png",
+   "a_rabbit": "ui/items/rabbit.png",
+   "a_crab": "ui/items/crab.png",
+   "a_bat": "ui/items/bat.png",
+   "a_squid": "ui/items/squid.png",
+   "a_goldfish": "ui/items/goldfish.png",
+   "st_dark": "ui/items/st_dark.png",
+   "pill_s": "ui/items/pill_s.png",
+   "pill_l": "ui/items/pill_l.png",
+   "st_breath": "ui/items/st_breath.png"
   },
   "tabs": {
    "bag": "ui/tab_bag.png",
@@ -322,7 +437,11 @@
    "cloud_2": "ui/title/cloud_2.png",
    "far": "ui/title/far.png",
    "sea": "ui/title/sea.png"
-  }
+  },
+  "alert": "ui/hud/alert.png",
+  "crown": "ui/hud/crown.png",
+  "port_heathcliff": "ui/port_heathcliff_0.png",
+  "bubble_helm": "ui/bubble_helm.png"
  },
  "vfx": {
   "dirt_puff": {
@@ -414,6 +533,858 @@
    "pivot": "bottom-center",
    "loop": false,
    "trigger": "event"
+  },
+  "slash_t0": {
+   "file": "vfx/slash_t0_3f_16x16.png",
+   "n": 3,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "slash_t1": {
+   "file": "vfx/slash_t1_3f_16x16.png",
+   "n": 3,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "slash_t2": {
+   "file": "vfx/slash_t2_4f_16x16.png",
+   "n": 4,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "slash_t3": {
+   "file": "vfx/slash_t3_4f_24x24.png",
+   "n": 4,
+   "w": 24,
+   "h": 24,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "slash_t4": {
+   "file": "vfx/slash_t4_5f_24x24.png",
+   "n": 5,
+   "w": 24,
+   "h": 24,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "slash_t5": {
+   "file": "vfx/slash_t5_6f_32x32.png",
+   "n": 6,
+   "w": 32,
+   "h": 32,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "slash_t6": {
+   "file": "vfx/slash_t6_5f_32x32.png",
+   "n": 5,
+   "w": 32,
+   "h": 32,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "monster_poof": {
+   "file": "vfx/monster_poof_4f_24x24.png",
+   "n": 4,
+   "w": 24,
+   "h": 24,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "attack"
+  },
+  "stone_free": {
+   "file": "vfx/stone_free_5f_32x32.png",
+   "n": 5,
+   "w": 32,
+   "h": 32,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "petrify": {
+   "file": "vfx/petrify_7f_56x32.png",
+   "n": 7,
+   "w": 56,
+   "h": 32,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "dark_aura": {
+   "file": "vfx/dark_aura_8f_48x56.png",
+   "n": 8,
+   "w": 48,
+   "h": 56,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_village": {
+   "file": "vfx/leader_village_12f_40x48.png",
+   "n": 12,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_sea": {
+   "file": "vfx/leader_sea_8f_40x48.png",
+   "n": 8,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m1": {
+   "file": "vfx/leader_m1_8f_40x48.png",
+   "n": 8,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m2": {
+   "file": "vfx/leader_m2_8f_40x48.png",
+   "n": 8,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m3": {
+   "file": "vfx/leader_m3_12f_40x48.png",
+   "n": 12,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m4": {
+   "file": "vfx/leader_m4_8f_40x48.png",
+   "n": 8,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m5": {
+   "file": "vfx/leader_m5_12f_40x48.png",
+   "n": 12,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m6": {
+   "file": "vfx/leader_m6_12f_40x48.png",
+   "n": 12,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m7": {
+   "file": "vfx/leader_m7_12f_40x48.png",
+   "n": 12,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m8": {
+   "file": "vfx/leader_m8_8f_40x48.png",
+   "n": 8,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "leader_m9": {
+   "file": "vfx/leader_m9_12f_40x48.png",
+   "n": 12,
+   "w": 40,
+   "h": 48,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "u_bubbles": {
+   "file": "vfx/u_bubbles_16f_11x18.png",
+   "n": 16,
+   "w": 11,
+   "h": 18,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "u_shock": {
+   "file": "vfx/u_shock_11f_22x18.png",
+   "n": 11,
+   "w": 22,
+   "h": 18,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "u_puff": {
+   "file": "vfx/u_puff_6f_37x26.png",
+   "n": 6,
+   "w": 37,
+   "h": 26,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "u_gate": {
+   "file": "vfx/u_gate_11f_37x28.png",
+   "n": 11,
+   "w": 37,
+   "h": 28,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "u_ink": {
+   "file": "vfx/u_ink_9f_33x26.png",
+   "n": 9,
+   "w": 33,
+   "h": 26,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "u_current": {
+   "file": "vfx/u_current_12f_44x24.png",
+   "n": 12,
+   "w": 44,
+   "h": 24,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  }
+ },
+ "cursors": {
+  "seed_turnip": {
+   "on": "ui/cursors/seed_turnip.png",
+   "off": "ui/cursors/seed_turnip_off.png"
+  },
+  "seed_strawberry": {
+   "on": "ui/cursors/seed_strawberry.png",
+   "off": "ui/cursors/seed_strawberry_off.png"
+  },
+  "seed_tomato": {
+   "on": "ui/cursors/seed_tomato.png",
+   "off": "ui/cursors/seed_tomato_off.png"
+  },
+  "seed_corn": {
+   "on": "ui/cursors/seed_corn.png",
+   "off": "ui/cursors/seed_corn_off.png"
+  },
+  "seed_pumpkin": {
+   "on": "ui/cursors/seed_pumpkin.png",
+   "off": "ui/cursors/seed_pumpkin_off.png"
+  },
+  "seed_yam": {
+   "on": "ui/cursors/seed_yam.png",
+   "off": "ui/cursors/seed_yam_off.png"
+  },
+  "seed_starmush": {
+   "on": "ui/cursors/seed_starmush.png",
+   "off": "ui/cursors/seed_starmush_off.png"
+  },
+  "seed_quakeflower": {
+   "on": "ui/cursors/seed_quakeflower.png",
+   "off": "ui/cursors/seed_quakeflower_off.png"
+  },
+  "pen1": {
+   "on": "ui/cursors/pen1.png",
+   "off": "ui/cursors/pen1_off.png"
+  },
+  "pen2": {
+   "on": "ui/cursors/pen2.png",
+   "off": "ui/cursors/pen2_off.png"
+  },
+  "scarecrow": {
+   "on": "ui/cursors/scarecrow.png",
+   "off": "ui/cursors/scarecrow_off.png"
+  },
+  "axe": {
+   "on": "ui/cursors/axe.png",
+   "off": "ui/cursors/axe_off.png"
+  },
+  "pickaxe": {
+   "on": "ui/cursors/pickaxe.png",
+   "off": "ui/cursors/pickaxe_off.png"
+  },
+  "rod": {
+   "on": "ui/cursors/rod.png",
+   "off": "ui/cursors/rod_off.png"
+  },
+  "shovel": {
+   "on": "ui/cursors/shovel.png",
+   "off": "ui/cursors/shovel_off.png"
+  },
+  "scythe": {
+   "on": "ui/cursors/scythe.png",
+   "off": "ui/cursors/scythe_off.png"
+  },
+  "knife": {
+   "on": "ui/cursors/knife.png",
+   "off": "ui/cursors/knife_off.png"
+  },
+  "bucket": {
+   "on": "ui/cursors/bucket.png",
+   "off": "ui/cursors/bucket_off.png"
+  },
+  "trap": {
+   "on": "ui/cursors/trap.png",
+   "off": "ui/cursors/trap_off.png"
+  },
+  "torch": {
+   "on": "ui/cursors/torch.png",
+   "off": "ui/cursors/torch_off.png"
+  },
+  "egg": {
+   "on": "ui/cursors/egg.png",
+   "off": "ui/cursors/egg_off.png"
+  },
+  "milk": {
+   "on": "ui/cursors/milk.png",
+   "off": "ui/cursors/milk_off.png"
+  },
+  "berry": {
+   "on": "ui/cursors/berry.png",
+   "off": "ui/cursors/berry_off.png"
+  },
+  "mushroom": {
+   "on": "ui/cursors/mushroom.png",
+   "off": "ui/cursors/mushroom_off.png"
+  },
+  "honey": {
+   "on": "ui/cursors/honey.png",
+   "off": "ui/cursors/honey_off.png"
+  },
+  "meat": {
+   "on": "ui/cursors/meat.png",
+   "off": "ui/cursors/meat_off.png"
+  },
+  "turnip": {
+   "on": "ui/cursors/turnip.png",
+   "off": "ui/cursors/turnip_off.png"
+  },
+  "strawberry": {
+   "on": "ui/cursors/strawberry.png",
+   "off": "ui/cursors/strawberry_off.png"
+  },
+  "tomato": {
+   "on": "ui/cursors/tomato.png",
+   "off": "ui/cursors/tomato_off.png"
+  },
+  "corn": {
+   "on": "ui/cursors/corn.png",
+   "off": "ui/cursors/corn_off.png"
+  },
+  "pumpkin": {
+   "on": "ui/cursors/pumpkin.png",
+   "off": "ui/cursors/pumpkin_off.png"
+  },
+  "yam": {
+   "on": "ui/cursors/yam.png",
+   "off": "ui/cursors/yam_off.png"
+  },
+  "starmush": {
+   "on": "ui/cursors/starmush.png",
+   "off": "ui/cursors/starmush_off.png"
+  },
+  "quakeflower": {
+   "on": "ui/cursors/quakeflower.png",
+   "off": "ui/cursors/quakeflower_off.png"
+  },
+  "fish": {
+   "on": "ui/cursors/fish.png",
+   "off": "ui/cursors/fish_off.png"
+  },
+  "sword": {
+   "on": "ui/cursors/sword.png",
+   "off": "ui/cursors/sword_off.png"
+  },
+  "revive": {
+   "on": "ui/cursors/revive.png",
+   "off": "ui/cursors/revive_off.png"
+  },
+  "stone": {
+   "on": "ui/cursors/stone.png",
+   "off": "ui/cursors/stone_off.png"
+  },
+  "hay": {
+   "on": "ui/cursors/hay.png",
+   "off": "ui/cursors/hay_off.png"
+  },
+  "sword_t2": {
+   "on": "ui/cursors/sword_t2.png",
+   "off": "ui/cursors/sword_t2_off.png"
+  },
+  "sword_t3": {
+   "on": "ui/cursors/sword_t3.png",
+   "off": "ui/cursors/sword_t3_off.png"
+  },
+  "sword_t4": {
+   "on": "ui/cursors/sword_t4.png",
+   "off": "ui/cursors/sword_t4_off.png"
+  },
+  "sword_t5": {
+   "on": "ui/cursors/sword_t5.png",
+   "off": "ui/cursors/sword_t5_off.png"
+  },
+  "sword_t6": {
+   "on": "ui/cursors/sword_t6.png",
+   "off": "ui/cursors/sword_t6_off.png"
+  },
+  "sword_t1": {
+   "on": "ui/cursors/sword_t1.png",
+   "off": "ui/cursors/sword_t1_off.png"
+  }
+ },
+ "monsters": {
+  "slime": {
+   "file": "monsters/slime.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "crab": {
+   "file": "monsters/crab.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "rockimp": {
+   "file": "monsters/rockimp.png",
+   "n": 5,
+   "cw": 21,
+   "ch": 21,
+   "fps": 8
+  },
+  "inkshade": {
+   "file": "monsters/inkshade.png",
+   "n": 5,
+   "cw": 21,
+   "ch": 21,
+   "fps": 8
+  },
+  "crow": {
+   "file": "monsters/crow.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "wolf": {
+   "file": "monsters/wolf.png",
+   "n": 5,
+   "cw": 24,
+   "ch": 24,
+   "fps": 8
+  },
+  "imp": {
+   "file": "monsters/imp.png",
+   "n": 5,
+   "cw": 21,
+   "ch": 21,
+   "fps": 8
+  },
+  "snowwolf": {
+   "file": "monsters/snowwolf.png",
+   "n": 5,
+   "cw": 24,
+   "ch": 24,
+   "fps": 8
+  },
+  "glitch": {
+   "file": "monsters/glitch.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "gull": {
+   "file": "monsters/gull.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "scorpion": {
+   "file": "monsters/scorpion.png",
+   "n": 5,
+   "cw": 21,
+   "ch": 21,
+   "fps": 8
+  },
+  "puffer": {
+   "file": "monsters/puffer.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "jelly": {
+   "file": "monsters/jelly.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "crabking": {
+   "file": "monsters/crabking.png",
+   "n": 5,
+   "cw": 28,
+   "ch": 28,
+   "fps": 8
+  },
+  "crabking_atk": {
+   "file": "monsters/crabking_atk.png",
+   "n": 7,
+   "cw": 28,
+   "ch": 28,
+   "fps": 8
+  },
+  "puffer_puff": {
+   "file": "monsters/puffer_puff.png",
+   "n": 7,
+   "cw": 17,
+   "ch": 17,
+   "fps": 10
+  },
+  "swordfish": {
+   "file": "monsters/swordfish.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "sawshark": {
+   "file": "monsters/sawshark.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "armorshark": {
+   "file": "monsters/armorshark.png",
+   "n": 5,
+   "cw": 28,
+   "ch": 28,
+   "fps": 8
+  },
+  "angler": {
+   "file": "monsters/angler.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "seasnake": {
+   "file": "monsters/seasnake.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "serpent": {
+   "file": "monsters/serpent.png",
+   "n": 5,
+   "cw": 24,
+   "ch": 24,
+   "fps": 8
+  },
+  "eel": {
+   "file": "monsters/eel.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "momeel": {
+   "file": "monsters/momeel.png",
+   "n": 5,
+   "cw": 28,
+   "ch": 28,
+   "fps": 8
+  },
+  "squid": {
+   "file": "monsters/squid.png",
+   "n": 5,
+   "cw": 17,
+   "ch": 17,
+   "fps": 8
+  },
+  "serpent_seg": {
+   "file": "monsters/serpent_seg.png",
+   "n": 1,
+   "cw": 12,
+   "ch": 13,
+   "fps": 1
+  }
+ },
+ "ruins": {
+  "zones/m2/obj/fence_h_s23.png": {
+   "dmg": "obj/ruin/fence_h_m2_dmg.png",
+   "ruin": "obj/ruin/fence_h_m2_ruin.png"
+  },
+  "zones/m3/obj/wall_s_t8.png": {
+   "dmg": "obj/ruin/wall_s_m3_dmg.png",
+   "ruin": "obj/ruin/wall_s_m3_ruin.png"
+  },
+  "zones/m5/obj/pavilion_t8.png": {
+   "dmg": "obj/ruin/pavilion_m5_dmg.png",
+   "ruin": "obj/ruin/pavilion_m5_ruin.png"
+  },
+  "gen_td/campfire_s7.png": {
+   "dmg": "obj/ruin/gen_td_campfire_s7_dmg.png",
+   "ruin": "obj/ruin/gen_td_campfire_s7_ruin.png"
+  },
+  "gen_td/post_s23.png": {
+   "dmg": "obj/ruin/gen_td_post_s23_dmg.png",
+   "ruin": "obj/ruin/gen_td_post_s23_ruin.png"
+  },
+  "zones/m1/obj/fence_h_s7.png": {
+   "dmg": "obj/ruin/m1_fence_h_s7_dmg.png",
+   "ruin": "obj/ruin/m1_fence_h_s7_ruin.png"
+  },
+  "zones/m1/obj/fence_v_s7.png": {
+   "dmg": "obj/ruin/m1_fence_v_s7_dmg.png",
+   "ruin": "obj/ruin/m1_fence_v_s7_ruin.png"
+  },
+  "zones/m2/obj/fence_v_s7.png": {
+   "dmg": "obj/ruin/m2_fence_v_s7_dmg.png",
+   "ruin": "obj/ruin/m2_fence_v_s7_ruin.png"
+  },
+  "zones/m3/obj/campfire_s7.png": {
+   "dmg": "obj/ruin/m3_campfire_s7_dmg.png",
+   "ruin": "obj/ruin/m3_campfire_s7_ruin.png"
+  },
+  "zones/m4/obj/wall_s_t8.png": {
+   "dmg": "obj/ruin/m4_wall_s_t8_dmg.png",
+   "ruin": "obj/ruin/m4_wall_s_t8_ruin.png"
+  },
+  "zones/m5/obj/wall_s_t8.png": {
+   "dmg": "obj/ruin/m5_wall_s_t8_dmg.png",
+   "ruin": "obj/ruin/m5_wall_s_t8_ruin.png"
+  },
+  "zones/m6/obj/wall_s_t8.png": {
+   "dmg": "obj/ruin/m6_wall_s_t8_dmg.png",
+   "ruin": "obj/ruin/m6_wall_s_t8_ruin.png"
+  },
+  "zones/m8/obj/campfire_s7.png": {
+   "dmg": "obj/ruin/m8_campfire_s7_dmg.png",
+   "ruin": "obj/ruin/m8_campfire_s7_ruin.png"
+  },
+  "zones/m9/obj/hexwall_t8.png": {
+   "dmg": "obj/ruin/m9_hexwall_t8_dmg.png",
+   "ruin": "obj/ruin/m9_hexwall_t8_ruin.png"
+  },
+  "zones/village/farm/pen_gate.png": {
+   "dmg": "obj/ruin/village_pen_gate_dmg.png",
+   "ruin": "obj/ruin/village_pen_gate_ruin.png"
+  },
+  "gen_td/lantern_s23.png": {
+   "dmg": "obj/ruin/gen_td_lantern_s23_dmg.png",
+   "ruin": "obj/ruin/gen_td_lantern_s23_ruin.png"
+  },
+  "zones/m1/obj/torch_s23.png": {
+   "dmg": "obj/ruin/m1_torch_s23_dmg.png",
+   "ruin": "obj/ruin/m1_torch_s23_ruin.png"
+  },
+  "zones/m2/obj/lantern_s23.png": {
+   "dmg": "obj/ruin/m2_lantern_s23_dmg.png",
+   "ruin": "obj/ruin/m2_lantern_s23_ruin.png"
+  },
+  "zones/m3/obj/lantern_s23.png": {
+   "dmg": "obj/ruin/m3_lantern_s23_dmg.png",
+   "ruin": "obj/ruin/m3_lantern_s23_ruin.png"
+  },
+  "zones/m4/obj/lantern_s7.png": {
+   "dmg": "obj/ruin/m4_lantern_s7_dmg.png",
+   "ruin": "obj/ruin/m4_lantern_s7_ruin.png"
+  },
+  "zones/m4/obj/torch_s7.png": {
+   "dmg": "obj/ruin/m4_torch_s7_dmg.png",
+   "ruin": "obj/ruin/m4_torch_s7_ruin.png"
+  },
+  "zones/m5/obj/pillar_s7.png": {
+   "dmg": "obj/ruin/m5_pillar_s7_dmg.png",
+   "ruin": "obj/ruin/m5_pillar_s7_ruin.png"
+  },
+  "zones/m5/obj/torch_s7.png": {
+   "dmg": "obj/ruin/m5_torch_s7_dmg.png",
+   "ruin": "obj/ruin/m5_torch_s7_ruin.png"
+  },
+  "zones/m6/obj/lantern_s23.png": {
+   "dmg": "obj/ruin/m6_lantern_s23_dmg.png",
+   "ruin": "obj/ruin/m6_lantern_s23_ruin.png"
+  },
+  "zones/m6/obj/pillar_s7.png": {
+   "dmg": "obj/ruin/m6_pillar_s7_dmg.png",
+   "ruin": "obj/ruin/m6_pillar_s7_ruin.png"
+  },
+  "zones/m7/obj/lantern_s7.png": {
+   "dmg": "obj/ruin/m7_lantern_s7_dmg.png",
+   "ruin": "obj/ruin/m7_lantern_s7_ruin.png"
+  },
+  "zones/m7/obj/torch_s23.png": {
+   "dmg": "obj/ruin/m7_torch_s23_dmg.png",
+   "ruin": "obj/ruin/m7_torch_s23_ruin.png"
+  },
+  "zones/m7/obj/turret_t8.png": {
+   "dmg": "obj/ruin/m7_turret_t8_dmg.png",
+   "ruin": "obj/ruin/m7_turret_t8_ruin.png"
+  },
+  "zones/m7/obj/wall_h_t8.png": {
+   "dmg": "obj/ruin/m7_wall_h_t8_dmg.png",
+   "ruin": "obj/ruin/m7_wall_h_t8_ruin.png"
+  },
+  "zones/m8/obj/lantern_s23.png": {
+   "dmg": "obj/ruin/m8_lantern_s23_dmg.png",
+   "ruin": "obj/ruin/m8_lantern_s23_ruin.png"
+  },
+  "zones/m8/obj/turret_t8.png": {
+   "dmg": "obj/ruin/m8_turret_t8_dmg.png",
+   "ruin": "obj/ruin/m8_turret_t8_ruin.png"
+  },
+  "zones/m8/obj/wall_h_t8.png": {
+   "dmg": "obj/ruin/m8_wall_h_t8_dmg.png",
+   "ruin": "obj/ruin/m8_wall_h_t8_ruin.png"
+  },
+  "zones/m9/obj/crystal_p_s23.png": {
+   "dmg": "obj/ruin/m9_crystal_p_s23_dmg.png",
+   "ruin": "obj/ruin/m9_crystal_p_s23_ruin.png"
+  },
+  "zones/m9/obj/lantern_s7.png": {
+   "dmg": "obj/ruin/m9_lantern_s7_dmg.png",
+   "ruin": "obj/ruin/m9_lantern_s7_ruin.png"
+  },
+  "zones/m9/obj/torch_s23.png": {
+   "dmg": "obj/ruin/m9_torch_s23_dmg.png",
+   "ruin": "obj/ruin/m9_torch_s23_ruin.png"
+  },
+  "zones/m6/obj/fountain_t8.png": {
+   "dmg": "obj/ruin/m6_fountain_t8_dmg.png",
+   "ruin": "obj/ruin/m6_fountain_t8_ruin.png"
+  },
+  "zones/m7/obj/fountain_t8.png": {
+   "dmg": "obj/ruin/m7_fountain_t8_dmg.png",
+   "ruin": "obj/ruin/m7_fountain_t8_ruin.png"
+  },
+  "zones/m8/obj/fountain_t8.png": {
+   "dmg": "obj/ruin/m8_fountain_t8_dmg.png",
+   "ruin": "obj/ruin/m8_fountain_t8_ruin.png"
+  },
+  "zones/m9/obj/altar_t8.png": {
+   "dmg": "obj/ruin/m9_altar_t8_dmg.png",
+   "ruin": "obj/ruin/m9_altar_t8_ruin.png"
+  },
+  "zones/m9/obj/fountain_t8.png": {
+   "dmg": "obj/ruin/m9_fountain_t8_dmg.png",
+   "ruin": "obj/ruin/m9_fountain_t8_ruin.png"
+  },
+  "zones/village/obj/board_t8.png": {
+   "dmg": "obj/ruin/village_board_t8_dmg.png",
+   "ruin": "obj/ruin/village_board_t8_ruin.png"
+  },
+  "zones/m6/obj/pavilion_t8.png": {
+   "dmg": "obj/ruin/m6_pavilion_t8_dmg.png",
+   "ruin": "obj/ruin/m6_pavilion_t8_ruin.png"
+  },
+  "zones/m7/obj/pavilion_t8.png": {
+   "dmg": "obj/ruin/m7_pavilion_t8_dmg.png",
+   "ruin": "obj/ruin/m7_pavilion_t8_ruin.png"
+  },
+  "zones/m8/obj/pavilion_t8.png": {
+   "dmg": "obj/ruin/m8_pavilion_t8_dmg.png",
+   "ruin": "obj/ruin/m8_pavilion_t8_ruin.png"
+  },
+  "zones/m9/obj/hexpillar_s7.png": {
+   "dmg": "obj/ruin/m9_hexpillar_s7_dmg.png",
+   "ruin": "obj/ruin/m9_hexpillar_s7_ruin.png"
+  },
+  "zones/village/farm/scarecrow.png": {
+   "dmg": "obj/ruin/village_scarecrow_dmg.png",
+   "ruin": "obj/ruin/village_scarecrow_ruin.png"
+  },
+  "zones/village/obj/monument_t8.png": {
+   "dmg": "obj/ruin/monument_dmg.png",
+   "ruin": "obj/ruin/monument_ruin.png"
+  },
+  "zones/m1/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m1_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m1_monument_badge_ruin.png"
+  },
+  "zones/m2/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m2_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m2_monument_badge_ruin.png"
+  },
+  "zones/m3/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m3_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m3_monument_badge_ruin.png"
+  },
+  "zones/m4/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m4_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m4_monument_badge_ruin.png"
+  },
+  "zones/m5/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m5_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m5_monument_badge_ruin.png"
+  },
+  "zones/m6/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m6_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m6_monument_badge_ruin.png"
+  },
+  "zones/m7/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m7_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m7_monument_badge_ruin.png"
+  },
+  "zones/m8/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m8_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m8_monument_badge_ruin.png"
+  },
+  "zones/m9/obj/monument_badge.png": {
+   "dmg": "obj/ruin/m9_monument_badge_dmg.png",
+   "ruin": "obj/ruin/m9_monument_badge_ruin.png"
   }
  }
 }
