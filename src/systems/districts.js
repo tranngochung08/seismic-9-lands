@@ -8,7 +8,7 @@
 // How fast they work depends on the land's Magnitude (every artist there has that level),
 // on how many artworks they have posted, and on whether you fed them.
 
-import { getCarry, removeCarry } from './animals.js';
+import { getCarry, removeCarry, hasFish, takeFish } from './animals.js';
 
 const TS = 16;
 const SCAN = 0.5;          // seconds between damage scans
@@ -499,7 +499,7 @@ function renderPanel(ctx) {
   const nation = ctx.S.nations.find(x => x.key === plot.nation) || { flag: '🏳', name: plot.nation };
   const stt = ctx.districtState(i), cond = Math.round((stt.condition || 0) * 100);
   const st = sysState(ctx, i), req = requestOf(ctx, i), off = offerOf(ctx, i), job = JOBS.get(i);
-  const carry = getCarry(ctx), food = carry.findIndex(c => c.kind === 'fish' || c.kind === 'chicken' || c.kind === 'cow');
+  const carry = getCarry(ctx), food = carry.findIndex(c => c.kind === 'fish' || c.kind === 'chicken' || c.kind === 'cow') >= 0 || hasFish(ctx) ? 0 : -1;   /* cá trong túi cũng cho ăn được (bỏ xô 2026-10-11) */
   const fed = Math.round(fedLeft(ctx, i));
   const lvTitle = skillTitle(ctx, ctx.S.zone.lv), secs = skillOf(ctx.S.zone.lv).sec;
 
@@ -569,8 +569,8 @@ function deliver(ctx, i) {
 function feed(ctx, i) {
   const t = L(ctx), carry = getCarry(ctx);
   const idx = carry.findIndex(c => c.kind === 'fish' || c.kind === 'chicken' || c.kind === 'cow');
-  if (idx < 0) { ctx.toast(t.noFood); return; }
-  removeCarry(ctx, idx);                       // also re-syncs save.inv.<kind> and persists
+  if (idx >= 0) removeCarry(ctx, idx);         // also re-syncs save.inv.<kind> and persists
+  else if (!takeFish(ctx)) { ctx.toast(t.noFood); return; }   /* cá trong túi (bỏ xô 2026-10-11) */
   const st = sysState(ctx, i);
   st.fed = Date.now() + FEED_SEC * 1000;
   ctx.persist();

@@ -1,14 +1,14 @@
 // farm.js — F02 Trồng trọt (plan-17 đợt 1, tác nhân A1-FARM). Hợp đồng: src/systems/API.md mục Clock / Plot / Đợt 1 + docs/contract-dot1.md.
 //  · Cày bằng XẺNG (ctx.tool.tier('shovel') ≥ 1) trên ô cỏ/đất trống TRONG plot nước mình (ctx.myPlot) → T.TILLED; tối đa 60 ô/vùng.
 //  · Gieo hạt seed_<crop> trong túi, chọn hạt đúng mùa (tag mùa của item); hạt sai mùa → nhãn từ chối.
-//  · Tưới bằng XÔ: đứng cạnh giếng/ô nước → E 'Múc nước' → save.sys.farm.bucketWater 0..5; tưới tốn 1 → T.TILLED_WET.
+//  · Tưới bằng TAY (2026-10-11 anh bỏ xô): tay không / cầm hạt / cầm đồ thường + E trên ô đã gieo chưa tưới → T.TILLED_WET. Không cần múc nước.
 //  · onDayEnd: ô đã tưới → stage +1 (1 ngày game = 1 giai đoạn), ướt → khô; ngày cuối mùa → cây sai mùa héo. Không tưới → cây đứng, không chết.
 //  · Thu hoạch +2–4 nông sản (số nổi ctx.pop), chất lượng q 0/1/2 theo số ngày tưới liên tục (chỉ lưu để bán sau); dâu/cà chua/bắp mọc lại.
 //  · Bù nhìn Rocky: item 'scarecrow' (RECIPES bàn mộc) → E trên ô trống trong plot → vật 'scarecrow' (solid) + save.sys.farm[zone].scarecrows
 //    để raiders_low đọc (hàm thuần guardedByScarecrow export bên dưới). Gỡ lại được (E cạnh bù nhìn).
 //  · Vẽ: ô cày = tile lõi T.TILLED / T.TILLED_WET (ctx.setG); cây = drawables theo giai đoạn qua HOOK.image('crop_<crop>_<0..3>' | 'crop_<crop>_dead')
 //    (fallback vẽ code fillRect); bù nhìn HOOK.image('scarecrow') 16×24 logic.
-//  · Save: save.sys.farm = { bucketWater, harvested, quality:[n0,n1,n2], [zone]: { tiles: {'x,y': {crop, stage, wet, planted, waterDays, q, dead}}, scarecrows:[{x,y}] } }.
+//  · Save: save.sys.farm = { harvested, quality:[n0,n1,n2], [zone]: { tiles: {'x,y': {crop, stage, wet, planted, waterDays, q, dead}}, scarecrows:[{x,y}] } }.
 //    Save cũ không có sys.farm → tự tạo rỗng.
 //  · Móc test: window.__farm = { give, tools, tick, state, act, press, near }.
 import { mkCanvas, HOOK, T, TS, PAL, tiles } from '../gfx.js';
@@ -17,24 +17,22 @@ import { ART } from '../art.js';   /* chỉ đọc ART.on: chế độ px nền 
 // ---------- chữ ----------
 const STR = {
   en: {
-    till: 'Till soil', sow: s => `Sow ${s}`, water: 'Water', harvest: 'Harvest', pull: 'Pull dead crop', fill: 'Fill bucket',
+    till: 'Till soil', sow: s => `Sow ${s}`, water: 'Water', harvest: 'Harvest', pull: 'Pull dead crop',
     placeScare: 'Place scarecrow', takeScare: 'Take scarecrow',
-    emptyBucket: 'Bucket is empty — fill it at the well or a water tile', needShovel: 'Needs a shovel — craft it at the workbench (4 wood)',
-    needBucket: 'Needs a bucket — craft Bucket I at the workbench (3 wood + 1 resin)', notMine: "Fields only inside your own nation's yard",
-    wrongSeason: 'Wrong season for these seeds', full: 'This yard already has 60 field tiles', bucketFull: 'Bucket is already full',
-    tilled: 'Soil tilled', sown: 'Seeds sown', watered: 'Watered', filled: 'Bucket filled', pulled: 'Dead crop removed', placed: 'Scarecrow placed', taken: 'Scarecrow taken back',
-    grew: n => `${n} crops grew`, wilted: n => `${n} crops wilted (season changed)`, harvested: (n, name) => `Harvested ${n} ${name}`, stars: ['', ' ☆', ' ★'],
-    hud: (w, m) => `💧 ${w}/${m}`
+    needShovel: 'Needs a shovel — craft it at the workbench (4 wood)',
+    handWater: 'Water by hand — pick an empty slot or hold seeds', notMine: "Fields only inside your own nation's yard",
+    wrongSeason: 'Wrong season for these seeds', full: 'This yard already has 60 field tiles',
+    tilled: 'Soil tilled', sown: 'Seeds sown', watered: 'Watered', pulled: 'Dead crop removed', placed: 'Scarecrow placed', taken: 'Scarecrow taken back',
+    grew: n => `${n} crops grew`, wilted: n => `${n} crops wilted (season changed)`, harvested: (n, name) => `Harvested ${n} ${name}`, stars: ['', ' ☆', ' ★']
   },
   vi: {
-    till: 'Cày đất', sow: s => `Gieo ${s}`, water: 'Tưới', harvest: 'Thu hoạch', pull: 'Nhổ cây héo', fill: 'Múc nước',
+    till: 'Cày đất', sow: s => `Gieo ${s}`, water: 'Tưới', harvest: 'Thu hoạch', pull: 'Nhổ cây héo',
     placeScare: 'Đặt bù nhìn', takeScare: 'Gỡ bù nhìn',
-    emptyBucket: 'Xô rỗng — múc nước ở giếng hoặc ô nước', needShovel: 'Cần xẻng — chế ở Bàn mộc (4 gỗ)',
-    needBucket: 'Cần xô — chế Xô I ở Bàn mộc (3 gỗ + 1 nhựa thông)', notMine: 'Ruộng chỉ đặt trong khu của nước mình',
-    wrongSeason: 'Hạt sai mùa, chưa gieo được', full: 'Khu này đã đủ 60 ô ruộng', bucketFull: 'Xô đã đầy',
-    tilled: 'Đã cày đất', sown: 'Đã gieo hạt', watered: 'Đã tưới', filled: 'Đã múc đầy xô', pulled: 'Đã nhổ cây héo', placed: 'Đã đặt bù nhìn', taken: 'Đã gỡ bù nhìn',
-    grew: n => `${n} cây lớn thêm`, wilted: n => `${n} cây héo vì sang mùa`, harvested: (n, name) => `Thu hoạch ${n} ${name}`, stars: ['', ' ☆', ' ★'],
-    hud: (w, m) => `💧 ${w}/${m}`
+    needShovel: 'Cần xẻng — chế ở Bàn mộc (4 gỗ)',
+    handWater: 'Tưới bằng tay — chọn ô trống hoặc cầm hạt', notMine: 'Ruộng chỉ đặt trong khu của nước mình',
+    wrongSeason: 'Hạt sai mùa, chưa gieo được', full: 'Khu này đã đủ 60 ô ruộng',
+    tilled: 'Đã cày đất', sown: 'Đã gieo hạt', watered: 'Đã tưới', pulled: 'Đã nhổ cây héo', placed: 'Đã đặt bù nhìn', taken: 'Đã gỡ bù nhìn',
+    grew: n => `${n} cây lớn thêm`, wilted: n => `${n} cây héo vì sang mùa`, harvested: (n, name) => `Thu hoạch ${n} ${name}`, stars: ['', ' ☆', ' ★']
   }
 };
 const L = ctx => STR[ctx.lang()] || STR.en;
@@ -47,7 +45,7 @@ const CROP = {
   pumpkin: { days: 6 }, yam: { days: 5 }, starmush: { days: 4 }, quakeflower: { days: 5 }
 };
 const FRUIT = { turnip: ['#f3ecff', '#b48cf0'], strawberry: ['#e2323f', '#ffd0d6'], tomato: ['#e5462a', '#ffb98a'], corn: ['#ffd84a', '#fff3a8'], pumpkin: ['#f08a1e', '#ffc46a'], yam: ['#9a5aa8', '#e8b5f5'], starmush: ['#5fe6ff', '#ffffff'], quakeflower: ['#d64ad8', '#ffe0ff'] };
-const MAX_TILES = 60, BUCKET_MAX = 5, SCARE_R = 6;
+const MAX_TILES = 60, SCARE_R = 6;
 const TILE_BIAS = 24;   // gather báo ô đất "cách" 25 px → ruộng 24 px thắng gather trên cùng ô, vẫn thua NPC/vật thể (≤ 22 px)
 const DIRV = [[0, 1], [-1, 0], [1, 0], [0, -1]];   // dir nhân vật: 0 xuống, 1 trái, 2 phải, 3 lên
 
@@ -59,8 +57,7 @@ const key = (x, y) => x + ',' + y;
 function root(ctx) {
   const s = ctx.S.save; s.sys = s.sys || {};
   const f = (s.sys.farm = s.sys.farm || {});
-  if (typeof f.bucketWater !== 'number' || !(f.bucketWater >= 0)) f.bucketWater = 0;
-  f.bucketWater = Math.min(BUCKET_MAX, f.bucketWater | 0);
+  if ('bucketWater' in f) delete f.bucketWater;   /* 2026-10-11 bỏ xô */
   if (typeof f.harvested !== 'number') f.harvested = 0;
   if (!Array.isArray(f.quality)) f.quality = [0, 0, 0];
   return f;
@@ -137,7 +134,34 @@ for (const crop of CROPS) {
 }
 IMG.scarecrow = HOOK.image('scarecrow', scareArt());
 IMG.cursor = HOOK.image('cursor_tile', (() => { const c = mkCanvas(16, 16), g = c.getContext('2d'); g.strokeStyle = '#e8ffb0'; g.lineWidth = 1; g.strokeRect(0.5, 0.5, 15, 15); return c; })());   /* khung chọn ô (gói: zones/village/farm/cursor_tile.png) */
-let HOVER = null;   /* ô đang trỏ chuột trong tầm với: { tx, ty, ok } — đặt trong near(), vẽ trong drawables() */
+let HOVER = null;
+/* 2026-10-11 anh: khung chọn ô bo góc, MÀU THEO ĐẤT bên dưới (màu đất nhưng đậm hơn). Hình khung lấy từ ảnh PixelLab cursor_tile (3 vòng nét: ngoài sẫm · sáng · trong),
+   tô lại theo màu nền đọc ở giữa ô trên canvas (1 điểm ảnh/khung hình), lưu đệm theo màu đã lượng tử. */
+const CURS = { src: null, rings: null, cache: {} };
+function cursorRings() {
+  if (CURS.rings) return CURS.rings;
+  if (!CURS.src) { if (typeof Image === 'undefined') return null; CURS.src = new Image(); CURS.src.src = 'assets/px/zones/village/farm/cursor_tile.png'; }
+  if (!CURS.src.complete || !CURS.src.naturalWidth) return null;
+  const c = mkCanvas(32, 32), cg = c.getContext('2d'); cg.drawImage(CURS.src, 0, 0); const d = cg.getImageData(0, 0, 32, 32).data, lum = i => d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
+  const L = new Float32Array(1024); let mx = 0; for (let i = 0; i < 1024; i++) { L[i] = d[i * 4 + 3] ? lum(i * 4) : -1; if (L[i] > mx) mx = L[i]; }
+  return (CURS.rings = { L, mx: mx || 1 });
+}
+function groundCursor(g, sx, sy, ctx, tx, ty) {
+  const R = cursorRings(); if (!R) return null;
+  let rgb = null;
+  if (ctx) {   /* theo LOẠI ô (chắc hơn đọc điểm ảnh): đất cày / đất trống → nâu đất · cát → cát · nước → xanh nước */
+    const gt = ctx.getG(ctx.S.map, tx, ty), TT = ctx.T || T, z = zoneData(ctx);
+    if ((z.tiles && z.tiles[tx + ',' + ty]) || gt === TT.TILLED || gt === TT.TILLED_WET || gt === TT.DIRT) rgb = [168, 116, 72];
+    else if (gt === TT.SAND || gt === TT.SAND2) rgb = [226, 196, 132];
+  }
+  if (!rgb) rgb = [110, 160, 70];
+  if (!ctx || rgb[0] === 110) try { const k = g.canvas.width / (g.canvas.__w || g.canvas.width) || 1, tr = g.getTransform ? g.getTransform() : { a: 1, e: 0, f: 0 }, px = Math.round((sx + 8) * tr.a + tr.e), py = Math.round((sy + 8) * tr.d + tr.f), p = g.getImageData(px, py, 1, 1).data; if (p[3]) rgb = [p[0], p[1], p[2]]; void k; } catch (e) { }
+  const q = rgb.map(v => v >> 4 << 4), key = q.join(','); if (CURS.cache[key]) return CURS.cache[key];
+  const c = mkCanvas(32, 32), cg = c.getContext('2d'), out = cg.createImageData(32, 32), o = out.data;
+  for (let i = 0; i < 1024; i++) { if (R.L[i] < 0) continue; const t = R.L[i] / R.mx, f = 0.28 + t * 0.42;   /* sẫm nhất 28 % · sáng nhất 70 % màu đất */
+    o[i * 4] = q[0] * f; o[i * 4 + 1] = q[1] * f; o[i * 4 + 2] = q[2] * f; o[i * 4 + 3] = 255; }
+  cg.putImageData(out, 0, 0); return (CURS.cache[key] = c);
+}   /* ô đang trỏ chuột trong tầm với: { tx, ty, ok } — đặt trong near(), vẽ trong drawables() */
 
 function ensureSprites(ctx) {
   if (!ST.sprites) {
@@ -166,16 +190,6 @@ function tillable(ctx, tx, ty) {   // ô trống có thể cày (chưa xét plot
 }
 function inFarmPlot(ctx, tx, ty) { if (ctx.ownsTile && ctx.ownsTile(tx, ty)) return true;   /* plan-25: đất đã mua */
   const p = farmPlot(ctx), q = ctx.plotOf(tx, ty); return !!(q && ((p && p.idx === q.idx) || (q.nation && ctx.canWorkPlot && ctx.canWorkPlot(tx, ty) && ctx.myNation() !== q.nation))); }   /* + khu nước thân thiện (nói chuyện ≥ 5 lần) */
-function nearWater(ctx) {
-  const m = ctx.S.map, p = ctx.S.player, tx = Math.floor(p.x / TS), ty = Math.floor(p.y / TS);
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const g0 = ctx.getG(m, tx + dx, ty + dy); if (g0 === T.WATER || g0 === T.REEF || g0 === T.DEEP) return { x: (tx + dx) * TS + 8, y: (ty + dy) * TS + 8 }; }
-  for (const o of m.objects) {
-    if (o.type !== 'well' || o.ruined) continue;
-    const d = ctx.O[o.type], wx = o.x * TS + d.fw * 8, wy = (o.y + d.fh) * TS - 4;
-    if (Math.hypot(wx - p.x, wy - p.y) < 30) return { x: wx, y: wy, well: true };
-  }
-  return null;
-}
 function pickSeed(ctx) {   // hạt đúng mùa đầu tiên trong túi (theo thứ tự CROPS); trả { crop, id } | null; hasAny = có hạt nào không
   let any = false, pick = null;
   for (const crop of CROPS) { const id = 'seed_' + crop; if (!ctx.bag.has(id, 1)) continue; any = true; if (!pick && cropOk(ctx, crop)) pick = { crop, id }; }
@@ -218,16 +232,10 @@ function doSow(ctx, tx, ty, seed) {
   ctx.sfx('sow'); burst(ctx, tx * TS + 8, ty * TS + 10, 5, [PAL.grass, PAL.grassD]); ctx.toast(`${t.sown}: ${ctx.itemIcon(seed.id)} ${ctx.itemName(seed.id)}`); ctx.persist(); return true;
 }
 function doWater(ctx, tx, ty) {
-  const t = L(ctx), f = root(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || rec.wet) return false;
-  if (f.bucketWater <= 0) { ctx.toast(t.emptyBucket); ctx.sfx('fail'); return false; }
-  f.bucketWater -= 1; rec.wet = true; applyTile(ctx, tx, ty, rec);
+  const z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || rec.wet) return false;
+  rec.wet = true;   /* tưới bằng tay, không tốn gì (2026-10-11 bỏ xô) */ applyTile(ctx, tx, ty, rec);
   playAct(ctx, 'water', tx, ty);
   ctx.sfx('water'); if (!(ctx.vfxAt && ctx.vfxAt(ctx.S.player, 'water_splash', tx * TS + 8, ty * TS + 13))) burst(ctx, tx * TS + 8, ty * TS + 8, 7, [PAL.waterL, PAL.foam, PAL.water]);   /* plan-19 */ ctx.persist(); return true;
-}
-function doFill(ctx) {
-  const t = L(ctx), f = root(ctx);
-  if (f.bucketWater >= BUCKET_MAX) { ctx.toast(t.bucketFull); return false; }
-  f.bucketWater = BUCKET_MAX; ctx.sfx('bucket_fill'); ctx.toast(`${t.filled} ${t.hud(f.bucketWater, BUCKET_MAX)}`); ctx.persist(); return true;
 }
 function doHarvest(ctx, tx, ty) {
   const t = L(ctx), f = root(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)]; if (!rec || !ripe(rec)) return false;
@@ -263,14 +271,19 @@ function doTakeScare(ctx, s) {
 }
 
 // ---------- ứng viên hành động cho 1 ô ----------
-/* plan-20: MÓN ĐANG CẦM quyết định (hotbar kiểu Stardew). Tay không: thu hoạch, nhổ cây héo. Cầm hạt X → gieo X; xô → tưới; xẻng → cày; bù nhìn → đặt.
+/* plan-20: MÓN ĐANG CẦM quyết định (hotbar kiểu Stardew). Tay không: thu hoạch, nhổ cây héo. Cầm hạt X → gieo X; ô đã gieo chưa tưới + tay không / cầm hạt / đồ thường → tưới (bỏ xô 2026-10-11); xẻng → cày; bù nhìn → đặt.
    Cầm sai món → kind 'need' (chỉ nhắc). aim = ô đang trỏ chuột: chỉ khi đó mới nhắc "cần cầm xẻng" trên ô cỏ trống (không spam khi đi ngang). */
 const holds = (ctx, id) => (ctx.holding ? ctx.holding(id) : ctx.tool.tier(id) >= 1 || ctx.bag.has(id, 1));
 const need = (ctx, id, tx, ty) => ({ kind: 'need', label: ctx.needHold ? ctx.needHold(id) : id, tx, ty, needId: id });
+/* tưới bằng tay: tay không, cầm hạt, đồ ăn, đồ đặt… — chỉ khi cầm DỤNG CỤ (rìu, kiếm, xẻng…) thì không tưới */
+const handFree = ctx => !ctx.heldKind || ctx.heldKind() !== 'tool';
 function anySeed(ctx) { for (const crop of CROPS) if (ctx.bag.has('seed_' + crop, 1)) return 'seed_' + crop; return null; }
 function tileCand(ctx, tx, ty, aim) {
-  const t = L(ctx), f = root(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)];
-  const shovel = holds(ctx, 'shovel'), bucket = holds(ctx, 'bucket'), hs = ctx.heldSeed ? ctx.heldSeed() : null;
+  const t = L(ctx), z = zoneData(ctx), rec = z.tiles[key(tx, ty)];
+  const shovel = holds(ctx, 'shovel'), hs = ctx.heldSeed ? ctx.heldSeed() : null;
+  const treeSeed = ctx.plantTreeAt && ctx.bag.has('seed', 1) && (ctx.holding ? ctx.holding('seed') : false);   /* 2026-10-11 anh: cầm BẤT KỲ thứ gì trồng được (cả hạt giống cây) → trồng vào đất đã xới / đất trống của mình */
+  if (treeSeed && ((rec && !rec.crop) || (!rec && inFarmPlot(ctx, tx, ty) && ctx.getG(ctx.S.map, tx, ty) === T.DIRT && !ctx.hasObjectAt(ctx.S.map, tx, ty))))
+    return { kind: 'plantTree', label: ctx.lang() === 'vi' ? 'Trồng cây (hạt giống cây)' : 'Plant a tree seed', tx, ty };
   if (rec) {
     if (rec.crop && rec.dead) return { kind: 'pull', label: t.pull, tx, ty };
     if (rec.crop && ripe(rec)) return { kind: 'harvest', label: t.harvest, tx, ty };
@@ -279,10 +292,8 @@ function tileCand(ctx, tx, ty, aim) {
       if (!ctx.heldSeed) { const { pick, any } = pickSeed(ctx); if (pick) return { kind: 'sow', label: t.sow(ctx.itemName(pick.id)), tx, ty, seed: pick }; if (any) return { kind: 'deny', label: t.wrongSeason, tx, ty, why: t.wrongSeason }; }
     }
     if (!rec.wet) {
-      if (bucket) return f.bucketWater <= 0 ? { kind: 'deny', label: t.emptyBucket, tx, ty, why: t.emptyBucket } : { kind: 'water', label: t.water, tx, ty };
-      if (rec.crop && ctx.tool.tier('bucket') >= 1) return need(ctx, 'bucket', tx, ty);
-      if (!rec.crop && aim) { const sd = anySeed(ctx); if (sd) return need(ctx, sd, tx, ty); }
-      if (rec.crop && !ctx.holding) return { kind: 'deny', label: t.water, tx, ty, why: t.needBucket };
+      if (rec.crop) return { kind: 'water', label: t.water, tx, ty };   /* 2026-10-11 anh 'không tưới được': cầm gì cũng tưới được ô đã gieo chưa tưới (gặt/nhổ đã xét ở trên) */
+      if (aim) { const sd = anySeed(ctx); if (sd) return need(ctx, sd, tx, ty); }
     }
     return null;
   }
@@ -292,7 +303,10 @@ function tileCand(ctx, tx, ty, aim) {
   if (mine) {
     if (scare) return { kind: 'scare', label: t.placeScare, tx, ty };
     if (shovel) return { kind: 'till', label: t.till, tx, ty };
+    /* 2026-10-11 anh: cầm hạt mà ô ĐẤT TRỐNG (phá/đào ra, trông như đất cày) không gieo được → tự xới + gieo luôn 1 lần */
+    if (hs && ctx.getG(ctx.S.map, tx, ty) === T.DIRT) { const crop = hs.slice(5); if (!ctx.bag.has(hs, 1)) return null; return cropOk(ctx, crop) ? { kind: 'sow', label: t.sow(ctx.itemName(hs)), tx, ty, seed: { crop, id: hs }, autoTill: true } : { kind: 'deny', label: t.wrongSeason, tx, ty, why: t.wrongSeason }; }
     /* ô cỏ trống: không cầm xẻng → để click = đi tới (không tự chọn xẻng, kẻo đi đâu cũng cày) */
+    if (aim === 'touch' && !shovel && ctx.tool && ctx.tool.tier('shovel') > 0) return need(ctx, 'shovel', tx, ty);   /* điện thoại: nút A theo ngữ cảnh — đứng trên đất của mình → tự cầm xẻng cày */
     if (!ctx.holding && pickSeed(ctx).any) return { kind: 'deny', label: t.till, tx, ty, why: t.needShovel };
     return null;
   }
@@ -383,12 +397,12 @@ export const farm = {
     try { restoreZone(ctx); } catch (e) { console.error('farm restore', e); }
     if (typeof window !== 'undefined') window.__farm = {   /* móc test */
       give: (seed, n = 1) => ctx.bag.add(String(seed).startsWith('seed_') ? seed : 'seed_' + seed, n),
-      tools: () => { if (ctx.tool.tier('shovel') < 1) ctx.tool.set('shovel', 1); if (ctx.tool.tier('bucket') < 1) ctx.tool.set('bucket', 1); },
+      tools: () => { if (ctx.tool.tier('shovel') < 1) ctx.tool.set('shovel', 1); },
       tick: () => { const info = { day: ctx.clock.day, season: ctx.clock.season, year: ctx.clock.year, dayIndex: ctx.clock.dayIndex }; dayEnd(ctx, info); const S = ctx.clock.SEASONS; let d = info.day + 1, s = info.season, y = info.year; if (d > ctx.clock.DAYS_PER_SEASON) { d = 1; const i = S.indexOf(s) + 1; if (i >= S.length) { s = S[0]; y++; } else s = S[i]; } ctx.clock.set({ day: d, season: s, year: y, hour: 6, minute: 0 }); dayStart(ctx); ctx.persist(); return ctx.clock.label('vi'); },
-      state: () => JSON.parse(JSON.stringify({ bucketWater: root(ctx).bucketWater, harvested: root(ctx).harvested, quality: root(ctx).quality, zone: zoneData(ctx) })),
+      state: () => JSON.parse(JSON.stringify({ harvested: root(ctx).harvested, quality: root(ctx).quality, zone: zoneData(ctx) })),
       near: () => farm.near(ctx),
       press: () => { const c = farm.near(ctx); if (c) farm.interact(ctx, c); return c ? c.label : null; },
-      act: (kind, tx, ty) => { const p = ctx.S.player; tx = tx ?? Math.floor(p.x / TS); ty = ty ?? Math.floor(p.y / TS); if (kind === 'till') return doTill(ctx, tx, ty); if (kind === 'sow') { const s = pickSeed(ctx).pick; return !!s && doSow(ctx, tx, ty, s); } if (kind === 'water') return doWater(ctx, tx, ty); if (kind === 'fill') return doFill(ctx); if (kind === 'harvest') return doHarvest(ctx, tx, ty); if (kind === 'pull') return doPull(ctx, tx, ty); if (kind === 'scare') return doPlaceScare(ctx, tx, ty); return false; },
+      act: (kind, tx, ty) => { const p = ctx.S.player; tx = tx ?? Math.floor(p.x / TS); ty = ty ?? Math.floor(p.y / TS); if (kind === 'till') return doTill(ctx, tx, ty); if (kind === 'sow') { const s = pickSeed(ctx).pick; return !!s && doSow(ctx, tx, ty, s); } if (kind === 'water') return doWater(ctx, tx, ty); if (kind === 'harvest') return doHarvest(ctx, tx, ty); if (kind === 'pull') return doPull(ctx, tx, ty); if (kind === 'scare') return doPlaceScare(ctx, tx, ty); return false; },
       plot: () => { const p = farmPlot(ctx); return p ? { x: p.x, y: p.y, w: p.w, h: p.h, idx: p.idx, mine: p.mine, nation: p.nation } : null }
     };
   },
@@ -413,15 +427,11 @@ export const farm = {
       const h = tileCand(ctx, mt.tx, mt.ty, true);
       if (h) { HOVER = { tx: mt.tx, ty: mt.ty, ok: h.kind !== 'deny' && h.kind !== 'need' }; return { label: h.label, x: p.x + 6, y: p.y, limit: 30, data: h, mouse: true, cursor: 'tool', need: h.kind === 'need', needId: h.needId }; }   /* chủ ý trỏ chuột → ưu tiên hơn NPC/vật thể kề (≤ 22); con trỏ nông cụ */
     }
-    /* 0b) trỏ chuột vào giếng / ô nước khi xô chưa đầy → múc nước (thắng ô dưới chân) */
-    if (mt && !holds(ctx, 'bucket') && ctx.tool.tier('bucket') >= 1 && ctx.needHold && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w && (w.well || ctx.tool.tier('rod') < 1) && Math.hypot(mt.wx - w.x, mt.wy - w.y) < 30)   /* nước tự nhiên + có cần câu → để câu cá (cầm xô rồi click mới múc) */ return { label: ctx.needHold('bucket'), x: mt.wx, y: mt.wy, limit: 30, data: { kind: 'need' }, mouse: true, cursor: 'tool', need: true, needId: 'bucket' }; }   /* trỏ giếng/nước khi chưa cầm xô → click tự cầm xô */
-    if (mt && holds(ctx, 'bucket') && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w && Math.hypot(mt.wx - w.x, mt.wy - w.y) < 30) return { label: t.fill, x: p.x + 6, y: p.y, limit: 30, data: { kind: 'fill' }, mouse: true, cursor: 'tool' }; }
-    const c = tileCand(ctx, tx, ty) || tileCand(ctx, tx + dx, ty + dy);
-    if (c && c.kind !== 'deny' && c.kind !== 'need') return { label: c.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: c };
+    const ta = ctx.touchA && ctx.touchA() ? 'touch' : undefined;   /* điện thoại (không chuột): ô dưới chân / trước mặt coi như đang nhắm → nhắc 'cần cầm hạt / xẻng' để nút A tự cầm */
+    const c = tileCand(ctx, tx, ty, ta) || tileCand(ctx, tx + dx, ty + dy, ta);
+    if (c && c.kind !== 'deny' && c.kind !== 'need') return { label: c.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: c, ...(c.kind === 'water' || c.kind === 'plantTree' || c.kind === 'sow' ? { priority: 1 } : {}) };   /* tưới / trồng cây / gieo: thắng tượng Rocky, dân đứng cạnh */   /* tưới tay không: thắng dân/Rocky đứng cạnh (tay không vốn nhường nói chuyện) — 2026-10-11 bỏ xô */
     // 2) bù nhìn cạnh người chơi → gỡ
     for (const s of ST.scare) { const wx = s.x * TS + 8, wy = s.y * TS + 12; const d = Math.hypot(wx - p.x, wy - p.y); if (d < 20) return { label: t.takeScare, x: wx, y: wy, limit: 20, data: { kind: 'takeScare', s } }; }
-    // 3) múc nước (giếng / ô nước) khi có xô — thắng nhãn từ chối
-    if (holds(ctx, 'bucket') && root(ctx).bucketWater < BUCKET_MAX) { const w = nearWater(ctx); if (w) return { label: t.fill, x: w.x, y: w.y, limit: 34, data: { kind: 'fill' } }; }
     if (c) return { label: c.label, x: p.x + TILE_BIAS, y: p.y, limit: TILE_BIAS + 15, data: c, need: c.kind === 'need', needId: c.needId };
     return null;
   },
@@ -429,18 +439,18 @@ export const farm = {
   interact(ctx, cand) {
     const d = cand && cand.data; if (!d) return;
     const p = ctx.S.player;
-    if (d.kind !== 'fill' && d.kind !== 'takeScare' && p.faceTo && (d.tx !== Math.floor(p.x / TS) || d.ty !== Math.floor(p.y / TS))) p.faceTo(d.tx * TS + 8, d.ty * TS + 8);
+    if (d.kind !== 'takeScare' && p.faceTo && (d.tx !== Math.floor(p.x / TS) || d.ty !== Math.floor(p.y / TS))) p.faceTo(d.tx * TS + 8, d.ty * TS + 8);
     switch (d.kind) {
       case 'deny': ctx.toast(d.why || d.label); ctx.sfx('fail'); break;
       case 'trespass': ctx.trespass(d.tx, d.ty, 'farm'); break;
       case 'till': doTill(ctx, d.tx, d.ty); break;
-      case 'sow': doSow(ctx, d.tx, d.ty, d.seed); break;
+      case 'plantTree': { const z = zoneData(ctx); delete z.tiles[key(d.tx, d.ty)]; if (ctx.plantTreeAt(d.tx, d.ty)) { playAct(ctx, 'harvest', d.tx, d.ty); ctx.persist(); } break; }   /* ô ruộng nhường chỗ cho cây non */
+      case 'sow': if (d.autoTill && !zoneData(ctx).tiles[key(d.tx, d.ty)] && !doTill(ctx, d.tx, d.ty)) break; doSow(ctx, d.tx, d.ty, d.seed); break;   /* đất trống: xới rồi gieo */
       case 'water': doWater(ctx, d.tx, d.ty); break;
       case 'harvest': doHarvest(ctx, d.tx, d.ty); break;
       case 'pull': doPull(ctx, d.tx, d.ty); break;
       case 'scare': doPlaceScare(ctx, d.tx, d.ty); break;
       case 'takeScare': doTakeScare(ctx, d.s); break;
-      case 'fill': doFill(ctx); break;
     }
   },
 
@@ -448,7 +458,7 @@ export const farm = {
     const m = ctx.S.map; if (!m || !m.plots || !m.plots.length) return [];
     const z = zoneData(ctx), out = [], g = ctx.g;
     const x0 = cx - 32, y0 = cy - 48, x1 = cx + ctx.VW + 32, y1 = cy + ctx.VH + 32;
-    if (HOVER) { const hx = HOVER.tx * TS, hy = HOVER.ty * TS; out.push({ y: hy + 0.6, f: () => { if (!HOVER.ok) g.globalAlpha = 0.45; g.drawImage(IMG.cursor, hx - cx, hy - cy); g.globalAlpha = 1; } }); }
+    if (HOVER) { const hx = HOVER.tx * TS, hy = HOVER.ty * TS; out.push({ y: hy + 0.6, f: () => { const ci = groundCursor(g, hx - cx, hy - cy, ctx, HOVER.tx, HOVER.ty); if (!HOVER.ok) g.globalAlpha = 0.45; if (ci) g.drawImage(ci, 0, 0, 32, 32, hx - cx, hy - cy, TS, TS); else g.drawImage(IMG.cursor, hx - cx, hy - cy); g.globalAlpha = 1; } }); }
     for (const k of Object.keys(z.tiles)) {
       const rec = z.tiles[k]; if (!rec) continue;
       const [tx, ty] = k.split(',').map(Number), wx = tx * TS, wy = ty * TS;
@@ -460,7 +470,7 @@ export const farm = {
       if (!rec.crop) continue;
       const img = rec.dead ? IMG[`crop_${rec.crop}_dead`] : IMG[`crop_${rec.crop}_${frameOf(rec)}`]; if (!img) continue;
       const lift = frameOf(rec) === 'seed' ? 0 : CROP_LIFT;   /* anh yêu cầu 2026-10-10: hạt và cây mọc lên ở TRUNG TÂM ô đất */
-      out.push({ y: wy + TS, f: () => { g.drawImage(img, wx - cx + ((TS - img.width) >> 1), wy + TS - img.height - lift - cy); } });
+      out.push({ y: frameOf(rec) === 'seed' && !rec.dead ? wy + 1 : wy + TS, f: () => { g.drawImage(img, wx - cx + ((TS - img.width) >> 1), wy + TS - img.height - lift - cy); } });   /* hạt nằm sát đất → xếp lớp như nền (anh 2026-10-11: hạt che người đứng trên ô) */
     }
     return out;
   },
@@ -479,7 +489,6 @@ export const farm = {
   },
 
   hudLines(ctx) {
-    if (!ctx.S.save || ctx.tool.tier('bucket') < 1) return [];
-    const t = L(ctx); return [t.hud(root(ctx).bucketWater, BUCKET_MAX)];
+    return [];   /* 2026-10-11 bỏ xô: không còn dòng 💧 nước trong xô */
   }
 };

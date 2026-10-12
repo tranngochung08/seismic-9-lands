@@ -5,6 +5,7 @@
 //  · Cọc ranh 4 góc + biển tên người chơi (ảnh PixelLab land_post / land_sign). Lưu save.lands[vùng] = [{ nation, x, y, w, h }].
 const W = 6, H = 6, FRIEND = 5;
 import { ART } from '../art.js';   /* ô vuông đất phá/đào (ART.soilSq) */
+import { immune } from './villagers.js';   /* 2026-10-11: khu bị chiếm (hóa đá hết dân) */
 const ST = { list: [], objs: [], chiefs: [], placed: false };
 const vi = ctx => ctx.lang() === 'vi';
 const zid = ctx => (ctx.S.zone && ctx.S.zone.id) || '';
@@ -23,7 +24,33 @@ const L = ctx => (vi(ctx) ? {
   sign: n => (n ? `${n}'s land` : 'Your land'),
 });
 function inParcel(l, tx, ty) { return tx >= l.x && ty >= l.y && tx < l.x + l.w && ty < l.y + l.h; }
-export function ownsTile(ctx, tx, ty) { return lands(ctx).some(l => inParcel(l, tx, ty)); }
+/* 2026-10-11 anh: phe Xealist HÓA ĐÁ HẾT dân của 1 khu quốc gia → cả khu thành của mình: cày, trồng, đào ao, phá đồ, dựng chuồng… như đất đã mua.
+   Điều kiện: đi phe Xealist · trong khu có ≥ 1 tượng dân hóa đá · không còn dân sống (trừ người không hóa đá được: Leader, Lyron…) thuộc quốc gia đó trong vùng, và không ai đứng trong khu.
+   Mảnh 'chiếm' lưu ở save.conq[vùng][chỉ số khu] = { nation, x, y, w, h, conquered, cleared, dug } (cùng dạng mảnh đã mua → applyCleared dùng chung).
+   Dân được giải đá trở lại → khu hết bị chiếm (đồ đã phá / đất đã đào vẫn giữ). */
+const CQ = { t: -1, set: new Set() };
+const conqStore = ctx => { const s = ctx.S.save; return ((s.conq ||= {})[zid(ctx)] ||= {}); };
+function conqScan(ctx) {
+  const now = ctx.S.time || 0; if (CQ.t >= 0 && now - CQ.t < 0.5 && CQ.z === zid(ctx)) return CQ.set;
+  CQ.t = now; CQ.z = zid(ctx); const set = new Set(), m = ctx.S.map, st = ctx.S.save.story;
+  if (!m || !m.plots || !st || st.path !== 'xealist') { CQ.set = set; return set; }
+  m.plots.forEach((p, i) => {
+    if (!p || !p.nation) return;
+    const inP = (x, y) => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h;
+    if (!m.objects.some(o => o.type === 'tomb' && inP(o.x, o.y))) return;
+    if (ST.chiefs.some(c => (ctx.S.staff || []).includes(c) && c.chief.nat.key === p.nation)) return;   /* Leader còn sống → chưa chiếm được */
+    for (const n of ctx.S.npcs || []) {
+      if (immune(ctx, n)) continue;
+      const nt = ctx.nationOf ? ctx.nationOf(n.m || {}) : null;
+      if ((nt && nt.key === p.nation) || inP(Math.floor(n.x / 16), Math.floor(n.y / 16))) return;
+    }
+    set.add(i);
+  });
+  CQ.set = set; return set;
+}
+function conqParcel(ctx, i) { const p = ctx.S.map.plots[i], c = conqStore(ctx); return (c[i] ||= { nation: p.nation, x: p.x, y: p.y, w: p.w, h: p.h, conquered: true }); }
+function conqAt(ctx, tx, ty) { for (const i of conqScan(ctx)) { const p = ctx.S.map.plots[i]; if (inParcel(p, tx, ty)) return conqParcel(ctx, i); } return null; }
+export function ownsTile(ctx, tx, ty) { return lands(ctx).some(l => inParcel(l, tx, ty)) || !!conqAt(ctx, tx, ty); }
 function defineObjs(ctx) {
   ctx.defineObject('land_post', 16, 16, 1, 1, g => { g.fillStyle = '#352022'; g.fillRect(6, 3, 4, 13); g.fillStyle = '#9c6b3a'; g.fillRect(7, 4, 2, 11); g.fillStyle = '#e84a3a'; g.fillRect(9, 3, 5, 3); }, { solid: false });
   ctx.defineObject('land_sign', 16, 16, 1, 1, g => { g.fillStyle = '#352022'; g.fillRect(2, 2, 12, 8); g.fillRect(7, 9, 2, 7); g.fillStyle = '#f6e7c8'; g.fillRect(3, 3, 10, 6); g.fillStyle = '#4caa4f'; g.fillRect(7, 5, 2, 2); }, { solid: false });
@@ -44,7 +71,7 @@ function findSpot(ctx, plot) {   /* luôn 6×6 trong khu (không đè rào biên
    · lưu l.cleared / l.dug = { 'x,y': 1 } → vào vùng áp lại (gỡ vật, đặt đất). */
 const WOODY = /fence|post|board|wood|crate|bench|bush|stall|pen|scare|tree|stump|lantern|torch|camp|sign|flag/;
 const tkey = (x, y) => `${x},${y}`;
-function parcelAt(ctx, tx, ty) { return lands(ctx).find(l => inParcel(l, tx, ty)) || null; }
+function parcelAt(ctx, tx, ty) { return lands(ctx).find(l => inParcel(l, tx, ty)) || conqAt(ctx, tx, ty) || null; }
 function objAt(ctx, tx, ty) {
   for (const o of ctx.S.map.objects) { if (o.ghost || o.landOf) continue; const d = ctx.O && ctx.O[o.type]; const fw = d ? d.fw : 1, fh = d ? d.fh : 1; if (tx >= o.x && tx < o.x + fw && ty >= o.y && ty < o.y + fh) return o; }
   return null;
@@ -75,6 +102,12 @@ function applyCleared(ctx, l) {
 function clearCand(ctx) {
   const p = ctx.S.player, under = { tx: Math.floor(p.x / 16), ty: Math.floor((p.y - 2) / 16) }, d = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir & 3];
   const fr = { tx: under.tx + d[0], ty: under.ty + d[1] }, vi2 = vi(ctx);
+  const lk = ctx.target && ctx.target.obj(), ll = lk && !lk.landOf && ctx.target.objGap(lk) <= 12 ? parcelAt(ctx, lk.x, lk.y) : null;   /* 2026-10-11: vật đã khóa (target.js) ở sát bên → phá ĐÚNG nó */
+  if (ll) {
+    const tool = WOODY.test(lk.type) ? 'axe' : 'pickaxe', hold = ctx.holding ? (ctx.holding('axe') || ctx.holding('pickaxe')) : true, nm = objNameOf(lk, vi2);
+    if (!hold && ctx.needHold) return { label: `${ctx.needHold(ctx.tool.tier(tool) ? tool : 'pickaxe')} → ${nm}`, x: p.x, y: p.y - 4, limit: 999, priority: 4.1, mouse: false, isLock: true, need: true, needId: ctx.tool.tier(tool) ? tool : 'pickaxe', data: { need: true } };
+    return { label: `🎯 ${vi2 ? 'Phá' : 'Break'} ${nm} (${lk.chp ?? 3}/3)`, x: p.x, y: p.y - 4, limit: 999, priority: 4.1, mouse: false, isLock: true, data: { brk: { o: lk, l: ll } } };
+  }
   for (const f of [fr, under]) {
     const l = parcelAt(ctx, f.tx, f.ty); if (!l) continue;
     const o = objAt(ctx, f.tx, f.ty);
@@ -82,11 +115,11 @@ function clearCand(ctx) {
       const tool = WOODY.test(o.type) ? 'axe' : 'pickaxe', hold = ctx.holding ? (ctx.holding('axe') || ctx.holding('pickaxe')) : true;
       const nm = objNameOf(o, vi2), label = vi2 ? `Phá ${nm} (${o.chp ?? 3}/3)` : `Break ${nm} (${o.chp ?? 3}/3)`;
       if (!hold && ctx.needHold) return { label: ctx.needHold(ctx.tool.tier(tool) ? tool : 'pickaxe'), x: f.tx * 16 + 8, y: f.ty * 16 + 8, limit: 30, priority: 0.7, need: true, needId: ctx.tool.tier(tool) ? tool : 'pickaxe', data: { need: true } };
-      return { label, x: f.tx * 16 + 8, y: f.ty * 16 + 8, limit: 30, priority: 0.7, data: { brk: { o, l } } };
+      return { label, x: f.tx * 16 + 8, y: f.ty * 16 + 8, limit: 30, priority: l.conquered ? 1 : 0.7, data: { brk: { o, l } } };   /* khu đã chiếm: thắng nhãn 'Đập phá công trình' của Xealist (0.8) */
     }
     const g = ctx.getG(ctx.S.map, f.tx, f.ty);
     if (PAVED(ctx).includes(g) && (ctx.holding ? ctx.holding('shovel') : ctx.tool.tier('shovel') > 0))
-      return { label: vi2 ? 'Đào lên thành đất' : 'Dig up into soil', x: f.tx * 16 + 8, y: f.ty * 16 + 8, limit: 30, priority: 0.7, data: { dig: { ...f, l } } };
+      return { label: vi2 ? 'Đào lên thành đất' : 'Dig up into soil', x: f.tx * 16 + 8, y: f.ty * 16 + 8, limit: 30, priority: l.conquered ? 1 : 0.7, data: { dig: { ...f, l } } };
   }
   return null;
 }
@@ -119,15 +152,18 @@ function placeChiefs(ctx) {
   const best = {}; for (const m of ctx.byId.values()) { const nat = ctx.nationOf(m); if (!nat) continue; const k = nat.key, sc = (ctx.isLeader(m) ? 1e9 : 0) + (m.r || 0); if (!best[k] || sc > best[k].sc) best[k] = { m, sc, nat }; }
   for (const p of plots) {
     const b = best[p.nation]; if (!b) continue;
+    const sd = ctx.S.save; if ((sd.dead && sd.dead[b.m.id]) || (sd.fallen || []).some(f => f.id === b.m.id)) continue;   /* Leader đang/đã hóa đá → khu không có người bán đất */
     let at = null; for (let r = 1; r < 4 && !at; r++) for (let dy = 0; dy <= r && !at; dy++) for (let dx = 0; dx <= r && !at; dx++) { const x = p.x + 2 + dx, y = p.y + 2 + dy; if (free(ctx, x, y)) at = { x, y }; }
     if (!at) continue;
     const n = new ctx.NPC({ ...b.m, staff: 'chief', tag: `Leader · ${b.nat.name}` }, at.x * 16 + 8, at.y * 16 + 14, ctx.npcSheet(b.m), () => 0.5);
-    n.busy = true; n.radius = 0; n.staffStill = true; n.chief = { nat: b.nat, m: b.m }; ST.chiefs.push(n); (ctx.S.staff ||= []).push(n);
+    n.busy = false; n.radius = 36; n.staffStill = false; n.rng = Math.random;   /* rng cũ () => 0.5 → luôn 1 hướng, đụng vật là đứng */ n.home = { x: (p.x + p.w / 2) * 16, y: (p.y + p.h / 2) * 16 + 6 };   /* 2026-10-11 anh: Leader đi lại quanh khu của mình (không đứng im như quầy bán) */
+    n.chief = { nat: b.nat, m: b.m }; ST.chiefs.push(n); (ctx.S.staff ||= []).push(n);
   }
 }
 function leaderNear(ctx) {
   const p = ctx.S.player; let best = null, bd = 30;
   for (const n of ST.chiefs) {
+    if (!(ctx.S.staff || []).includes(n)) continue;   /* đã bị hóa đá */
     const nat = n.chief.nat;
     const d = Math.hypot(n.x - p.x, n.y - p.y); if (d < bd) { bd = d; best = { n, nat }; }
   }
@@ -143,11 +179,20 @@ export const land = {
   onZoneEnter(ctx) {
     ST.objs = []; ST.chiefs = []; ST.placed = false; defineObjs(ctx);
     ctx.ownsTile = (tx, ty) => ownsTile(ctx, tx, ty);
+    ctx.landBreakable = o => !!o && !o.ghost && !o.landOf && !o.ruined && !!parcelAt(ctx, o.x, o.y);   /* target.js: vật trong đất của mình khóa được để phá */
     for (const l of lands(ctx)) { applyCleared(ctx, l); markParcel(ctx, l); }
+    CQ.t = -1; ST.conqSeen = null; for (const l of Object.values(conqStore(ctx))) applyCleared(ctx, l);   /* khu đã chiếm: đồ đã phá / đất đã đào giữ nguyên */
     ctx.myLands = () => { const all = ctx.S.save.lands || {}, out = []; for (const [z, arr] of Object.entries(all)) for (const l of arr) out.push({ zone: z, ...l }); return out; };
     if (typeof window !== 'undefined') window.__land = { buyNear: () => { const b = leaderNear(ctx); if (b) buy(ctx, b); return lands(ctx); }, list: () => lands(ctx), grant: key => { const plot = (ctx.S.map.plots || []).find(q => q.nation === (key || (ctx.S.map.plots[0] || {}).nation)); if (!plot) return null; const sp = findSpot(ctx, plot); if (!sp) return null; const l = { nation: plot.nation, ...sp }; lands(ctx).push(l); markParcel(ctx, l); ctx.persist(); return l; } };
   },
-  update(dt, ctx) { if (!ST.placed && ctx.S.map) { ST.placed = true; try { placeChiefs(ctx); } catch (e) { console.error('land chiefs', e); } } },   /* sau setupStaff (main) mới thêm được vào S.staff */
+  update(dt, ctx) {
+    if (!ST.placed && ctx.S.map) { ST.placed = true; try { placeChiefs(ctx); } catch (e) { console.error('land chiefs', e); } }
+    if (ctx.S.mode === 'play' && ctx.S.map) {   /* báo 1 lần khi 1 khu vừa bị chiếm */
+      const set = conqScan(ctx), seen = ST.conqSeen;
+      if (seen) for (const i of set) if (!seen.has(i)) { const p = ctx.S.map.plots[i], nm = ctx.nationName ? ctx.nationName(p.nation) : p.nation; ctx.toast(vi(ctx) ? `🗿 Khu ${nm} không còn ai cản — cả khu là của bạn: cày, trồng, đào ao, phá đồ tùy ý!` : `🗿 Nobody is left to stop you in the ${nm} district — it's yours: till, plant, dig ponds, smash anything!`, true); ctx.sfx('win'); conqParcel(ctx, i); ctx.persist(); }
+      ST.conqSeen = new Set(set);
+    }
+  },   /* sau setupStaff (main) mới thêm được vào S.staff */
   near(ctx) {
     const cc = clearCand(ctx); if (cc) return cc;   /* phá / đào trên đất mình */
     const b = leaderNear(ctx); if (!b) return null;

@@ -21,7 +21,13 @@ export const ITEMS = {
   shell: I('🐚', 'Sea shell', 'Vỏ sò', 0.3, 'material sea'), seagem: I('🔷', 'Sea crystal', 'Tinh thể biển', 1, 'material sea'), ink: I('🦑', 'Kraken ink', 'Mực Kraken', 0, 'trophy sea'),
   bottle: I('🍾', 'Message bottle', 'Chai thư', 0.5, 'sea'), squid: I('🦑', 'Squid', 'Mực', 0, 'carry'), goldfish: I('🐠', 'Golden fish', 'Cá vàng', 0, 'carry'),
   /* plan-26 B0: viên thở dưới nước (Heathcliff bán ở cầu tàu) — cộng giây thở, đồng hồ thở chỉ chạy khi ở dưới nước */
+  /* plan-28: viên hồi máu (thưởng bạn tập trên đường đèo) — ăn như đồ ăn, hồi heal × máu tối đa (hotbar.js / menu.js) */
+  pill_hp: { ...I('❤', 'Healing pill', 'Viên hồi máu', 0.1, 'food heal'), heal: 0.45, desc: { vi: 'Ăn để hồi 45 % máu tối đa.', en: 'Eat to restore 45% of your max health.' } },
   pill_s: I('💊', 'Small breath pill', 'Viên thở nhỏ', 0.1, 'pill breath'), pill_l: I('🧪', 'Large breath pill', 'Viên thở lớn', 0.2, 'pill breath'),
+  /* 2026-10-11: Súng Hóa Đá — Xealist tặng khi theo phe Xealist (systems/petgun.js). desc: mô tả hiện ở túi đồ */
+  petgun: { ...I('🔫', 'Petrify Gun', 'Súng Hóa Đá', 0, 'story weapon'), desc: {
+    vi: 'Chỉ bắn khi đang cầm (E / click, 6 ô, hồi 2 giây). Sức súng = 40 + 10 × cấp (dưới nước còn một nửa). Kẻ YẾU (dân thường, thú, quái có máu ≤ sức súng) hóa đá vĩnh viễn; kẻ MẠNH chỉ đứng hình 0,15–3 giây (trùm tối đa 0,4 giây). Vật thể xám đá một lúc rồi trở lại.',
+    en: 'Only fires while held (E / click, 6 tiles, 2 s recharge). Power = 40 + 10 × level (halved underwater). The WEAK (villagers, animals, monsters with max HP ≤ power) turn to stone for good; the STRONG only freeze for 0.15–3 s (bosses at most 0.4 s). Objects go stone-grey for a moment, then change back.' } },
   // the storyline (weight 0: they never block the bag; never sold)
   scarf: I('🧣', "Lyron's scarf", 'Khăn của Lyron', 0, 'story'), divebell: I('🔔', 'Diving bell', 'Chuông lặn', 0, 'story'), trenchmap: I('🗺', 'Map of the Kraken Trench', 'Bản đồ Vực Kraken', 0, 'story'),
   // F02/F03 (plan-17 đợt 1): hạt 'seed_<crop>' + nông sản (tag crop, mùa trong 'season' + tag 'spring|summer|autumn|winter|any'), sản phẩm chuồng, vật đặt được (tag placeable — pens.js/farm.js đặt)
@@ -39,15 +45,19 @@ export const ITEMS = {
   fish: I('🐟', 'Fish', 'Cá', 0, 'carry'), cow: I('🐄', 'Cow', 'Bò', 0, 'carry'), chicken: I('🐔', 'Chicken', 'Gà', 0, 'carry'), bird: I('🐦', 'Bird', 'Chim', 0, 'carry'),
   sheep: I('🐏', 'Sheep', 'Cừu', 0, 'carry'), rabbit: I('🐰', 'Rabbit', 'Thỏ', 0, 'carry'), crab: I('🦀', 'Crab', 'Cua', 0, 'carry'), bat: I('🦇', 'Bat', 'Dơi', 0, 'carry'),
 };
+/* plan-28: NGỌC RỒNG — 7 viên (7 sao → 1 sao), rơi khi thắng bạn tập cơ bắp (systems/roadloot.js). Công dụng khi gom đủ 7: chờ anh chốt. */
+for (let n = 1; n <= 7; n++) ITEMS['dball' + n] = { ...I('🟠', `${n}-Star Dragon Ball`, `Ngọc Rồng ${n} sao`, 0, 'trophy dragonball'),
+  desc: { vi: `Viên ngọc cam trong suốt, ${n} ngôi sao đỏ bên trong. Gom đủ 7 viên… chuyện gì sẽ xảy ra? (sắp có)`, en: `A clear orange orb with ${n} red star${n > 1 ? 's' : ''} inside. Gather all 7… and then? (coming soon)` } };
 // Tools have tiers: 0 = not owned, 1..3 = wood/iron/obsidian quality. `save.toolTier`.
 export const TOOLS = {
   axe: I('🪓', 'Axe', 'Rìu', 0), pickaxe: I('⛏', 'Pickaxe', 'Cuốc', 0), rod: I('🎣', 'Fishing rod', 'Cần câu', 0), shovel: I('🥄', 'Shovel', 'Xẻng', 0), scythe: I('🌾', 'Scythe', 'Liềm', 0),
-  knife: I('🔪', 'Knife', 'Dao', 0), bucket: I('🪣', 'Bucket', 'Xô', 0), cage: I('🧺', 'Cage', 'Lồng', 0), cart: I('🛒', 'Livestock cart', 'Xe chở vật nuôi', 0), lasso: I('🪢', 'Lasso', 'Thòng lọng', 0), trap: I('🪤', 'Trap', 'Bẫy', 0), saddle: I('🐎', 'Saddle', 'Yên ngựa', 0), torch: I('🔦', 'Torch', 'Đuốc', 0),
+  knife: I('🔪', 'Knife', 'Dao', 0), torch: I('🔦', 'Torch', 'Đuốc', 0),   /* 2026-10-11 anh bỏ xe chở vật nuôi, thòng lọng, bẫy, yên ngựa (save.js dropBucket gỡ khỏi save cũ) */
   sword: I('⚔', 'Sword', 'Kiếm', 0)   /* plan-21: 6 cấp (gỗ → đá → sắt → obsidian → pha lê → Seismic) */
 };
 /* 2026-10-10 anh yêu cầu: bắt được thú → phím T ném vào ô trống. Thú trong túi mang mã riêng 'a_<loài>' (tên + icon như thú trên đầu) */
 export const ANIMAL_KINDS = ['fish', 'cow', 'chicken', 'bird', 'sheep', 'rabbit', 'crab', 'bat', 'squid', 'goldfish'];
 for (const k of ANIMAL_KINDS) if (ITEMS[k]) ITEMS['a_' + k] = { ...ITEMS[k], tags: ['animal'], w: 0 };
+ITEMS.a_fishbig = { ...ITEMS.a_fish, name: { en: 'Big fish', vi: 'Cá to' } };   /* 2026-10-11 anh bỏ XÔ: cá câu được vào thẳng túi; cá to giữ mã riêng (giá cao, nhiệm vụ 'cá to') */
 export const BAG_CAP = 60;
 /* plan-26 B0: giây thở mỗi viên + giá (đá Seismic) ở quầy Heathcliff; cộng dồn tối đa BREATH_CAP giây */
 export const PILLS = { pill_s: { secs: 60, price: 20 }, pill_l: { secs: 180, price: 50 } };

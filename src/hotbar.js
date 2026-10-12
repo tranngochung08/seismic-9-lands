@@ -4,8 +4,8 @@
 import { ITEMS, TOOLS, itemName, itemIcon } from './items.js';
 
 export const N = 12;
-export const ACTIVE = ['sword', 'axe', 'pickaxe', 'shovel', 'bucket', 'scythe', 'knife', 'rod', 'torch', 'trap'];   // dụng cụ phải cầm mới dùng (lồng/xe/yên/lasso = thụ động)
-const PLACE = ['scarecrow', 'pen1', 'pen2', 'seed', 'hay', 'revive', 'stone'];   /* stone: cầm đá Seismic → click dân = tặng (dân có đá mới chiến đấu, plan-21) */   /* hay = rơm cho thú ăn (ngựa, chuồng gà, máng chuồng) */   /* seed = hạt cây (trồng cây, gather.js) */
+export const ACTIVE = ['petgun', 'sword', 'axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'rod', 'torch'];   /* dụng cụ phải cầm mới dùng (bẫy, xe chở, yên, thòng lọng đã bỏ 2026-10-11) */
+const PLACE = ['scarecrow', 'pen1', 'pen2', 'seed', 'hay', 'revive', 'stone', 'a_fish', 'a_fishbig'];   /* a_fish: cá câu được vào túi (bỏ xô 2026-10-11) → lần đầu có tự lên 1 ô trống, cầm cá + E cạnh ao = thả cá */   /* stone: cầm đá Seismic → click dân = tặng (dân có đá mới chiến đấu, plan-21) */   /* hay = rơm cho thú ăn (ngựa, chuồng gà, máng chuồng) */   /* seed = hạt cây (trồng cây, gather.js) */
 const KEYS = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Digit6: 5, Digit7: 6, Digit8: 7, Digit9: 8, Digit0: 9, Minus: 10, Equal: 11 };
 const LABEL = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '−', '='];
 let deps = null, el = null, sig = '', tipT = 0, off = false;
@@ -41,7 +41,11 @@ export function sync() {
   s.hotbar = bar;
   if (!(s.hotSel >= 0 && s.hotSel < N)) s.hotSel = 0;
 }
-export const held = () => { const s = sv(); return s && s.hotbar ? s.hotbar[s.hotSel] || null : null; };
+/* 2026-10-11 anh: ĐIỆN THOẠI (pointer:coarse) không dùng thanh công cụ PC — 'tay' riêng save.mHeld do ô tròn quanh nút A chọn (src/mslots.js). Desktop giữ nguyên hotSel. */
+const MQ = typeof matchMedia !== 'undefined' ? matchMedia('(pointer:coarse)') : null;
+export const mobile = () => !off && !!(MQ && MQ.matches);
+export const held = () => { const s = sv(); if (!s) return null; if (mobile()) { if (s.mHeld === undefined) s.mHeld = s.hotbar ? s.hotbar[s.hotSel] || null : null; return s.mHeld && owned(s.mHeld) ? s.mHeld : null; } return s.hotbar ? s.hotbar[s.hotSel] || null : null; };
+export function putAway() { const s = sv(); if (!s) return; s.mHeld = null; tipT = 0; if (deps.onHold) deps.onHold(null); render(true); }   /* điện thoại: cất đồ, tay không */
 export const holding = id => held() === id;
 export const heldKind = () => kindOf(held());
 export function slotOf(id) { const s = sv(); return s && s.hotbar ? s.hotbar.indexOf(id) : -1; }
@@ -86,18 +90,21 @@ export function select(i) { const s = sv(); if (!s) return; s.hotSel = ((i % N) 
 export function cycle(d) { select((sv().hotSel || 0) + d); }
 export function key(code) { if (hidden() || !(code in KEYS)) return false; select(KEYS[code]); return true; }
 /* đưa món lên thanh (ô sẵn có / ô trống / ô đang chọn) rồi chọn — cho kịch bản tự động (demo, promo, bảng test) và móc test */
-export function hold(id) { const s = sv(); if (!s || !id) return false; sync(); let i = s.hotbar.indexOf(id); if (i < 0) { i = s.hotbar.indexOf(null); if (i < 0) i = s.hotSel; s.hotbar[i] = id; } select(i); return true; }
+export function hold(id) { const s = sv(); if (!s || !id) return false; sync(); if (mobile()) { s.mHeld = id; if (deps.onHold) deps.onHold(id); render(true); return true; } let i = s.hotbar.indexOf(id); if (i < 0) { i = s.hotbar.indexOf(null); if (i < 0) i = s.hotSel; s.hotbar[i] = id; } select(i); return true; }
 export function firstEmpty(id) { const s = sv(); if (!s) return -1; sync(); const j = s.hotbar.indexOf(id); if (j >= 0) return j; return s.hotbar.indexOf(null); }   /* phím T: ô sẽ nhận thú */
 export function putAt(i, id) { const s = sv(); if (!s || i < 0) return; s.hotbar[i] = id; deps.CTX.persist(); render(true); }
 export function setSlot(i, id) { const s = sv(); sync(); const j = s.hotbar.indexOf(id); if (j >= 0) s.hotbar[j] = s.hotbar[i]; s.hotbar[i] = id; deps.CTX.persist(); render(true); }
 
 /* ăn món đang cầm (E vào chỗ trống / chuột phải) */
 export function eatHeld() {
-  if (off) return false; const id = held(); if (kindOf(id) !== 'food') return false;
+  if (off) return false; return eatItem(held());
+}
+export function eatItem(id) {   /* ăn 1 món đồ ăn bất kỳ trong túi (nút Ăn cạnh nút A trên điện thoại) */
+  if (!deps || kindOf(id) !== 'food') return false;
   const C = deps.CTX, p = deps.S.player; if (!C.bag.has(id, 1)) return false;
   C.bag.remove(id, 1);
   if (p.hasAct && p.hasAct('eat') && !p.custom) { p.dir = 0; p.act('eat', 0); }
-  p.fedT = 30; if (C.hero) C.hero.heal(25); C.sfx('pickup');   /* plan-21: ăn hồi 25 máu */
+  p.fedT = 30; if (C.hero) C.hero.heal(ITEMS[id] && ITEMS[id].heal ? Math.round(C.hero.max * ITEMS[id].heal) : 25);   /* plan-28: viên hồi máu hồi theo % máu tối đa */ C.sfx('pickup');   /* plan-21: ăn hồi 25 máu */
   const vi = C.lang() === 'vi', nm = itemName(id, vi ? 'vi' : 'en');
   C.toast(vi ? `Ngon quá, ${nm}! Thấy khoẻ khoắn — đi nhanh hơn 30 giây` : `Yum, ${nm}! You feel lively — walking faster for 30 s`);
   sync(); render(true); C.persist(); return true;

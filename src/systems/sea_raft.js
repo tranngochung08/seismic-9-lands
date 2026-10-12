@@ -1,4 +1,5 @@
 import { HOOK } from '../gfx.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 // sea_raft.js — the Sea of Origins prologue: the raft you wake up on, currents, whirlpools,
 // floating planks / crates, raft HP and patching, the shipwreck, the sail, the compass to the dock.
 // Shared state: S.sea = { raft:{hp,max,sail}, riding:'raft'|'whale'|null, diving, x, y } (see systems/API.md).
@@ -269,7 +270,7 @@ function drawRaft(g, ent) {
   if (act) { const cst = ent.custom; ent.custom = null; g.save(); g.translate(0, bob - 8); ent.draw(g); g.restore(); ent.custom = cst; if (sail && d !== 3) g.drawImage(SAIL[d][f], sx, sy); return; }
   const pad = !sail && ent.sheet.actions && ent.sheet.actions.paddle;   // clip chèo PixelLab: khung theo thời gian khi đang đi, khung 0 khi đứng
   if (pad) { const s0 = Math.max(0, pad.n - 4), pf = ent.moving ? s0 + Math.floor(st.t * 7) % (pad.n - s0) : s0, ch = pad.ch || 20, cw = pad.cw || 16;   /* 3 khung đầu clip AI = đứng chưa cầm chèo → chỉ dùng 4 khung cuối; đứng yên = cầm chèo */ g.drawImage(pad.img, pf * cw, d * ch, cw, ch, x - (cw >> 1), y - 26 + bob - (ch - 20), cw, ch); }
-  else g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 20, x - 8, y - 26 + bob, 16, 20);
+  else drawBody(g, ent, (ent.frame || 0) * 16, d * 20, 20, x - 8, y - 26 + bob);
   if (!sail && !pad) { ln(g, x + 7, y - 20 + bob, x + 12 + sw, y - 2 + bob, C.out, 2); ln(g, x + 7, y - 20 + bob, x + 12 + sw, y - 2 + bob, C.woodL, 1); }   // paddle pole (code, khi không có clip)
   if (sail && d !== 3) g.drawImage(SAIL[d][f], sx, sy);
 }
@@ -415,8 +416,8 @@ export const seaRaft = {
     for (const list of [st.planks, st.crates]) for (const it of list) {
       if (it.dead) continue;
       const wx = it.x * 16 + 8, wy = it.y * 16 + 12, bob = Math.round(Math.sin(st.t * 2.2 + it.ph) * 1.5), dx = Math.round(Math.sin(st.t * 0.7 + it.ph) * 2);
-      if (it.kind === 'plank') out.push({ y: wy, f: () => { g.fillStyle = 'rgba(20,60,110,.25)'; g.beginPath(); g.ellipse(wx + dx - cx, wy - cy, 8, 3, 0, 0, 7); g.fill(); g.drawImage(PLANK, wx - 7 + dx - cx, wy - 6 + bob - cy); } });
-      else out.push({ y: wy, f: () => { g.fillStyle = 'rgba(20,60,110,.3)'; g.beginPath(); g.ellipse(wx + dx - cx, wy - cy, 9, 4, 0, 0, 7); g.fill(); g.drawImage(CRATE, wx - 7 + dx - cx, wy - 12 + bob - cy); } });
+      if (it.kind === 'plank') out.push({ y: wy, f: () => { g.fillStyle = 'rgba(20,60,110,.25)'; g.beginPath(); g.ellipse(wx + dx - cx, wy - cy, 8, 3, 0, 0, 7); g.fill(); const pi = ctx.ART && ctx.ART.packs && ctx.ART.packs.village && ctx.ART.packs.village.images && ctx.ART.packs.village.images.plank; if (pi) { const w = 14, h = Math.max(4, Math.round(14 * pi.height / pi.width)); g.drawImage(pi, 0, 0, pi.width, pi.height, wx - 7 + dx - cx, wy - h + bob - cy, w, h); } else g.drawImage(PLANK, wx - 7 + dx - cx, wy - 6 + bob - cy); } });   /* ván trôi: ảnh PixelLab (gói village) */
+      else out.push({ y: wy, f: () => { g.fillStyle = 'rgba(20,60,110,.3)'; g.beginPath(); g.ellipse(wx + dx - cx, wy - cy, 9, 4, 0, 0, 7); g.fill(); const ci = ctx.ART && ctx.ART.packs && ctx.ART.packs.village && ctx.ART.packs.village.images && ctx.ART.packs.village.images.crate_float; if (ci) g.drawImage(ci, 0, 0, ci.width, ci.height, wx - 8 + dx - cx, wy - 11 + bob - cy, 16, 12); else g.drawImage(CRATE, wx - 7 + dx - cx, wy - 12 + bob - cy); } });   /* 2026-10-11 anh hỏi 'ô này là gì' khi câu: thùng trôi đang hiện bản vẽ code giống ô giao diện → vẽ thẳng ảnh PixelLab thùng gỗ (gói village) */
     }
     if (st.parked && s.riding !== 'raft') { const wx = st.parked.x * 16 + 8, wy = st.parked.y * 16 + 14; out.push({ y: wy + 2, f: () => drawParked(g, wx - cx, wy - cy, s.raft.sail) }); }
     return out;
@@ -488,6 +489,7 @@ if (typeof window !== 'undefined') {
     sink() { if (st.ctx && st.ctx.S.sea) sink(st.ctx); },
     give() { const b = st.ctx.bag; b.add('plank', 4); b.add('sailcloth', 1); b.add('rope', 2); return { plank: b.count('plank'), sailcloth: b.count('sailcloth'), rope: b.count('rope') }; },
     damage(n = 1) { const s = st.ctx.S.sea; if (s) s.raft.hp -= n; return s ? s.raft.hp : null; },
-    mash() { mash(); return st.caught ? st.caught.meter : null; }
+    mash() { mash(); return st.caught ? st.caught.meter : null; },
+    floats: () => ({ crates: st.crates.filter(f => !f.dead).map(f => [f.x, f.y]), planks: st.planks.filter(f => !f.dead).map(f => [f.x, f.y]) })   /* QA: vị trí thùng / ván trôi */
   };
 }

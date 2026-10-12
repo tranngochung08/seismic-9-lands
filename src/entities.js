@@ -3,6 +3,14 @@ import { isSolid } from './world.js';
 import { FPS, clipFps, waterDraw } from './anim.js';
 
 const CYCLE = [0, 1, 0, 2];
+/* plan-29: vẽ phần thân trên 16×h của ô (sx, sy) sheet đi tại (dx, dy) — như drawImage cũ; nếu sheet có .skin (Chad, cao hơn) thì vẽ khung Chad 1:1,
+   chân trùng chân người thường, cắt ở CÙNG đường cắt (mép nước / thành thuyền) → hệ cưỡi / bơi / lặn dùng chung, không rơi về nhân vật cũ. */
+export function drawBody(g, ent, sx, sy, h, dx, dy) {
+  const sk = ent && ent.sheet && ent.sheet.skin;
+  if (!sk) { g.drawImage(ent.sheet, sx, sy, 16, h, dx, dy, 16, h); return; }
+  const f = Math.round(sx / 16), d = Math.round(sy / 20), rows = Math.min(sk.ch, h + (sk.ch - 20));
+  g.drawImage(sk.img, f * sk.cw, d * sk.ch, sk.cw, rows, dx + 8 - Math.floor(sk.cw / 2), dy + 20 - sk.ch, sk.cw, rows);
+}
 export class Entity {
   constructor(x, y, sheet) {
     this.x = x; this.y = y; this.sheet = sheet; this.dir = 0; this.frame = 0; this.animT = 0; this.moving = false;
@@ -42,7 +50,9 @@ export class Entity {
       const k = Math.floor(a.t * clipFps(a.name, sh)), f = a.walk ? sh.n - 3 + (this.moving ? CYCLE[Math.floor(this.animT * FPS.walk) % 4] : 0) : a.loop ? k % sh.n : Math.min(sh.n - 1, k);   /* plan-19: khung theo FPS chung (anim.js), không kéo giãn theo dur */   /* clip đi: 3 cột cuối = đứng/bước/bước như sheet đi */
       const ch = sh.ch || 20, cw = sh.cw || 16; g.drawImage(sh.img, f * cw, this.dir * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return;   /* cw: ô động tác rộng 24 (px-actions 2026-09-28) */
     }
-    const body = () => g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, Math.round(this.x) - 8, Math.round(this.y) - 18, 16, 20);
+    const sk = this.sheet.skin;   /* plan-29: ngoại hình to (Chad) — sheet đi riêng ô sk.cw×sk.ch logic, đáy ô = chân (y+2), vẽ 1:1 */
+    const body = sk ? () => g.drawImage(sk.img, this.frame * sk.cw, this.dir * sk.ch, sk.cw, sk.ch, Math.round(this.x) - Math.floor(sk.cw / 2), Math.round(this.y) + 2 - sk.ch, sk.cw, sk.ch)
+      : () => g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, Math.round(this.x) - 8, Math.round(this.y) - 18, 16, 20);
     if (this instanceof Player) body(); else waterDraw(g, this.x, this.y, this.x, this.y, body);   /* NPC lội nước: che phần dưới (người chơi do swim.js lo) */
   }
   // Động tác: act('chop', 0.35) chạy 1 lần; act('fish', 1, true) lặp/giữ khung cuối tới khi endAct(). hasAct(name): có clip PixelLab không (module quyết định vẽ dụng cụ code hay không)

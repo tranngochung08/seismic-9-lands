@@ -15,14 +15,26 @@ function iconMap() {
   const put = (emo, id) => { if (emo && items[id] && !ICON.has(emo)) ICON.set(emo, 'assets/px/' + items[id]); };
   put('🪨', 'stone'); put('⚔', 'sword_t1'); put('🕯', 'revive'); put('✨', 'soul');
   /* biểu tượng trạng thái → icon đồ PixelLab gần nghĩa nhất */
-  for (const [e, id] of [['💧', 'bucket'], ['⛽', 'charcoal'], ['🥚', 'egg'], ['🫧', 'pearl'], ['🪵', 'wood'], ['🐾', 'meat'], ['🏊', 'fish'], ['⛵', 'sailcloth'], ['🛶', 'plank'], ['🦑', 'squid'], ['🏁', 'flower'], ['🐋', 'fish'], ['🎈', 'rope'], ['🛠', 'pickaxe'], ['👷', 'axe'], ['📜', 'trenchmap'], ['🐎', 'saddle'], ['🦊', 'fur'], ['🪤', 'trap'], ['🐰', 'rabbit'], ['🐏', 'sheep'], ['🖼', 'bottle'],
+  for (const [e, id] of [['⛽', 'charcoal'], ['🥚', 'egg'], ['🫧', 'pearl'], ['🪵', 'wood'], ['🐾', 'meat'], ['🏊', 'fish'], ['⛵', 'sailcloth'], ['🛶', 'plank'], ['🦑', 'squid'], ['🏁', 'flower'], ['🐋', 'fish'], ['🎈', 'rope'], ['🛠', 'pickaxe'], ['👷', 'axe'], ['📜', 'trenchmap'], ['🐎', 'saddle'], ['🦊', 'fur'], ['🐰', 'rabbit'], ['🐏', 'sheep'], ['🖼', 'bottle'],
     /* dòng chỉ số thẻ Nhân vật (plan-22 B4) */
-    ['🏃', 'st_boots'], ['🚶', 'st_boots'], ['🎿', 'wax'], ['🛞', 'fl_tires'], ['🛡', 'fl_armor'], ['🧥', 'fl_coat'], ['🪣', 'bucket'], ['🧺', 'cage'], ['🛒', 'cart'], ['🏮', 'fl_lamps'], ['⚡', 'fl_charged'], ['⭐', 'st_medal'], ['🏅', 'st_medal'], ['🗿', 'st_rocky'], ['🌑', 'st_dark'], ['🫧', 'st_breath'], ['🧣', 'fl_cape']]) put(e, id);
+    ['🏃', 'st_boots'], ['🚶', 'st_boots'], ['🎿', 'wax'], ['🛞', 'fl_tires'], ['🛡', 'fl_armor'], ['🧥', 'fl_coat'], ['🏮', 'fl_lamps'], ['⚡', 'fl_charged'], ['⭐', 'st_medal'], ['🏅', 'st_medal'], ['🗿', 'st_rocky'], ['🌑', 'st_dark'], ['🫧', 'st_breath'], ['🧣', 'fl_cape']]) put(e, id);
   const tb = (deps.ART.man && deps.ART.man.ui && deps.ART.man.ui.tabs) || {}; if (tb.bag) ICON.set('🎒', 'assets/px/' + tb.bag); if (tb.hero) ICON.set('☺', 'assets/px/' + tb.hero);
   for (const [id, d] of Object.entries({ ...TOOLS, ...ITEMS })) put(d.icon, id);
   return ICON;
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+/* polish 2026-10-10: gợi ý phím theo thiết bị. Màn cảm ứng (pointer:coarse, hoặc vừa chạm) → E/Space/Enter = Ⓐ (nút A), Esc = ☰ (nút menu).
+   Desktop (hoặc vừa bấm phím thật / dùng chuột) → giữ nguyên chữ. keyHint nhận 1 phím ('E', 'Esc') hoặc cả câu gợi ý ('Esc · thu cần'). */
+let lastInput = null;
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') lastInput = 'touch'; else if (e.pointerType === 'mouse') lastInput = 'key'; }, { capture: true, passive: true });
+  window.addEventListener('keydown', e => { if (e.isTrusted) lastInput = 'key'; }, { capture: true, passive: true });   /* phím ảo của nút cảm ứng (isTrusted=false) không tính */
+}
+export function isTouchUI() { if (lastInput) return lastInput === 'touch'; try { return matchMedia('(pointer:coarse)').matches; } catch (e) { return false; } }
+export function keyHint(s) {
+  if (!s || !isTouchUI()) return s;
+  return String(s).replace(/E \/ Space(?: \/ (?:A|Enter))?|\bEsc\b|\bSpace\b|\bEnter\b|(^|\s)E(?=\s*[·:]|$)/g, (m, pre) => m === 'Esc' ? '☰' : (pre || '') + 'Ⓐ');
+}
 export function pxText(s) {   /* chuỗi có emoji → HTML với icon pixel */
   const m = iconMap();
   return esc(s).replace(EMO, e => { const k = e.replace(/️/g, ''); const src = m.get(e) || m.get(k); return src ? `<img class="pxi" src="${src}" alt="">` : KEEP.has(k) ? k : ''; }).replace(/\s{2,}/g, ' ').trim();
@@ -107,7 +119,7 @@ export function tick(dt) {
   if (!root || !deps.S.save) return;
   const S = deps.S, play = S.mode === 'play';
   if (document.body.dataset.mode !== S.mode) document.body.dataset.mode = S.mode;   /* plan-25 B5: CSS điện thoại theo chế độ (câu cá → ẩn D-pad) */
-  root.hidden = !(S.map && (play || S.mode === 'menu' || S.mode === 'dialog'));
+  root.hidden = !(S.map && (play || S.mode === 'menu' || S.mode === 'dialog' || S.mode === 'chat'));   /* plan-27: ô chat Rocky không làm tắt HUD */
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) root.querySelector('#px-banner').hidden = true; }
   if (notes.length) { for (const n of notes) n.t -= dt; const before = notes.length; notes = notes.filter(n => n.t > 0); render(); if (notes.length !== before) render(); }
   const ck = document.getElementById('h-clock'); const txt = ck ? ck.textContent : '';   /* đồng hồ cũ (clock.js) làm nguồn chữ, ẩn bằng CSS */
@@ -130,7 +142,8 @@ export function flyToSlot(kind, slot, done, file, wx, wy, n = 1) {
   if (!cv || !C.cam || !src) { done(); return; }
   const r = cv.getBoundingClientRect(), k = r.width / C.VW, p = S.player;
   const x0 = r.left + ((wx ?? p.x) - C.cam.cx) * k, y0 = r.top + ((wy ?? p.y - 30) - C.cam.cy) * k;   /* plan-24: bay từ chỗ nhặt */
-  const el = slot >= 0 ? document.querySelector(`#hotbar .hb-slot[data-i="${slot}"]`) : document.querySelector('#hotbar .hb-bag');   /* ô thanh / nút Túi (ô đếm đá đã bỏ 2026-10-10: đá hiện trên thanh) */   /* đá Seismic → ô đếm đá */
+  const msr = document.querySelector('#mslots:not([hidden])'), msEl = msr ? msr.querySelector(`.ms-slot[data-id="${kind}"]`) || msr.querySelector('.ms-bag') : null;   /* điện thoại: ô tròn có món đó, không thì nút Túi */
+  const el = msEl || (slot >= 0 ? document.querySelector(`#hotbar .hb-slot[data-i="${slot}"]`) : document.querySelector('#hotbar .hb-bag'));   /* ô thanh / nút Túi (ô đếm đá đã bỏ 2026-10-10: đá hiện trên thanh) */   /* đá Seismic → ô đếm đá */
   const tb = el ? el.getBoundingClientRect() : { left: innerWidth / 2 - 20, top: innerHeight - 60, width: 40, height: 40 };
   const x1 = tb.left + tb.width / 2, y1 = tb.top + tb.height / 2, cx1 = (x0 + x1) / 2 + (x1 > x0 ? -60 : 60), cy1 = Math.min(y0, y1) - 140;
   const fly = document.createElement('img'); fly.src = src; fly.className = 'fx-fly'; document.body.appendChild(fly);
@@ -147,7 +160,7 @@ export function flyToSlot(kind, slot, done, file, wx, wy, n = 1) {
       fly.remove(); sheetBurst('item_pickup_pop', x1, y1, 72); sheetBurst('crop_sparkle', x1 - 18, y1 - 14, 40, 0.08); sheetBurst('crop_sparkle', x1 + 18, y1 - 10, 40, 0.16);
       done();
       const pl = document.createElement('div'); pl.className = 'fx-plus'; pl.textContent = '+' + n; pl.style.left = (x1 - 12) + 'px'; pl.style.top = (y1 - 44) + 'px'; document.body.appendChild(pl); setTimeout(() => pl.remove(), 900);
-      const el2 = slot >= 0 ? document.querySelector(`#hotbar .hb-slot[data-i="${slot}"]`) : slot === -2 ? document.querySelector('#hotbar .hb-bag') : null;
+      const el2 = msEl ? msEl : slot >= 0 ? document.querySelector(`#hotbar .hb-slot[data-i="${slot}"]`) : slot === -2 ? document.querySelector('#hotbar .hb-bag') : null;
       if (el2) { el2.classList.remove('hb-catch'); void el2.offsetWidth; el2.classList.add('hb-catch'); setTimeout(() => el2.classList.remove('hb-catch'), 700); }
     }
   };

@@ -1,0 +1,136 @@
+{
+ "id": "21ca9e5c-5d73-4673-bf35-b8306b895b00",
+ "status": "completed",
+ "mode": "create_character_state of chad_polo (dae7928d…)",
+ "size": 56,
+ "phase": "muscle (sau cảnh xé áo chad_polo/act/rip_*)",
+ "west": "mirror of east",
+ "ref": "assets/px/ref/chad_ref3_squid.png (không upload)",
+ "actions": {
+  "chop": {
+   "file": "chars/chad_act_chop.png",
+   "n": 7,
+   "ch": 28,
+   "cw": 32
+  },
+  "pick": {
+   "file": "chars/chad_act_pick.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "carry": {
+   "file": "chars/chad_act_carry.png",
+   "n": 7,
+   "ch": 29,
+   "cw": 32
+  },
+  "paddle": {
+   "file": "chars/chad_act_paddle.png",
+   "n": 7,
+   "ch": 28,
+   "cw": 32
+  },
+  "hammer": {
+   "file": "chars/chad_act_hammer.png",
+   "n": 7,
+   "ch": 28,
+   "cw": 32
+  },
+  "hoe": {
+   "file": "chars/chad_act_hoe.png",
+   "n": 5,
+   "ch": 31,
+   "cw": 32
+  },
+  "water": {
+   "file": "chars/chad_act_water.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "harvest": {
+   "file": "chars/chad_act_harvest.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "eat": {
+   "file": "chars/chad_act_eat.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "hurt": {
+   "file": "chars/chad_act_hurt.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "attack": {
+   "file": "chars/chad_act_attack.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "shoot": {
+   "file": "chars/chad_act_shoot.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "knockfly": {
+   "file": "chars/chad_act_knockfly.png",
+   "n": 7,
+   "ch": 28,
+   "cw": 32
+  },
+  "launched": {
+   "file": "chars/chad_act_launched.png",
+   "n": 5,
+   "ch": 29,
+   "cw": 32
+  },
+  "knockdown": {
+   "file": "chars/chad_act_knockdown.png",
+   "n": 7,
+   "ch": 28,
+   "cw": 32
+  },
+  "stagger": {
+   "file": "chars/chad_act_stagger.png",
+   "n": 5,
+   "ch": 28,
+   "cw": 32
+  },
+  "idle": {
+   "file": "chars/chad_act_idle.png",
+   "n": 4,
+   "ch": 28,
+   "cw": 32
+  },
+  "mine": {
+   "file": "chars/chad_act_mine.png",
+   "n": 7,
+   "ch": 31,
+   "cw": 32
+  },
+  "fish": {
+   "file": "chars/chad_act_fish.png",
+   "n": 7,
+   "ch": 35,
+   "cw": 32
+  },
+  "swim": {
+   "file": "chars/chad_act_swim.png",
+   "n": 6,
+   "ch": 28,
+   "cw": 32
+  }
+ },
+ "walk_sheet": {
+  "file": "chars/chad.png",
+  "cw": 45,
+  "ch": 60
+ }
+}

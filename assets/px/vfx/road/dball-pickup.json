@@ -1,0 +1,183 @@
+{
+ "frames": [
+  {
+   "filename": "dball-pickup 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "sourceSize": {
+    "w": 30,
+    "h": 35
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5142857142857142
+   },
+   "duration": 63
+  },
+  {
+   "filename": "dball-pickup 1.png",
+   "frame": {
+    "x": 30,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "sourceSize": {
+    "w": 30,
+    "h": 35
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5142857142857142
+   },
+   "duration": 63
+  },
+  {
+   "filename": "dball-pickup 2.png",
+   "frame": {
+    "x": 60,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "sourceSize": {
+    "w": 30,
+    "h": 35
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5142857142857142
+   },
+   "duration": 63
+  },
+  {
+   "filename": "dball-pickup 3.png",
+   "frame": {
+    "x": 0,
+    "y": 35,
+    "w": 30,
+    "h": 35
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "sourceSize": {
+    "w": 30,
+    "h": 35
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5142857142857142
+   },
+   "duration": 63
+  },
+  {
+   "filename": "dball-pickup 4.png",
+   "frame": {
+    "x": 30,
+    "y": 35,
+    "w": 30,
+    "h": 35
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "sourceSize": {
+    "w": 30,
+    "h": 35
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5142857142857142
+   },
+   "duration": 63
+  },
+  {
+   "filename": "dball-pickup 5.png",
+   "frame": {
+    "x": 60,
+    "y": 35,
+    "w": 30,
+    "h": 35
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 30,
+    "h": 35
+   },
+   "sourceSize": {
+    "w": 30,
+    "h": 35
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5142857142857142
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "dball-pickup.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 90,
+   "h": 70
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 15,
+   "y": 18
+  },
+  "frameTags": [
+   {
+    "name": "dball-pickup",
+    "from": 0,
+    "to": 5,
+    "direction": "forward"
+   }
+  ]
+ }
+}

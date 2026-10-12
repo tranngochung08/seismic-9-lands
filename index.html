@@ -6,7 +6,7 @@
 <title>Seismic · 9 Lands</title>
 <meta name="description" content="A pixel adventure through the 9 Magnitude lands of the Seismic community. Every NPC is a real artist.">
 <link rel="stylesheet" href="assets/fonts/vt323.css">
-<link rel="stylesheet" href="style.css?v=202610102232">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -21,11 +21,13 @@
 
 <div id="touch">
   <div class="dpad">
-    <button data-k="up">▲</button><button data-k="left">◀</button><button data-k="right">▶</button><button data-k="down">▼</button>
+    <div id="joy"><div class="jring"></div><div class="jknob"></div></div>   <!-- 2026-10-11 anh: thay 4 nút mũi tên bằng NÚT TRÒN kéo thả -->
   </div>
   <button id="btn-a">A</button>
   <button id="btn-menu">☰</button>
   <button id="btn-photo">📷</button>
+  <button id="btn-rot" title="Xoay ngang">⟳</button>
+  <button id="btn-tgt" hidden>🎯</button>
   <div id="touch-skills" hidden><button data-skill="Digit1">1</button><button data-skill="Digit2">2</button><button data-skill="Digit3">3</button></div>
 </div>
 
@@ -160,6 +162,6 @@
 
 <div id="toast" hidden></div>
 <div id="loading">Loading…</div>
-<script type="module" src="src/main.js?v=202610102232"></script>
+<script type="module" src="src/main.js"></script>
 </body>
 </html>

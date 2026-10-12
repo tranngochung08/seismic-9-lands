@@ -17,11 +17,10 @@ function seasonSeeds(ctx) { return Object.keys(ctx.ITEMS).filter(id => id.starts
 
 async function giveAll() {
   const C = deps.CTX; window.__farm && window.__farm.tools();
-  if (C.tool.tier('cage') < 1) C.tool.set('cage', 1); if (C.tool.tier('cart') < 1) C.tool.set('cart', 1);
   for (const id of seasonSeeds(C)) C.bag.add(id, 5);
   C.bag.add('hay', 8); if (!C.bag.has('pen1', 1)) C.bag.add('pen1', 1);
-  const c = C.carry.get(); if (!c.includes('chicken')) c.push('chicken'); if (!c.includes('cow')) c.push('cow');
-  C.persist(); say('Đã cấp: xẻng, xô, lồng, xe, hạt theo mùa ×5, rơm 8, chuồng gỗ; đang bế gà + bò. (Bù nhìn cấp khi dựng ruộng.)');
+  const c = C.carry.get(); if (!c.length) c.push('chicken'); if (!C.bag.has('a_cow', 1)) C.bag.add('a_cow', 1);   /* bỏ xe chở 2026-10-11: tay bế 1 con, bò để trong túi */
+  C.persist(); say('Đã cấp: xẻng, hạt theo mùa ×5, rơm 8, chuồng gỗ; đang bế gà (bò vào túi). (Bù nhìn cấp khi dựng ruộng.)');
 }
 function plotTiles() {
   const C = deps.CTX, S = deps.S, my = C.myPlot(); if (!my) return null; const sp = my.spawn || my; const out = [];
@@ -34,13 +33,12 @@ async function buildFarm() {
   const C = deps.CTX; await giveAll(); const tiles = plotTiles(); if (!tiles || !tiles.length) { say('Không tìm được ô trống trong khu — đi tới khu khác rồi bấm lại.'); return; }
   const seeds = seasonSeeds(C); let n = 0;
   for (const t of tiles.slice(0, 6)) { warp(t.x, t.y); pressFarm(); await wait(30); const l = pressFarm(); if (l && /Gieo|Sow/.test(l)) n++; await wait(30); }
-  /* múc nước ở giếng */
-  if (toWell()) { pressFarm(); await wait(30); }
+  /* tưới bằng tay (bỏ xô 2026-10-11) */
   for (const t of tiles.slice(0, 5)) { warp(t.x, t.y); pressFarm(); await wait(20); }
   /* bù nhìn ở ô thứ 7 (cấp sau cùng vì cầm bù nhìn thì E ưu tiên đặt bù nhìn) */
   let sc = false; if (tiles[6] && C.bag.add('scarecrow', 1) > 0) { warp(tiles[6].x, tiles[6].y); sc = /Bù nhìn|scarecrow/i.test(pressFarm() || ''); }
   const t0 = tiles[0]; warp(t0.x, t0.y + 1, 3);
-  say(`Ruộng mẫu: cày + gieo ${n} ô (${seeds.map(s => s.slice(5)).join(', ')}), tưới ${window.__farm.state().bucketWater >= 0 ? 5 : 0} ô${sc ? ', bù nhìn 1' : ''}. Bấm "Qua đêm" vài lần để xem cây lớn; ô thứ 6 chưa tưới để so sánh.`);
+  say(`Ruộng mẫu: cày + gieo ${n} ô (${seeds.map(s => s.slice(5)).join(', ')}), tưới 5 ô${sc ? ', bù nhìn 1' : ''}. Bấm "Qua đêm" vài lần để xem cây lớn; ô thứ 6 chưa tưới để so sánh.`);
 }
 async function buildPen() {
   const C = deps.CTX; await giveAll(); const sp = window.__pens && window.__pens.spot(); if (!sp) { say('Khu này không có bãi trống 4×3 cho chuồng — thử khu khác.'); return; }
@@ -53,10 +51,9 @@ async function buildPen() {
   const st = window.__pens.state()[0];
   say(`Chuồng mẫu dựng ở (${sp.x0},${sp.y0}), thú trong chuồng: ${st ? st.animals.map(a => a.name || a.kind).join(', ') : '?'}; đã cho ăn ${st ? st.animals.filter(a => a.fed).length : 0} (E: ${acts.filter(Boolean).join(' → ')}). Bấm "Qua đêm" → bảng sáng báo trứng + sữa; đứng cạnh bảng tên bấm E lấy.`);
 }
-async function careAll() {   /* tưới hết ô đã cày (múc lại xô khi cạn) + cho thú ăn → bấm trước mỗi "Qua đêm" để thấy cây lớn từng ngày */
+async function careAll() {   /* tưới hết ô đã cày (bằng tay) + cho thú ăn → bấm trước mỗi "Qua đêm" để thấy cây lớn từng ngày */
   const C = deps.CTX, tiles = Object.keys(window.__farm.state().zone.tiles).map(k => k.split(',').map(Number)); let w = 0, fed = null;
   for (const [x, y] of tiles) {
-    if (window.__farm.state().bucketWater <= 0) { if (!toWell()) break; pressFarm(); await wait(30); }
     warp(x, y); const l = pressFarm(); if (l && /Tưới|Water/.test(l)) w++; await wait(20);
   }
   const trough = deps.S.map.objects.find(o => o.type === 'pen_trough'); if (trough) { warp(trough.x, trough.y + 1, 3); await wait(20); fed = pressPens(); await wait(30); pressPens(); }

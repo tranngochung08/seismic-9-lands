@@ -1,0 +1,1145 @@
+{
+ "_fx": {
+  "ring": {
+   "file": "spar/fx/ring.png"
+  },
+  "warn_circle": {
+   "file": "spar/fx/warn_circle.png"
+  },
+  "warn_ring": {
+   "file": "spar/fx/warn_ring.png"
+  },
+  "warn_line": {
+   "file": "spar/fx/warn_line.png"
+  },
+  "tg_ring_o": {
+   "file": "spar/fx/tg_ring_o.png"
+  },
+  "tg_ring_r": {
+   "file": "spar/fx/tg_ring_r.png"
+  },
+  "tg_ring_p": {
+   "file": "spar/fx/tg_ring_p.png"
+  },
+  "tg_lane_o": {
+   "file": "spar/fx/tg_lane_o.png"
+  },
+  "tg_lane_r": {
+   "file": "spar/fx/tg_lane_r.png"
+  },
+  "tg_lane_p": {
+   "file": "spar/fx/tg_lane_p.png"
+  },
+  "tg_fill_o": {
+   "file": "spar/fx/tg_fill_o.png"
+  },
+  "tg_fill_r": {
+   "file": "spar/fx/tg_fill_r.png"
+  },
+  "tg_fill_p": {
+   "file": "spar/fx/tg_fill_p.png"
+  },
+  "tg_bang": {
+   "file": "spar/fx/tg_bang.png"
+  },
+  "tg_hand": {
+   "file": "spar/fx/tg_hand.png"
+  },
+  "crater_sand": {
+   "file": "spar/fx/crater_sand.png"
+  },
+  "crater_stone": {
+   "file": "spar/fx/crater_stone.png"
+  },
+  "bittai_neck": {
+   "file": "spar/fx/bittai_neck.png",
+   "hx": 5,
+   "ty": 6.5
+  },
+  "barbell": {
+   "file": "spar/fx/barbell.png"
+  },
+  "ult_rock_obsidian": {
+   "file": "spar/fx/ult_rock_obsidian.png"
+  },
+  "ult_feather_fire": {
+   "file": "spar/fx/ult_feather_fire.png"
+  },
+  "ult_bowl_iron": {
+   "file": "spar/fx/ult_bowl_iron.png"
+  },
+  "ult_chess_king": {
+   "file": "spar/fx/ult_chess_king.png"
+  },
+  "ult_ice_chunk": {
+   "file": "spar/fx/ult_ice_chunk.png"
+  },
+  "bittai_t1_neck": {
+   "file": "spar/fx/bittai_t1_neck.png",
+   "hx": 10,
+   "ty": 14.0
+  },
+  "bittai_t2_neck": {
+   "file": "spar/fx/bittai_t2_neck.png",
+   "hx": 9,
+   "ty": 14.0
+  }
+ },
+ "caro": {
+  "file": "spar/caro.png",
+  "face": "spar/caro_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   7
+  ],
+  "impact": 4,
+  "h": 54,
+  "src": "hf_31",
+  "bow": {
+   "file": "spar/caro_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  },
+  "punch": [
+   18,
+   9
+  ]
+ },
+ "dauvuong": {
+  "file": "spar/dauvuong.png",
+  "face": "spar/dauvuong_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   7
+  ],
+  "impact": 4,
+  "h": 52,
+  "src": "hf_51",
+  "punch": [
+   18,
+   9
+  ],
+  "bow": {
+   "file": "spar/dauvuong_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "sungbo": {
+  "file": "spar/sungbo.png",
+  "face": "spar/sungbo_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 53,
+  "src": "hf_28",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/sungbo_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "maoga": {
+  "file": "spar/maoga.png",
+  "face": "spar/maoga_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 55,
+  "src": "hf_29",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/maoga_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "batup": {
+  "file": "spar/batup.png",
+  "face": "spar/batup_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 54,
+  "src": "hf_33",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/batup_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "riatrau": {
+  "file": "spar/riatrau.png",
+  "face": "spar/riatrau_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_24",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/riatrau_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "sungbo_t2": {
+  "file": "spar/sungbo_t2.png",
+  "face": "spar/sungbo_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 55,
+  "src": "hf_28",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/sungbo_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "sungbo_t1": {
+  "file": "spar/sungbo_t1.png",
+  "face": "spar/sungbo_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 55,
+  "src": "hf_28",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/sungbo_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "sungbo_t3": {
+  "file": "spar/sungbo_t3.png",
+  "face": "spar/sungbo_t3_face.png",
+  "cw": 120,
+  "ch": 108,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 74,
+  "src": "hf_28",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/sungbo_t3_bow.png",
+   "n": 5,
+   "cw": 120,
+   "ch": 108
+  }
+ },
+ "bonggon": {
+  "file": "spar/bonggon.png",
+  "face": "spar/bonggon_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 53,
+  "src": "hf_26",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/bonggon_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "bittai": {
+  "file": "spar/bittai.png",
+  "face": "spar/bittai_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 59,
+  "src": "hf_18",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/bittai_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  },
+  "neckY": 19
+ },
+ "cambua": {
+  "file": "spar/cambua.png",
+  "face": "spar/cambua_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_23",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/cambua_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "lucsi": {
+  "file": "spar/lucsi.png",
+  "face": "spar/lucsi_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_36",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/lucsi_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "biker": {
+  "file": "spar/biker.png",
+  "face": "spar/biker_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 54,
+  "src": "hf_41",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/biker_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "dauvuong_t1": {
+  "file": "spar/dauvuong_t1.png",
+  "face": "spar/dauvuong_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_51",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/dauvuong_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "dauvuong_t2": {
+  "file": "spar/dauvuong_t2.png",
+  "face": "spar/dauvuong_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 53,
+  "src": "hf_51",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/dauvuong_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "maoga_t1": {
+  "file": "spar/maoga_t1.png",
+  "face": "spar/maoga_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 59,
+  "src": "hf_29",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/maoga_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "maoga_t2": {
+  "file": "spar/maoga_t2.png",
+  "face": "spar/maoga_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 60,
+  "src": "hf_29",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/maoga_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "batup_t1": {
+  "file": "spar/batup_t1.png",
+  "face": "spar/batup_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 54,
+  "src": "hf_33",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/batup_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "riatrau_t1": {
+  "file": "spar/riatrau_t1.png",
+  "face": "spar/riatrau_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_24",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/riatrau_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "batup_t2": {
+  "file": "spar/batup_t2.png",
+  "face": "spar/batup_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 56,
+  "src": "hf_33",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/batup_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "riatrau_t2": {
+  "file": "spar/riatrau_t2.png",
+  "face": "spar/riatrau_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_24",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/riatrau_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "caro_t1": {
+  "file": "spar/caro_t1.png",
+  "face": "spar/caro_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 59,
+  "src": "hf_31",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/caro_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "caro_t2": {
+  "file": "spar/caro_t2.png",
+  "face": "spar/caro_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 61,
+  "src": "hf_31",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/caro_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "cambua_t1": {
+  "file": "spar/cambua_t1.png",
+  "face": "spar/cambua_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_23",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/cambua_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "cambua_t2": {
+  "file": "spar/cambua_t2.png",
+  "face": "spar/cambua_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 54,
+  "src": "hf_23",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/cambua_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "bonggon_t1": {
+  "file": "spar/bonggon_t1.png",
+  "face": "spar/bonggon_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 54,
+  "src": "hf_26",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/bonggon_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "lucsi_t1": {
+  "file": "spar/lucsi_t1.png",
+  "face": "spar/lucsi_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_36",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/lucsi_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "biker_t1": {
+  "file": "spar/biker_t1.png",
+  "face": "spar/biker_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 54,
+  "src": "hf_41",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/biker_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "lucsi_t2": {
+  "file": "spar/lucsi_t2.png",
+  "face": "spar/lucsi_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 52,
+  "src": "hf_36",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/lucsi_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "biker_t2": {
+  "file": "spar/biker_t2.png",
+  "face": "spar/biker_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 54,
+  "src": "hf_41",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/biker_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "bonggon_t2": {
+  "file": "spar/bonggon_t2.png",
+  "face": "spar/bonggon_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 58,
+  "src": "hf_26",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/bonggon_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  }
+ },
+ "bittai_t1": {
+  "file": "spar/bittai_t1.png",
+  "face": "spar/bittai_t1_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 59,
+  "src": "hf_18",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/bittai_t1_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  },
+  "neckY": 19
+ },
+ "bittai_t2": {
+  "file": "spar/bittai_t2.png",
+  "face": "spar/bittai_t2_face.png",
+  "cw": 80,
+  "ch": 72,
+  "idle": [
+   0,
+   5
+  ],
+  "walk": [
+   5,
+   6
+  ],
+  "atk": [
+   11,
+   9
+  ],
+  "impact": 5,
+  "h": 58,
+  "src": "hf_18",
+  "punch": [
+   20,
+   9
+  ],
+  "bow": {
+   "file": "spar/bittai_t2_bow.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 72
+  },
+  "neckY": 19
+ }
+}

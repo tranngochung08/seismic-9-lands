@@ -29,8 +29,9 @@ const armsOf = (ctx, n) => (n && n.m ? sv(ctx).armed[n.m.id] || 0 : 0);
 const zoneName = ctx => (ctx.S.zone && (ctx.S.zone.name ? (ctx.S.zone.name[ctx.lang()] || ctx.S.zone.name.en || ctx.S.zone.name) : ctx.S.zone.id)) || '';
 export function immune(ctx, n) {
   const m = n.m || {};
+  if (n.chief) return false;   /* 2026-10-11 anh: Leader khu (vương miện) trúng súng phải hóa đá thật — kể cả thành viên có ★ (friend/elder) */
   if (n.lyron || n.hermit || n.custom || m.friend || m.elder || n.guide || n === ctx.S.guide) return true;
-  if (ctx.isLeader && ctx.isLeader(m)) return true;
+  /* 2026-10-11 anh: bắn Súng Hóa Đá vào Leader (người đội vương miện) mà chỉ đứng hình rồi chạy tiếp → Leader KHÔNG còn được miễn hóa đá */
   try { const q = typeof window !== 'undefined' && window.__quests && window.__quests.list(); if (q && q.active && q.active.some(a => a.npcId === m.id)) return true; } catch (e) { /* bỏ qua */ }
   return false;
 }
@@ -91,6 +92,7 @@ function killNpc(ctx, n) {
   const d = { name: nm, zone: ctx.S.zone.id, zoneName: zn, x: n.x, y: n.y, day: ctx.clock ? ctx.clock.dayIndex : 0, nation: nat };
   s.dead[id] = d;
   const i = ctx.S.npcs.indexOf(n); if (i >= 0) ctx.S.npcs.splice(i, 1);
+  if (ctx.S.staff) { const j = ctx.S.staff.indexOf(n); if (j >= 0) ctx.S.staff.splice(j, 1); }   /* Leader khu nằm trong S.staff */
   placeTomb(ctx, id, d); if (ctx.vfx && !ctx.vfx('petrify', n.x, n.y + 4, 0, true)) ctx.vfx('dirt_puff', n.x, n.y); if (ctx.quake) ctx.quake(0.3);   /* plan-25: sóng hóa đá */
   ctx.toast(L(ctx).fell(nm, zn), true); ctx.sfx('sad'); ctx.persist();
 }
@@ -132,7 +134,7 @@ export const villagers = {
       for (let r = 2; r < 9 && !ST.mem; r++) for (let dx = -r; dx <= r && !ST.mem; dx++) { const x = e.x + dx, y = e.y - r; if (x < 1 || y < 1) continue; if (!ctx.isSolid(map, x, y) && !ctx.isSolid(map, x + 1, y) && !ctx.hasObjectAt(map, x, y) && !ctx.hasObjectAt(map, x + 1, y) && !ctx.isSolid(map, x, y + 1)) ST.mem = ctx.place(map, 'memorial', x, y, { memorial: true }); }
     }
     for (const n of ctx.S.npcs) { n.hpMax = npcMax(ctx, n); n.hp = n.hpMax; n.hurtSit = false; }
-    ctx.villagers = { petrify: n => { if (ctx.S.npcs.includes(n) && !immune(ctx, n)) { killNpc(ctx, n); return true; } return false; },   /* plan-25 B3: đòn hóa đá của phe Xealist */
+    ctx.villagers = { petrify: n => { if ((ctx.S.npcs.includes(n) || (n.chief && (ctx.S.staff || []).includes(n))) && !immune(ctx, n)) { killNpc(ctx, n); return true; } return false; },   /* plan-25 B3: đòn hóa đá của phe Xealist */
       hurt: (n, dmg, from) => hurtNpc(ctx, n, dmg, from), immune: n => immune(ctx, n), rescued: m => rescued(ctx, m), alive: () => ctx.S.npcs.filter(n => !n.custom && !n.lyron) };
     if (typeof window !== 'undefined') window.__villagers = { dead: () => sv(ctx).dead, fallen: () => sv(ctx).fallen, kill: i => { const n = ctx.S.npcs.filter(x => !immune(ctx, x))[i || 0]; if (n) killNpc(ctx, n); return n && n.m.id; }, tombs: () => ST.tombs.map(t => t.id), expireNow: () => { for (const d of Object.values(sv(ctx).dead)) d.day -= REVIVE_DAYS; expire(ctx); } };
   },
@@ -143,7 +145,7 @@ export const villagers = {
     if (mons && mons.length) for (const n of ctx.S.npcs) {
       const k = armsOf(ctx, n); if (!k || n.hurtSit || n.custom) continue;
       let tg = n.attacker && mons.includes(n.attacker) ? n.attacker : null;
-      if (!tg) { let bd = 40; for (const mo of mons) { const d = Math.hypot(mo.x - n.x, mo.y - n.y); if (d < bd) { bd = d; tg = mo; } } }
+      if (!tg) { let bd = 40; for (const mo of mons) { if (mo.c && mo.c.spar) continue;   /* spar.js: bạn tập không phải quái */ const d = Math.hypot(mo.x - n.x, mo.y - n.y); if (d < bd) { bd = d; tg = mo; } } }
       if (!tg) continue;
       const d = Math.hypot(tg.x - n.x, tg.y - n.y); n.faceTo && n.faceTo(tg.x, tg.y);
       if (d > 16) { n.goal = { x: tg.x, y: tg.y }; n.busy = false; continue; }

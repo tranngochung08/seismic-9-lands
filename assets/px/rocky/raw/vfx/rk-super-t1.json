@@ -1,0 +1,391 @@
+{
+ "frames": [
+  {
+   "filename": "rk-super-t1 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 1.png",
+   "frame": {
+    "x": 49,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 2.png",
+   "frame": {
+    "x": 98,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 3.png",
+   "frame": {
+    "x": 147,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 4.png",
+   "frame": {
+    "x": 0,
+    "y": 92,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 5.png",
+   "frame": {
+    "x": 49,
+    "y": 92,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 6.png",
+   "frame": {
+    "x": 98,
+    "y": 92,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 7.png",
+   "frame": {
+    "x": 147,
+    "y": 92,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 8.png",
+   "frame": {
+    "x": 0,
+    "y": 184,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 9.png",
+   "frame": {
+    "x": 49,
+    "y": 184,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 10.png",
+   "frame": {
+    "x": 98,
+    "y": 184,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 11.png",
+   "frame": {
+    "x": 147,
+    "y": 184,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 12.png",
+   "frame": {
+    "x": 0,
+    "y": 276,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-super-t1 13.png",
+   "frame": {
+    "x": 49,
+    "y": 276,
+    "w": 49,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5102040816326531,
+    "y": 0.75
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "rk-super-t1.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 196,
+   "h": 368
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 25,
+   "y": 69
+  },
+  "frameTags": [
+   {
+    "name": "rk-super-t1",
+    "from": 0,
+    "to": 13,
+    "direction": "forward"
+   }
+  ]
+ }
+}

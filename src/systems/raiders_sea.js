@@ -8,6 +8,7 @@
 // See systems/API.md ("The Sea of Origins"). Reads S.sea (owned by sea_raft.js) and only ever lowers
 // S.sea.raft.hp — the raft system handles sinking. No screen shake, no flashes; warnings are the red HUD line.
 import { mkCanvas, HOOK } from '../gfx.js';
+import { hasFish, takeFish } from './animals.js';   /* 2026-10-11 bỏ xô: cá cho Kraken lấy từ tay hoặc túi */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -431,7 +432,7 @@ export const raidersSea = {
     const p = ctx.S.player, S = L(ctx);
     if (K && K.phase === 'attack') {
       // numeric priorities: the raft/dive systems put "priority: true" prompts right at the player's feet, so ours must outrank them
-      if (fishIndex(ctx) >= 0 && Math.hypot(K.head.x - p.x, K.head.y - p.y) <= 2.5 * TILE) return { label: S.feed, x: K.head.x, y: K.head.y, limit: 2.5 * TILE, priority: 3, data: { feed: true } };
+      if (hasFish(ctx) && Math.hypot(K.head.x - p.x, K.head.y - p.y) <= 2.5 * TILE) return { label: S.feed, x: K.head.x, y: K.head.y, limit: 2.5 * TILE, priority: 3, data: { feed: true } };
       let best = null, bd = Infinity;
       for (const t of K.tents) { if (t.st === 'dead' || t.rise < 0.8) continue; const d = Math.hypot(t.x - p.x, t.y - p.y); if (d <= 1.5 * TILE && d < bd) { bd = d; best = t; } }
       if (best) return { label: S.strike, x: best.x, y: best.y - 8, limit: 1.5 * TILE, priority: 2, data: { tent: best } };
@@ -445,7 +446,7 @@ export const raidersSea = {
 
   interact(ctx, cand) {
     const d = cand && cand.data; if (!d) return;
-    if (d.feed && K && K.phase === 'attack') { const i = fishIndex(ctx); if (i < 0) return; ctx.carry.remove(i); ctx.S.player.faceTo(K.head.x, K.head.y); splash(K.head.x, K.head.y + 6, false); endKraken(ctx, 'fed'); return; }
+    if (d.feed && K && K.phase === 'attack') { if (!takeFish(ctx)) return; ctx.S.player.faceTo(K.head.x, K.head.y); splash(K.head.x, K.head.y + 6, false); endKraken(ctx, 'fed'); return; }
     if (d.tent) { strike(ctx, d.tent); return; }
     if (d.ship && ship && ship.st === 'sail' && ctx.bag.has('rope', 1)) openHold(ctx);
   },

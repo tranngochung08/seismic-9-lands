@@ -1,0 +1,46 @@
+{
+ "inherit": "u4",
+ "objects": {
+  "xwall": {
+   "file": "zones/xfort/obj/xwall_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "xwall2": {
+   "file": "zones/xfort/obj/xwall2_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "xcrystal": {
+   "file": "zones/xfort/obj/xcrystal_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "xthrone": {
+   "file": "zones/xfort/obj/xthrone_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "classes": {
+  "__base": "hex",
+  "SEABED": "hex",
+  "SAND": "hex",
+  "REEF": "hex",
+  "WATER": "hex",
+  "ABYSS": "dark",
+  "DEEP": "dark",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled"
+ },
+ "wang": [
+  {
+   "dir": "zones/m9/wang/a",
+   "upper": "dark"
+  },
+  {
+   "dir": "wang/f3",
+   "upper": "tilled"
+  }
+ ]
+}

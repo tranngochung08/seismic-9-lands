@@ -1,9 +1,9 @@
 // ponds.js — plan-25 B2: ĐÀO AO NUÔI CÁ trên đất của mình (khu nước mình hoặc đất đã mua).
 //  · Cầm xẻng + E vào ô đã cày (chưa trồng) → ô thành ao nước (bụi đất + nước bắn, VFX PixelLab).
-//  · Đang đội cá trên đầu + E cạnh ao → thả cá (tối đa 6 / ao). Mỗi ngày: cứ 2 con sinh 1 cá con (tới 6).
+//  · Cá trong túi (2026-10-11 bỏ xô): cầm cá trên thanh công cụ (hoặc ao còn trống) + E cạnh ao → thả cá (tối đa 6 / ao). Mỗi ngày: cứ 2 con sinh 1 cá con (tới 6).
 //  · 'Vớt cá' → cá rơi ra bờ ao (drops) rồi nhặt vào túi. Bóng cá bơi trong ao (ảnh PixelLab fishshadow).
 //  · Lưu save.sys.ponds[vùng] = { 'x,y': { n, sp: [loài…], day } }; vào vùng → đặt lại ô nước.
-import { getCarry, removeCarry } from './animals.js';
+import { getCarry, FISH_BAG, takeFish } from './animals.js';
 
 const MAX = 6;
 const ST = { list: [] };
@@ -26,7 +26,10 @@ function breed(ctx) {
   for (const p of Object.values(st)) { if (p.day == null) p.day = today; const days = today - p.day; if (days <= 0) continue; p.day = today; for (let d = 0; d < Math.min(days, 7); d++) { const k = Math.floor(p.n / 2); const add = Math.min(k, MAX - p.n); p.n += add; born += add; for (let i = 0; i < add; i++) p.sp.push(p.sp[(Math.random() * p.sp.length) | 0] || 'perch'); } }
   if (born) { ctx.persist(); setTimeout(() => ctx.toast(L(ctx).born(born)), 1800); }
 }
-function facing(ctx) { const p = ctx.S.player, d = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir & 3]; return { tx: Math.floor(p.x / 16) + d[0], ty: Math.floor((p.y - 2) / 16) + d[1] }; }
+/* polish 2026-10-10: ô dưới chân tính GIỐNG farm.js (floor(y/16)); trước đây (y−2)/16 → đứng sát mép trên ô (y%16 < 2) ao nhìn lệch lên 1 hàng,
+   E thứ hai không đào được ô vừa cày (anh thấy trong video) */
+const underTile = p => ({ tx: Math.floor(p.x / 16), ty: Math.floor(p.y / 16) });
+function facing(ctx) { const p = ctx.S.player, d = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir & 3], u = underTile(p); return { tx: u.tx + d[0], ty: u.ty + d[1] }; }
 function pondNear(ctx) { const p = ctx.S.player, st = store(ctx); let best = null, bd = 30; for (const k of Object.keys(st)) { const [x, y] = k.split(',').map(Number), d = Math.hypot(x * 16 + 8 - p.x, y * 16 + 8 - p.y); if (d < bd) { bd = d; best = { x, y, k, rec: st[k] }; } } return best; }
 
 /* ao liền (anh yêu cầu: nhiều ô sát nhau phải thành một mặt nước): cắt ô ao PixelLab thành 9 mảnh (góc 6 px của ảnh 32 px);
@@ -40,6 +43,7 @@ function waterPal(tile) {   /* lấy 3 sắc xanh từ giữa ô ao PixelLab: n�
   const base = cols[0] || [58, 143, 214], rest = cols.slice(1, 8), light = rest.filter(c => lum(c) > lum(base)).sort((a, b) => lum(b) - lum(a))[0] || [191, 232, 255], dark = rest.filter(c => lum(c) < lum(base)).sort((a, b) => lum(a) - lum(b))[0] || [36, 90, 143];
   const css = c => `rgb(${c[0]},${c[1]},${c[2]})`; return (PAL = { base: css(base), light: css(light), dark: css(dark) });
 }
+const pondMask = (st, x, y) => { const h = (dx, dy) => !!st[key(x + dx, y + dy)]; return (h(0, -1) ? 1 : 0) | (h(1, 0) ? 2 : 0) | (h(0, 1) ? 4 : 0) | (h(-1, 0) ? 8 : 0) | (h(1, -1) ? 16 : 0) | (h(1, 1) ? 32 : 0) | (h(-1, 1) ? 64 : 0) | (h(-1, -1) ? 128 : 0); };
 function drawJoined(g, tile, st, x, y, sx, sy) {
   const S = tile.width, f = S / 32, c = Math.round(7 * f), k = 16 / S, has = (dx, dy) => !!st[key(x + dx, y + dy)];
   const L = has(-1, 0), R = has(1, 0), U = has(0, -1), D = has(0, 1);
@@ -63,14 +67,17 @@ export const ponds = {
   },
   near(ctx) {
     if (ctx.S.mode !== 'play') return null;
-    const t = L(ctx), pn = pondNear(ctx);
+    const t = L(ctx), pn0 = pondNear(ctx), mt = ctx.mouseTile && ctx.mouseTile(), pl = ctx.S.player;
+    /* 2026-10-11 anh: trỏ chuột vào ô khác để đào mà bấm lại ra 'Thả cá vào ao' → chuột đang chỉ 1 ô KHÔNG phải ao ngay cạnh người thì nhường ô đó */
+    const aimElse = !!(mt && !ctx.mouseOnSprite && !store(ctx)[key(mt.tx, mt.ty)] && Math.abs(mt.tx - Math.floor(pl.x / 16)) <= 1 && Math.abs(mt.ty - Math.floor(pl.y / 16)) <= 1);
+    const pn = aimElse ? null : pn0;
     if (pn) {
-      const carry = getCarry(ctx), fi = carry.map(c => c.kind).lastIndexOf('fish');
-      if (fi >= 0) return { label: pn.rec.n >= MAX ? t.full : t.stock(pn.rec.n), x: pn.x * 16 + 8, y: pn.y * 16 + 8, limit: 30, priority: true, data: { stock: pn, fi } };
+      const carry = getCarry(ctx), fi = carry.map(c => c.kind).lastIndexOf('fish'), hb = FISH_BAG.some(id => ctx.bag.has(id, 1)), held = ctx.holding ? FISH_BAG.some(id => ctx.holding(id)) : hb;   /* cá trong túi: phải cầm cá (hoặc ao trống) mới thả, kẻo không vớt được */
+      if (fi >= 0 || (hb && held)) return { label: pn.rec.n >= MAX ? t.full : t.stock(pn.rec.n), x: pn.x * 16 + 8, y: pn.y * 16 + 8, limit: 30, priority: true, data: { stock: pn, fi } };
       if (pn.rec.n > 0) return { label: t.take(pn.rec.n), x: pn.x * 16 + 8, y: pn.y * 16 + 8, limit: 30, priority: 1, data: { take: pn } };
     }
     const shovel = ctx.holding ? ctx.holding('shovel') : ctx.tool.tier('shovel') > 0; if (!shovel) return null;
-    const p = ctx.S.player, under = { tx: Math.floor(p.x / 16), ty: Math.floor((p.y - 2) / 16) };   /* như ruộng: ô dưới chân trước, rồi ô phía trước */
+    const p = ctx.S.player, under = underTile(p);   /* như ruộng: ô dưới chân trước, rồi ô phía trước */
     for (const f of [under, facing(ctx)]) {
       const g = ctx.getG(ctx.S.map, f.tx, f.ty);
       if ((g === ctx.T.TILLED || g === ctx.T.TILLED_WET) && mine(ctx, f.tx, f.ty) && !(ctx.farmCrops && ctx.farmCrops().some(c => c.tx === f.tx && c.ty === f.ty)))
@@ -84,12 +91,12 @@ export const ponds = {
       const { tx, ty } = d.dig; if (ctx.farmUntill) ctx.farmUntill(tx, ty);
       st[key(tx, ty)] = { n: 0, sp: [], day: ctx.clock ? ctx.clock.dayIndex : 0 }; ctx.setG(ctx.S.map, tx, ty, ctx.T.WATER, true); ctx.persist(); shoo(ctx);
       const p = ctx.S.player; if (p.hasAct && p.hasAct('hoe')) p.act('hoe', 0.5);
-      if (Math.floor(p.x / 16) === tx && Math.floor((p.y - 2) / 16) === ty) { for (const [dx, dy] of [[0, 1], [0, -1], [-1, 0], [1, 0]]) if (!ctx.isSolid(ctx.S.map, tx + dx, ty + dy)) { p.x = (tx + dx) * 16 + 8; p.y = (ty + dy) * 16 + 12; break; } }   /* đứng trên ô vừa thành nước → bước ra bờ */
+      const u = underTile(p); if (u.tx === tx && u.ty === ty) { for (const [dx, dy] of [[0, 1], [0, -1], [-1, 0], [1, 0]]) if (!ctx.isSolid(ctx.S.map, tx + dx, ty + dy)) { p.x = (tx + dx) * 16 + 8; p.y = (ty + dy) * 16 + 12; break; } }   /* đứng trên ô vừa thành nước → bước ra bờ */
       if (ctx.vfx) { ctx.vfx('dirt_puff', tx * 16 + 8, ty * 16 + 12); setTimeout(() => ctx.vfx && ctx.vfx('water_splash', tx * 16 + 8, ty * 16 + 12), 260); }   /* đất bung rồi nước trào lên */
       ctx.sfx('pond_dig'); ctx.toast(t.dug);
     } else if (d.stock) {
       const r = d.stock.rec; if (r.n >= MAX) { ctx.toast(t.full); return; }
-      const it = removeCarry(ctx, d.fi); if (!it) return;
+      const it = takeFish(ctx, !!(ctx.holding && ctx.holding('a_fishbig'))); if (!it) return;
       r.n++; r.sp.push(it.sp || 'perch'); ctx.persist();
       if (ctx.vfx) ctx.vfx('water_splash', d.stock.x * 16 + 8, d.stock.y * 16 + 12); ctx.sfx('splash');
     } else if (d.take) {
@@ -111,12 +118,18 @@ export const ponds = {
     const tile = sh && sh.pond_tile;
     for (const [k, p] of Object.entries(st)) {
       const [x, y] = k.split(',').map(Number), bx = x * 16 - cx, by = y * 16 - cy;
-      if (tile) drawJoined(g, tile, st, x, y, bx, by);
+      const pt = tile && ctx.ART.pondTile ? ctx.ART.pondTile(pondMask(st, x, y), tile) : null;   /* 2026-10-11 anh: ao bo góc, viền nâu dịu như ô đào đất */
+      if (pt) g.drawImage(pt, bx, by, 16, 16); else if (tile) drawJoined(g, tile, st, x, y, bx, by);
       for (let i = 0; i < 2; i++) {   /* gợn sáng: vạch xanh nhạt trôi ngang, nhấp nháy */
         const ph = (t * 0.6 + i * 0.5 + (x * 7 + y * 3) * 0.13) % 1, gx = Math.round(bx + 3 + ph * 9), gy = Math.round(by + 5 + i * 6 + ((x + y + i) % 2) * 2);
         if (Math.floor(t * 3 + i + x) % 3 !== 0) { g.fillStyle = '#bfe8ff'; g.fillRect(gx, gy, 3, 1); g.fillStyle = '#8fd0f5'; g.fillRect(gx + 3, gy, 1, 1); }
       }
-      for (let i = 0; i < Math.min(p.n, 2); i++) {   /* bóng cá: dáng cá pixel xanh nước đậm (không đen) */
+      const fishIm = sh && [sh.pondfish_koi, sh.pondfish_blue];   /* 2026-10-11 anh: cá trong ao phải nhận ra rõ → cá PixelLab bơi lượn (tối đa 3 con / ô) */
+      if (fishIm && fishIm[0]) { for (let i = 0; i < Math.min(p.n, 3); i++) {
+        const a = t * (0.6 + i * 0.27) + i * 2.1 + x * 1.3 + y, fx = bx + 8 + Math.cos(a) * 4, fy = by + 8 + Math.sin(a) * 3, right = -Math.sin(a) >= 0, im = fishIm[(i + x + y) % 2] || fishIm[0];
+        g.save(); g.translate(Math.round(fx), Math.round(fy)); if (right) g.scale(-1, 1); g.globalAlpha = 0.92; g.drawImage(im, 0, 0, im.width, im.height, -5, -5, 10, 10); g.restore();
+      } continue; }
+      for (let i = 0; i < Math.min(p.n, 2); i++) {   /* dự phòng khi chưa có ảnh: bóng cá pixel xanh nước đậm */
         const a = t * (0.7 + i * 0.35) + i * 2.1 + x, fx = Math.round(bx + 8 + Math.cos(a) * 4), fy = Math.round(by + 8 + Math.sin(a) * 3), dir = -Math.sin(a) >= 0 ? 1 : -1;
         g.fillStyle = '#245a8f'; g.fillRect(fx - 2, fy, 5, 2); g.fillRect(fx - 2 - dir * 2, fy - (dir > 0 ? 0 : 0), 1, 2); g.fillRect(fx - 3 * dir - (dir > 0 ? 0 : 0), fy - 1 + 0, 1, 1); g.fillRect(fx - 3 * dir, fy + 2, 1, 1);
       }

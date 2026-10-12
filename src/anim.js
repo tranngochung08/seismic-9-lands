@@ -2,7 +2,7 @@
 // 8 FPS cho đi/đứng/thú/vật lặp/cờ; động tác nhanh (chặt, đào, đập, giật cần) 12 FPS; VFX 12 FPS.
 // Clip trong manifest có thể ghi đè bằng trường `fps` / `impact` (khung va chạm, VFX bắn đúng khung này).
 export const FPS = { walk: 8, idle: 8, creature: 8, loop: 8, flag: 8, act: 8, actFast: 12, vfx: 12 };
-const FAST = new Set(['chop', 'mine', 'hammer', 'reel', 'attack']);
+const FAST = new Set(['chop', 'mine', 'hammer', 'reel', 'attack', 'shoot']);   /* shoot: 5 khung 0,42 s (petgun.js) */
 export function clipFps(name, clip) { return (clip && clip.fps) || (FAST.has(name) ? FPS.actFast : FPS.act); }
 
 // Đồng hồ hoạt hình (main.js cộng dt mỗi khung) + lệch pha ngẫu nhiên theo từng đối tượng để thú không bước đều răm rắp.

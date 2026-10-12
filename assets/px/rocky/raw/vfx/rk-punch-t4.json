@@ -1,0 +1,235 @@
+{
+ "frames": [
+  {
+   "filename": "rk-punch-t4 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  },
+  {
+   "filename": "rk-punch-t4 1.png",
+   "frame": {
+    "x": 46,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  },
+  {
+   "filename": "rk-punch-t4 2.png",
+   "frame": {
+    "x": 92,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  },
+  {
+   "filename": "rk-punch-t4 3.png",
+   "frame": {
+    "x": 0,
+    "y": 49,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  },
+  {
+   "filename": "rk-punch-t4 4.png",
+   "frame": {
+    "x": 46,
+    "y": 49,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  },
+  {
+   "filename": "rk-punch-t4 5.png",
+   "frame": {
+    "x": 92,
+    "y": 49,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  },
+  {
+   "filename": "rk-punch-t4 6.png",
+   "frame": {
+    "x": 0,
+    "y": 98,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  },
+  {
+   "filename": "rk-punch-t4 7.png",
+   "frame": {
+    "x": 46,
+    "y": 98,
+    "w": 46,
+    "h": 49
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 49
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 49
+   },
+   "pivot": {
+    "x": 0.43478260869565216,
+    "y": 0.46938775510204084
+   },
+   "duration": 56
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "rk-punch-t4.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 138,
+   "h": 147
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 20,
+   "y": 23
+  },
+  "frameTags": [
+   {
+    "name": "rk-punch-t4",
+    "from": 0,
+    "to": 7,
+    "direction": "forward"
+   }
+  ]
+ }
+}

@@ -70,7 +70,7 @@ const titleOpen = () => { try { const t = document.getElementById('title'); retu
 
 /* ---------------- nhạc theo vùng / ngày đêm ---------------- */
 let zone = null, want = null, playing = null, night = false, bossOn = false, credits = false, ambWant = null;
-const AMB_OF = { sea: 'waves', m1: 'shore', m4: 'drips', m5: 'breeze', m7: 'lava', m8: 'wind', trench: 'deep', u1: 'under' };
+const AMB_OF = { sea: 'waves', m1: 'shore', m4: 'drips', arena: 'drips', m5: 'breeze', m7: 'lava', m8: 'wind', trench: 'deep', u1: 'under' };
 function wantedTrack() {
   if (credits) return 'credits';
   if (!zone) return titleOpen() ? 'title' : null;

@@ -1,0 +1,287 @@
+{
+ "frames": [
+  {
+   "filename": "rk-book-t4 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 1.png",
+   "frame": {
+    "x": 43,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 2.png",
+   "frame": {
+    "x": 86,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 3.png",
+   "frame": {
+    "x": 129,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 4.png",
+   "frame": {
+    "x": 0,
+    "y": 78,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 5.png",
+   "frame": {
+    "x": 43,
+    "y": 78,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 6.png",
+   "frame": {
+    "x": 86,
+    "y": 78,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 7.png",
+   "frame": {
+    "x": 129,
+    "y": 78,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 8.png",
+   "frame": {
+    "x": 0,
+    "y": 156,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  },
+  {
+   "filename": "rk-book-t4 9.png",
+   "frame": {
+    "x": 43,
+    "y": 156,
+    "w": 43,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.4883720930232558,
+    "y": 0.782051282051282
+   },
+   "duration": 67
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "rk-book-t4.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 172,
+   "h": 234
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 21,
+   "y": 61
+  },
+  "frameTags": [
+   {
+    "name": "rk-book-t4",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   }
+  ]
+ }
+}

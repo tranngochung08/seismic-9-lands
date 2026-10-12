@@ -7,6 +7,7 @@
 // while we hold the player on a plank we set S.sea.riding = 'plank' so the raft system stops re-applying its defaults.
 import { NPC } from '../entities.js';
 import { mkCanvas, HOOK } from '../gfx.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -233,7 +234,7 @@ function drawPlank(g, ent) {
   const x = Math.round(ent.x), y = Math.round(ent.y), bob = Math.round(Math.sin(st.t * 2.2) * 1.5);
   g.fillStyle = 'rgba(20,60,110,.25)'; g.beginPath(); g.ellipse(x, y + 2, 11, 4, 0, 0, TAU); g.fill();
   g.drawImage(PLANK, x - 9, y - 5 + bob);
-  g.drawImage(ent.sheet, 0, 0, 16, 14, x - 8, y - 17 + bob, 16, 14);          // kneeling: head + torso from your own sheet
+  drawBody(g, ent, 0, 0, 14, x - 8, y - 17 + bob);          // kneeling: head + torso from your own sheet
   g.fillStyle = 'rgba(223,243,255,.6)'; g.fillRect(x - 12, y + 1 + bob, 4, 1); g.fillRect(x + 9, y + bob, 3, 1);
 }
 const PLANK_HAND = 0.45;   /* anh yêu cầu 2026-10-10: trên ván vẫn tự khua tay chèo được (chậm), dòng nước vẫn đẩy thêm */

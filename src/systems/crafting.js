@@ -18,18 +18,16 @@ const STR = {
     names: {
       sword1: 'Wooden sword', sword2: 'Stone sword', sword3: 'Iron sword', sword4: 'Obsidian sword', sword5: 'Crystal sword', sword6: 'Seismic sword', revive: 'Revival tinder',
       axe1: 'Axe I', pick1: 'Pickaxe I', shovel: 'Shovel', scythe: 'Scythe', knife: 'Knife', torch: 'Torch',
-      bucket1: 'Bucket', rope: 'Rope', lasso: 'Lasso', trap: 'Trap', saddle: 'Saddle', raft: 'Raft', wax: 'Ski wax',
-      cage1: 'Cage I', cart1: 'Livestock cart I', cage2: 'Iron cage II', cart2: 'Iron-wheel cart II', bucket3: 'Crystal bucket III', cage3: 'Obsidian cage III', cart3: 'Obsidian cart III',
-      charcoal: 'Charcoal', iron: 'Iron bar', glass: 'Glass', axe2: 'Axe II', pick2: 'Pickaxe II', rod2: 'Fishing rod II', bucket2: 'Iron bucket',
+      rope: 'Rope', raft: 'Raft', wax: 'Ski wax',
+      charcoal: 'Charcoal', iron: 'Iron bar', glass: 'Glass', axe2: 'Axe II', pick2: 'Pickaxe II', rod2: 'Fishing rod II',
       sail: 'Sail', cape: 'Rocky cape', coat: 'Warm coat',
       axe3: 'Axe III', pick3: 'Pickaxe III', tires: 'Obsidian tires', armor: 'Rocky armour', lavaglass: 'Lava glass',
       lamp: 'Crystal lamp', charge: 'Rocky charge', rod3: 'Fishing rod III',
       pen1: 'Wooden pen', pen2: 'Stone pen', scarecrow: 'Rocky scarecrow'
     },
     notes: {
-      rope: 'Braided palm leaves', lasso: 'Catch big animals', trap: 'Set it for small game', saddle: 'Ride a horse',
-      raft: 'Cross open water', wax: 'Ski down the snow', charcoal: 'Furnace fuel', bucket1: 'Holds 3 fish', bucket2: 'Holds 5 fish · lava-proof', bucket3: 'Holds 8 fish',
-      cage1: 'Holds 3 small animals', cage2: 'Holds 5 small animals', cage3: 'Holds 8 small animals', cart1: 'Hauls 2 cows/sheep', cart2: 'Hauls 4 cows/sheep', cart3: 'Hauls 6 cows/sheep',
+      rope: 'Braided palm leaves',
+      raft: 'Cross open water', wax: 'Ski down the snow', charcoal: 'Furnace fuel', pick2: 'Mines harder rock · scoops lava',
       sail: 'Faster raft', cape: 'Rocky glides', coat: 'Survive the cold', tires: 'Drive over lava rock',
       armor: 'Rocky takes hits', lavaglass: 'Melted with lava', lamp: 'Lights the core', charge: 'Wakes a Rocky',
       pen1: 'Place it in your nation\'s plot · 4 small / 2 big animals', pen2: 'Twice the room', scarecrow: 'Keeps birds off the crops'
@@ -45,18 +43,16 @@ const STR = {
     names: {
       sword1: 'Kiếm gỗ', sword2: 'Kiếm đá', sword3: 'Kiếm sắt', sword4: 'Kiếm obsidian', sword5: 'Kiếm pha lê', sword6: 'Kiếm Seismic', revive: 'Bùi nhùi hồi sinh',
       axe1: 'Rìu I', pick1: 'Cuốc I', shovel: 'Xẻng', scythe: 'Liềm', knife: 'Dao', torch: 'Đuốc',
-      bucket1: 'Xô', rope: 'Dây thừng', lasso: 'Thòng lọng', trap: 'Bẫy', saddle: 'Yên ngựa', raft: 'Bè', wax: 'Sáp trượt',
-      cage1: 'Lồng I', cart1: 'Xe chở vật nuôi I', cage2: 'Lồng sắt II', cart2: 'Xe bánh sắt II', bucket3: 'Xô tinh thể III', cage3: 'Lồng obsidian III', cart3: 'Xe obsidian III',
-      charcoal: 'Than', iron: 'Thanh sắt', glass: 'Kính', axe2: 'Rìu II', pick2: 'Cuốc II', rod2: 'Cần câu II', bucket2: 'Xô sắt',
+      rope: 'Dây thừng', raft: 'Bè', wax: 'Sáp trượt',
+      charcoal: 'Than', iron: 'Thanh sắt', glass: 'Kính', axe2: 'Rìu II', pick2: 'Cuốc II', rod2: 'Cần câu II',
       sail: 'Buồm', cape: 'Áo choàng Rocky', coat: 'Áo ấm',
       axe3: 'Rìu III', pick3: 'Cuốc III', tires: 'Lốp obsidian', armor: 'Giáp Rocky', lavaglass: 'Kính dung nham',
       lamp: 'Đèn tinh thể', charge: 'Pin Rocky', rod3: 'Cần câu III',
       pen1: 'Chuồng gỗ', pen2: 'Chuồng đá', scarecrow: 'Bù nhìn Rocky'
     },
     notes: {
-      rope: 'Bện từ lá cọ', lasso: 'Bắt thú lớn', trap: 'Đặt bẫy thú nhỏ', saddle: 'Cưỡi ngựa',
-      raft: 'Vượt mặt nước', wax: 'Trượt trên tuyết', charcoal: 'Nhiên liệu lò', bucket1: 'Đựng 3 cá', bucket2: 'Đựng 5 cá · chịu dung nham', bucket3: 'Đựng 8 cá',
-      cage1: 'Nhốt 3 thú nhỏ', cage2: 'Nhốt 5 thú nhỏ', cage3: 'Nhốt 8 thú nhỏ', cart1: 'Chở 2 bò/cừu', cart2: 'Chở 4 bò/cừu', cart3: 'Chở 6 bò/cừu',
+      rope: 'Bện từ lá cọ',
+      raft: 'Vượt mặt nước', wax: 'Trượt trên tuyết', charcoal: 'Nhiên liệu lò', pick2: 'Đào đá cứng · múc dung nham',
       sail: 'Bè chạy nhanh hơn', cape: 'Rocky lượn được', coat: 'Chịu lạnh', tires: 'Chạy trên đá lửa',
       armor: 'Rocky chịu đòn', lavaglass: 'Nấu bằng dung nham', lamp: 'Thắp sáng lõi', charge: 'Đánh thức Rocky',
       pen1: 'Đặt trong plot nước mình · 4 thú nhỏ / 2 gia súc', pen2: 'Chứa gấp đôi', scarecrow: 'Đuổi chim khỏi ruộng'
@@ -91,13 +87,8 @@ const RECIPES = [
   { id: 'scythe', st: 'bench', icon: '🌾', tool: 'scythe', tier: 1, in: { wood: 3, rock: 1 } },
   { id: 'knife', st: 'bench', icon: '🔪', tool: 'knife', tier: 1, in: { rock: 2, wood: 1 } },
   { id: 'torch', st: 'bench', icon: '🔦', tool: 'torch', tier: 1, in: { wood: 2, resin: 1 } },
-  { id: 'bucket1', st: 'bench', icon: '🪣', tool: 'bucket', tier: 1, in: { wood: 3, resin: 1 } },
   { id: 'rope', st: 'bench', icon: '🪢', item: 'rope', n: 1, in: { leaf: 3 } },
-  { id: 'lasso', st: 'bench', icon: '🪢', tool: 'lasso', tier: 1, in: { rope: 3 } },
-  { id: 'trap', st: 'bench', icon: '🪤', tool: 'trap', tier: 1, in: { wood: 4, rope: 2 } },
-  { id: 'saddle', st: 'bench', icon: '🐎', tool: 'saddle', tier: 1, in: { fur: 2, rope: 2, wood: 1 } },
-  { id: 'cage1', st: 'bench', icon: '🧺', tool: 'cage', tier: 1, in: { wood: 4, rope: 2 } },
-  { id: 'cart1', st: 'bench', icon: '🛒', tool: 'cart', tier: 1, in: { wood: 8, rope: 3 } },
+  /* 2026-10-11 anh bỏ thòng lọng, bẫy, yên ngựa, xe chở vật nuôi I/II/III: thỏ bắt tay, ngựa cưỡi trần, bò/cừu bế trên đầu */
   { id: 'raft', st: 'bench', icon: '🛶', flag: ['vehicles', 'raft'], in: { wood: 6, rope: 2 } },
   { id: 'wax', st: 'bench', icon: '🎿', flag: ['vehicles', 'wax'], in: { wax: 2 } },
   /* F03 (plan-17): chuồng & bù nhìn là VẬT PHẨM đặt được (tag placeable trong items.js) — pens.js / farm.js xử lý đặt xuống */
@@ -111,9 +102,6 @@ const RECIPES = [
   { id: 'sword3', st: 'furnace', icon: '⚔', tool: 'sword', tier: 3, in: { iron: 4, wood: 1, fang: 2 } },
   { id: 'pick2', st: 'furnace', icon: '⛏', tool: 'pickaxe', tier: 2, in: { iron: 3, wood: 2 } },
   { id: 'rod2', st: 'furnace', icon: '🎣', tool: 'rod', tier: 2, in: { iron: 1, rope: 2, wood: 2 } },
-  { id: 'bucket2', st: 'furnace', icon: '🪣', tool: 'bucket', tier: 2, in: { iron: 2 } },
-  { id: 'cage2', st: 'furnace', icon: '🧺', tool: 'cage', tier: 2, in: { iron: 3, rope: 2 } },
-  { id: 'cart2', st: 'furnace', icon: '🛒', tool: 'cart', tier: 2, in: { iron: 3, wood: 4 } },
   { id: 'pen2', st: 'furnace', icon: '🏛', item: 'pen2', n: 1, in: { rock: 8, iron: 4 } },   /* F03: chuồng đá, sức chứa gấp đôi */
   // --- loom ---
   { id: 'sail', st: 'loom', icon: '⛵', flag: ['vehicles', 'sail'], in: { wool: 6, rope: 2 } },
@@ -126,15 +114,12 @@ const RECIPES = [
   { id: 'tires', st: 'forge', icon: '🛞', flag: ['vehicles', 'tires'], in: { obsidian: 3, rope: 2 } },
   { id: 'armor', st: 'forge', icon: '🛡', flag: ['rocky', 'armor'], in: { wormhide: 1, obsidian: 4 } },
   { id: 'lavaglass', st: 'forge', icon: '🪟', item: 'glass', n: 5, in: { lava: 1, glass: 2 } },
-  { id: 'cage3', st: 'forge', icon: '🧺', tool: 'cage', tier: 3, in: { obsidian: 2, iron: 2 } },
-  { id: 'cart3', st: 'forge', icon: '🛒', tool: 'cart', tier: 3, in: { obsidian: 3, iron: 2 } },
   // --- crystal altar ---
   { id: 'lamp', st: 'altar', icon: '🏮', count: ['crafting', 'lamps'], in: { crystal: 2, glass: 1 } },
   { id: 'charge', st: 'altar', icon: '⚡', count: ['rocky', 'charged'], in: { crystal: 3 } },
   { id: 'rod3', st: 'altar', icon: '🎣', tool: 'rod', tier: 3, in: { crystal: 1, iron: 2, rope: 3 } },
   { id: 'sword5', st: 'altar', icon: '⚔', tool: 'sword', tier: 5, in: { crystal: 4, obsidian: 2, ember: 2 } },
-  { id: 'sword6', st: 'altar', icon: '⚔', tool: 'sword', tier: 6, in: { stone: 30, crystal: 4, shard: 3 } },
-  { id: 'bucket3', st: 'altar', icon: '🪣', tool: 'bucket', tier: 3, in: { crystal: 1, iron: 2 } }
+  { id: 'sword6', st: 'altar', icon: '⚔', tool: 'sword', tier: 6, in: { stone: 30, crystal: 4, shard: 3 } }
 ];
 const FLAG_ROWS = [
   ['vehicles', 'raft', '🛶'], ['vehicles', 'sail', '⛵'], ['vehicles', 'wax', '🎿'], ['vehicles', 'tires', '🛞'],

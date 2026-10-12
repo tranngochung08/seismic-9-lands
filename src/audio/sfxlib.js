@@ -221,6 +221,40 @@ export const SFX_LIB = {
     { w: 'sq', f: 300, f2: 70, a: 0.001, d: 0.14, v: 0.17, lp: 1800 },
     { w: 'sin', f: 70, f2: 40, a: 0.001, d: 0.2, v: 0.32 },
     { w: 'sin', t: 0.02, f: 1568, a: 0.001, d: 0.3, v: 0.08 }, { w: 'sin', t: 0.02, f: 2349, a: 0.001, d: 0.25, v: 0.05 }] }],
+  /* 2026-10-11 spar.js — trận tập với bạn tập */
+  spar_bell: ['fight', 'Chuông vào trận tập (2 tiếng)', { seeds: 1, vary: 0, rev: 0.3, v: [
+    { w: 'sin', f: 1320, a: 0.001, d: 0.7, v: 0.11 }, { w: 'sin', f: 3310, a: 0.001, d: 0.3, v: 0.03 },
+    { w: 'sin', t: 0.2, f: 1320, a: 0.001, d: 0.9, v: 0.1 }, { w: 'sin', t: 0.2, f: 3310, a: 0.001, d: 0.35, v: 0.03 }] }],
+  spar_charge: ['fight', 'Bạn tập lấy đà (báo trước đòn)', { seeds: 2, vary: 0.05, v: [
+    { w: 'tri', f: 180, f2: 420, a: 0.03, d: 0.45, v: 0.08 }, { w: 'noise', a: 0.1, d: 0.3, v: 0.05, bp: 500, bp2: 1400, bq: 2 }] }],
+  spar_thud: ['fight', 'Đòn bạn tập giáng xuống đất', { seeds: 3, vary: 0.06, v: [
+    { w: 'sin', f: 110, f2: 42, a: 0.001, d: 0.28, v: 0.3 }, { w: 'noise', a: 0.001, d: 0.12, v: 0.18, lp: 900 }] }],
+  spar_whoosh: ['fight', 'Bạn tập lao / quất (vút)', { seeds: 3, vary: 0.06, v: [
+    { w: 'noise', a: 0.04, d: 0.2, v: 0.2, bp: 500, bp2: 2600, bq: 1.6 }, { w: 'sin', f: 220, f2: 120, a: 0.01, d: 0.15, v: 0.06 }] }],
+  punch_light: ['fight', 'Cú đấm nhẹ (jab) trúng', { seeds: 3, vary: 0.07, v: [
+    { w: 'noise', a: 0.0005, d: 0.04, v: 0.2, bp: 1200, bq: 1 }, { w: 'sin', f: 190, f2: 90, a: 0.001, d: 0.07, v: 0.18 }] }],
+  punch_heavy: ['fight', 'Cú đấm nặng (móc) trúng — bịch trầm', { seeds: 2, vary: 0.05, rev: 0.08, v: [
+    { w: 'noise', a: 0.0005, d: 0.09, v: 0.3, lp: 1600 }, { w: 'sin', f: 120, f2: 38, a: 0.001, d: 0.3, v: 0.38 },
+    { w: 'sq', f: 160, f2: 60, a: 0.001, d: 0.12, v: 0.1, lp: 900 }] }],
+  knock_whoosh: ['fight', 'Bị đánh bay (vút gió)', { seeds: 2, vary: 0.05, v: [
+    { w: 'noise', a: 0.02, d: 0.35, v: 0.22, bp: 300, bp2: 2200, bq: 1.4 }, { w: 'sin', f: 260, f2: 520, a: 0.01, d: 0.25, v: 0.05 }] }],
+  knock_land: ['fight', 'Rơi bịch xuống đất', { seeds: 3, vary: 0.06, v: [
+    { w: 'sin', f: 95, f2: 40, a: 0.001, d: 0.25, v: 0.34 }, { w: 'noise', a: 0.001, d: 0.14, v: 0.2, lp: 700 }] }],
+  knock_wall: ['fight', 'Đập vào tường', { seeds: 2, vary: 0.05, rev: 0.06, v: [
+    { w: 'noise', a: 0.0005, d: 0.1, v: 0.3, lp: 1400 }, { w: 'sin', f: 140, f2: 55, a: 0.001, d: 0.22, v: 0.3 }, { w: 'tri', f: 420, f2: 200, a: 0.001, d: 0.06, v: 0.06 }] }],
+  spar_crow: ['fight', 'Mào Gà gáy (ò ó o — kiểu gà trống, giọng khàn)', { seeds: 1, vary: 0.03, rev: 0.15, v: [
+    { w: 'sq', duty: 0.25, f: 520, f2: 780, a: 0.01, d: 0.12, v: 0.12, lp: 2600 },
+    { w: 'sq', duty: 0.25, t: 0.13, f: 820, f2: 980, a: 0.01, d: 0.14, v: 0.13, lp: 2800 },
+    { w: 'sq', duty: 0.3, t: 0.3, f: 1040, f2: 620, a: 0.02, d: 0.5, v: 0.13, lp: 2600, vib: [9, 0.35] },
+    { w: 'noise', t: 0.3, a: 0.02, d: 0.45, v: 0.05, bp: 1400, bq: 2 }] }],
+  spar_grunt: ['fight', 'Bạn tập rặn sức (hự!) khi nhấc / quật', { seeds: 2, vary: 0.06, v: [
+    { w: 'sq', duty: 0.3, f: 180, f2: 120, a: 0.01, d: 0.22, v: 0.14, lp: 900, vib: [18, 0.4] }, { w: 'noise', a: 0.01, d: 0.18, v: 0.08, bp: 500, bq: 1.5 }] }],
+  spar_roar: ['fight', 'Gầm biến hình (bò quỷ)', { seeds: 2, vary: 0.04, v: [
+    { w: 'saw', a: 0.06, d: 0.9, v: 0.22, f: 95, f2: 60, lp: 900, vib: [7, 0.5] }, { w: 'noise', a: 0.05, d: 0.8, v: 0.2, bp: 380, bp2: 220, bq: 1.2 }, { w: 'sq', a: 0.08, d: 0.7, v: 0.07, f: 140, f2: 80, lp: 700 }] }],
+  spar_whipcrack: ['fight', 'Ria quất (vút + tách roi)', { seeds: 2, vary: 0.05, v: [
+    { w: 'noise', a: 0.03, d: 0.16, v: 0.16, bp: 700, bp2: 3200, bq: 1.6 }, { w: 'noise', t: 0.15, a: 0.0005, d: 0.04, v: 0.32, hp: 2500 }, { w: 'sq', t: 0.15, f: 1900, f2: 900, a: 0.0005, d: 0.05, v: 0.06, lp: 5000 }] }],
+  spar_bow: ['fight', 'Kết thúc trận tập (cúi chào)', { seeds: 1, vary: 0, rev: 0.2, v: [
+    sxNote(659, 0, 0.14, 0.1, 'tri', { lp: 0 }), sxNote(523, 0.13, 0.32, 0.1, 'tri', { lp: 0 })] }],
   hurt: ['fight', 'Người chơi bị đánh', { seeds: 3, vary: 0.05, v: [
     { w: 'sq', f: 420, f2: 200, a: 0.002, d: 0.14, v: 0.12, lp: 1600, vib: [30, 0.5] },
     { w: 'noise', a: 0.001, d: 0.06, v: 0.17, lp: 1500 },
@@ -298,6 +332,19 @@ export const SFX_LIB = {
     { grains: 28, span: 0.8, dens: 0.7, w: 'noise', a: 0.0005, d: [0.004, 0.015], v: [0.05, 0.14], bp: [1500, 5000], bq: 2 },
     { w: 'saw', f: 220, f2: 110, a: 0.05, h: 0.3, d: 0.4, v: 0.05, lp: 800, vib: [5, 0.3] },
     { w: 'sin', t: 0.75, f: 90, f2: 50, a: 0.005, d: 0.3, v: 0.28 }] }],
+  /* 2026-10-11 Súng Hóa Đá (systems/petgun.js) */
+  petgun_fire: ['magic', 'Súng Hóa Đá bắn (vút pha lê)', { seeds: 3, vary: 0.05, rev: 0.2, v: [
+    { w: 'sq', duty: 0.25, f: 1400, f2: 380, a: 0.002, d: 0.16, v: 0.13, lp: 3800 },
+    { w: 'sin', f: 2200, f2: 900, a: 0.002, d: 0.12, v: 0.08 },
+    { w: 'noise', a: 0.002, d: 0.1, v: 0.1, bp: 3000, bp2: 1200, bq: 1 }, sxSparkle(0.03, 3, 0.15, [0.02, 0.04])] }],
+  petrify_hit: ['magic', 'Tia hóa đá trúng (đá đông cứng ngắn)', { seeds: 3, vary: 0.05, rev: 0.15, v: [
+    { w: 'noise', a: 0.001, d: 0.06, v: 0.2, bp: 2600, bq: 1.6 },
+    { w: 'tri', f: 520, f2: 260, a: 0.001, d: 0.09, v: 0.12 },
+    sxCrumble(0.02, 8, 0.18, 1500, 4500, [0.03, 0.08])] }],
+  stone_crumble: ['magic', 'Tượng đá vỡ vụn', { seeds: 2, vary: 0.05, rev: 0.2, v: [
+    { w: 'noise', a: 0.002, d: 0.35, v: 0.22, lp: 1400, lp2: 300 },
+    { w: 'sin', f: 95, f2: 45, a: 0.002, d: 0.22, v: 0.24 },
+    sxCrumble(0.03, 16, 0.5), ...sxKnock(0.12, 180, 0.16)] }],
   unstone: ['magic', 'Giải đá (pha lê vỡ + chuông)', { seeds: 2, vary: 0.02, rev: 0.35, v: [
     { w: 'noise', a: 0.0005, d: 0.12, v: 0.24, hp: 3000 },
     { grains: 14, span: 0.5, dens: 1.6, w: 'sin', f: [2500, 6000], a: 0.0005, d: [0.04, 0.15], v: [0.03, 0.07] },
@@ -374,6 +421,8 @@ export const SFX_LIB = {
   hover: ['ui', 'Rê chuột qua nút', { seeds: 2, vary: 0.03, v: [{ w: 'sin', f: 2400, a: 0.001, d: 0.015, v: 0.055 }] }],
   tab: ['ui', 'Đổi thẻ', { seeds: 1, vary: 0, v: [
     { w: 'sq', duty: 0.25, f: 880, a: 0.001, d: 0.03, v: 0.07, lp: 3500 }, { w: 'sq', duty: 0.25, t: 0.045, f: 1320, a: 0.001, d: 0.04, v: 0.07, lp: 3500 }] }],
+  target_lock: ['ui', 'Khóa mục tiêu (2 nốt lên, gọn)', { seeds: 2, vary: 0.02, v: [{ w: 'sq', duty: 0.125, f: 988, a: 0.001, d: 0.04, v: 0.06, lp: 4200 }, { w: 'sq', duty: 0.125, t: 0.045, f: 1480, a: 0.001, d: 0.06, v: 0.06, lp: 4200 }, { w: 'tri', f: 494, a: 0.001, d: 0.05, v: 0.04 }] }],
+  target_clear: ['ui', 'Bỏ khóa mục tiêu (1 nốt xuống)', { seeds: 1, vary: 0.02, v: [{ w: 'sq', duty: 0.125, f: 880, f2: 587, a: 0.001, d: 0.06, v: 0.05, lp: 3600 }] }],
   slot_select: ['ui', 'Chọn ô thanh công cụ', { seeds: 2, vary: 0.02, v: [{ w: 'sq', duty: 0.125, f: 1760, a: 0.001, d: 0.02, v: 0.05, lp: 5000 }, { w: 'tri', f: 440, a: 0.001, d: 0.02, v: 0.04 }] }],
   menu_open: ['ui', 'Mở túi / bảng', { seeds: 1, vary: 0, v: [
     { w: 'noise', a: 0.04, d: 0.12, v: 0.05, bp: 1200, bp2: 3500, bq: 1.2 },

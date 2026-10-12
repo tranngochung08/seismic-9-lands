@@ -4,7 +4,7 @@ import { getCarry, removeCarry, clearCarry } from './animals.js';
 const STR = {
   en: {
     sign: 'Trader', near: 'Trade', title: 'Trader',
-    lead: 'Sell what you are carrying — hands, bucket, cage and cart.',
+    lead: 'Sell what you are carrying in your hands — and the animals and fish in your bag.',
     head: 'On your head', goods: 'Goods', shop: 'For sale',
     stones: 'Stones', sell: 'Sell', sell1: 'Sell 1', sellAll: 'Sell all', close: 'Close', buy: 'Buy', owned: 'Owned ✓',
     empty: 'Your head is empty — go catch something!',
@@ -16,7 +16,7 @@ const STR = {
   },
   vi: {
     sign: 'Thương nhân', near: 'Mua bán', title: 'Thương nhân',
-    lead: 'Bán thứ đang mang theo — trên tay, trong xô, lồng và xe chở.',
+    lead: 'Bán thứ đang bế trên tay — và thú, cá trong túi.',
     head: 'Trên đầu bạn', goods: 'Hàng hóa', shop: 'Bán cho bạn',
     stones: 'Đá', sell: 'Bán', sell1: 'Bán 1', sellAll: 'Bán hết', close: 'Đóng', buy: 'Mua', owned: 'Đã có ✓',
     empty: 'Trên đầu chưa có gì — đi bắt thú đi!',
@@ -31,6 +31,7 @@ const L = ctx => STR[ctx.lang() === 'vi' ? 'vi' : 'en'];
 
 const PRICE = { fish: 2, fishBig: 5, chicken: 3, bird: 4, cow: 6, sheep: 5, rabbit: 3, crab: 3, bat: 4, wood: 1, squid: 4, goldfish: 12, pearl: 8, shell: 1, seagem: 5 };
 for (const k of ['fish', 'chicken', 'bird', 'cow', 'sheep', 'rabbit', 'crab', 'bat', 'squid', 'goldfish']) PRICE['a_' + k] = PRICE[k];   /* thú đã ném vào túi (phím T) */
+PRICE.a_fishbig = PRICE.fishBig;   /* 2026-10-11 bỏ xô: cá câu được vào thẳng túi, cá to giữ giá 5 */
 const ROD_PRICE = 8;
 /* F02: Thương nhân bán hạt 2 đá/hạt, chỉ hạt đúng mùa hiện tại (tag mùa hoặc 'any') */
 const SEED_PRICE = 2;
@@ -84,6 +85,8 @@ function carryRow(ctx, it, i) {
 }
 // bag goods the trader buys: wood always, sea finds only once the player has some
 const GOODS = ['wood', 'pearl', 'shell', 'seagem'];
+GOODS.push('a_fish', 'a_fishbig', 'a_goldfish', 'a_squid');   /* cá trong túi (bỏ xô 2026-10-11) — chỉ hiện khi có */
+GOODS.push('a_cow', 'a_sheep', 'a_chicken', 'a_bird', 'a_rabbit', 'a_crab', 'a_bat');   /* thú cất trong túi (phím T; bỏ lồng + xe chở 2026-10-11) — chỉ hiện khi có */
 GOODS.push('turnip', 'strawberry', 'tomato', 'corn', 'pumpkin', 'yam', 'starmush', 'quakeflower', 'egg', 'milk', 'wool', 'fur_rabbit');   /* F02: nông sản bán được ở quầy (A0 thêm dòng) */
 function goodsRow(ctx, id, n) {
   const S = L(ctx), dis = n > 0 ? '' : ' disabled';
@@ -179,7 +182,8 @@ export function sellFromBag(ctx, id, how) {
   if (idx() >= 0) { do { const it = removeCarry(ctx, idx()); if (!it) break; earned += priceOf(it); sold++; } while (how === 'all' && idx() >= 0); }
   else { const have = inv[id] || 0; if (have <= 0 || !PRICE[id]) return 0; sold = how === 'all' ? have : 1; inv[id] = have - sold; earned = sold * PRICE[id]; }
   if (!sold) return 0;
-  ctx.give('stone', earned, stall ? stall.x * TILE + 16 : undefined, stall ? (stall.y + 2) * TILE : undefined); ctx.persist(); ctx.sfx && ctx.sfx('sell'); ctx.toast(S.got(earned));
+  /* 2026-10-11 anh: bán qua TÚI ở vùng không có quầy (M1…) không nhận được đá — trước đây rơi đá ở toạ độ quầy (không có → mất). Giờ cộng THẲNG vào túi */
+  ctx.bag.add('stone', earned); if (ctx.flyToSlot) try { ctx.flyToSlot('stone'); } catch (e) { } ctx.persist(); ctx.sfx && ctx.sfx('sell'); ctx.toast(S.got(earned));
   return earned;
 }
 function sellGoods(ctx, id, how) {

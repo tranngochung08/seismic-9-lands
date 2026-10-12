@@ -1,6 +1,7 @@
 // sea_life.js — life on the Sea of Origins: castaways clinging to driftwood, message bottles from real artists,
 // the whale you can ride, and the hermit's buoy race. Everyone here is a real member of the roster. See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -456,7 +457,7 @@ export const seaLife = {
       out.push({ y: c.y - 200, f: () => { g.strokeStyle = 'rgba(223,240,255,.5)'; g.lineWidth = 1; g.beginPath(); g.ellipse(x, y + 1, 12 + Math.sin(c.ph) * 1.5, 4, 0, 0, TAU); g.stroke(); } });
       out.push({ y: c.y, f: () => {
         g.drawImage(BOARD, x - 9, y - 4);
-        g.drawImage(c.sheet, 0, 0, 16, 13, x - 8, y - 16, 16, 13);           // head + shoulders above the water
+        drawBody(g, c, 0, 0, 13, x - 8, y - 16);           // head + shoulders above the water
         g.fillStyle = 'rgba(80,160,200,.55)'; g.fillRect(x - 8, y - 3, 16, 1); // the water line
         const t = ctx.S.time * 2 + c.ph; g.fillStyle = c.sheet ? '#f2ebe0' : '#fff';
         if (Math.sin(t) > 0.3) { g.fillStyle = OUT; g.fillRect(x + 8, y - 20 + Math.round(Math.sin(t * 3) * 2), 3, 8); g.fillStyle = '#e8b48e'; g.fillRect(x + 9, y - 19 + Math.round(Math.sin(t * 3) * 2), 1, 6); } // waving arm
@@ -475,7 +476,7 @@ export const seaLife = {
       aboard.forEach((c, i) => {
         const ox = (i === 0 ? -11 : 11), bob = Math.round(Math.sin(ctx.S.time * 2.2 + i) * 1);
         const x = Math.round(p.x + ox) - cx, y = Math.round(p.y) - cy + bob - (ctx.S.sea && ctx.S.sea.riding === 'whale' ? 30 : 0);
-        out.push({ y: p.y + 0.4 + i * 0.01, f: () => g.drawImage(c.sheet, 0, (fl ? 1 : p.dir === 2 ? 2 : p.dir === 3 ? 3 : 0) * 20, 16, 20, x - 8, y - 18, 16, 20) });
+        out.push({ y: p.y + 0.4 + i * 0.01, f: () => drawBody(g, c, 0, (fl ? 1 : p.dir === 2 ? 2 : p.dir === 3 ? 3 : 0) * 20, 20, x - 8, y - 18) });
       });
     }
     return out;

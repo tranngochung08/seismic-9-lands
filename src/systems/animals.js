@@ -1,8 +1,11 @@
 // animals.js — wild animals: land animals are caught instantly and ride on your head,
 // fish need a rod, live in a per-zone density field and fight back on the line. See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
+import { STONE_FILTER } from './petgun.js';
 import { ART } from '../art.js';
 import { FPS, loopFrame, phase, waterDraw } from '../anim.js';
+import { keyHint, isTouchUI } from '../hud.js';
+import { thirst, drawThirsty } from './thirst.js';   /* 2026-10-11 anh: thú thấy nước chỉ uống, không xuống */   /* polish 2026-10-10: cảm ứng → Ⓐ / ☰ thay E / Esc */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -119,8 +122,8 @@ const SPR = { cow: HOOK.creature('cow', build(16, 14, cowArt)), chicken: HOOK.cr
 const HELD = { fish: build(14, 9, heldFishArt(false)), fishBig: build(18, 11, heldFishArt(true)) };
 /* ---------------------------------------------------------------- plan-9: vẽ đồ mang theo (tay / xô / lồng / xe) — trung tâm cho mọi module
    HEAD_SPR: kind → [khung][lật]; ecology/sea_dive đăng ký sprite của mình bằng registerHead. Đồ đựng: canvas vẽ code, art.js thay ảnh PixelLab
-   qua HOOK.image('carry_<tool><tier>[_s|e|n]'). Ô: tay = đội đầu như cũ; lồng = đội đầu, thú ngồi trong, song lồng đè mờ; xô = cầm bên hông,
-   cá ló đầu; xe = kéo sau lưng ngược hướng đi, bò/cừu ngồi trên thùng (thu 75 %). */
+   qua HOOK.image('carry_<tool><tier>[_s|e|n]'). Ô: tay = đội đầu như cũ (lồng bỏ 2026-10-11);
+   xe = kéo sau lưng ngược hướng đi, bò/cừu ngồi trên thùng (thu 75 %). Xô đựng cá đã bỏ 2026-10-11 (cá vào túi). */
 /* ---- plan-11: thú đi 4 hướng. set.dir = { s, e, n } do art.js gắn (mỗi hàng 4 khung [khung][lật]); face 's'|'e'|'n'|'w' từ hướng đi ---- */
 export function faceOfV(vx, vy) { return Math.abs(vx) >= Math.abs(vy) ? (vx >= 0 ? 'e' : 'w') : (vy >= 0 ? 's' : 'n'); }
 export function faceOf(a) { return faceOfV(Math.cos(a.ang), Math.sin(a.ang)); }
@@ -157,35 +160,25 @@ function speciesSet(sp, big) {
   };
   return (SP_SET[key] = [[make(false, false), make(false, true)], [make(true, false), make(true, true)]]);
 }
-function contArt(w, h, fn) { const c = mkCanvas(w, h); fn(c.getContext('2d')); return c; }
-const CONT_IMG = {};
-for (let t = 1; t <= 3; t++) {
-  const wood = ['', '#9c6b3a', '#8a8f9a', '#6b3fa0'][t], dark = ['', '#5a3a1e', '#4a4f5a', '#3a1f60'][t];
-  CONT_IMG['bucket' + t] = HOOK.image('carry_bucket' + t, contArt(10, 10, g => { g.fillStyle = dark; g.fillRect(1, 2, 8, 8); g.fillStyle = wood; g.fillRect(2, 3, 6, 6); g.fillStyle = dark; g.fillRect(2, 0, 6, 1); g.fillRect(1, 1, 1, 2); g.fillRect(8, 1, 1, 2); }));
-  CONT_IMG['cage' + t] = HOOK.image('carry_cage' + t, contArt(20, 16, g => { g.fillStyle = dark; g.fillRect(0, 0, 20, 2); g.fillRect(0, 14, 20, 2); for (let x = 0; x < 20; x += 4) g.fillRect(x, 0, 1, 16); g.fillRect(19, 0, 1, 16); g.fillStyle = wood; g.fillRect(1, 1, 18, 1); }));
-  for (const d of ['s', 'e', 'n']) CONT_IMG[`cart${t}_${d}`] = HOOK.image(`carry_cart${t}_${d}`, contArt(32, 22, g => { g.fillStyle = dark; g.fillRect(2, 6, 28, 12); g.fillStyle = wood; g.fillRect(4, 8, 24, 8); g.fillStyle = '#222'; g.beginPath(); g.arc(8, 18, 3.5, 0, TAU); g.arc(24, 18, 3.5, 0, TAU); g.fill(); }));
-}
-let SHOW = null;   /* 2026-10-10 anh: 'câu được cá thì cầm cá lên luôn' → con vừa câu giơ trên đầu ~2,6 s (kể cả khi có xô), rồi mới vào xô */
-function carrySlots(ctx) {   /* → [{ it, where: 'hand'|'bucket'|'cage'|'cart', i }] theo thứ tự bắt; đồ đựng đầy → tay (save cũ vượt mức chồng lên đầu) */
-  const n = {}, out = []; let hand = 0;
-  const all = sysS(ctx).carry;
-  for (let ci = 0; ci < all.length; ci++) {
-    const raw = all[ci], it = normItem(raw), cat = catOf(it.kind), cap = capOf(ctx, cat), k = n[cat] || 0;
-    const show = SHOW && SHOW.i === ci && SHOW.n === all.length && ctx.S.time < SHOW.until;
-    if (CONT[cat].tool && k < cap && !show) out.push({ it, where: CONT[cat].tool, i: k }); else out.push({ it, where: 'hand', i: hand++ });
-    n[cat] = k + 1;
-  }
+/* 2026-10-11 anh bỏ XÔ + LỒNG + XE CHỞ: không còn đồ đựng thú — mọi con bắt được bế trên đầu (1 con), phím T cất vào túi */
+/* 2026-10-11 anh bỏ XÔ: cá câu được vào thẳng TÚI (đã cộng ngay lúc câu → tắt game giữa chừng không mất cá). SHOW = { it, id, until, pending }:
+   con vừa câu giơ trên đầu lúc thẻ cá hiện + 2,6 s sau khi đóng thẻ (anh: 'câu được cá thì cầm cá lên luôn'), rồi bay vào ô/túi. */
+let SHOW = null;
+const showOn = ctx => !!SHOW && (SHOW.pending || ctx.S.time < SHOW.until);
+function carrySlots(ctx) {   /* → [{ it, where: 'hand', i }] theo thứ tự bắt (không còn xe/lồng/xô: tất cả trên tay; save cũ vượt mức chồng lên đầu) */
+  const out = []; let hand = 0;
+  for (const raw of sysS(ctx).carry) out.push({ it: normItem(raw), where: 'hand', i: hand++ });
+  if (showOn(ctx)) out.push({ it: SHOW.it, where: 'hand', i: hand++ });   /* cá đang khoe: trên cùng chồng tay */
   return out;
 }
-const clampT = (ctx, tool) => Math.min(3, Math.max(1, ctx.tool.tier(tool)));
 export function drawCarry(ctx, g, cx, cy, out) {
   const p = ctx.S.player; if (p.custom && !ctx.S.sea) return;   /* thuyền/jeep/Rocky vẽ người chơi riêng; trên biển (bè/ván) vẫn vẽ */
   const slots = carrySlots(ctx); if (!slots.length) return;
   const t = ctx.S.time, flipI = p.dir === 1 ? 1 : 0, px = Math.round(p.x) - cx, py = Math.round(p.y) - cy;
   const frame = (set, i) => set[(((t * 3 + i * 0.7) | 0) % 2 + 2) % 2][flipI];
   const glow = (it, x, y, w, h) => { if (it.kind !== 'goldfish') return; g.globalAlpha = 0.35 + 0.25 * Math.sin(t * 5); g.fillStyle = '#ffd45e'; g.beginPath(); g.ellipse(x, y, w * 0.75, h * 0.8, 0, 0, TAU); g.fill(); g.globalAlpha = 1; };
-  const by = slots.filter(s => s.where === 'bucket'), cg = slots.filter(s => s.where === 'cage'), ct = slots.filter(s => s.where === 'cart'), hd = slots.filter(s => s.where === 'hand');
-  /* 2026-09-28 anh chê 'cồng kềnh' → gọn kiểu Stardew: trên đầu CHỈ con bế tay; lồng đeo hông (thu 0,6, phía đối diện xô); xe nhỏ 0,75 và bám sát lưng */
+  const hd = slots;
+  /* 2026-09-28 anh chê 'cồng kềnh' → gọn kiểu Stardew: trên đầu CHỈ con bế tay (xô/lồng/xe chở đã bỏ 2026-10-11) */
   if (hd.length) out.push({ y: p.y + 0.5, f: () => {
     const lift = (p.action && p.action.name === 'carry') ? -4 : 0;   /* clip bế: tay giơ ngang tai → hạ 4 px cho chạm tay */
     const top = py - 18 - lift - (ctx.S.sea && ctx.S.sea.riding ? 8 : 0);   /* trên bè/ván người vẽ cao hơn 8 px */
@@ -193,36 +186,6 @@ export function drawCarry(ctx, g, cx, cy, out) {
       const yy = Math.round(top - i * 8 + bob); glow(s.it, px, yy - (im.height >> 1), im.width, im.height);
       g.save(); g.translate(px, yy); g.rotate(wig); g.drawImage(im, -(im.width >> 1), -im.height); g.restore(); });
   } });
-  const SHOW_CAGE_CART = false;   /* 2026-09-28 anh: 'chỉ để lại xô cá, bỏ 2 thứ còn lại' — lồng/xe vẫn chứa thú, chỉ không vẽ */
-  if (SHOW_CAGE_CART && cg.length) {
-    const back = p.dir === 3;   /* quay lưng (bắc): lồng che trước người → vẽ sau người; còn lại vẽ trước */
-    out.push({ y: p.y + (back ? 0.7 : -0.2), f: () => {
-      const img = CONT_IMG['cage' + clampT(ctx, 'cage')], K = 0.6, cw = Math.round(img.width * K), ch = Math.round(img.height * K);
-      const side = p.dir === 1 ? 1 : p.dir === 2 ? -1 : -1, x0 = px + side * 8 - (cw >> 1), y0 = py - 1 - ch;
-      cg.forEach((s, j) => { const set = sprOf(s.it); if (!set) return; const im = frame(set, j), k = 0.5, w = Math.max(4, Math.round(im.width * k)), h = Math.max(3, Math.round(im.height * k));
-        const ax = x0 + (cw >> 1) - (w >> 1) + ((j % 3) - 1) * 3, ay = y0 + ch - 2 - ((j / 3) | 0) * 2;
-        g.save(); g.beginPath(); g.rect(x0, y0 - 2, cw, ch + 2); g.clip(); g.drawImage(im, Math.round(ax), Math.round(ay - h), w, h); g.restore(); });
-      g.globalAlpha = 0.8; g.drawImage(img, x0, y0, cw, ch); g.globalAlpha = 1;
-    } });
-  }
-  if (by.length) out.push({ y: p.y + 0.6, f: () => {
-    const img = CONT_IMG['bucket' + clampT(ctx, 'bucket')], side = p.dir === 1 ? -1 : 1, bx = px + side * 9 - (img.width >> 1), b0 = py + 2 - img.height;
-    by.forEach((s, j) => { const set = sprOf(s.it); if (!set) return; const im = frame(set, j), k = 0.5, w = Math.max(4, Math.round(im.width * k)), h = Math.max(3, Math.round(im.height * k));   /* cá thu nửa, ló đầu trên miệng xô */
-      const fx = bx + (img.width >> 1) - (w >> 1) + ((j % 3) - 1) * 2, fy = b0 + 5 + ((j / 3) | 0) - Math.round(Math.sin(t * 4 + j) * 1);
-      glow(s.it, fx + (w >> 1), fy - (h >> 1), w, h); g.drawImage(im, fx, fy - h, w, h); });
-    g.drawImage(img, bx, b0); } });
-  if (SHOW_CAGE_CART && ct.length) {
-    const d = p.dir, key = d === 0 ? 's' : d === 3 ? 'n' : 'e', img = CONT_IMG[`cart${clampT(ctx, 'cart')}_${key}`];
-    const off = d === 0 ? [0, -20] : d === 3 ? [0, 13] : d === 2 ? [-19, 0] : [19, 0], wob = p.moving ? Math.round(Math.sin(t * 8)) : 0, KC = 0.75;   /* xe nhỏ lại, bám sát lưng */
-    const cxp = px + off[0], cyp = py + off[1] + wob;
-    out.push({ y: p.y + off[1] + (d === 3 ? 1 : -0.5), f: () => {
-      const iw = Math.round(img.width * KC), ih = Math.round(img.height * KC), x0 = cxp - (iw >> 1), y0 = cyp + 4 - ih;
-      g.save(); if (d === 1) { g.translate(cxp * 2, 0); g.scale(-1, 1); } g.drawImage(img, x0, y0, iw, ih); g.restore();
-      ct.forEach((s, j) => { const set = sprOf(s.it); if (!set) return; const im = frame(set, j), k = 0.55, w = Math.round(im.width * k), h = Math.round(im.height * k);
-        const ax = cxp - (w >> 1) + (j - (ct.length - 1) / 2) * 5, ay = y0 + ih - 5 - (j % 2) * 2;
-        g.drawImage(im, Math.round(ax), Math.round(ay - h), w, h); });
-    } });
-  }
 }
 
 
@@ -262,6 +225,7 @@ function walkable(ctx, x, y) {
   const map = ctx.S.map, tx = tileOf(x), ty = tileOf(y);
   if (tx < 1 || ty < 1 || tx > map.w - 2 || ty > map.h - 2) return false;
   if (ctx.isSolid(map, tx, ty)) return false;
+  { const g0 = ctx.getG(map, tx, ty); if (g0 === ctx.T.WATER || g0 === ctx.T.DEEP) return false; }   /* thú cạn không bao giờ bước xuống nước (kể cả ô nước không đặt cờ chắn) */
   return !inPlot(map, tx, ty);
 }
 const isWater = (ctx, x, y) => ctx.getG(ctx.S.map, tileOf(x), tileOf(y)) === ctx.T.WATER;
@@ -278,12 +242,12 @@ function sysS(ctx) {
   return s;
 }
 /* ---- plan-9: tay không mang 1 con; mang thêm phải có đồ đựng đúng loại, nâng cấp để chứa nhiều hơn ----
-   Loại: fish (xô) · small (lồng) · large (xe chở) · loot (đồ lặn, không có đồ đựng, 2 + tay).
+   Loại: fish · small (bế tay, 1 thứ — 2026-10-11 bỏ xô + lồng; cá câu vào túi, phím T cất thú vào túi) · large (bò/cừu, bế tay như gà — bỏ xe chở 2026-10-11) · loot (đồ lặn, không có đồ đựng, 2 + tay).
    Ô tay = 1 thứ bất kỳ không nằm vừa đồ đựng. Save cũ vượt mức: giữ nguyên, chỉ chặn bắt thêm. */
 export const CAT = { fish: 'fish', goldfish: 'fish', squid: 'fish', sala: 'fish',
   chicken: 'small', bird: 'small', rabbit: 'small', crab: 'small', bat: 'small', moth: 'small',
   cow: 'large', sheep: 'large' };
-export const CONT = { fish: { tool: 'bucket', cap: [0, 3, 5, 8] }, small: { tool: 'cage', cap: [0, 3, 5, 8] }, large: { tool: 'cart', cap: [0, 2, 4, 6] }, loot: { tool: null, cap: [2] } };
+export const CONT = { fish: { tool: null, cap: [0] }, small: { tool: null, cap: [0] },   /* 2026-10-11 anh bỏ LỒNG: gà/chim/thỏ/cua/dơi… bế trên đầu như bò */ large: { tool: null, cap: [0] }   /* 2026-10-11 anh bỏ XE CHỞ: bò/cừu cũng bế trên đầu */, loot: { tool: null, cap: [2] } };
 export const catOf = kind => CAT[kind] || 'loot';
 export function capOf(ctx, cat) { const c = CONT[cat]; if (!c.tool) return c.cap[0]; return c.cap[Math.min(c.cap.length - 1, ctx.tool.tier(c.tool))] || 0; }
 /* { n: {cat: số}, over: số con phải cầm tay (ngoài đồ đựng) } */
@@ -299,15 +263,12 @@ export function canCarry(ctx, kind) {
 }
 /* Lý do không bắt thêm được (EN/VI), nêu rõ đồ cần / cần nâng cấp */
 /* Đường nâng cấp từng món: [cấp] = { vi, en } (tên · nơi chế · nguyên liệu) — khớp RECIPES trong crafting.js */
-const UPG = {
-  bucket: { 1: { vi: 'Xô I ở Bàn mộc (3 gỗ + 1 nhựa thông)', en: 'Bucket I at the workbench (3 wood + 1 resin)' }, 2: { vi: 'Xô sắt II ở Lò nung M4/M5 (2 thanh sắt)', en: 'Iron bucket II at the furnace in M4/M5 (2 iron bars)' }, 3: { vi: 'Xô tinh thể III ở Bàn thờ tinh thể M9 (1 tinh thể + 2 sắt)', en: 'Crystal bucket III at the crystal altar in M9 (1 crystal + 2 iron)' } },
-  cage: { 1: { vi: 'Lồng I ở Bàn mộc (4 gỗ + 2 dây thừng)', en: 'Cage I at the workbench (4 wood + 2 rope)' }, 2: { vi: 'Lồng sắt II ở Lò nung M4/M5 (3 sắt + 2 dây)', en: 'Iron cage II at the furnace in M4/M5 (3 iron + 2 rope)' }, 3: { vi: 'Lồng obsidian III ở Lò rèn M7/M8 (2 obsidian + 2 sắt)', en: 'Obsidian cage III at the forge in M7/M8 (2 obsidian + 2 iron)' } },
-  cart: { 1: { vi: 'Xe chở vật nuôi I ở Bàn mộc (8 gỗ + 3 dây thừng)', en: 'Livestock cart I at the workbench (8 wood + 3 rope)' }, 2: { vi: 'Xe bánh sắt II ở Lò nung M4/M5 (3 sắt + 4 gỗ)', en: 'Iron-wheel cart II at the furnace in M4/M5 (3 iron + 4 wood)' }, 3: { vi: 'Xe obsidian III ở Lò rèn M7/M8 (3 obsidian + 2 sắt)', en: 'Obsidian cart III at the forge in M7/M8 (3 obsidian + 2 iron)' } },
-};
+const UPG = {};   /* 2026-10-11 bỏ xô, lồng, xe chở: không còn đồ đựng nào để nâng cấp */
 const ANIMAL_VI = { fish: 'cá', small: 'thú nhỏ', large: 'bò/cừu', loot: 'đồ lặn' }, ANIMAL_EN = { fish: 'fish', small: 'small animals', large: 'cows/sheep', loot: 'dive finds' };
 export function carryDeny(ctx, kind) {
   const vi = ctx.lang && ctx.lang() === 'vi', cat = catOf(kind), c = CONT[cat], tier = c.tool ? ctx.tool.tier(c.tool) : 0;
   const name = c.tool ? ctx.itemName(c.tool) : '', maxT = c.tool ? c.cap.length - 1 : 0, an = vi ? ANIMAL_VI[cat] : ANIMAL_EN[cat];
+  if (!c.tool && !c.cap[0]) return vi ? 'Tay đang bận — chỉ cầm được 1 thứ trên tay. Bấm T cất vào túi hoặc bán ở Thương nhân Làng' : 'Hands busy — you can only hold 1 thing. Press T to stow it in the bag or sell it at the village trader';   /* cá: không còn xô (2026-10-11) */
   if (!c.tool) return vi ? `Tay đang bận — chỉ mang được 2 ${an} + 1 trên tay. Bán ở Thương nhân Làng rồi quay lại` : `Hands busy — only 2 ${an} + 1 in hand. Sell at the village trader and come back`;
   const next = UPG[c.tool][tier + 1], nx = next ? (vi ? next.vi : next.en) : '';
   if (tier < 1) return vi ? `Tay đang bận — muốn mang thêm ${an}, hãy chế ${nx}` : `Hands busy — to carry more ${an}, craft ${nx}`;
@@ -335,13 +296,49 @@ export function throwTop(ctx) {
   const c = sysS(ctx).carry; if (!c.length || ctx.S.mode !== 'play') return false;
   const raw = removeCarry(ctx, c.length - 1); if (!raw) return false;
   const it = normItem(raw);   /* cá vàng / mực lưu dạng chuỗi ('goldfish') → trước đây ra 'a_undefined', không ném được (QA 2026-10-10) */
-  const id = 'a_' + it.kind; if (!ctx.ITEMS[id]) { addCarry(ctx, raw); return false; }
+  const id = bagIdOf(it); if (!ctx.ITEMS[id]) { addCarry(ctx, raw); return false; }
   const p = ctx.S.player; if (p.hasAct && p.hasAct('harvest')) p.act('harvest', 0.3);
   if (ctx.vfx) ctx.vfx('item_pickup_pop', p.x, p.y - 26, 0, true); ctx.sfx('magnet');
   const slot = ctx.hotbarFirstEmpty ? ctx.hotbarFirstEmpty(id) : -1;
   const done = () => { ctx.bag.add(id, 1); if (slot >= 0 && ctx.hotbarPut) ctx.hotbarPut(slot, id); ctx.sfx('slot'); ctx.toast(`+1 ${ctx.itemIcon(it.kind)} ${ctx.itemName(it.kind)}`); };
   if (ctx.flyToSlot) ctx.flyToSlot(it.kind, slot, done, it.sp && fishUi() && fishUi().species ? fishUi().species[it.sp] : null); else done();
   return true;
+}
+/* ---- 2026-10-11 anh bỏ XÔ: cá ở trong TÚI. Mã túi: 'a_fish' (cá thường) · 'a_fishbig' (cá to, giá cao) · 'a_goldfish' · 'a_squid'.
+   Loài cá (cho ao nuôi) nhớ ở save.sys.animals.fishSp (hàng đợi, tối đa 40). Các hệ cần "một con cá" (cáo, khỉ, Yeti, Kraken, ao, nhiệm vụ, cho dân ăn)
+   hỏi hasFish / takeFish: cá trên tay (save cũ, quái trả lại) trước, rồi tới túi. ---- */
+export const FISH_BAG = ['a_fish', 'a_fishbig'];
+export const bagIdOf = it => (it.kind === 'fish' ? (it.big ? 'a_fishbig' : 'a_fish') : 'a_' + it.kind);
+const FISH_CAT = ['fish', 'goldfish', 'squid'];   /* loại vào túi được (kỳ nhông 'sala' không có mã túi → vẫn cầm tay) */
+export function hasFish(ctx, big) {
+  if (getCarry(ctx).some(it => it.kind === 'fish' && (!big || it.big))) return true;
+  return (big ? ['a_fishbig'] : FISH_BAG).some(id => ctx.bag.has(id, 1));
+}
+export function takeFish(ctx, big) {   /* → { kind:'fish', big, sp } | null */
+  const c = getCarry(ctx); for (let i = c.length - 1; i >= 0; i--) if (c[i].kind === 'fish' && (!big || c[i].big)) return removeCarry(ctx, i);
+  for (const id of (big ? ['a_fishbig'] : FISH_BAG)) if (ctx.bag.has(id, 1)) { ctx.bag.remove(id, 1); const q = sysS(ctx).fishSp, sp = Array.isArray(q) && q.length ? q.shift() : null; ctx.persist(); return { kind: 'fish', big: id === 'a_fishbig', ...(sp ? { sp } : {}) }; }
+  return null;
+}
+export function catchToBag(ctx, item) {   /* cá vừa câu (bờ + biển): cộng túi ngay, giơ khoe trên đầu, hết khoe thì bay vào ô */
+  const it = normItem(item), id = bagIdOf(it); if (!ctx.ITEMS[id]) return false;
+  if (addCarry(ctx, item)) return true;   /* 2026-10-11 anh: cá vừa câu nằm TRÊN TAY (giơ trên đầu) tới khi bấm T mới vào túi — như bắt gà; tay bận thì mới vào thẳng túi */
+  ctx.bag.add(id, 1);
+  if (it.kind === 'fish' && it.sp) { const s = sysS(ctx), q = (s.fishSp = Array.isArray(s.fishSp) ? s.fishSp : []); q.push(it.sp); if (q.length > 40) q.shift(); }
+  SHOW = { it, id, until: Infinity, pending: true }; ctx.persist();
+  return true;
+}
+function showLand(ctx) {   /* hết khoe → con cá bay vào ô hotbar đang chứa nó (hoặc nút Túi); chỉ là hiệu ứng, túi đã cộng lúc câu */
+  const sh = SHOW; SHOW = null; if (!sh) return;
+  const slot = ctx.hotbarSlotOf ? ctx.hotbarSlotOf(sh.id) : -1, file = sh.it.sp && fishUi() && fishUi().species ? fishUi().species[sh.it.sp] : null;
+  const done = () => { ctx.sfx('slot'); };
+  if (ctx.flyToSlot) ctx.flyToSlot(sh.it.kind, slot, done, file); else done();
+}
+/* save cũ: cá đang nằm trong xô / trên tay → vào túi (save.js dọn xô lúc nạp; đây là lưới an toàn khi vào vùng) */
+function fishToBag(ctx) {
+  const c = sysS(ctx).carry; let moved = 0;
+  for (let i = c.length - 1; i >= 0; i--) { const it = normItem(c[i]); if (!FISH_CAT.includes(it.kind) || !ctx.ITEMS[bagIdOf(it)]) continue; c.splice(i, 1); ctx.bag.add(bagIdOf(it), 1); moved++; }
+  if (moved) { syncInv(ctx); ctx.persist(); }
+  return moved;
 }
 export function addCarry(ctx, item) {   /* plan-21: export — quái bị hạ trả lại thú đã cướp */
   const c = sysS(ctx).carry;
@@ -663,8 +660,7 @@ function nine(ug, x, y, w, h, b) {
 }
 function fishUi() { const f = ART.on && ART.man && ART.man.ui && ART.man.ui.fish; return f || null; }
 function startCast(ctx, t) {
-  const S = L(ctx);
-  if (!canCarry(ctx, 'fish')) { ctx.toast(carryDeny(ctx, 'fish')); return; }
+  const S = L(ctx);   /* 2026-10-11: cá vào túi vô hạn → không còn chặn 'đầy xô' */
   const d = densityAt(ctx, t.bx, t.by);
   // nhân phẩm — luck: a plain 0.7–1.3 roll on top of how crowded the water is
   const luck = 0.7 + Math.random() * 0.6;
@@ -699,7 +695,7 @@ function startReel(ctx) {
 }
 function endFish(ctx) {
   fishing = null; if (ctx.S.player.endAct) ctx.S.player.endAct('fish'); if (ctx.S.mode === 'fish') ctx.setMode('play');
-  if (SHOW && SHOW.pending) {   /* thẻ cá vừa đóng → giơ con cá lên đầu 2,6 s cho người chơi thấy rồi mới vào xô */
+  if (SHOW && SHOW.pending) {   /* thẻ cá vừa đóng → giơ con cá lên đầu 2,6 s cho người chơi thấy rồi mới bay vào túi */
     SHOW.pending = false; SHOW.until = ctx.S.time + 2.6;
     const p = ctx.S.player; if (p.hasAct && p.hasAct('carry') && p.act) p.act('carry', 2.2);
   }
@@ -711,22 +707,19 @@ function failFish(ctx, msg) {
   ctx.toast(msg || S.gotAway);
   fishing = { ...fishing, phase: 'done', ok: false, t: 0.9, text: msg === S.snapped ? S.snapped : S.bad };
 }
-function showCatch(ctx) {   /* con vừa câu = phần tử cuối của carry */
-  const c = sysS(ctx).carry; if (!c.length) return; SHOW = { i: c.length - 1, n: c.length, until: Infinity, pending: true };   /* theo vị trí: carry đổi (ném T, bị cướp) thì thôi khoe; giơ trong lúc thẻ cá hiện + 2,6 s sau khi đóng thẻ (endFish) */
-}
 function succeedFish(ctx) {
   const S = L(ctx);
   if (fishing.ent) { const i = list.indexOf(fishing.ent); if (i >= 0) list.splice(i, 1); }
   splash(fishing.bx, fishing.by, 1.4);
   puff(ctx.S.player.x, ctx.S.player.y - 16, 6, '#dff0ff');
-  if (fishing.special) {   /* biển: mực / cá vàng (không có thẻ loài) */
-    const k = fishing.special, ok2 = addCarry(ctx, k), vi = ctx.lang() === 'vi'; if (ok2) showCatch(ctx);
-    ctx.toast(!ok2 ? carryDeny(ctx, k) : k === 'goldfish' ? (vi ? 'Cá vàng! (hiếm)' : 'A golden fish! (rare)') : (vi ? 'Câu được mực!' : 'A squid!')); ctx.sfx(k === 'goldfish' ? 'catch_rare' : 'catch');
+  if (fishing.special) {   /* biển: mực / cá vàng (không có thẻ loài) → túi */
+    const k = fishing.special, vi = ctx.lang() === 'vi'; catchToBag(ctx, k);
+    ctx.toast(k === 'goldfish' ? (vi ? 'Cá vàng! (hiếm)' : 'A golden fish! (rare)') : (vi ? 'Câu được mực!' : 'A squid!')); ctx.sfx(k === 'goldfish' ? 'catch_rare' : 'catch');
     fishing = { ...fishing, phase: 'done', ok: true, t: 0.9, text: S.ok }; if (ctx.S.player.endAct) ctx.S.player.endAct('reel'); return;
   }
-  const sp = pickFish(!!fishing.big), cm = Math.round(sp.cm[0] + (sp.cm[1] - sp.cm[0]) * Math.pow(Math.random(), fishing.big ? 0.7 : 1.4));   /* chọn loài TRƯỚC → nhân vật bưng đúng con vừa câu */
-  const ok = addCarry(ctx, { kind: 'fish', big: !!fishing.big, sp: sp.id, cm }); if (ok) showCatch(ctx);
-  ctx.toast(ok ? (fishing.big ? S.gotBigFish : S.gotFish) : carryDeny(ctx, 'fish')); if (ok && ctx.pop) ctx.pop(ctx.S.player.x, ctx.S.player.y - 18, '+1 🐟');
+  const sp = pickFish(!!fishing.big), cm = Math.round(sp.cm[0] + (sp.cm[1] - sp.cm[0]) * Math.pow(Math.random(), fishing.big ? 0.7 : 1.4));   /* chọn loài TRƯỚC → nhân vật giơ đúng con vừa câu */
+  const ok = catchToBag(ctx, { kind: 'fish', big: !!fishing.big, sp: sp.id, cm });
+  ctx.toast(fishing.big ? S.gotBigFish : S.gotFish); if (ok && ctx.pop) ctx.pop(ctx.S.player.x, ctx.S.player.y - 18, '+1 🐟');
   const log = ((ctx.S.save.sys ||= {}).fishLog ||= {}), rec = log[sp.id] ||= { n: 0, best: 0 }; rec.n++; const isRec = cm > rec.best; if (isRec) rec.best = cm; ctx.persist();
   fishing = { ...fishing, phase: 'done', ok: true, t: 6, text: S.ok, card: { sp, cm, n: rec.n, best: rec.best, isRec, first: rec.n === 1 } };
   if (ctx.S.player.endAct) ctx.S.player.endAct('reel');
@@ -807,7 +800,7 @@ function drawFishCard(ug, ctx, c, W, H, scale) {
   for (const w of desc.split(' ')) { const tt = line ? line + ' ' + w : w; if (ug.measureText(tt).width > maxW) { ug.fillText(line, X(25), yy); line = w; yy += U(5.5); } else line = tt; }
   if (line) ug.fillText(line, X(25), yy);
   if (c.first) { ug.fillStyle = '#c9851a'; ug.textAlign = 'right'; ug.font = F(6); ug.fillText(vi ? 'MỚI!' : 'NEW!', X(103), Y(68)); }
-  ug.textAlign = 'center'; ug.font = F(5.5); const hint = vi ? 'E · đóng' : 'E · close', hw = ug.measureText(hint).width + U(8);
+  ug.textAlign = 'center'; ug.font = F(5.5); const hint = keyHint(vi ? 'E · đóng' : 'E · close'), hw = ug.measureText(hint).width + U(8);
   ug.fillStyle = 'rgba(13,11,20,.7)'; ug.fillRect(x0 + cw / 2 - hw / 2, Y(91), hw, U(8)); ug.fillStyle = '#f5e6c4'; ug.fillText(hint, x0 + cw / 2, Y(92));
 }
 
@@ -821,7 +814,11 @@ export const animals = {
     if (ctx.S.mode === 'fish' || ctx.S.mode === 'catch') ctx.setMode('play');
     ctx.onAction('fish', () => fishAction(ctx));     // E / Space / Enter / touch A while reeling
     ctx.registerCloser('fish', () => { fishing = null; ctx.setMode('play'); });
+    /* cá trên tay giữ nguyên tới khi bấm T (anh 2026-10-11); xô của save cũ đã được save.js dropBucket dọn */
+    { const sa = sysS(ctx), m = sa.migr; if (m) { delete sa.migr; ctx.persist(); const vi = ctx.lang() === 'vi';   /* save cũ có lồng / xe chở (save.js dropBucket) → báo 1 lần */
+      setTimeout(() => ctx.toast(vi ? `Đã bỏ lồng/xe chở: ${m.bag || 0} con thú chuyển vào túi${m.freed ? `, ${m.freed} con được thả ra` : ''} (bấm T cất thú trên đầu vào túi)` : `Cages and carts are gone: ${m.bag || 0} animals moved to your bag${m.freed ? `, ${m.freed} released` : ''} (press T to stow the one on your head)`, true), 1200); } }
     syncInv(ctx);                                    // the HUD line always mirrors what is on your head
+    ctx.animals = { list: () => list, remove: a => { const i = list.indexOf(a); if (i >= 0) list.splice(i, 1); } };   /* petgun.js: thú hóa đá (a.stoneT) → tượng rồi vỡ */
     if (ctx.S.map.sea) return;                       // the Sea of Origins: sea_dive.js owns fishing, schools and the head stack there
     buildDensity(ctx);
     const id = ctx.S.zone.id, th = THEME[id]; if (!th) return;
@@ -834,7 +831,9 @@ export const animals = {
     // test / demo hooks
     if (typeof window !== 'undefined') window.__animalsRaw = () => list;   /* móc test plan-11 */
     if (typeof window !== 'undefined') window.__animals = {
-      list: () => list.map(a => ({ kind: a.kind, x: Math.round(a.x), y: Math.round(a.y), st: a.st })),
+      list: () => list.map(a => ({ kind: a.kind, x: Math.round(a.x), y: Math.round(a.y), st: a.st, drink: a.dr ? a.dr.ph : null, drinkN: a.drinkN || 0 })),
+      thirsty: (kind, x, y) => { const a = list.find(o => o.kind === kind); if (!a) return null; if (x !== undefined) { a.x = x; a.y = y; } a.st = 'idle'; a.t = 1; a.dr = null; a.thirstT = 0; a.badK = null; return { x: a.x, y: a.y }; },   /* test thirst.js */
+      raw: kind => list.find(o => o.kind === kind) || null,
       warp: (kind, dx = 14) => { const a = list.find(x => x.kind === kind); if (!a) return null; ctx.S.player.x = a.x + dx; ctx.S.player.y = a.y + 4; return { x: a.x, y: a.y }; },
       bring: kind => { const a = list.find(x => x.kind === kind), p = ctx.S.player; if (!a) return null; a.x = p.x + 16; a.y = p.y; a.st = 'idle'; a.t = 5; if (a.perch) { a.perch.x = a.x; a.perch.y = a.y; } return { x: a.x, y: a.y }; },
       spots: () => spots.slice(), fishing: () => fishing,
@@ -852,20 +851,27 @@ export const animals = {
 
   onZoneLeave(ctx) {
     if (fishing) { fishing = null; if (ctx.S.mode === 'fish') ctx.setMode('play'); }
+    SHOW = null;   /* cá đã ở trong túi từ lúc câu */
     list = []; fx = []; dens = null; spots = []; waterTiles = [];
   },
 
   update(dt, ctx) {
     const p = ctx.S.player, playing = ctx.S.mode === 'play';
+    if (SHOW) {   /* khoe cá: thẻ bị đóng kiểu khác (Esc) → bắt đầu đếm 2,6 s; hết giờ → bay vào túi */
+      if (SHOW.pending && !fishing) { SHOW.pending = false; SHOW.until = ctx.S.time + 2.6; }
+      else if (!SHOW.pending && ctx.S.time >= SHOW.until) showLand(ctx);
+    }
     // bế thú: có gì trên đầu → clip 'carry' (hai tay giơ đỡ, chân theo bước); hết → trả về (không đè động tác khác đang chạy)
     if (p.act) { const carrying = !p.custom && carrySlots(ctx).some(s => s.where === 'hand');   /* chỉ khi bế tay trên đầu; lồng đã đeo hông (2026-09-28), xô/xe không giơ tay */ if (carrying && p.hasAct('carry') && (!p.action || p.action.name === 'carry')) p.act('carry', 1, true, true); else if (!carrying && p.action && p.action.name === 'carry') p.endAct('carry'); }
     for (const a of list) {
+      if (a.stoneT) continue;   /* petgun.js: tượng đá đứng yên */
       if (a.kind === 'bird') updateBird(dt, ctx, a, p, playing);
       else if (a.kind === 'fish') updateFish(dt, ctx, a);
       else {
         // land animals bolt if you barge into them; catching itself is instant, so no sneaking bar any more
         if (playing && Math.hypot(a.x - p.x, a.y - p.y) < 13 && a.st !== 'flee') fleeFrom(a, p);
-        updateLand(dt, ctx, a, p, playing);
+        if (thirst(dt, ctx, a, { walk: (x, y) => walkable(ctx, x, y), step: (dx, dy) => stepTo(ctx, a, dx, dy), sp: KIND[a.kind].sp })) { if (a.st === 'walk') { a.ft += dt * KIND[a.kind].anim; a.fr = (a.ft | 0) % 2; } }   /* khát → ra mép nước uống */
+        else updateLand(dt, ctx, a, p, playing);
       }
     }
     hotSplashes(dt, ctx);
@@ -883,6 +889,7 @@ export const animals = {
       const img = dirFrame(set0, a.face, a.ft, a.st !== 'idle', a) || set[a.fr % set.length][a.dir < 0 ? 1 : 0];   /* plan-11: hàng theo hướng nếu có */
       const dx = Math.round(a.x) - (img.width >> 1) - cx;
       const dy = Math.round(a.y - (a.z || 0)) - img.height - cy;
+      if (a.stoneT) { out.push({ y: a.y, f: () => { g.save(); g.filter = STONE_FILTER; g.drawImage(img, dx, dy); g.restore(); } }); continue; }   /* petgun.js: tượng đá = chính ảnh thú tô đá */
       if (a.kind === 'bird' && a.z > 1) {
         const bx = Math.round(a.x) - cx, by = Math.round(a.y) - cy, r = Math.max(2, 5 - a.z / 10);
         out.push({ y: a.y - 1, f: () => { g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(bx, by, r, r * 0.5, 0, 0, 7); g.fill(); } });
@@ -897,7 +904,7 @@ export const animals = {
         if (ctx.getG(map, tx, ty + 1) !== W) fy2 = Math.min(fy2, (ty + 1) * TILE - img.height - cy);
         out.push({ y: a.y - 200, f: () => g.drawImage(img, fx2, fy2) });
       } else {
-        out.push({ y: a.y, f: () => waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => g.drawImage(img, dx, dy)) });   /* thú lội nước vẽ ngập */
+        out.push({ y: a.y, f: () => waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => drawThirsty(g, img, dx, dy, a)) });   /* thú lội nước vẽ ngập; đang uống → cúi đầu (thirst.js) */
       }
     }
     // plan-9: đồ mang theo (tay / xô / lồng / xe) vẽ tập trung cho mọi module
@@ -930,7 +937,7 @@ export const animals = {
     if (f.phase === 'done' && f.card) { ug.save(); drawFishCard(ug, ctx, f.card, W, H, scale); ug.restore(); return; }   /* thẻ cá thay cho bảng câu */
     ug.save();
     ug.textAlign = 'center'; ug.textBaseline = 'middle';
-    const fs = Math.max(12, scale * 4);
+    const fs = Math.max(W < 600 ? 14 : 12, scale * 4);   /* điện thoại dọc: chữ to hơn chút cho dễ đọc */
     if (f.phase === 'wait' || f.phase === 'bite') {              // "…" then "!" over the bobber
       const bx = Math.round((f.bx - cx) * scale), by = Math.round((f.by - 22 - cy) * scale);
       const bite = f.phase === 'bite';
@@ -939,14 +946,18 @@ export const animals = {
       ug.fillStyle = bite ? '#c0392b' : '#3b2412';
       ug.fillText(bite ? S.bite : '…', bx, by + 2);
     }
-    const bw = Math.min(W * 0.62, 460), bh = Math.max(18, scale * 7), bx = (W - bw) / 2;
-    const th = Math.max(6, scale * 2.2);                        // tension meter height
-    const extra = f.phase === 'reel' ? th + 6 + fs : 0;         // the reel panel is taller: bar + tension + labels
-    const by = H - Math.max(96, scale * 34) - extra;
-    const pad = Math.max(8, scale * 3);
+    /* polish 2026-10-10: màn hẹp (điện thoại dọc ~390 px) → khung gần hết bề ngang; nhãn 'Độ căng' + gợi ý không đủ chỗ thì gợi ý xuống dòng riêng (thu chữ nếu vẫn dài);
+       cảm ứng: khung nhấc lên trên nút A. Desktop (≥ 600 px) giữ y như cũ. */
+    const pad = Math.max(8, scale * 3), narrow = W < 600;
+    const bw = narrow ? Math.max(120, W - pad * 2 - 24) : Math.min(W * 0.62, 460), bh = Math.max(18, scale * 7), bx = (W - bw) / 2;
+    const th = Math.max(6, scale * 2.2);                        /* tension meter height */
+    const smallPx = Math.max(narrow ? 12 : 10, scale * 3), small = `${smallPx}px VT323, monospace`;
+    const reelHint = keyHint(S.reelHint); let wrap = false, hintFont = small;
+    if (f.phase === 'reel') { ug.font = small; const tw = ug.measureText(S.tension).width, hw = ug.measureText(reelHint).width; if (tw + hw + 16 > bw) { wrap = true; if (hw > bw) hintFont = `${Math.max(8, Math.floor(smallPx * bw / hw))}px VT323, monospace`; } }
+    const extra = f.phase === 'reel' ? th + 6 + fs + (wrap ? fs * 0.9 : 0) : 0;   /* the reel panel is taller: bar + tension + labels */
+    const by = H - (narrow && isTouchUI() ? 190 : Math.max(96, scale * 34)) - extra;
     nine(ug, bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, Math.max(8, scale * 3));   /* khung giấy PixelLab (ui/hud/box.png), không bo góc */
     ug.font = `bold ${fs}px VT323, monospace`;
-    const small = `${Math.max(10, scale * 3)}px VT323, monospace`;
     if (f.phase === 'done') {
       ug.fillStyle = f.ok ? '#2e7d32' : '#c0392b';
       ug.font = `bold ${fs * 1.5}px VT323, monospace`;
@@ -966,12 +977,13 @@ export const animals = {
       ug.fillRect(bx, ty, Math.max(2, bw * f.tens), th);
       ug.font = small; ug.fillStyle = '#7a5634'; ug.textAlign = 'left';
       ug.fillText(S.tension, bx, ty + th + fs * 0.7);
-      ug.textAlign = 'right'; ug.fillText(S.reelHint, bx + bw, ty + th + fs * 0.7);
+      if (wrap) { ug.font = hintFont; ug.textAlign = 'center'; ug.fillText(reelHint, W / 2, ty + th + fs * 1.6); }
+      else { ug.textAlign = 'right'; ug.fillText(reelHint, bx + bw, ty + th + fs * 0.7); }
       ug.textAlign = 'center';
     } else {
-      ug.fillStyle = '#3b2412'; ug.fillText(f.phase === 'bite' ? S.biteHint : S.waiting, W / 2, by - fs * 0.6);
+      ug.fillStyle = '#3b2412'; ug.fillText(f.phase === 'bite' ? keyHint(S.biteHint) : S.waiting, W / 2, by - fs * 0.6);
       ug.font = small; ug.fillStyle = '#7a5634';
-      ug.fillText(S.castHint, W / 2, by + bh + fs * 0.9);
+      ug.fillText(keyHint(S.castHint), W / 2, by + bh + fs * 0.9);
       ug.fillStyle = '#352022'; ug.fillRect(bx - 2, by - 2, bw + 4, bh + 4); ug.fillStyle = '#7a5634'; ug.fillRect(bx, by, bw, bh);
       if (f.phase === 'bite') { ug.fillStyle = '#ffd45e'; ug.fillRect(bx, by, Math.max(bh, bw * Math.max(0, f.t / 1.2)), bh); }
       else { const k = (Math.sin(f.wob * 2) + 1) / 2; ug.fillStyle = '#3d6db5'; ug.fillRect(bx + bw * 0.5 - bh, by, bh * 2 + bw * 0.06 * k, bh); }
@@ -984,7 +996,7 @@ export const animals = {
     const S = L(ctx), p = ctx.S.player;
     let best = null, bd = Infinity;
     for (const a of list) {
-      if (a.kind === 'fish') continue;
+      if (a.kind === 'fish' || a.stoneT) continue;   /* tượng đá (petgun) không bắt được */
       if (a.kind === 'bird' && a.st !== 'sit') continue;        // only a perched bird can be grabbed
       const d = Math.hypot(a.x - p.x, a.y - p.y - (a.kind === 'cow' ? 2 : 0));
       if (d < 26 && d < bd) { bd = d; best = a; }
@@ -995,6 +1007,7 @@ export const animals = {
     if (!hasRod(ctx)) return { label: S.needRod, x: t.x, y: t.y, limit: 30, data: { hint: true } };
     if (!holdRod(ctx)) { const mt = ctx.mouseTile && ctx.mouseTile(), p = ctx.S.player;   /* có cần mà không cầm: chỉ khi TRỎ CHUỘT vào nước gần → click tự cầm cần câu */
       if (mt && ctx.needHold && isWaterT(ctx, mt.tx, mt.ty) && Math.hypot(mt.wx - p.x, mt.wy - p.y) < 56) return { label: ctx.needHold('rod'), x: mt.wx, y: mt.wy, limit: 60, mouse: true, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };
+      if (ctx.touchA && ctx.touchA() && ctx.needHold) return { label: ctx.needHold('rod'), x: t.x, y: t.y, limit: 30, mouse: false, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };   /* điện thoại: đứng cạnh nước → nút A tự cầm cần câu */
       return null; }
     return { label: S.cast, x: t.x, y: t.y, limit: 30, data: { cast: t } };
   },

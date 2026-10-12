@@ -38,6 +38,7 @@ export function drop(ctx, id, n = 1, x, y, opts = {}) {
 }
 function collect(ctx, d) {
   d.st = 'gone'; persist(ctx);
+  if (/^dball\d$/.test(d.id) && ctx.vfx) ctx.vfx('dball_pickup', d.x, d.y + 9, 0, true);   /* plan-28: nhặt Ngọc Rồng → lóe sáng 1 lần (vfx_workbench, không lặp) */
   /* đích (anh chốt 2026-10-10): món đã có trên thanh → đúng ô đó; món MỚI → ô trống đầu tiên; thanh đầy / món đang nằm trong túi → bay vào túi */
   const C = ctx, had = C.bag.count(d.id) > 0, on = C.hotbarSlotOf ? C.hotbarSlotOf(d.id) : -1;
   let slot = on, put = false;

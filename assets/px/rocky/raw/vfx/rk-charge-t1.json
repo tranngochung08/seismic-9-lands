@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "rk-charge-t1 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 1.png",
+   "frame": {
+    "x": 62,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 2.png",
+   "frame": {
+    "x": 124,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 3.png",
+   "frame": {
+    "x": 186,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 4.png",
+   "frame": {
+    "x": 0,
+    "y": 62,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 5.png",
+   "frame": {
+    "x": 62,
+    "y": 62,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 6.png",
+   "frame": {
+    "x": 124,
+    "y": 62,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 7.png",
+   "frame": {
+    "x": 186,
+    "y": 62,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 8.png",
+   "frame": {
+    "x": 0,
+    "y": 124,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 9.png",
+   "frame": {
+    "x": 62,
+    "y": 124,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 10.png",
+   "frame": {
+    "x": 124,
+    "y": 124,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-charge-t1 11.png",
+   "frame": {
+    "x": 186,
+    "y": 124,
+    "w": 62,
+    "h": 62
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 62,
+    "h": 62
+   },
+   "sourceSize": {
+    "w": 62,
+    "h": 62
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 71
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "rk-charge-t1.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 248,
+   "h": 186
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 31,
+   "y": 31
+  },
+  "frameTags": [
+   {
+    "name": "rk-charge-t1",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

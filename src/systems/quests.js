@@ -9,7 +9,7 @@
 //
 // Owns: save.sys.quests = { active: [{npcId, zone, type, item, n, base, reward, day, …}], done, declined }
 // See systems/API.md. Only this file + the two registration lines in systems/index.js.
-import { getCarry, removeCarry } from './animals.js';
+import { getCarry, removeCarry, hasFish, takeFish } from './animals.js';
 import { ZONES } from '../world.js';
 
 const TILE = 16;
@@ -265,6 +265,9 @@ function carryIndex(ctx, q) {
   for (let i = 0; i < c.length; i++) { if (c[i].kind !== q.kind) continue; if (q.big && !c[i].big) continue; return i; }
   return -1;
 }
+/* 2026-10-11 anh bỏ xô: cá câu được nằm trong TÚI ('a_fish'/'a_fishbig'); thú ném vào túi (phím T) là 'a_<loài>' → nhiệm vụ mang thú nhận cả từ túi */
+function bagHasQ(ctx, q) { if (q.kind === 'fish') return hasFish(ctx, q.big); const id = 'a_' + q.kind; return !!ctx.ITEMS[id] && ctx.bag.has(id, 1); }
+function takeBagQ(ctx, q) { if (q.kind === 'fish') return !!takeFish(ctx, q.big); const id = 'a_' + q.kind; if (!ctx.ITEMS[id] || !ctx.bag.has(id, 1)) return false; ctx.bag.remove(id, 1); return true; }
 // animals.js owns the stack; after its removeCarry we re-sync every mirror (ecology adds four more kinds)
 function takeCarry(ctx, i) {
   removeCarry(ctx, i);
@@ -344,7 +347,7 @@ function generate(ctx) {
 function progressOf(ctx, q) {
   switch (q.type) {
     case 'fetch': return { have: Math.min(q.n, ctx.bag.count(q.item)), need: q.n };
-    case 'carry': return { have: carryIndex(ctx, q) >= 0 ? 1 : 0, need: 1 };
+    case 'carry': return { have: carryIndex(ctx, q) >= 0 || bagHasQ(ctx, q) ? 1 : 0, need: 1 };
     case 'friend': return { have: q.ok || ctx.S.save.met.includes(q.friendId) ? 1 : 0, need: 1 };
     case 'chop': return { have: Math.min(q.n, q.gain || 0), need: q.n };
     case 'helpDistrict': {
@@ -470,7 +473,7 @@ function handIn(ctx, q) {
   const t = L(ctx), st = sysS(ctx), m = memberOf(ctx, q.npcId);
   if (!isReady(ctx, q)) { ctx.toast(t.notReady); return; }
   if (q.type === 'fetch') ctx.bag.remove(q.item, q.n);
-  else if (q.type === 'carry') { const i = carryIndex(ctx, q); if (i < 0) { ctx.toast(t.notReady); return; } takeCarry(ctx, i); }
+  else if (q.type === 'carry') { const i = carryIndex(ctx, q); if (i >= 0) takeCarry(ctx, i); else if (!takeBagQ(ctx, q)) { ctx.toast(t.notReady); return; } }
   const i = st.active.indexOf(q); if (i >= 0) st.active.splice(i, 1);
   st.done = (st.done || 0) + 1;
   const paid = ctx.give('stone', q.reward, undefined, undefined, { toPlayer: true });   /* plan-24: người giao việc ném thưởng */           // stone weighs 0 — the bag never refuses it

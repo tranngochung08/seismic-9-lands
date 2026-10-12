@@ -131,6 +131,42 @@
       "n": 7,
       "ch": 24,
       "cw": 32
+     },
+     "pick": {
+      "file": "chars/hung_b_act_pick.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32
+     },
+     "shoot": {
+      "file": "chars/hung_b_act_shoot.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32
+     },
+     "knockfly": {
+      "file": "chars/hung_b_act_knockfly.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "launched": {
+      "file": "chars/hung_b_act_launched.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32
+     },
+     "knockdown": {
+      "file": "chars/hung_b_act_knockdown.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
+     },
+     "stagger": {
+      "file": "chars/hung_b_act_stagger.png",
+      "n": 5,
+      "ch": 24,
+      "cw": 32
      }
     }
    },
@@ -203,6 +239,170 @@
     "shirt": "hero",
     "file": "chars/heathcliff.png",
     "note": "Heathcliff · CM Seismic (plan-26, thiết kế riêng)"
+   },
+   "chad": {
+    "skin": "chad",
+    "hair": "chad",
+    "shirt": "chad",
+    "file": "chars/chad.png",
+    "cell": [
+     22.5,
+     30.0
+    ],
+    "note": "plan-29: ngoại hình Chad (thân cơ bắp, quần đùi) — điều ước Rồng Thần; vẽ 1:1, cao 1,54× người chơi",
+    "actions": {
+     "chop": {
+      "file": "chars/chad_act_chop.png",
+      "n": 7,
+      "ch": 28.5,
+      "cw": 32,
+      "impact": 3
+     },
+     "pick": {
+      "file": "chars/chad_act_pick.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "carry": {
+      "file": "chars/chad_act_carry.png",
+      "n": 7,
+      "ch": 29.5,
+      "cw": 32
+     },
+     "paddle": {
+      "file": "chars/chad_act_paddle.png",
+      "n": 7,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "hammer": {
+      "file": "chars/chad_act_hammer.png",
+      "n": 7,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "hoe": {
+      "file": "chars/chad_act_hoe.png",
+      "n": 5,
+      "ch": 31.0,
+      "cw": 32,
+      "impact": 3
+     },
+     "water": {
+      "file": "chars/chad_act_water.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32,
+      "impact": 2
+     },
+     "harvest": {
+      "file": "chars/chad_act_harvest.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32,
+      "impact": 4
+     },
+     "eat": {
+      "file": "chars/chad_act_eat.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "hurt": {
+      "file": "chars/chad_act_hurt.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "attack": {
+      "file": "chars/chad_act_attack.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32,
+      "impact": 3
+     },
+     "shoot": {
+      "file": "chars/chad_act_shoot.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "knockfly": {
+      "file": "chars/chad_act_knockfly.png",
+      "n": 7,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "launched": {
+      "file": "chars/chad_act_launched.png",
+      "n": 5,
+      "ch": 29.0,
+      "cw": 32
+     },
+     "knockdown": {
+      "file": "chars/chad_act_knockdown.png",
+      "n": 7,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "stagger": {
+      "file": "chars/chad_act_stagger.png",
+      "n": 5,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "idle": {
+      "file": "chars/chad_act_idle.png",
+      "n": 4,
+      "ch": 28.5,
+      "cw": 32
+     },
+     "mine": {
+      "file": "chars/chad_act_mine.png",
+      "n": 7,
+      "ch": 31.0,
+      "cw": 32,
+      "impact": 4
+     },
+     "fish": {
+      "file": "chars/chad_act_fish.png",
+      "n": 7,
+      "ch": 35.0,
+      "cw": 32
+     },
+     "swim": {
+      "file": "chars/chad_act_swim.png",
+      "n": 6,
+      "ch": 28.5,
+      "cw": 32
+     }
+    }
+   },
+   "chad_polo": {
+    "skin": "chad_polo",
+    "hair": "chad_polo",
+    "shirt": "chad_polo",
+    "file": "chars/chad_polo.png",
+    "cell": [
+     23.5,
+     29.0
+    ],
+    "note": "plan-29: Chad pha áo polo (30 s đầu) + clip xé áo rip",
+    "actions": {
+     "idle": {
+      "file": "chars/chad_polo_act_idle.png",
+      "n": 4,
+      "ch": 29.5,
+      "cw": 32
+     },
+     "rip": {
+      "file": "chars/chad_polo_act_rip.png",
+      "n": 11,
+      "ch": 30.0,
+      "cw": 32
+     }
+    }
    }
   },
   "shirtHue": [
@@ -227,7 +427,19 @@
   "u1": "zones/u1.json",
   "u2": "zones/u2.json",
   "u3": "zones/u3.json",
-  "u4": "zones/u4.json"
+  "u4": "zones/u4.json",
+  "kraken": "zones/kraken.json",
+  "xfort": "zones/xfort.json",
+  "arena": "zones/arena.json",
+  "road1": "zones/road1.json",
+  "road2": "zones/road2.json",
+  "road3": "zones/road3.json",
+  "road4": "zones/road4.json",
+  "road5": "zones/road5.json",
+  "road6": "zones/road6.json",
+  "road7": "zones/road7.json",
+  "road8": "zones/road8.json",
+  "road9": "zones/road9.json"
  },
  "ui": {
   "items": {
@@ -338,6 +550,7 @@
    "st_medal": "ui/items/st_medal.png",
    "st_rocky": "ui/items/st_rocky.png",
    "a_fish": "ui/items/fish.png",
+   "a_fishbig": "ui/items/fish.png",
    "a_cow": "ui/items/cow.png",
    "a_chicken": "ui/items/chicken.png",
    "a_bird": "ui/items/bird.png",
@@ -350,13 +563,30 @@
    "st_dark": "ui/items/st_dark.png",
    "pill_s": "ui/items/pill_s.png",
    "pill_l": "ui/items/pill_l.png",
-   "st_breath": "ui/items/st_breath.png"
+   "st_breath": "ui/items/st_breath.png",
+   "petgun": "ui/items/petgun.png",
+   "rk_skill_punch": "ui/items/rk_skill_punch.png",
+   "rk_skill_ha": "ui/items/rk_skill_ha.png",
+   "rk_skill_super": "ui/items/rk_skill_super.png",
+   "rk_lock": "ui/items/rk_lock.png",
+   "rkbook_punch": "ui/items/rkbook_punch.png",
+   "rkbook_ha": "ui/items/rkbook_ha.png",
+   "rkbook_super": "ui/items/rkbook_super.png",
+   "dball1": "ui/items/dball1.png",
+   "dball2": "ui/items/dball2.png",
+   "dball3": "ui/items/dball3.png",
+   "dball4": "ui/items/dball4.png",
+   "dball5": "ui/items/dball5.png",
+   "dball6": "ui/items/dball6.png",
+   "dball7": "ui/items/dball7.png",
+   "pill_hp": "ui/items/pill_hp.png"
   },
   "tabs": {
    "bag": "ui/tab_bag.png",
    "hero": "ui/tab_hero.png",
    "quest": "ui/tab_quest.png",
-   "gear": "ui/tab_gear.png"
+   "gear": "ui/tab_gear.png",
+   "rocky": "ui/port_rocky.png"
   },
   "status": {
    "check": "ui/st_check.png",
@@ -441,7 +671,26 @@
   "alert": "ui/hud/alert.png",
   "crown": "ui/hud/crown.png",
   "port_heathcliff": "ui/port_heathcliff_0.png",
-  "bubble_helm": "ui/bubble_helm.png"
+  "bubble_helm": "ui/bubble_helm.png",
+  "target": {
+   "arrow": "ui/hud/target_arrow.png"
+  },
+  "cursor": {
+   "arrow": "ui/cur/arrow.png",
+   "attack": "ui/cur/attack.png",
+   "talk": "ui/cur/talk.png",
+   "hand": "ui/cur/hand.png",
+   "tool": "ui/cur/tool.png",
+   "gun": "ui/cur/gun.png",
+   "no": "ui/cur/no.png"
+  },
+  "mslots": {
+   "ring": "ui/mslots/ring.png",
+   "ring_on": "ui/mslots/ring_on.png",
+   "btn_a": "ui/mslots/btn_a.png"
+  },
+  "rocky_nest": "ui/rocky_nest.png",
+  "port_rocky": "ui/port_rocky.png"
  },
  "vfx": {
   "dirt_puff": {
@@ -793,6 +1042,592 @@
    "fps": 12,
    "pivot": "bottom-center",
    "loop": true
+  },
+  "petgun_bolt": {
+   "file": "vfx/petgun_bolt_8f_16x16.png",
+   "n": 8,
+   "w": 16,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "petgun_hit": {
+   "file": "vfx/petgun_hit_5f_16x18.png",
+   "n": 5,
+   "w": 16,
+   "h": 18,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "knock_heavy": {
+   "file": "vfx/knock_heavy_5f_24x24.png",
+   "n": 5,
+   "w": 24,
+   "h": 24,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "knock_jab": {
+   "file": "vfx/knock_jab_4f_16x14.png",
+   "n": 4,
+   "w": 16,
+   "h": 14,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "knock_streak": {
+   "file": "vfx/knock_streak_8f_32x16.png",
+   "n": 8,
+   "w": 32,
+   "h": 16,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "knock_land": {
+   "file": "vfx/knock_land_11f_28x26.png",
+   "n": 11,
+   "w": 28,
+   "h": 26,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "knock_wall": {
+   "file": "vfx/knock_wall_9f_28x26.png",
+   "n": 9,
+   "w": 28,
+   "h": 26,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "knock_erupt": {
+   "file": "vfx/knock_erupt_11f_46x34.png",
+   "n": 11,
+   "w": 46,
+   "h": 34,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "knock_dizzy": {
+   "file": "vfx/knock_dizzy_12f_20x12.png",
+   "n": 12,
+   "w": 20,
+   "h": 12,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "spar_blockslam": {
+   "file": "vfx/spar_blockslam_11f_58x30.png",
+   "n": 11,
+   "w": 58,
+   "h": 30,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_chargedust": {
+   "file": "vfx/spar_chargedust_8f_28x14.png",
+   "n": 8,
+   "w": 28,
+   "h": 14,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "spar_hornhit": {
+   "file": "vfx/spar_hornhit_11f_28x28.png",
+   "n": 11,
+   "w": 28,
+   "h": 28,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_crow": {
+   "file": "vfx/spar_crow_8f_40x38.png",
+   "n": 8,
+   "w": 40,
+   "h": 38,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_bodyslam": {
+   "file": "vfx/spar_bodyslam_11f_32x26.png",
+   "n": 11,
+   "w": 32,
+   "h": 26,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_whip": {
+   "file": "vfx/spar_whip_8f_40x12.png",
+   "n": 8,
+   "w": 40,
+   "h": 12,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_afrowave": {
+   "file": "vfx/spar_afrowave_8f_118x104.png",
+   "n": 8,
+   "w": 118,
+   "h": 104,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "arena_flame": {
+   "file": "vfx/arena_flame_8f_9x13.png",
+   "n": 8,
+   "w": 9,
+   "h": 13,
+   "fps": 9,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "arena_embers": {
+   "file": "vfx/arena_embers_12f_11x10.png",
+   "n": 12,
+   "w": 11,
+   "h": 10,
+   "fps": 8,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "arena_fireout": {
+   "file": "vfx/arena_fireout_8f_14x15.png",
+   "n": 8,
+   "w": 14,
+   "h": 15,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_heavyhit": {
+   "file": "vfx/spar_heavyhit_5f_21x20.png",
+   "n": 5,
+   "w": 21,
+   "h": 20,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_shock": {
+   "file": "vfx/spar_shock_7f_47x20.png",
+   "n": 7,
+   "w": 47,
+   "h": 20,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_transform": {
+   "file": "vfx/spar_transform_11f_27x45.png",
+   "n": 11,
+   "w": 27,
+   "h": 45,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "spar_kingaura": {
+   "file": "vfx/spar_kingaura_12f_14x8.png",
+   "n": 12,
+   "w": 14,
+   "h": 8,
+   "fps": 8,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "spar_firepatch": {
+   "file": "vfx/spar_firepatch_8f_12x9.png",
+   "n": 8,
+   "w": 12,
+   "h": 9,
+   "fps": 10,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "arena_wall_dust": {
+   "file": "vfx/arena_wall_dust_8f_45x36.png",
+   "n": 8,
+   "w": 45,
+   "h": 36,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_ha_t1": {
+   "file": "vfx/rk_ha_t1_6f_100x16.png",
+   "n": 6,
+   "w": 100,
+   "h": 16,
+   "fps": 14,
+   "pivot": "left-middle",
+   "loop": false
+  },
+  "rk_ha_t4": {
+   "file": "vfx/rk_ha_t4_7f_132x20.png",
+   "n": 7,
+   "w": 132,
+   "h": 20,
+   "fps": 14,
+   "pivot": "left-middle",
+   "loop": false
+  },
+  "rk_ha_t7": {
+   "file": "vfx/rk_ha_t7_8f_165x28.png",
+   "n": 8,
+   "w": 165,
+   "h": 28,
+   "fps": 14,
+   "pivot": "left-middle",
+   "loop": false
+  },
+  "rk_punch_t1": {
+   "file": "vfx/rk_punch_t1_4f_17x16.png",
+   "n": 4,
+   "w": 17,
+   "h": 16,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_punch_t4": {
+   "file": "vfx/rk_punch_t4_6f_23x25.png",
+   "n": 6,
+   "w": 23,
+   "h": 25,
+   "fps": 18,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_punch_t7": {
+   "file": "vfx/rk_punch_t7_8f_29x31.png",
+   "n": 8,
+   "w": 29,
+   "h": 31,
+   "fps": 18,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_shock": {
+   "file": "vfx/rk_shock_7f_53x22.png",
+   "n": 7,
+   "w": 53,
+   "h": 22,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_charge_t1": {
+   "file": "vfx/rk_charge_t1_12f_31x31.png",
+   "n": 12,
+   "w": 31,
+   "h": 31,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_charge_t4": {
+   "file": "vfx/rk_charge_t4_12f_37x37.png",
+   "n": 12,
+   "w": 37,
+   "h": 37,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_charge_t7": {
+   "file": "vfx/rk_charge_t7_12f_37x37.png",
+   "n": 12,
+   "w": 37,
+   "h": 37,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_super_t1": {
+   "file": "vfx/rk_super_t1_12f_25x46.png",
+   "n": 12,
+   "w": 25,
+   "h": 46,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_super_t4": {
+   "file": "vfx/rk_super_t4_13f_58x47.png",
+   "n": 13,
+   "w": 58,
+   "h": 47,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_super_t7": {
+   "file": "vfx/rk_super_t7_13f_58x77.png",
+   "n": 13,
+   "w": 58,
+   "h": 77,
+   "fps": 16,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_aura_t1": {
+   "file": "vfx/rk_aura_t1_8f_29x42.png",
+   "n": 8,
+   "w": 29,
+   "h": 42,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "rk_aura_t4": {
+   "file": "vfx/rk_aura_t4_8f_29x42.png",
+   "n": 8,
+   "w": 29,
+   "h": 42,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "rk_aura_t7": {
+   "file": "vfx/rk_aura_t7_8f_34x50.png",
+   "n": 8,
+   "w": 34,
+   "h": 50,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true
+  },
+  "rk_book_t1": {
+   "file": "vfx/rk_book_t1_9f_22x25.png",
+   "n": 9,
+   "w": 22,
+   "h": 25,
+   "fps": 15,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_book_t4": {
+   "file": "vfx/rk_book_t4_9f_22x39.png",
+   "n": 9,
+   "w": 22,
+   "h": 39,
+   "fps": 15,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "rk_book_t7": {
+   "file": "vfx/rk_book_t7_9f_27x51.png",
+   "n": 9,
+   "w": 27,
+   "h": 51,
+   "fps": 15,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_magmahit": {
+   "file": "vfx/ult_magmahit_10f_46x30.png",
+   "n": 10,
+   "w": 46,
+   "h": 30,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_quakering": {
+   "file": "vfx/ult_quakering_7f_167x66.png",
+   "n": 7,
+   "w": 167,
+   "h": 66,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_firehit": {
+   "file": "vfx/ult_firehit_12f_33x33.png",
+   "n": 12,
+   "w": 33,
+   "h": 33,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_firering": {
+   "file": "vfx/ult_firering_7f_166x68.png",
+   "n": 7,
+   "w": 166,
+   "h": 68,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_bolt": {
+   "file": "vfx/ult_bolt_8f_44x62.png",
+   "n": 8,
+   "w": 44,
+   "h": 62,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_thunderring": {
+   "file": "vfx/ult_thunderring_6f_165x65.png",
+   "n": 6,
+   "w": 165,
+   "h": 65,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_icehit": {
+   "file": "vfx/ult_icehit_14f_30x38.png",
+   "n": 14,
+   "w": 30,
+   "h": 38,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "ult_frostring": {
+   "file": "vfx/ult_frostring_7f_167x66.png",
+   "n": 7,
+   "w": 167,
+   "h": 66,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "dball_pickup": {
+   "file": "vfx/dball_pickup_5f_15x18.png",
+   "n": 5,
+   "w": 15,
+   "h": 18,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "dball pickup"
+  },
+  "dr_pillar": {
+   "file": "vfx/dr_pillar_11f_99x176.png",
+   "n": 11,
+   "w": 99,
+   "h": 176,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "plan-29 dragon",
+   "ax": 49.5,
+   "ay": 155.5
+  },
+  "dr_bolt": {
+   "file": "vfx/dr_bolt_5f_70x165.png",
+   "n": 5,
+   "w": 70,
+   "h": 165,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "plan-29 dragon",
+   "ax": 35.0,
+   "ay": 160.0
+  },
+  "dr_rain": {
+   "file": "vfx/dr_rain_12f_101x115.png",
+   "n": 12,
+   "w": 101,
+   "h": 115,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": true,
+   "trigger": "plan-29 dragon",
+   "ax": 49.5,
+   "ay": 98.5
+  },
+  "dr_trail": {
+   "file": "vfx/dr_trail_8f_32x14.png",
+   "n": 8,
+   "w": 32,
+   "h": 14,
+   "fps": 12,
+   "pivot": "head",
+   "loop": true,
+   "trigger": "plan-29 dragon",
+   "ax": 24.5,
+   "ay": 6.5
+  },
+  "dr_grant": {
+   "file": "vfx/dr_grant_12f_42x73.png",
+   "n": 12,
+   "w": 42,
+   "h": 73,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "plan-29 dragon",
+   "ax": 20.5,
+   "ay": 55.5
+  },
+  "dr_ballglow": {
+   "file": "vfx/dr_ballglow_12f_17x20.png",
+   "n": 12,
+   "w": 17,
+   "h": 20,
+   "fps": 12,
+   "pivot": "center",
+   "loop": true,
+   "trigger": "plan-29 dragon",
+   "ax": 8.0,
+   "ay": 9.5
+  },
+  "dr_hit": {
+   "file": "vfx/dr_hit_8f_46x69.png",
+   "n": 8,
+   "w": 46,
+   "h": 69,
+   "fps": 14,
+   "pivot": "bottom-center",
+   "loop": false,
+   "trigger": "plan-29 dragon",
+   "ax": 22.5,
+   "ay": 56.5
+  },
+  "dr_motes": {
+   "file": "vfx/dr_motes_16f_175x141.png",
+   "n": 16,
+   "w": 175,
+   "h": 141,
+   "fps": 10,
+   "pivot": "center",
+   "loop": true,
+   "trigger": "plan-29 dragon",
+   "ax": 93.0,
+   "ay": 60.5
+  },
+  "dr_aura": {
+   "file": "vfx/dr_aura_12f_89x122.png",
+   "n": 12,
+   "w": 89,
+   "h": 122,
+   "fps": 10,
+   "pivot": "center",
+   "loop": true,
+   "trigger": "plan-29 dragon",
+   "ax": 44.0,
+   "ay": 62.0
   }
  },
  "cursors": {
@@ -975,6 +1810,10 @@
   "sword_t1": {
    "on": "ui/cursors/sword_t1.png",
    "off": "ui/cursors/sword_t1_off.png"
+  },
+  "petgun": {
+   "on": "ui/cursors/petgun.png",
+   "off": "ui/cursors/petgun_off.png"
   }
  },
  "monsters": {
@@ -1158,6 +1997,97 @@
    "n": 1,
    "cw": 12,
    "ch": 13,
+   "fps": 1
+  },
+  "kraken_idle": {
+   "file": "monsters/kraken/kraken_idle.png",
+   "n": 9,
+   "cw": 80,
+   "ch": 64,
+   "fps": 6
+  },
+  "kraken_roar": {
+   "file": "monsters/kraken/kraken_roar.png",
+   "n": 9,
+   "cw": 80,
+   "ch": 64,
+   "fps": 10
+  },
+  "kraken_hurt": {
+   "file": "monsters/kraken/kraken_hurt.png",
+   "n": 5,
+   "cw": 80,
+   "ch": 64,
+   "fps": 12
+  },
+  "kraken_tsway": {
+   "file": "monsters/kraken/kraken_tsway.png",
+   "n": 4,
+   "cw": 48,
+   "ch": 64,
+   "fps": 6
+  },
+  "kraken_tslam": {
+   "file": "monsters/kraken/kraken_tslam.png",
+   "n": 9,
+   "cw": 48,
+   "ch": 64,
+   "fps": 14
+  },
+  "kraken_tsink": {
+   "file": "monsters/kraken/kraken_tsink.png",
+   "n": 9,
+   "cw": 48,
+   "ch": 64,
+   "fps": 14
+  },
+  "kraken_long": {
+   "file": "monsters/kraken/kraken_long.png",
+   "n": 1,
+   "cw": 80,
+   "ch": 24,
+   "fps": 1
+  },
+  "kraken_coil": {
+   "file": "monsters/kraken/kraken_coil.png",
+   "n": 1,
+   "cw": 32,
+   "ch": 40,
+   "fps": 1
+  },
+  "kraken_crack": {
+   "file": "monsters/kraken/kraken_crack.png",
+   "n": 1,
+   "cw": 80,
+   "ch": 40,
+   "fps": 1
+  },
+  "kraken_warn": {
+   "file": "monsters/kraken/kraken_warn.png",
+   "n": 1,
+   "cw": 24,
+   "ch": 16,
+   "fps": 1
+  },
+  "kraken_rock": {
+   "file": "monsters/kraken/kraken_rock.png",
+   "n": 1,
+   "cw": 16,
+   "ch": 16,
+   "fps": 1
+  },
+  "kraken_ltip": {
+   "file": "monsters/kraken/kraken_ltip.png",
+   "n": 1,
+   "cw": 18,
+   "ch": 24,
+   "fps": 1
+  },
+  "kraken_lseg": {
+   "file": "monsters/kraken/kraken_lseg.png",
+   "n": 1,
+   "cw": 32,
+   "ch": 24,
    "fps": 1
   }
  },
@@ -1385,6 +2315,188 @@
   "zones/m9/obj/monument_badge.png": {
    "dmg": "obj/ruin/m9_monument_badge_dmg.png",
    "ruin": "obj/ruin/m9_monument_badge_ruin.png"
+  },
+  "zones/u3/obj/wreckwall_t8.png": {
+   "dmg": "obj/ruin/u3_wreckwall_dmg.png",
+   "ruin": "obj/ruin/u3_wreckwall_ruin.png"
+  },
+  "zones/u3/obj/wreckwall2_t8.png": {
+   "dmg": "obj/ruin/u3_wreckwall2_dmg.png",
+   "ruin": "obj/ruin/u3_wreckwall2_ruin.png"
+  },
+  "zones/u3/obj/wreckwall3_t8.png": {
+   "dmg": "obj/ruin/u3_wreckwall3_dmg.png",
+   "ruin": "obj/ruin/u3_wreckwall3_ruin.png"
+  },
+  "zones/u4/obj/caverock_t8.png": {
+   "dmg": "obj/ruin/uw_caverock_dmg.png",
+   "ruin": "obj/ruin/uw_caverock_ruin.png"
+  },
+  "zones/u4/obj/caverock2_t8.png": {
+   "dmg": "obj/ruin/uw_caverock2_dmg.png",
+   "ruin": "obj/ruin/uw_caverock2_ruin.png"
+  },
+  "zones/xfort/obj/xwall_t8.png": {
+   "dmg": "obj/ruin/uw_xwall_dmg.png",
+   "ruin": "obj/ruin/uw_xwall_ruin.png"
+  },
+  "zones/xfort/obj/xwall2_t8.png": {
+   "dmg": "obj/ruin/uw_xwall2_dmg.png",
+   "ruin": "obj/ruin/uw_xwall2_ruin.png"
+  },
+  "zones/trench/obj/coral_s23.png": {
+   "dmg": "obj/ruin/uw_coral_dmg.png",
+   "ruin": "obj/ruin/uw_coral_ruin.png"
+  },
+  "zones/trench/obj/coral_t_s23.png": {
+   "dmg": "obj/ruin/uw_coral_t_dmg.png",
+   "ruin": "obj/ruin/uw_coral_t_ruin.png"
+  },
+  "zones/trench/obj/wreck_s7.png": {
+   "dmg": "obj/ruin/uw_wreck_dmg.png",
+   "ruin": "obj/ruin/uw_wreck_ruin.png"
+  },
+  "zones/arena/obj/arena_pillar_t8.png": {
+   "dmg": "obj/ruin/arena_pillar_dmg.png",
+   "ruin": "obj/ruin/arena_pillar_ruin.png"
+  },
+  "zones/arena/obj/arena_bag_t8.png": {
+   "dmg": "obj/ruin/arena_bag_dmg.png",
+   "ruin": "obj/ruin/arena_bag_ruin.png"
+  },
+  "zones/arena/obj/arena_weights_t8.png": {
+   "dmg": "obj/ruin/arena_weights_dmg.png",
+   "ruin": "obj/ruin/arena_weights_ruin.png"
+  },
+  "zones/arena/obj/arena_dummy_t8.png": {
+   "dmg": "obj/ruin/arena_dummy_dmg.png",
+   "ruin": "obj/ruin/arena_dummy_ruin.png"
+  },
+  "zones/arena/obj/arena_bench_t8.png": {
+   "dmg": "obj/ruin/arena_bench_dmg.png",
+   "ruin": "obj/ruin/arena_bench_ruin.png"
+  },
+  "zones/arena/obj/arena_crowd_t8.png": {
+   "dmg": "obj/ruin/arena_crowd_dmg.png",
+   "ruin": "obj/ruin/arena_crowd_ruin.png"
+  },
+  "zones/m4/obj/crate_s7.png": {
+   "dmg": "obj/ruin/arena_crate_dmg.png",
+   "ruin": "obj/ruin/arena_crate_ruin.png"
+  },
+  "gen_td/tree_L7.png": {
+   "dmg": "obj/ruin/road_tree_v_dmg.png",
+   "ruin": "obj/ruin/road_tree_v_ruin.png"
+  },
+  "zones/village/obj/berrybush_picked_t8.png": {
+   "dmg": "obj/ruin/road_bush_v_dmg.png",
+   "ruin": "obj/ruin/road_bush_v_ruin.png"
+  },
+  "zones/m1/obj/palm_L7.png": {
+   "dmg": "obj/ruin/road_palm_m1_dmg.png",
+   "ruin": "obj/ruin/road_palm_m1_ruin.png"
+  },
+  "zones/m1/obj/rock_s23.png": {
+   "dmg": "obj/ruin/road_rock_m1_dmg.png",
+   "ruin": "obj/ruin/road_rock_m1_ruin.png"
+  },
+  "zones/m2/obj/tree_L7.png": {
+   "dmg": "obj/ruin/road_tree_m2_dmg.png",
+   "ruin": "obj/ruin/road_tree_m2_ruin.png"
+  },
+  "zones/m2/obj/berrybush_picked_t8.png": {
+   "dmg": "obj/ruin/road_bush_m2_dmg.png",
+   "ruin": "obj/ruin/road_bush_m2_ruin.png"
+  },
+  "zones/m3/obj/tree_L7.png": {
+   "dmg": "obj/ruin/road_tree_m3_dmg.png",
+   "ruin": "obj/ruin/road_tree_m3_ruin.png"
+  },
+  "zones/m3/obj/berrybush_picked_t8.png": {
+   "dmg": "obj/ruin/road_bush_m3_dmg.png",
+   "ruin": "obj/ruin/road_bush_m3_ruin.png"
+  },
+  "zones/m3/obj/deadtree_L7.png": {
+   "dmg": "obj/ruin/road_deadtree_m3_dmg.png",
+   "ruin": "obj/ruin/road_deadtree_m3_ruin.png"
+  },
+  "zones/m4/obj/rock_s23.png": {
+   "dmg": "obj/ruin/road_rock_m4_dmg.png",
+   "ruin": "obj/ruin/road_rock_m4_ruin.png"
+  },
+  "zones/road/obj/cliff_mine_t8.png": {
+   "dmg": "obj/ruin/road_cliff_mine_dmg.png",
+   "ruin": "obj/ruin/road_cliff_mine_ruin.png"
+  },
+  "zones/m4/obj/beam_t8.png": {
+   "dmg": "obj/ruin/road_beam_m4_dmg.png",
+   "ruin": "obj/ruin/road_beam_m4_ruin.png"
+  },
+  "zones/m5/obj/rock_s31.png": {
+   "dmg": "obj/ruin/road_rock_m5_dmg.png",
+   "ruin": "obj/ruin/road_rock_m5_ruin.png"
+  },
+  "zones/m5/obj/deadtree_L7.png": {
+   "dmg": "obj/ruin/road_deadtree_m5_dmg.png",
+   "ruin": "obj/ruin/road_deadtree_m5_ruin.png"
+  },
+  "zones/m6/obj/pillar_broken_s23.png": {
+   "dmg": "obj/ruin/road_pillarb_m6_dmg.png",
+   "ruin": "obj/ruin/road_pillarb_m6_ruin.png"
+  },
+  "zones/m6/obj/statue_s23.png": {
+   "dmg": "obj/ruin/road_statue_m6_dmg.png",
+   "ruin": "obj/ruin/road_statue_m6_ruin.png"
+  },
+  "zones/m6/obj/berrybush_picked_t8.png": {
+   "dmg": "obj/ruin/road_bush_m6_dmg.png",
+   "ruin": "obj/ruin/road_bush_m6_ruin.png"
+  },
+  "zones/road/obj/cliff_basalt_t8.png": {
+   "dmg": "obj/ruin/road_cliff_basalt_dmg.png",
+   "ruin": "obj/ruin/road_cliff_basalt_ruin.png"
+  },
+  "zones/m7/obj/rock_s23.png": {
+   "dmg": "obj/ruin/road_rock_m7_dmg.png",
+   "ruin": "obj/ruin/road_rock_m7_ruin.png"
+  },
+  "zones/m7/obj/deadtree_L23.png": {
+   "dmg": "obj/ruin/road_deadtree_m7_dmg.png",
+   "ruin": "obj/ruin/road_deadtree_m7_ruin.png"
+  },
+  "zones/m8/obj/pine_s_s23.png": {
+   "dmg": "obj/ruin/road_pines_m8_dmg.png",
+   "ruin": "obj/ruin/road_pines_m8_ruin.png"
+  },
+  "zones/m8/obj/pine_L7.png": {
+   "dmg": "obj/ruin/road_pine_m8_dmg.png",
+   "ruin": "obj/ruin/road_pine_m8_ruin.png"
+  },
+  "zones/m8/obj/rock_s7.png": {
+   "dmg": "obj/ruin/road_rock_m8_dmg.png",
+   "ruin": "obj/ruin/road_rock_m8_ruin.png"
+  }
+ },
+ "dragon": {
+  "images": {
+   "dragon_spirit": "dragon/dragon_spirit.png",
+   "skill_icon": "dragon/skill_icon.png",
+   "dragon_idle": "dragon/dragon_idle.png",
+   "dragon_roar8": "dragon/dragon_roar8.png"
+  },
+  "frames": {
+   "dragon_idle": {
+    "n": 9,
+    "w": 128,
+    "h": 84,
+    "fps": 8
+   },
+   "dragon_roar8": {
+    "n": 9,
+    "w": 128,
+    "h": 84,
+    "fps": 10
+   }
   }
  }
 }

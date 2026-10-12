@@ -251,18 +251,15 @@ function soilTex(wet) {   /* vân đất 22×22 lấy từ giữa ảnh nguồn 
   const c = mkCanvas(32, 32), g = c.getContext('2d'); g.drawImage(src, 0, 0, 32, 32);
   const d = g.getImageData(4, 4, 22, 22); return (SOIL.tex[k] = d);
 }
-ART.soilTile = (wet, mask, wmask = 0) => {   /* wmask: ô kề cũng đã tưới (cùng bit với mask) — để bo góc vết ướt */
-  const key = wet ? 'w' + mask + '_' + wmask : 'd' + mask; if (SOIL.cache[key]) return SOIL.cache[key];
-  const tx = soilTex(wet); if (!tx) return null;
-  const c = mkCanvas(32, 32), g = c.getContext('2d'), out = g.createImageData(32, 32), o = out.data, TD = tx.data, TW = tx.width;
+/* khối ô bo góc dùng chung (đất cày · ao nước): fill(x,y) tô phần trong, viền màu BR chỉ ở cạnh không có ô kề, bo góc ngoài R=3, vát góc trong */
+function blobTile(mask, fillPx, BR, inset = 4) {   /* inset: lề trong ô khi cạnh không có ô kề (đất 4 px · ao 1 px = nước tràn đủ ô) */
+  const c = mkCanvas(32, 32), g = c.getContext('2d'), out = g.createImageData(32, 32), o = out.data;
   const has = b => (mask & b) !== 0, N = has(1), E = has(2), S = has(4), W = has(8);
-  const BR = wet ? [92, 60, 38] : [126, 86, 52];   /* viền nâu sẫm vừa (trước là gần đen) */
   const cls = new Uint8Array(1024);   /* 0 trống · 1 đất · 2 viền */
   const put = (x, y, r, gg, b) => { const i = (y * 32 + x) * 4; o[i] = r; o[i + 1] = gg; o[i + 2] = b; o[i + 3] = 255; };
-  const texAt = (D, x, y) => { const sx = ((x - 4) % TW + TW) % TW, sy = ((y - 4) % TW + TW) % TW, j = (sy * TW + sx) * 4; return [D[j], D[j + 1], D[j + 2]]; };
-  const soil = (x, y) => { const v = texAt(TD, x, y); put(x, y, v[0], v[1], v[2]); cls[y * 32 + x] = 1; };
-  const border = (x, y) => { put(x, y, BR[0], BR[1], BR[2]); cls[y * 32 + x] = 2; };
-  const lo = 4, hi = 27, fx0 = W ? 0 : lo, fx1 = E ? 31 : hi, fy0 = N ? 0 : lo, fy1 = S ? 31 : hi;
+  const soil = (x, y) => { if (x < 0 || y < 0 || x > 31 || y > 31) return; const v = fillPx(x, y); put(x, y, v[0], v[1], v[2]); cls[y * 32 + x] = 1; };
+  const border = (x, y) => { if (x < 0 || y < 0 || x > 31 || y > 31) return; put(x, y, BR[0], BR[1], BR[2]); cls[y * 32 + x] = 2; };
+  const lo = inset, hi = 31 - inset, fx0 = W ? 0 : lo, fx1 = E ? 31 : hi, fy0 = N ? 0 : lo, fy1 = S ? 31 : hi;
   /* 1) phần đất: hình chữ thập (giữa + các dải cạnh có hàng xóm) + góc khi đủ 3 ô kề */
   for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
     const inX = x >= lo && x <= hi, inY = y >= lo && y <= hi;
@@ -283,10 +280,11 @@ ART.soilTile = (wet, mask, wmask = 0) => {   /* wmask: ô kề cũng đã tướ
   if (!E) for (let y = fy0; y <= fy1; y++) border(hi + 1, y);
   if (!N && !W) border(lo - 1, lo - 1); if (!N && !E) border(hi + 1, lo - 1); if (!S && !W) border(lo - 1, hi + 1); if (!S && !E) border(hi + 1, hi + 1);
   const inner = (cn, cw, diag, xs, ys, vx, hy) => { if (cn && cw && !diag) { for (const y of ys) border(vx, y); for (const x of xs) border(x, hy); } };
-  inner(N, W, has(128), [0, 1, 2, 3], [0, 1, 2, 3], lo - 1, lo - 1);
-  inner(N, E, has(16), [28, 29, 30, 31], [0, 1, 2, 3], hi + 1, lo - 1);
-  inner(S, W, has(64), [0, 1, 2, 3], [28, 29, 30, 31], lo - 1, hi + 1);
-  inner(S, E, has(32), [28, 29, 30, 31], [28, 29, 30, 31], hi + 1, hi + 1);
+  const A = [...Array(lo).keys()], Z = A.map(i => 31 - i);   /* dải lề (0..lo-1) · (31-lo+1..31) */
+  inner(N, W, has(128), A, A, lo - 1, lo - 1);
+  inner(N, E, has(16), Z, A, hi + 1, lo - 1);
+  inner(S, W, has(64), A, Z, lo - 1, hi + 1);
+  inner(S, E, has(32), Z, Z, hi + 1, hi + 1);
   /* 3) bo tròn nhẹ các góc NGOÀI của khối đất (anh: 'bo góc tròn một tý cho thẩm mỹ'), bán kính 3 px ảnh 2× ≈ 1,5 px game */
   const R = 3, clear = (x, y) => { o[(y * 32 + x) * 4 + 3] = 0; cls[y * 32 + x] = 0; };
   const round = (ox, oy, sx, sy) => { for (let j = 0; j <= R; j++) for (let k = 0; k <= R; k++) { const x = ox + sx * k, y = oy + sy * j, d = Math.hypot(k, j); if (d > R + 0.5) clear(x, y); else if (d > R - 0.5) border(x, y); } };
@@ -300,6 +298,42 @@ ART.soilTile = (wet, mask, wmask = 0) => {   /* wmask: ô kề cũng đã tướ
   if (N && E && !has(16)) bevel(hi + 1, lo - 1, 1, -1);
   if (S && W && !has(64)) bevel(lo - 1, hi + 1, -1, 1);
   if (S && E && !has(32)) bevel(hi + 1, hi + 1, 1, 1);
+  return { c, g, out, o, cls, put, border, has, N, E, S, W, lo, hi };
+}
+/* 2026-10-11 anh: ô AO bo góc + viền nâu dịu như ô đào đất (trước: viền đá đen đậm). Mặt nước lấy vân từ giữa ảnh ô ao PixelLab (pond_tile);
+   1 px nước sát viền sẫm hơn chút cho có chiều sâu. mask như soilTile (N1 E2 S4 W8 · NE16 SE32 SW64 NW128). Ảnh 32 px → vẽ kèm cỡ đích 16×16. */
+const POND = { cache: {}, pal: null, pat: null, src: null };
+ART.pondTile = (mask, src) => {
+  if (!src) return null;
+  if (POND.v !== 4) { POND.v = 4; POND.src = null; }   /* đổi kiểu viền → xoá bộ nhớ đệm */
+  if (POND.src !== src) {   /* bảng màu nước (nền nhiều nhất · sáng · tối) lấy từ giữa ảnh ô ao PixelLab — ảnh gốc có khung đá + lá súng nên KHÔNG cắt vân trực tiếp */
+    POND.src = src; POND.cache = {};
+    const c0 = mkCanvas(32, 32), g0 = c0.getContext('2d'); g0.drawImage(src, 0, 0, 32, 32); const d = g0.getImageData(6, 14, 10, 10).data, cnt = {};
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 2] < d[i] + 30) continue; const k = d[i] + ',' + d[i + 1] + ',' + d[i + 2]; cnt[k] = (cnt[k] || 0) + 1; }
+    const cols = Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(e => e[0].split(',').map(Number)), lum = c => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
+    const base = cols[0] || [58, 143, 214], rest = cols.slice(1, 10);
+    void base; void rest; POND.pal = [[118, 190, 253], [191, 232, 255], [96, 168, 238]];   /* 2026-10-11 anh: mặt ao CÙNG MÀU nước nông xanh nhạt của bản đồ (dịu mắt) — trước lấy xanh đậm của ảnh ô ao, lệch màu với nước ngoài */
+    const pat = new Uint8Array(1024); let h = 2166136261;   /* vệt sóng ngắn rải đều (cố định) */
+    for (let n = 0; n < 9; n++) { h = Math.imul(h ^ (n * 977), 16777619) >>> 0; const x = h % 28, y = (h >>> 8) % 30, len = 3 + ((h >>> 16) % 4), v = n % 3 === 0 ? 2 : 1; for (let i = 0; i < len; i++) pat[y * 32 + ((x + i) % 32)] = v; }
+    POND.pat = pat;
+  }
+  if (POND.cache[mask]) return POND.cache[mask];
+  const water = (x, y) => POND.pal[POND.pat[y * 32 + x]];
+  const B = blobTile(mask, water, POND.pal[2], 1), { c, g, out, o, cls } = B;   /* anh 2026-10-11: nước tràn đủ ô (không chừa cỏ quanh) */   /* anh 2026-10-11: bỏ viền nâu — mép ao = nước sẫm (vẫn bo góc) */
+  for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {   /* mép nước sát viền: sẫm 18 % */
+    if (cls[y * 32 + x] !== 1) continue;
+    let edge = false; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < 32 && yy < 32 && cls[yy * 32 + xx] === 2) edge = true; }
+    if (edge) { const i = (y * 32 + x) * 4; o[i] = o[i] * 0.82; o[i + 1] = o[i + 1] * 0.82; o[i + 2] = o[i + 2] * 0.86; }
+  }
+  g.putImageData(out, 0, 0); return (POND.cache[mask] = c);
+};
+ART.soilTile = (wet, mask, wmask = 0) => {   /* wmask: ô kề cũng đã tưới (cùng bit với mask) — để bo góc vết ướt */
+  const key = wet ? 'w' + mask + '_' + wmask : 'd' + mask; if (SOIL.cache[key]) return SOIL.cache[key];
+  const tx = soilTex(wet); if (!tx) return null;
+  const TD = tx.data, TW = tx.width;
+  const texAt = (D, x, y) => { const sx = ((x - 4) % TW + TW) % TW, sy = ((y - 4) % TW + TW) % TW, j = (sy * TW + sx) * 4; return [D[j], D[j + 1], D[j + 2]]; };
+  const BR = wet ? [92, 60, 38] : [126, 86, 52];   /* viền nâu sẫm vừa (trước là gần đen) */
+  const B = blobTile(mask, (x, y) => texAt(TD, x, y), BR), { c, g, out, cls, put, has, N, E, S, W, lo, hi } = B;
   /* 4) vết đất ƯỚT bo góc (anh: 'đất đã tưới nước bo luôn'): góc nào của ô ướt giáp đất KHÔ thì phần ngoài cung tròn trả về đất khô + viền khô */
   if (wet && ART.soilSq) {
     const dtx = soilTex(false), DD = dtx && dtx.data, BRd = [126, 86, 52], RW = 7, wh = b => (wmask & b) !== 0;

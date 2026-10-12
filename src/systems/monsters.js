@@ -6,12 +6,15 @@
 //   người chơi đang bơi (p.custom = dáng bơi) vẫn bị đuổi / đánh / đánh trả được (cờ uw); sức đánh ×ctx.atkMul() (−50% dưới nước, cả phần cộng của kiếm).
 import { getCarry, removeCarry, addCarry, headSprite } from './animals.js';
 import { ART } from '../art.js';
-import { FPS } from '../anim.js';
+import { ROADS } from '../world.js';   /* plan-28: quái đường đèo = loài của vùng dưới, mạnh hơn */
+import { FPS, waterDraw, WATER } from '../anim.js';
+import { STONE_FILTER } from './petgun.js';   /* petgun.js: bộ lọc tô đá */
+import { initKraken, aiKraken as aiKrakenNew, slamAt as krSlamAt, slamTick as krSlamTick, tentDrawable as krTent, drawSlamGround, drawKraken as drawKrakenNew, drawCrack, drawDead, krDrawables, krNearTent, krMash, krHeld, krOnDeath, krStrikeLabel } from './kraken.js';   /* 2026-10-11: Kraken làm lại (hình + kỹ năng 3 pha) */
 
 /* plan-23 B0 (anh duyệt 2026-10-10): đúng cấp vùng → 3–4 nhát hạ 1 con, chịu ~11 đòn mới ngất, ~8 con lên 1 cấp */
 const SP = {
   village: { key: 'slime', vi: 'Nhầy Mầm', en: 'Sprout Slime', hp: 35, dmg: 9, armor: 0, sp: 20, xp: 6, drop: 'gel', steal: 'crop', w: 12, h: 12, c: ['#6fbf4a', '#3f7a2a', '#bff28a'], shape: 'blob', day: 6, night: 12 },
-  m1: { key: 'crab', vi: 'Cua Trộm', en: 'Thief Crab', hp: 60, dmg: 10, armor: 0, sp: 26, xp: 12, drop: 'claw', steal: 'carry', w: 14, h: 11, c: ['#e0603a', '#8a2e1a', '#ffb08a'], shape: 'crab', day: 6, night: 12 },
+  m1: { key: 'crab', vi: 'Cua Trộm', en: 'Thief Crab', hp: 60, dmg: 10, armor: 0, sp: 26, xp: 12, drop: 'claw', steal: 'carry', w: 14, h: 11, c: ['#e0603a', '#8a2e1a', '#ffb08a'], shape: 'crab', aqua: true, day: 6, night: 12 },   /* aqua (2026-10-11 anh): quái nước lội vào nước nông / ao */
   m2: { key: 'crow', vi: 'Quạ Xám', en: 'Grey Crow', hp: 85, dmg: 13, armor: 1, sp: 36, xp: 25, drop: 'feather', steal: 'crop', w: 16, h: 11, c: ['#5a5868', '#2c2a36', '#9a98aa'], shape: 'bird', fly: true, day: 7, night: 14 },
   m3: { key: 'wolf', vi: 'Sói Bóng', en: 'Shadow Wolf', hp: 130, dmg: 16, armor: 1, sp: 40, xp: 37, drop: 'fang', steal: 'carry', w: 12, h: 23, c: ['#4a4560', '#22202e', '#9f8fd0'], shape: 'beast', day: 7, night: 14 },
   m4: { key: 'rockimp', vi: 'Yêu Đá', en: 'Rock Imp', hp: 150, dmg: 19, armor: 2, sp: 24, xp: 50, drop: 'core', steal: 'node', nodes: /ore|rock|boulder|seis/, w: 12, h: 13, c: ['#8a8078', '#4a443e', '#ffb03a'], shape: 'golem', day: 8, night: 16 },
@@ -26,7 +29,7 @@ const SP = {
 const UW = {
   puffer: { key: 'puffer', vi: 'Cá Nóc Gai', en: 'Spiny Puffer', hp: 70, dmg: 12, armor: 0, sp: 22, xp: 18, drop: 'shell', w: 14, h: 13, c: ['#f0a030', '#a8601a', '#ffe08a'], shape: 'blob', ai: 'puffer' },
   jelly: { key: 'jelly', vi: 'Sứa Điện', en: 'Shock Jelly', hp: 55, dmg: 10, armor: 0, sp: 12, xp: 16, drop: 'gel', w: 12, h: 15, c: ['#b8a8f0', '#6a58b0', '#ffe066'], shape: 'ghost', ai: 'jelly', float: true },
-  crabking: { key: 'crabking', vi: 'Cua Hoàng Đế', en: 'Emperor Crab', hp: 240, dmg: 16, armor: 0, sp: 18, xp: 80, drop: 'seagem', w: 26, h: 18, c: ['#b8302a', '#6a1a14', '#ffd45e'], shape: 'crab', ai: 'crabking', boss: true, shell: true,
+  crabking: { key: 'crabking', vi: 'Cua Hoàng Đế', en: 'Emperor Crab', hp: 240, dmg: 16, armor: 0, sp: 18, xp: 80, drop: 'seagem', w: 26, h: 18, c: ['#b8302a', '#6a1a14', '#ffd45e'], shape: 'crab', ai: 'crabking', boss: true, shell: true, aqua: true,
     openLbl: { vi: 'GIƠ CÀNG!', en: 'CLAWS UP!' } },
   /* plan-26 B1 — tầng 2 (≈ quái M4–M5): núp tảo + lao thẳng hàng / lượn vòng + húc; trùm phóng điện vòng (có khe hở để né) */
   eel: { key: 'eel', vi: 'Lươn Điện', en: 'Shock Eel', hp: 100, dmg: 19, armor: 2, sp: 26, xp: 52, drop: 'gel', w: 16, h: 9, c: ['#2a8a80', '#14403c', '#ffe066'], shape: 'ghost', ai: 'eel', lurk: true },
@@ -48,7 +51,18 @@ SP.u1 = { ...UW.puffer, mix: [UW.puffer, UW.puffer, UW.jelly], boss: UW.crabking
 SP.u2 = { ...UW.eel, mix: [UW.eel, UW.eel, UW.swordfish], boss: UW.momeel, day: 8, night: 10 };
 SP.u3 = { ...UW.squid, mix: [UW.squid, UW.sawshark, UW.sawshark], boss: UW.armorshark, day: 8, night: 10 };
 SP.u4 = { ...UW.angler, mix: [UW.angler, UW.seasnake, UW.seasnake], boss: UW.serpent, day: 8, night: 10 };
-const NEED_LV = { village: 1, m1: 2, sea: 2, u1: 3, m2: 3, m3: 5, m4: 7, u2: 8, m5: 9, m6: 11, u3: 12, m7: 13, m8: 15, u4: 16, m9: 17 };   /* cấp nhân vật dự kiến của vùng */
+/* plan-26 B2 — Kraken (trùm giữa, máu thật; đầu ở mép trên, xúc tu đập xuống vùng báo trước, phun mực, <50 % gọi 2 cá mập) + Xealist (trùm cuối 3 pha) + Bóng Tối (lính triệu hồi, ảnh inkshade) */
+UW.kraken = { key: 'kraken', vi: 'Kraken', en: 'Kraken', hp: 1400, dmg: 36, armor: 4, sp: 22, xp: 520, drop: 'seagem', w: 64, h: 48, c: ['#4a2a6a', '#24123a', '#ffd45e'], shape: 'blob', ai: 'kraken', boss: true, leash: 200, engage: 400, shell: true, weak: 1.5,
+  openLbl: { vi: 'NGOI LÊN!', en: 'SURFACED!' }, tip: { vi: 'Đầu Kraken còn chìm sau khe vực — chém xúc tu đang KẸT, hoặc đợi nó ngoi lên!', en: 'The Kraken\'s head is sunk in the abyss — slash a STUCK tentacle, or wait for it to surface!' } };   /* 2026-10-11: đầu chìm = chỉ ăn 25 %, ngoi lên = ×1,5; chém xúc tu đang kẹt = sát thương đủ (kraken.js) */
+UW.shade = { key: 'inkshade', vi: 'Bóng Tối', en: 'Shadow', hp: 220, dmg: 26, armor: 3, sp: 36, xp: 60, drop: 'ink', w: 9, h: 16, c: ['#2a2440', '#120f1c', '#ff7ad9'], shape: 'ghost', fly: true, ai: 'shade' };
+UW.xealistb = { key: 'xealistboss', vi: 'Xealist', en: 'Xealist', hp: 1800, dmg: 38, armor: 4, sp: 30, xp: 800, drop: 'seagem', w: 20, h: 34, c: ['#f2f2f2', '#24202e', '#ff7ad9'], shape: 'beast', ai: 'xealist', boss: true, leash: 420, engage: 430 };
+SP.kraken = { ...UW.sawshark, mix: [UW.sawshark, UW.seasnake], boss: UW.kraken, day: 4, night: 5 };
+SP.xfort = { ...UW.shade, mix: [UW.shade], boss: UW.xealistb, day: 0, night: 0, noDark: true };   /* phe Xealist: pháo đài là căn cứ an toàn (không quái) */
+/* plan-28: đường đèo — loài quái của VÙNG DƯỚI, máu / sức đánh / kinh nghiệm ×1,2 (đoạn 1) → ×1,5 (đoạn 9); không sinh ngẫu nhiên (day/night 0):
+   đứng ở chỗ cố định (map.monSpots), chết thì hồi sinh tại chỗ sau 10 s (người chơi đứng gần thì chờ thêm). */
+ROADS.forEach((R, i) => { const b = SP[R.lower], k = 1.2 + 0.3 * i / 8; SP[R.id] = { ...b, hp: Math.round(b.hp * k), dmg: Math.round(b.dmg * k), xp: Math.round(b.xp * k), day: 0, night: 0, road: true, steal: null }; });
+export const ROAD_RESPAWN = 10, ROAD_NEAR = 80;
+const NEED_LV = { village: 1, m1: 2, sea: 2, u1: 3, m2: 3, m3: 5, m4: 7, u2: 8, m5: 9, m6: 11, u3: 12, m7: 13, m8: 15, u4: 16, m9: 17, kraken: 18, xfort: 19, road1: 2, road2: 3, road3: 4, road4: 6, road5: 8, road6: 10, road7: 12, road8: 14, road9: 16 };   /* cấp nhân vật dự kiến của vùng */
 /* đi vùng khó khi cấp còn thấp → quái đánh đau hơn, tối đa gấp đôi (nhắc quay lại luyện cấp) */
 const hurtMul = ctx => { const need = NEED_LV[ctx.S.zone && ctx.S.zone.id] || 1, lv = ctx.hero ? ctx.hero.lv : need; return lv >= need ? 1 : Math.min(2, 1 + (need - lv) * 0.25); };
 const uwOn = ctx => !!(ctx.isUnderwater && ctx.isUnderwater());   /* dưới nước: người chơi vẽ dáng bơi (p.custom) nhưng vẫn đánh nhau bình thường */
@@ -100,7 +114,11 @@ const T = ctx => (vi(ctx) ? {
 });
 const night = ctx => !!(ctx.clock && ctx.clock.isNight && ctx.clock.isNight());
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-const walkable = (ctx, x, y, fly) => { const m = ctx.S.map, tx = Math.floor(x / 16), ty = Math.floor(y / 16); if (tx < 1 || ty < 1 || tx >= m.w - 1 || ty >= m.h - 1) return false; return fly || !ctx.isSolid(m, tx, ty); };
+const walkable = (ctx, x, y, fly, aq) => { const m = ctx.S.map, tx = Math.floor(x / 16), ty = Math.floor(y / 16); if (tx < 1 || ty < 1 || tx >= m.w - 1 || ty >= m.h - 1) return false; return fly || !ctx.isSolid(m, tx, ty) || (!!aq && wetOk(ctx, m, tx, ty)); };
+/* 2026-10-11 anh: quái nước (c.aqua: cua) được lội vào ô nước NÔNG (biển sát bờ, ao người chơi đào) — không có vật thể; nước khơi (bơi) vẫn chặn.
+   Quái thường giữ nguyên: nước = vật chắn. */
+function wetG(ctx, x, y) { const g0 = ctx.getG(ctx.S.map, Math.floor(x / 16), Math.floor(y / 16)); return g0 === ctx.T.WATER || g0 === ctx.T.DEEP; }
+function wetOk(ctx, m, tx, ty) { const g0 = ctx.getG(m, tx, ty); if (g0 !== ctx.T.WATER && g0 !== ctx.T.REEF) return false; if (!(WATER.depth && WATER.depth(tx * 16 + 8, ty * 16 + 12) === 6)) return false; return !(ctx.hasObjectAt && ctx.hasObjectAt(m, tx, ty)); }
 const inRect = (r, tx, ty) => !!r && tx >= r.x && ty >= r.y && tx < r.x + r.w && ty < r.y + r.h;
 
 function newMo(c, x, y) { return { id: ++ST.uid, c, x, y, hp: c.hp, max: c.hp, state: 'wander', goal: null, t: Math.random() * 3, cd: 0, kb: null, flash: 0, ft: Math.random() * 4, dir: 1, loot: null, claim: null, warned: false }; }
@@ -117,6 +135,10 @@ function spawnOne(ctx, kind) {
   }
   return false;
 }
+function spawnAt(ctx, i) {   /* plan-28: quái đường đèo ở chỗ cố định i */
+  const sp = ctx.S.map.monSpots && ctx.S.map.monSpots[i]; if (!sp || !ST.cfg) return null;
+  const mo = newMo(ST.cfg, sp.x * 16 + 8, sp.y * 16 + 12); mo.spot = i; mo.home = { x: mo.x, y: mo.y }; ST.list.push(mo); return mo;
+}
 function spawnBoss(ctx) {   /* trùm canh cổng: 1 con, đứng ở m.boss, không hồi sinh khi cổng đã mở */
   const z = ST.cfg, m = ctx.S.map; if (!z || !z.boss || !m.boss || ST.list.some(o => o.c.boss)) return null;
   if (ctx.uwGateOpen && ctx.uwGateOpen(ctx.S.zone.id)) return null;
@@ -130,8 +152,9 @@ function warn(ctx, txt) { if (ctx.S.time - ST.warnT < 8) return; ST.warnT = ctx.
 function steer(ctx, mo, tx, ty, speed, dt) {
   const dx = tx - mo.x, dy = ty - mo.y, d = Math.hypot(dx, dy); if (d < 1) return true;
   const fly = mo.c.fly, vx = dx / d * speed * dt, vy = dy / d * speed * dt; mo.dir = vx >= 0 ? 1 : -1; mo.face = Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 2 : 1) : (dy >= 0 ? 0 : 3);
-  if (walkable(ctx, mo.x + vx, mo.y, fly)) mo.x += vx; else if (!fly) mo.side = (mo.side || 1);
-  if (walkable(ctx, mo.x, mo.y + vy, fly)) mo.y += vy;
+  const dryLead = fly || mo.c.aqua || !wetG(ctx, mo.x + vx + Math.sign(vx) * 5, mo.y);   /* quái cạn: mép thân (±5 px) không lấn ra mặt nước khi đi ngang */
+  if (dryLead && walkable(ctx, mo.x + vx, mo.y, fly, mo.c.aqua)) mo.x += vx; else if (!fly) mo.side = (mo.side || 1);
+  if (walkable(ctx, mo.x, mo.y + vy, fly, mo.c.aqua)) mo.y += vy;   /* aqua: cua lội nước */
   return d < 8;
 }
 function wander(ctx, mo, dt, speedK = 0.5) {
@@ -162,33 +185,38 @@ function pickTarget(ctx, mo) {
 }
 function release(mo) { if (mo.claim) { mo.claim.claimed = null; mo.claim = null; } }
 function killMonster(ctx, mo, xpMul = 1) {
+  if (mo.c.onFall && mo.c.onFall(mo)) return;   /* spar.js: bị hạ mà còn dạng kế → biến hình, chưa chết */
   const c = mo.c, t = T(ctx); mo.state = 'dead'; release(mo);
+  if (c.onDown) { ST.list = ST.list.filter(o => o !== mo); c.onDown(mo); return; }   /* spar.js: bạn tập thua → không rơi đồ, hệ spar tự thưởng */
   const got = []; const add = (id, n) => { ctx.give(id, n, mo.x, mo.y); };   /* plan-24: đồ rơi ra chỗ quái ngã, nhặt rồi mới vào túi */
   if (c.boss) { add(c.drop, 2); add('stone', 10 + ((Math.random() * 6) | 0)); add('pearl', 1); add('soul', 1); }   /* plan-26: trùm canh cổng rơi nhiều */
   else { if (Math.random() < 0.7) add(c.drop, 1); if (Math.random() < 0.3) add('soul', 1); if (Math.random() < 0.35) add('stone', 1 + ((Math.random() * 2) | 0)); }
   if (mo.loot) dropLoot(ctx, mo);   /* plan-24: đồ cướp rơi xuống đất */
   if (ctx.pop && got.length) ctx.pop(mo.x, mo.y - 16, got.join(' '));
   if (ctx.vfx && !ctx.vfx('monster_poof', mo.x, mo.y + 4, 0, true)) ctx.vfx('dirt_puff', mo.x, mo.y + 2);
+  if (mo.spot != null) (ST.rq ||= []).push({ spot: mo.spot, t: ROAD_RESPAWN });   /* plan-28: hồi sinh tại chỗ sau 10 s */
   const xp = Math.max(1, Math.round(c.xp * xpMul)); ST.killed++; if (!c.boss) ST.respawnT = 20; if (ctx.hero) ctx.hero.gainXp(xp); ctx.toast(t.kill(nm(ctx, c), xp)); ctx.sfx('coin');
   if (ctx.villagers) ctx.villagers.rescued(mo);
+  if (ctx.onMonsterDown) { try { ctx.onMonsterDown(mo, c.xp); } catch (e) { console.error('onMonsterDown', e); } }   /* plan-27: Rocky nhận kinh nghiệm khi cùng hạ quái (pet.js) */
+  if (c.ai === 'kraken') krOnDeath(mo);   /* đầu Kraken chìm hẳn xuống khe vực */
   ST.list = ST.list.filter(o => o !== mo);
   if (c.boss && ctx.onBossDown) { try { ctx.onBossDown(c.key, mo); } catch (e) { console.error('onBossDown', e); } }   /* plan-26: underwater.js mở cổng xoáy */
 }
 /* đòn của người chơi — gọi khi tới khung va chạm của clip chém */
-function strike(ctx, mo, seg = -1) {
-  if (!ST.list.includes(mo)) return;
-  const p = ctx.S.player, body = seg >= 0 && mo.segs && mo.segs[seg], tgt = body || mo;   /* plan-26 B1: rắn khổng lồ — đánh vào đốt thân (vảy cứng) hay vào đầu */
-  if (dist(tgt, p) > REACH + 10 + (mo.c.boss && !body ? 10 : 0)) return;
+function strike(ctx, mo, seg = -1, tent = null) {
+  if (!ST.list.includes(mo) || (tent && tent.st !== 'stuck')) return;   /* xúc tu Kraken đã rút → hụt */
+  const p = ctx.S.player, body = seg >= 0 && mo.segs && mo.segs[seg], tgt = tent || body || mo;   /* plan-26 B1: rắn khổng lồ — đánh vào đốt thân (vảy cứng) hay vào đầu */
+  if (dist(tgt, p) > REACH + 10 + (mo.c.boss && !body && !tent ? 10 : 0)) return;
   const c = mo.c, w = heldWeapon(ctx), wt = w === 'sword' ? ctx.tool.tier('sword') : 0;
   const raw = ctx.hero ? ctx.hero.atk + ctx.hero.weaponBonus(wt) : 10, mul = ctx.atkMul ? ctx.atkMul() : 1;
   let dmg = mul === 1 ? raw : Math.max(1, Math.round(raw * mul));   /* plan-26: dưới nước ×0,5 — áp lên tổng (sức cơ bản + phần cộng của kiếm) */
   if (wt < c.armor) { dmg = 1; if (ctx.S.time - ST.needT > 3) { ST.needT = ctx.S.time; ctx.toast(T(ctx).armor(c.armor)); } }
-  const shut = (c.shell && !mo.open) || !!body; if (c.shell && !mo.open) { dmg = Math.max(1, Math.round(dmg * 0.25)); if (ctx.S.time - ST.shellT > 4) { ST.shellT = ctx.S.time; ctx.toast(c.tip ? (vi(ctx) ? c.tip.vi : c.tip.en) : T(ctx).shell); } }   /* vỏ cứng: chỉ 25 % — trừ lúc đang giơ càng / hở giáp */
+  const shut = !tent && ((c.shell && !mo.open) || !!body); if (tent) tent.flash = 0.18; else if (c.shell && !mo.open) { dmg = Math.max(1, Math.round(dmg * 0.25)); if (ctx.S.time - ST.shellT > 4) { ST.shellT = ctx.S.time; ctx.toast(c.tip ? (vi(ctx) ? c.tip.vi : c.tip.en) : T(ctx).shell); } }   /* vỏ cứng: chỉ 25 % — trừ lúc đang giơ càng / hở giáp */
   else if (body) { dmg = Math.max(1, Math.round(dmg * 0.1)); if (ctx.S.time - ST.shellT > 4) { ST.shellT = ctx.S.time; ctx.toast(T(ctx).scales); } }   /* thân rắn: vảy cứng, chỉ 10 % */
   else if (mo.open && c.weak) dmg = Math.round(dmg * c.weak);   /* lúc hở (kẹt mỏ / hết điện / đầu hạ thấp) đánh đau hơn */
-  ST.lastHit = { key: c.key, raw, mul, dmg, shut, body: !!body, open: !!mo.open, zone: ctx.S.zone && ctx.S.zone.id, t: ctx.S.time };
+  ST.lastHit = { key: c.key, raw, mul, dmg, shut, body: !!body, tent: !!tent, open: !!mo.open, zone: ctx.S.zone && ctx.S.zone.id, t: ctx.S.time };
   mo.hp -= dmg; mo.flash = 0.18; mo.angry = true; mo.justHit = true; if (mo.loot && mo.hp > 0) dropLoot(ctx, mo);   /* plan-24: trúng đòn → đánh rơi đồ cướp */
-  const d = dist(mo, p) || 1, kbk = c.boss ? (c.ai === 'serpent' || c.ai === 'armorshark' ? 0 : 0.25) : 1; if (kbk) mo.kb = { vx: (mo.x - p.x) / d * 110 * kbk, vy: (mo.y - p.y) / d * 110 * kbk, t: 0.14 };
+  const d = dist(mo, p) || 1, kbk = c.boss ? (c.ai === 'serpent' || c.ai === 'armorshark' || c.ai === 'kraken' || c.ai === 'xealist' ? 0 : 0.25) : 1; if (kbk) mo.kb = { vx: (mo.x - p.x) / d * 110 * kbk, vy: (mo.y - p.y) / d * 110 * kbk, t: 0.14 };
   if (ctx.pop) ctx.pop(tgt.x, tgt.y - 14, `-${dmg}`, wt >= c.armor && !shut ? '#fff6c8' : '#a79a86');
   if (ctx.vfx) {   /* vệt chém theo cấp vũ khí (t0 rìu … t6 kiếm Seismic) — càng cao càng nhiều chi tiết; quái giáp dày → đá vụn */
     const sl = `slash_t${wt}`, left = tgt.x < p.x;
@@ -198,14 +226,15 @@ function strike(ctx, mo, seg = -1) {
   ctx.sfx('hit');
   if (mo.hp <= 0) killMonster(ctx, mo);
 }
-function attack(ctx, mo, seg = -1) {
+function attack(ctx, mo, seg = -1, tent = null) {
+  if (mo.c.ai === 'kraken' && krHeld(mo)) { krMash(ctx, mo); return; }   /* đang bị xúc tu túm: mỗi lần bấm = 1 lần vùng */
   const p = ctx.S.player; if (ST.cd > 0) return; ST.cd = 0.45;
   if (ctx.hold && heldWeapon(ctx) && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* đang cầm rìu mà có kiếm → đổi sang kiếm */
-  const tg = seg >= 0 && mo.segs && mo.segs[seg] || mo; if (p.faceTo) p.faceTo(tg.x, tg.y);
+  const tg = tent || seg >= 0 && mo.segs && mo.segs[seg] || mo; if (p.faceTo) p.faceTo(tg.x, tg.y);
   const clip = p.hasAct && p.hasAct('attack') ? 'attack' : p.hasAct && p.hasAct('chop') ? 'chop' : null;
   if (clip && (!p.custom || uwOn(ctx))) p.act(clip, 0);   /* plan-26: dưới nước dáng bơi tự vẽ clip chém (underwater.drawSwim) */
   const sh = clip && p.sheet.actions[clip], at = sh && sh.impact != null ? sh.impact / (sh.fps || 12) : 0.18;
-  ST.hitQ.push({ mo, t: at, seg });
+  ST.hitQ.push({ mo, t: at, seg, tent });
 }
 
 /* ---------------- plan-26 B0: AI dưới nước ---------------- */
@@ -257,9 +286,10 @@ function aiCrab(ctx, mo, dt, p, dp, canHit) {   /* trùm vỏ cứng: tới gầ
 /* ---------------- plan-26 B1: AI tầng 2–4 (mỗi loài một kiểu đánh; báo trước bằng sáng + rung nhẹ, chỉ trong lúc báo) ---------------- */
 const faceTo = (mo, x, y) => { const dx = x - mo.x, dy = y - mo.y; mo.face = Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 2 : 1) : (dy >= 0 ? 0 : 3); mo.dir = dx >= 0 ? 1 : -1; };
 function glide(ctx, mo, vx, vy, dt) {   /* lướt thẳng (lao / húc); false = đâm vào vật chắn */
-  let ok = true; const nx = mo.x + vx * dt, ny = mo.y + vy * dt;
-  if (walkable(ctx, nx, mo.y, mo.c.fly)) mo.x = nx; else ok = false;
-  if (walkable(ctx, mo.x, ny, mo.c.fly)) mo.y = ny; else ok = false;
+  let ok = true, hit = null; const nx = mo.x + vx * dt, ny = mo.y + vy * dt;
+  if (walkable(ctx, nx, mo.y, mo.c.fly, mo.c.aqua)) mo.x = nx; else { ok = false; hit = [Math.floor(nx / 16), Math.floor(mo.y / 16)]; }
+  if (walkable(ctx, mo.x, ny, mo.c.fly, mo.c.aqua)) mo.y = ny; else { ok = false; hit = hit || [Math.floor(mo.x / 16), Math.floor(ny / 16)]; }
+  if (hit && mo.c.ai !== 'armorshark') ramWreck(ctx, mo, hit, 2);   /* quái nhỏ lao vào xác tàu: 3 lần mới vỡ (trùm to tự xử lý: 1 lần) */
   return ok;
 }
 const hitP = (ctx, mo, mul = 1) => (ctx.hero ? ctx.hero.hit(Math.round(mo.c.dmg * mul * hurtMul(ctx))) : false);
@@ -366,13 +396,37 @@ function aiSawshark(ctx, mo, dt, p, dp, canHit) {   /* lượn nhanh vòng ngoà
   if (dp > 260) mo.angry = false;
 }
 const AS_AIM = 1.0, AS_CHARGE = 1.3, AS_SP = 215, AS_STUN = 2.4, AS_TIRED = 1.0, AS_CD = 1.4;
+/* anh 2026-10-11: xác tàu (wreckwall*) bị húc / đánh thì VỠ — 'máu' 6: Cá Mập Bọc Giáp húc 1 lần là san phẳng; quái nhỏ húc 3 lần; người chơi đánh 6 lần.
+   Đang sứt → ảnh NỨT PixelLab (manifest.ruins dmg), vỡ hẳn → ảnh ĐỐNG VÁN VỤN (ruin) của chính mẫu tường, hết chắn đường. Chừa viền bản đồ. */
+export const WRECK_HP = 6;
+export const BREAKABLE = /^(wreckwall\d?|wreck|coral|coral_t|caverock\d?|xwall\d?)$/;   /* anh 2026-10-11: mọi vật cản đường dưới nước phá được (san hô, xác tàu, đá hang, tường pháo đài); cổng/rương/bảng/pha lê/ngai thì không */
+const fp = (ctx, o) => { const d = ctx.O && ctx.O[o.type]; return { w: (d && d.fw) || 1, h: (d && d.fh) || 1 }; };
+export function isWreck(m, o) { return !!o && !o.ruined && !!m.under && BREAKABLE.test(o.type) && o.x > 1 && o.y > 1 && o.x < m.w - 2 && o.y < m.h - 2; }
+export function hitWreck(ctx, o, power) {   /* true = vỡ hẳn */
+  const m = ctx.S.map; o.hpMax = WRECK_HP; o.hp = Math.max(0, (o.hp ?? WRECK_HP) - power);
+  if (ctx.vfx) ctx.vfx('wood_chips', o.x * 16 + 8, o.y * 16 + 10);
+  if (o.hp > 0) return false;
+  const f = fp(ctx, o); o.ruined = true; for (let j = 0; j < f.h; j++) for (let i = 0; i < f.w; i++) if (o.x + i < m.w && o.y + j < m.h) m.solid[(o.y + j) * m.w + o.x + i] = 0; return true;
+}
+function ramWreck(ctx, mo, tile, power) {   /* tile: ô bị đâm (quái nhỏ) · null = cả vùng trước mũi (trùm to, rộng ~3 ô) */
+  const m = ctx.S.map, now = ctx.S.time; if ((mo.ramT || 0) > now) return 0; mo.ramT = now + 0.35;
+  const fx = mo.x + mo.vx * 16, fy = mo.y + mo.vy * 12; let n = 0, broke = 0;
+  for (const o of m.objects) {
+    if (!isWreck(m, o)) continue;
+    const f = fp(ctx, o);
+    if (tile ? (tile[0] < o.x || tile[0] >= o.x + f.w || tile[1] < o.y || tile[1] >= o.y + f.h) : (Math.abs(o.x * 16 + f.w * 8 - fx) > 14 + f.w * 8 || Math.abs(o.y * 16 + f.h * 8 - fy) > 12 + f.h * 8)) continue;
+    n++; if (hitWreck(ctx, o, power)) broke++;
+  }
+  if (n) ctx.sfx(broke ? 'collapse' : 'build');
+  return n;
+}
 function aiArmorShark(ctx, mo, dt, p, dp, canHit) {   /* trùm bọc giáp (chỉ ăn 25 %): nhắm 1 s → húc thẳng; đâm trúng xác tàu → choáng 2,4 s, HỞ GIÁP; húc hụt → khựng 1 s (cũng hở); trúng người → rất đau + hất văng */
   const c = mo.c, home = mo.home || mo;
   if (mo.st2 === 'aim') { mo.t2 -= dt; mo.glow = 1; mo.shake = 0.7; faceTo(mo, p.x, p.y); const d = dp || 1; mo.vx = (p.x - mo.x) / d; mo.vy = (p.y - mo.y) / d; if (mo.t2 <= 0) { mo.st2 = 'charge'; mo.t2 = AS_CHARGE; mo.hitOnce = false; mo.shake = 0; mo.glow = 0; ctx.sfx('alarm'); } return; }
   if (mo.st2 === 'charge') {
     mo.t2 -= dt; const ok = glide(ctx, mo, mo.vx * AS_SP, mo.vy * AS_SP, dt);
     if (canHit && !mo.hitOnce && dist(mo, p) < 20) { mo.hitOnce = true; hitP(ctx, mo, 1.3); shove(ctx, p, mo.vx, mo.vy, 30); if (ctx.quake) ctx.quake(0.3); }
-    if (!ok) { mo.st2 = 'stun'; mo.t2 = AS_STUN; mo.open = true; if (ctx.quake) ctx.quake(0.45); ctx.sfx('build'); if (ctx.vfx) ctx.vfx('rock_debris', mo.x + mo.vx * 14, mo.y + 2); ctx.toast(T(ctx).armorOpen(nm(ctx, c)), true); return; }
+    if (!ok) { mo.st2 = 'stun'; mo.t2 = AS_STUN; mo.open = true; if (ctx.quake) ctx.quake(0.45); if (!ramWreck(ctx, mo, null, WRECK_HP)) ctx.sfx('build'); if (ctx.vfx) ctx.vfx('rock_debris', mo.x + mo.vx * 14, mo.y + 2); ctx.toast(T(ctx).armorOpen(nm(ctx, c)), true); return; }
     if (mo.t2 <= 0 || dist(mo, home) > (c.leash || LEASH * 1.6)) { mo.st2 = 'tired'; mo.t2 = AS_TIRED; mo.open = true; say(ctx, 'asmiss', T(ctx).missOpen(nm(ctx, c))); } return;
   }
   if (mo.st2 === 'stun' || mo.st2 === 'tired') { mo.t2 -= dt; mo.open = true; mo.shake = mo.st2 === 'stun' ? 0.4 : 0; if (mo.t2 <= 0) { mo.st2 = null; mo.open = false; mo.shake = 0; mo.cd = AS_CD; } return; }
@@ -381,7 +435,7 @@ function aiArmorShark(ctx, mo, dt, p, dp, canHit) {   /* trùm bọc giáp (ch�
   if (!mo.warned) { mo.warned = true; ctx.toast(T(ctx).boss(nm(ctx, c)), true); }
   if (dp < 20 && (mo.cd2 = (mo.cd2 || 0) - dt) <= 0) { mo.cd2 = 1.4; hitP(ctx, mo, 0.8); }
   if (mo.cd <= 0 && dp < 160 && dp > 30) { mo.st2 = 'aim'; mo.t2 = AS_AIM; say(ctx, 'asaim', T(ctx).aim(nm(ctx, c)), false, 10); return; }
-  if (dp > 40) steer(ctx, mo, p.x, p.y, c.sp, dt); else faceTo(mo, p.x, p.y);
+  if (dp > 16) steer(ctx, mo, p.x, p.y, c.sp, dt); else faceTo(mo, p.x, p.y);   /* 2026-10-11: trước đây chỉ bơi lại khi > 40 px mà cắn khi < 20 px → đứng im khựng ở 20–40 px (anh thấy 'bị kẹt') */
 }
 const AN_LURE_R = 84, AN_PULL = 15, AN_GAPE = 0.45, AN_SNAP = 0.2, AN_SNAP_SP = 210, AN_REST = 3.0;
 function aiAngler(ctx, mo, dt, p, dp, canHit) {   /* nằm im trong tối, chỉ mồi sáng lắc lư; người lại gần ≤ 84 px → ánh sáng DỤ (kéo nhẹ về phía mồi); ≤ 30 px → há miệng 0,45 s → ĐỚP lao tới; xong lùi về chỗ tối, tắt mồi 3 s */
@@ -445,52 +499,138 @@ function aiSerpent(ctx, mo, dt, p, dp, canHit) {   /* trùm nhiều đốt: lư�
   steer(ctx, mo, p.x + Math.cos(mo.orb) * 64, p.y + Math.sin(mo.orb) * 46, c.sp, dt);
 }
 
-const AI = { eel: aiEel, swordfish: aiSwordfish, momeel: aiMomEel, squid: aiSquid, sawshark: aiSawshark, armorshark: aiArmorShark, angler: aiAngler, seasnake: aiSeaSnake, serpent: aiSerpent };
+/* ---------------- plan-26 B2: Kraken + Xealist ---------------- */
+const T2 = ctx => (vi(ctx) ? {
+  krSlam: 'Bóng tối loang dưới đáy — xúc tu sắp đập xuống, tránh ra!', krSum: 'Kraken gọi cá mập tới!', krInk: 'Kraken phun mực!',
+  xeBoss: '👑 Xealist chặn đường — kẻ đã biến Lyron thành đá!', xeP2: 'Xealist gọi Bóng Tối và xúc tu Kraken!', xeP3: 'Pha lê hồng bừng sáng — Xealist mạnh lên, tia hóa đá bắn tứ phía!', xeBeam: 'Xealist nhắm tia hóa đá — tránh khỏi đường ngắm!',
+} : {
+  krSlam: 'A shadow spreads on the seabed — a tentacle is about to slam, move!', krSum: 'The Kraken calls in the sharks!', krInk: 'The Kraken sprays ink!',
+  xeBoss: '👑 Xealist blocks the way — the one who turned Lyron to stone!', xeP2: 'Xealist summons Shadows and the Kraken\'s tentacles!', xeP3: 'The pink crystals flare — Xealist powers up, petrify beams in every direction!', xeBeam: 'Xealist aims a petrify beam — get out of its line!',
+});
+const KR_WARN = 0.8, KR_LASH = 0.55, KR_R = 20, KR_CD = 1.4, KR_INK_EVERY = 4;
+const XE_AIM = 0.85, XE_FIRE = 0.35, XE_LEN = 240, XE_W = 9, XE_PETRI = 2;
+initKraken({ ST, UW, hitP, shove, say, newMo, walkable, nm, vi });
+const slamAt = krSlamAt, slamTick = krSlamTick;   /* xúc tu dùng chung (Kraken: kẹt 2 s · Xealist: 0,6 s) — kraken.js */
+function aiKraken(ctx, mo, dt, p, dp, canHit) { aiKrakenNew(ctx, mo, dt, p, dp, canHit, bossLeash); }   /* 2026-10-11: 3 pha — kraken.js */
+function aiShade(ctx, mo, dt, p, dp, canHit) {   /* Bóng Tối (lính của Xealist): bay xuyên vật cản, áp sát cào */
+  if (!canHit) { wander(ctx, mo, dt, 0.4); return; }
+  if (dp > 12) steer(ctx, mo, p.x, p.y, mo.c.sp, dt); else if (mo.cd <= 0) { mo.cd = 1.3; hitP(ctx, mo); }
+  faceTo(mo, p.x, p.y);
+}
+const segDist = (px_, py_, x0, y0, a, len) => { const ux = Math.cos(a), uy = Math.sin(a), t = Math.max(0, Math.min(len, (px_ - x0) * ux + (py_ - y0) * uy)); return Math.hypot(px_ - (x0 + ux * t), py_ - (y0 + uy * t)); };
+function beamTick(ctx, mo, dt, p, canHit) {   /* tia hóa đá: nhắm 0,85 s (vạch tĩnh) → bắn; trúng: hóa đá 2 s (underwater.js ctx.petrifyPlayer) */
+  if (!mo.beams || !mo.beams.length) return;
+  for (const b of mo.beams) {
+    b.t -= dt; if (b.st !== 'aim' || b.t > 0) continue;
+    b.st = 'fire'; b.t = XE_FIRE; ctx.sfx('zap');
+    if (ctx.vfx) for (const k of [0.35, 0.7]) ctx.vfx('petrify', b.x + Math.cos(b.a) * XE_LEN * k, b.y + Math.sin(b.a) * XE_LEN * k + 8, 0, true);
+    if (canHit && !b.hit && segDist(p.x, p.y - 6, b.x, b.y, b.a, XE_LEN) < XE_W) { b.hit = true; hitP(ctx, mo, 0.6); if (ctx.petrifyPlayer) ctx.petrifyPlayer(XE_PETRI); }
+  }
+  mo.beams = mo.beams.filter(b => b.st === 'aim' || b.t > 0);
+}
+function aiXealist(ctx, mo, dt, p, dp, canHit) {   /* trùm cuối (phe Noxx): pha 1 tia hóa đá · pha 2 (< 66 %) + Bóng Tối + xúc tu Kraken · pha 3 (< 30 %) pha lê hồng: nhanh hơn, tia bắn vòng tròn */
+  const c = mo.c, k = mo.hp / mo.max, ph = k > 0.66 ? 1 : k > 0.3 ? 2 : 3;
+  slamTick(ctx, mo, dt, p, canHit, 1.0); beamTick(ctx, mo, dt, p, canHit);
+  if (mo.ph && ph > mo.ph) {
+    if (ph === 2) { say(ctx, 'xep2', T2(ctx).xeP2, true, 4); mo.sumT = 0; }
+    if (ph === 3) { say(ctx, 'xep3', T2(ctx).xeP3, true, 4); mo.pink = true; if (ctx.quake) ctx.quake(0.35); if (ctx.vfx) ctx.vfx('dark_aura', mo.x, mo.y, 0, true); ctx.sfx('xealist'); }
+  }
+  mo.ph = ph;
+  if (bossLeash(ctx, mo, dt, p, canHit)) { mo.beams = null; mo.slams = null; return; }
+  if (!mo.warned) { mo.warned = true; ctx.toast(T2(ctx).xeBoss, true); ctx.sfx('xealist'); }
+  const sp = c.sp * (ph === 3 ? 1.6 : 1), aiming = mo.beams && mo.beams.some(b => b.st === 'aim');
+  mo.orb = (mo.orb ?? Math.atan2(mo.y - p.y, mo.x - p.x)) + dt * (ph === 3 ? 0.9 : 0.5);
+  if (!aiming) steer(ctx, mo, p.x + Math.cos(mo.orb) * 90, p.y + Math.sin(mo.orb) * 70, sp, dt);
+  faceTo(mo, p.x, p.y);
+  if (canHit && dp < 18 && (mo.cd3 = (mo.cd3 || 0) - dt) <= 0) { mo.cd3 = 1.2; hitP(ctx, mo, 0.5); }
+  if (ph >= 2 && (mo.sumT = (mo.sumT ?? 0) - dt) <= 0) {
+    mo.sumT = 20; const have = ST.list.filter(o => o.c.ai === 'shade').length, n = Math.max(0, (ph === 3 ? 3 : 2) - have);
+    for (let i = 0; i < n; i++) { const a = TAU_M * i / Math.max(1, n), e = newMo(UW.shade, mo.x + Math.cos(a) * 40, mo.y + Math.sin(a) * 30); e.angry = true; ST.list.push(e); if (ctx.vfx) ctx.vfx('monster_poof', e.x, e.y + 4, 0, true); }
+  }
+  if (mo.cd > 0 || aiming || (mo.slams && mo.slams.length)) return;
+  mo.n = (mo.n || 0) + 1;
+  if (ph >= 2 && mo.n % 3 === 0) { const a = Math.random() * TAU_M; slamAt(mo, [[p.x, p.y], [p.x + Math.cos(a) * 44, p.y + Math.sin(a) * 44]]); mo.cd = 1.4 + KR_WARN; return; }
+  const ox = mo.x, oy = mo.y - 16;
+  if (ph === 3) { const a0 = Math.atan2(p.y - 6 - oy, p.x - ox); mo.beams = Array.from({ length: 8 }, (_, i) => ({ x: ox, y: oy, a: a0 + TAU_M * i / 8, t: XE_AIM, st: 'aim' })); mo.cd = 1.5 + XE_AIM; }
+  else { mo.beams = [{ x: ox, y: oy, a: Math.atan2(p.y - 6 - oy, p.x - ox), t: XE_AIM, st: 'aim' }]; mo.cd = (ph === 1 ? 1.2 : 1.6) + XE_AIM; }
+  say(ctx, 'xebeam', T2(ctx).xeBeam, false, 14);
+}
+/* vạch báo trước (tĩnh) trên đáy: bóng xúc tu sắp đập + đường ngắm tia hóa đá — lớp nền (drawGround) */
+function drawWarnGround(g, mo, cx, cy) {
+  drawSlamGround(g, mo, cx, cy);   /* vết nứt báo xúc tu / vệt quét / bóng đá rơi (kraken.js) */
+  if (mo.beams) for (const b of mo.beams) { if (b.st !== 'aim') continue; g.strokeStyle = 'rgba(255,122,217,.55)'; g.lineWidth = 2; g.beginPath(); g.moveTo(Math.round(b.x - cx), Math.round(b.y + 8 - cy)); g.lineTo(Math.round(b.x + Math.cos(b.a) * XE_LEN - cx), Math.round(b.y + 8 + Math.sin(b.a) * XE_LEN - cy)); g.stroke(); }
+}
+const tentDrawable = krTent;
+function beamDrawable(g, b, cx, cy) {   /* tia đang bắn: dải hồng nhạt ngắn (0,35 s, một lần) — hiệu ứng chính là sheet PixelLab 'petrify' dọc tia */
+  return { y: b.y + 999, f: () => { g.save(); g.globalAlpha = Math.max(0, b.t / XE_FIRE) * 0.8; g.strokeStyle = '#ffd0f0'; g.lineWidth = 3; g.beginPath(); g.moveTo(Math.round(b.x - cx), Math.round(b.y - cy)); g.lineTo(Math.round(b.x + Math.cos(b.a) * XE_LEN - cx), Math.round(b.y + Math.sin(b.a) * XE_LEN - cy)); g.stroke(); g.restore(); } };
+}
+function drawKraken(g, mo, x, y) { drawKrakenNew(g, mo, x, y); }   /* đầu Kraken PixelLab 80×64 trồi từ khe vực (kraken.js) */
+let XSHEET = null;
+function drawXealist(g, mo, x, y) {   /* sheet nhân vật PixelLab của Xealist (chars.fixed.xealist) vẽ to ×2; pha 3: ánh hồng tĩnh */
+  if (!XSHEET && ST.ctx && ST.ctx.charSheetOf) { try { XSHEET = ST.ctx.charSheetOf({ hero: 'xealist' }); } catch (e) { XSHEET = null; } }
+  g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, y + 1, 11, 3, 0, 0, TAU_M); g.fill();
+  if (mo.flash > 0) g.filter = 'brightness(2.2)'; else if (mo.pink) g.filter = 'drop-shadow(0 0 3px #ff7ad9) saturate(1.3)';
+  const row = [0, 2, 1, 3][mo.face ?? 0], fr = mo.moving ? Math.floor(mo.ft * 6) % 4 : 0;
+  if (XSHEET) g.drawImage(XSHEET, fr * 16, row * 20, 16, 20, x - 16, y - 38, 32, 40);
+  else { g.fillStyle = '#f2f2f2'; g.fillRect(x - 8, y - 34, 16, 30); }
+  g.filter = 'none';
+}
+
+const AI = { eel: aiEel, swordfish: aiSwordfish, momeel: aiMomEel, squid: aiSquid, sawshark: aiSawshark, armorshark: aiArmorShark, angler: aiAngler, seasnake: aiSeaSnake, serpent: aiSerpent, kraken: aiKraken, shade: aiShade, xealist: aiXealist };
 
 export const monsters = {
   id: 'monsters',
   onZoneEnter(ctx) {
-    ST.ctx = ctx; ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = ctx.noMonsters ? null : SP[ctx.S.zone.id] || null; ST.spawnT = 1.5; ST.respawnT = 0; ST.wasNight = night(ctx); ST.lastHit = null;
+    ST.ctx = ctx; ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = ctx.noMonsters ? null : SP[ctx.S.zone.id] || null; if (ST.cfg && ST.cfg.noDark && ((ctx.story && ctx.story()) || {}).path === 'xealist') ST.cfg = null; ST.spawnT = 1.5; ST.respawnT = 0; ST.wasNight = night(ctx); ST.lastHit = null; ST.krDead = null; ST.chaseTent = null;
+    ST.rq = [];
     if (ST.cfg) { for (let i = 0; i < Math.min(MAX_ON, want(ctx)); i++) spawnOne(ctx); spawnBoss(ctx); }
+    if (ST.cfg && ST.cfg.road && ctx.S.map.monSpots) ctx.S.map.monSpots.forEach((sp, i) => spawnAt(ctx, i));   /* plan-28 */
     /* dân có đá Seismic đánh trả (villagers.js): đòn của dân — hạ quái thì người chơi được nửa kinh nghiệm */
-    ctx.monsters = { list: () => ST.list, damage: (mo, dmg, src) => { if (!ST.list.includes(mo)) return; mo.hp -= dmg; mo.flash = 0.18; if (mo.loot && mo.hp > 0) dropLoot(ctx, mo); const d = Math.hypot(mo.x - src.x, mo.y - src.y) || 1; mo.kb = { vx: (mo.x - src.x) / d * 80, vy: (mo.y - src.y) / d * 80, t: 0.12 }; if (ctx.pop) ctx.pop(mo.x, mo.y - 14, `-${dmg}`, '#8fd3ff'); if (ctx.vfx) ctx.vfx('wood_chips', mo.x, mo.y + 2); if (mo.hp <= 0) killMonster(ctx, mo, 0.5); } };
+    ctx.monsters = { list: () => ST.list, lastHitT: () => (ST.lastHit ? ST.lastHit.t : -99),   /* main.js: đang đánh → A không mở bảng/nói chuyện */ add: (c, x, y) => { if (!ST.cfg) ST.cfg = { key: '_spar', vi: '', en: '', day: 0, night: 0, mix: [] }; const mo = newMo(c, x, y); ST.list.push(mo); return mo; }, remove: mo => { ST.list = ST.list.filter(o => o !== mo); if (ST.chase === mo) ST.chase = null; },   /* spar.js: bạn tập (c.aiFn / c.drawFn / c.onDown) */ kill: mo => { if (ST.list.includes(mo)) killMonster(ctx, mo); },   /* petgun.js: tượng đá vỡ → đồ rơi + kinh nghiệm */ damage: (mo, dmg, src, xpMul = 0.5, kbPow = 80, noFx = false) => { if (!ST.list.includes(mo) || (mo.c.spar && !(ctx.sparFoe && ctx.sparFoe() === mo))) return; mo.hp -= dmg; mo.flash = 0.18; if (mo.loot && mo.hp > 0) dropLoot(ctx, mo); const d = Math.hypot(mo.x - src.x, mo.y - src.y) || 1; if (kbPow) mo.kb = { vx: (mo.x - src.x) / d * kbPow, vy: (mo.y - src.y) / d * kbPow, t: 0.12 }; if (ctx.pop) ctx.pop(mo.x, mo.y - 14, `-${dmg}`, '#8fd3ff'); if (ctx.vfx && !noFx) ctx.vfx('wood_chips', mo.x, mo.y + 2); if (mo.hp <= 0) killMonster(ctx, mo, xpMul); } };   /* plan-27: Rocky đánh → xpMul 1, lực hất (0 = không hất), tắt VFX gỗ vụn (Rocky có VFX riêng) */
     if (typeof window !== 'undefined') window.__monsters = {
       list: () => ST.list.map(m => ({ id: m.id, key: m.c.key, x: Math.round(m.x), y: Math.round(m.y), hp: m.hp, max: m.max, state: m.state, st2: m.st2 || null, open: !!m.open, goal: m.goal && m.goal.kind, loot: !!m.loot, boss: !!m.c.boss })),
       cfg: () => ST.cfg && { ...ST.cfg, nodes: undefined, mix: ST.cfg.mix ? ST.cfg.mix.map(c => c.key) : undefined, boss: ST.cfg.boss ? ST.cfg.boss.key : undefined },
       spawnNear: (n = 1) => { const p = ctx.S.player; for (let i = 0; i < n; i++) { if (!spawnOne(ctx)) break; const m = ST.list[ST.list.length - 1]; m.x = p.x + 30 + i * 10; m.y = p.y; } return ST.list.length; },
       spawnKind: (key, dx = 26, dy = 0) => { const c = UW[key] || Object.values(SP).find(s => s.key === key); if (!c) return null; const p = ctx.S.player, mo = newMo(c, p.x + dx, p.y + dy); if (c.boss) mo.home = { x: mo.x, y: mo.y }; ST.list.push(mo); return mo.id; },
-      boss: () => { const b = ST.list.find(m => m.c.boss); return b ? { x: Math.round(b.x), y: Math.round(b.y), hp: b.hp, max: b.max, st2: b.st2 || null, open: !!b.open } : null; },
-      lastHit: () => ST.lastHit, killed: () => ST.killed, clear: () => { ST.list.forEach(release); ST.list = []; },
+      boss: () => { const b = ST.list.find(m => m.c.boss); return b ? { x: Math.round(b.x), y: Math.round(b.y), hp: b.hp, max: b.max, st2: b.st2 || null, open: !!b.open, key: b.c.key, ph: b.ph || null, slams: (b.slams || []).map(s => ({ x: Math.round(s.x), y: Math.round(s.y), st: s.st })), beams: (b.beams || []).map(s => ({ st: s.st, a: +s.a.toFixed(2) })), summoned: !!b.summoned, kr: b.kr ? { surf: +b.kr.surf.toFixed(2), sink: +b.kr.sink.toFixed(1), sweeps: b.kr.sweeps.map(w => w.st), rocks: b.kr.rocks.length, grab: b.kr.grab && { st: b.kr.grab.st, n: b.kr.grab.n }, anim: b.kr.anim && b.kr.anim.k } : null } : null; },
+      lastHit: () => ST.lastHit, killed: () => ST.killed, rq: () => (ST.rq || []).map(q => ({ ...q })), spots: () => ST.list.filter(m => m.spot != null).map(m => ({ spot: m.spot, x: Math.round(m.x), y: Math.round(m.y), hp: m.hp, max: m.max, key: m.c.key })),
+      killSpot: i => { const mo = ST.list.find(m => m.spot === i); if (mo) killMonster(ctx, mo); return !!mo; }, clear: () => { ST.list.forEach(release); ST.list = []; },
     };
   },
   onZoneLeave() { ST.list.forEach(release); ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = null; },
   onClick(ctx, mt) {   /* click trúng quái → tự đuổi theo + chém */
     if (!ST.cfg || !mt) return false;
+    for (const o of ST.list) if (o.c.ai === 'kraken') { if (krHeld(o)) { krMash(ctx, o); return true; } const k = krNearTent(o, ctx.S.player, mt); if (k && k.under) { ST.chase = o; ST.chaseTent = k.s; return true; } }   /* click xúc tu đang kẹt → đuổi chém xúc tu */
+    ST.chaseTent = null;
     const mo = ST.list.find(o => Math.abs(mt.wx - o.x) < o.c.w * 0.7 + 3 && mt.wy > o.y - o.c.h - 8 && mt.wy < o.y + 5); if (!mo) return false;
     ST.chase = mo; if (ctx.hold && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ return true;
   },
   update(dt, ctx) {
     const z = ST.cfg; if (!z || ctx.S.mode !== 'play') return;
     const p = ctx.S.player, t = T(ctx), uw = uwOn(ctx); if (ST.cd > 0) ST.cd -= dt;
-    const nt = night(ctx); if (nt && !ST.wasNight && !z.mix) ctx.toast(t.night(nm(ctx)), true); ST.wasNight = nt;
+    const nt = night(ctx); if (nt && !ST.wasNight && !z.mix && !z.road) ctx.toast(t.night(nm(ctx)), true); ST.wasNight = nt;
+    if (ST.rq && ST.rq.length) for (const q of ST.rq.slice()) { q.t -= dt; if (q.t > 0) continue; const sp = ctx.S.map.monSpots && ctx.S.map.monSpots[q.spot];
+      if (sp && Math.hypot(sp.x * 16 + 8 - p.x, sp.y * 16 + 12 - p.y) < ROAD_NEAR) { q.t = 1; q.waited = (q.waited || 0) + 1; continue; }   /* người chơi đứng gần chỗ đó → chờ thêm */
+      ST.rq.splice(ST.rq.indexOf(q), 1); const mo = spawnAt(ctx, q.spot); if (mo && ctx.vfx) ctx.vfx('dirt_puff', mo.x, mo.y + 2); }
     if (ST.respawnT > 0) ST.respawnT -= dt;   /* vừa hạ 1 con → 20 s sau mới có con mới (không diệt xong lại đầy ngay) */
     ST.spawnT -= dt; if (ST.spawnT <= 0 && !(ST.respawnT > 0)) { ST.spawnT = 4; if (ST.list.length < Math.min(MAX_ON, want(ctx))) spawnOne(ctx); }
-    for (let i = ST.hitQ.length - 1; i >= 0; i--) { const h = ST.hitQ[i]; h.t -= dt; if (h.t <= 0) { ST.hitQ.splice(i, 1); strike(ctx, h.mo, h.seg ?? -1); } }
+    for (let i = ST.hitQ.length - 1; i >= 0; i--) { const h = ST.hitQ[i]; h.t -= dt; if (h.t <= 0) { ST.hitQ.splice(i, 1); strike(ctx, h.mo, h.seg ?? -1, h.tent || null); } }
     if (ST.chase) {   /* đuổi theo quái đã click */
-      const mo = ST.chase; if (!ST.list.includes(mo) || (ctx.S.player.custom && !uw)) ST.chase = null;
-      else if (dist(mo, p) <= REACH + (mo.c.boss ? 8 : 0)) { p.autoPath = null; if (ST.cd <= 0) { if (ctx.hold && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ attack(ctx, mo); } }
-      else if (!p.autoPath || (ST.chaseT = (ST.chaseT || 0) - dt) <= 0) { ST.chaseT = 0.3; p.autoPath = [{ x: mo.x, y: mo.y }]; }
+      const mo = ST.chase, ct = ST.chaseTent, tg = ct || mo; if (!ST.list.includes(mo) || (ctx.S.player.custom && !uw) || (ct && ct.st !== 'stuck')) { ST.chase = null; ST.chaseTent = null; }
+      else if (dist(tg, p) <= REACH + (mo.c.boss && !ct ? 8 : 0)) { p.autoPath = null; if (ST.cd <= 0) { if (ctx.hold && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ attack(ctx, mo, -1, ct); } }
+      else if (!p.autoPath || (ST.chaseT = (ST.chaseT || 0) - dt) <= 0) { ST.chaseT = 0.3; p.autoPath = [{ x: tg.x, y: tg.y }]; }
     }
     const canHit = !(ctx.hero && ctx.hero.fainted) && (!p.custom || uw) && !(ctx.isDarkRevealed && ctx.isDarkRevealed());   /* plan-25 B4: lộ mặt → quái là 'người của ta'; plan-26: đang bơi dưới nước vẫn bị đánh */
     for (const mo of ST.list.slice()) {
       const c = mo.c;
+      if (mo.statue || mo.stoneT > ctx.S.time) { if (mo.flash > 0) mo.flash -= dt; continue; }   /* petgun.js: hóa đá (tượng / đứng hình) → không AI, không gây sát thương; người chơi vẫn đánh được */
       mo.ft += dt; if (mo.flash > 0) mo.flash -= dt; if (mo.cd > 0) mo.cd -= dt; if (mo.loot) mo.lootT = (mo.lootT || 0) + dt;
-      if (mo.kb) { mo.kb.t -= dt; if (walkable(ctx, mo.x + mo.kb.vx * dt, mo.y + mo.kb.vy * dt, c.fly)) { mo.x += mo.kb.vx * dt; mo.y += mo.kb.vy * dt; } if (mo.kb.t <= 0) mo.kb = null; continue; }
+      if (mo.kb) { mo.kb.t -= dt; if (walkable(ctx, mo.x + mo.kb.vx * dt, mo.y + mo.kb.vy * dt, c.fly, c.aqua)) { mo.x += mo.kb.vx * dt; mo.y += mo.kb.vy * dt; } else if (!mo.kb.hit && !c.fly && ctx.S.map.road && ctx.arenaImpact && Math.hypot(mo.kb.vx, mo.kb.vy) > 60) { mo.kb.hit = true; const l = Math.hypot(mo.kb.vx, mo.kb.vy); ctx.arenaImpact(mo.x + mo.kb.vx / l * 10, mo.y + mo.kb.vy / l * 6, 1, 'wall'); }   /* plan-28: quái / bạn tập bị đánh văng vào vách → vật viền đèo hư rồi đổ nát (road.js) */ if (mo.kb.t <= 0) mo.kb = null; continue; }
       const dp = dist(mo, p);
       if (c.ai === 'puffer') { aiPuffer(ctx, mo, dt, p, dp, canHit); continue; }
       if (c.ai === 'jelly') { aiJelly(ctx, mo, dt, p, dp, canHit); continue; }
       if (c.ai === 'crabking') { aiCrab(ctx, mo, dt, p, dp, canHit); continue; }
-      const ai = AI[c.ai]; if (ai) { ai(ctx, mo, dt, p, dp, canHit); continue; }   /* plan-26 B1 */
+      const ai = AI[c.ai] || c.aiFn; if (ai) { ai(ctx, mo, dt, p, dp, canHit); continue; }   /* plan-26 B1 */
       if (mo.state === 'flee') {   /* ôm đồ bỏ chạy, ra xa rồi biến mất */
         const d = dp || 1; steer(ctx, mo, mo.x + (mo.x - p.x) / d * 40, mo.y + (mo.y - p.y) / d * 40, c.sp * 1.15, dt);
         mo.t -= dt; if (mo.t <= 0 && d > 160) { release(mo); ST.list = ST.list.filter(o => o !== mo); } continue;
@@ -529,40 +669,62 @@ export const monsters = {
   near(ctx) {
     if (!ST.cfg || !ST.list.length) return null;
     const p = ctx.S.player, t = T(ctx), mt = ctx.mouseTile && ctx.mouseTile(); let best = null, bd = REACH;
+    const kb = ST.list.find(o => o.c.ai === 'kraken'); if (kb && krHeld(kb)) return { label: krStrikeLabel(ctx).held(kb.kr.grab.n), x: p.x, y: p.y - 6, limit: 999, priority: 5, mouse: false, data: { grab: kb } };   /* bị xúc tu túm: E = vùng */
+    if (ctx.holding && ctx.holding('petgun')) return null;   /* cầm súng: petgun.js lo quái (không hiện gợi ý cầm kiếm khi trỏ quái) */
+    const lk = ctx.target && ctx.target.mon();   /* 2026-10-11 khóa mục tiêu (target.js): quái / xúc tu đã khóa → E đánh ĐÚNG nó (xa thì tự đuổi tới) */
+    if (lk && ST.list.includes(lk.mo || lk.ref) && dist(lk.kind === 'tent' ? lk.ref : (lk.mo || lk.ref), p) <= REACH * 1.6 + ((lk.mo || lk.ref).c.boss ? 10 : 0)) {   /* trong tầm mới nhận; xa → main báo 'xa quá' (không tự đuổi) */
+      const mo = lk.mo || lk.ref, c = mo.c, tent = lk.kind === 'tent' ? lk.ref : null, tg = tent || mo, hp = Math.max(0, Math.ceil(mo.hp));
+      const label = tent ? krStrikeLabel(ctx).tent(hp, mo.max) : t.hit(nm(ctx, c), hp, mo.max);
+      if (heldWeapon(ctx)) return { label: `🎯 ${label}`, x: tg.x, y: tg.y - 4, limit: 999, priority: 3.9, cursor: 'tool', mouse: false, isLock: true, data: { mo, seg: -1, tent, lock: true } };
+      return { label: `${ctx.needHold(bestWeapon(ctx))} → ${ctx.target.nameOf(lk)}`, x: tg.x, y: tg.y - 4, limit: 999, priority: 3.9, need: true, urgent: true, needId: bestWeapon(ctx), cursor: 'tool', mouse: false, isLock: true, data: { need: true } };
+    }
     for (const mo of ST.list) {
       const c = mo.c; let seg = -1, d = dist(mo, p) - (c.boss ? 8 : 0), tx = mo.x, ty = mo.y;
       if (mo.segs) mo.segs.forEach((sg, i) => { const ds = dist(sg, p); if (ds < d) { d = ds; seg = i; tx = sg.x; ty = sg.y; } });   /* rắn khổng lồ: đốt thân gần hơn đầu → nhắm vào thân */
       const under = mt && Math.abs(mt.wx - mo.x) < c.w * 0.7 + 3 && mt.wy > mo.y - c.h - 8 && mt.wy < mo.y + 5;
       if (under) { seg = -1; tx = mo.x; ty = mo.y; }
-      const dd = under && d < REACH * 1.6 ? -1 : d; if (dd >= bd) continue; bd = dd;
+      let tent = null, tdd = 0; if (c.ai === 'kraken') { const k = krNearTent(mo, p, mt); if (k && (k.under || k.d < d)) { tent = k.s; tdd = k.under ? -1 : k.d; } }   /* xúc tu đang kẹt gần hơn đầu → nhắm xúc tu */
+      const dd = tent ? tdd : under && d < REACH * 1.6 ? -1 : d; if (dd >= bd) continue; bd = dd;
       const label = seg >= 0 ? t.hitBody(nm(ctx, c), Math.max(0, Math.ceil(mo.hp)), mo.max) : t.hit(nm(ctx, c), Math.max(0, Math.ceil(mo.hp)), mo.max);
       best = heldWeapon(ctx) ? { label, x: under ? mt.wx : tx, y: under ? mt.wy : ty - 4, limit: REACH * 1.6 + (c.boss ? 10 : 0), priority: 0.8, cursor: 'tool', data: { mo, seg } }
-        : { label: ctx.needHold(bestWeapon(ctx)), x: under ? mt.wx : mo.x, y: under ? mt.wy : mo.y - 4, limit: REACH * 1.6, priority: 0.8, need: true, needId: bestWeapon(ctx), cursor: 'tool', data: { need: true } };
+        : { label: ctx.needHold(bestWeapon(ctx)), x: under ? mt.wx : mo.x, y: under ? mt.wy : mo.y - 4, limit: REACH * 1.6, priority: 0.8, need: true, needId: bestWeapon(ctx), urgent: !!(mo.angry && dist(mo, p) < 24), cursor: 'tool', data: { need: true } };   /* urgent: quái đang đánh sát → gợi ý cầm kiếm được thắng việc khác */
+      if (tent) { best.x = tent.x; best.y = tent.y - 10; if (best.data.mo) { best.data.tent = tent; best.label = krStrikeLabel(ctx).tent(Math.max(0, Math.ceil(mo.hp)), mo.max); } }
     }
     return best;
   },
-  interact(ctx, cand) { const d = cand && cand.data; if (d && d.mo) attack(ctx, d.mo, d.seg ?? -1); },
+  interact(ctx, cand) { const d = cand && cand.data; if (d && d.grab) { krMash(ctx, d.grab); return; }
+    if (d && d.lock && d.mo) { const tg = d.tent || d.mo, p = ctx.S.player; if (dist(tg, p) > REACH + (d.mo.c.boss && !d.tent ? 8 : 0)) { if (ctx.target.sayFar) ctx.target.sayFar(); return; } }   /* khóa mà còn xa → KHÔNG tự đuổi (anh chốt): chỉ báo xa quá */
+    if (d && d.mo) attack(ctx, d.mo, d.seg ?? -1, d.tent || null); },
   drawables(ctx, cx, cy) {
     if (!ST.cfg) return [];
     const g = ctx.g; ST.cam = { cx, cy };
     const out = [];
     for (const mo of ST.list) {
       const a = ctx.uwHide ? ctx.uwHide(mo) : 1;   /* plan-26 B1: núp trong tảo → gần như vô hình */
-      out.push({ y: mo.y, f: () => { if (a < 1) g.globalAlpha = a; drawMonster(g, mo.c, mo, Math.round(mo.x - cx), Math.round(mo.y - cy)); g.globalAlpha = 1; } });
+      out.push({ y: mo.y, f: () => { if (a < 1) g.globalAlpha = a; const stn = mo.statue || mo.stoneT > ctx.S.time; if (stn) g.filter = STONE_FILTER;   /* petgun.js: tô đá chính ảnh PixelLab của quái */ if (mo.c.fly || mo.c.float || mo.c.boss) drawMonster(g, mo.c, mo, Math.round(mo.x - cx), Math.round(mo.y - cy)); else waterDraw(g, mo.x, mo.y, Math.round(mo.x - cx), Math.round(mo.y - cy), () => drawMonster(g, mo.c, mo, Math.round(mo.x - cx), Math.round(mo.y - cy)));   /* 2026-10-11 anh: quái lội nước như người chơi */ g.globalAlpha = 1; g.filter = 'none'; } });
       if (mo.segs) mo.segs.forEach((sg, i) => out.push({ y: sg.y - 0.1, f: () => drawSeg(g, mo, sg, i, Math.round(sg.x - cx), Math.round(sg.y - cy)) }));
+      if (mo.slams) for (const s of mo.slams) out.push(tentDrawable(g, s, cx, cy));   /* plan-26 B2: xúc tu Kraken */
+      if (mo.kr) krDrawables(g, mo, cx, cy, ctx, out);   /* quét ngang · đá rơi · xúc tu túm */
+      if (mo.beams) for (const b of mo.beams) if (b.st === 'fire') out.push(beamDrawable(g, b, cx, cy));
     }
+    if (ST.krDead) { const d = ST.krDead, now = ctx.S.time; out.push({ y: d.y, f: () => drawDead(g, cx, cy, now) }); }
     return out;
+  },
+  drawGround(g, ctx, cx, cy) {   /* plan-26 B2: vạch báo trước tĩnh trên đáy (bóng xúc tu, đường ngắm tia) */
+    drawCrack(g, ctx.S.map, cx, cy);   /* khe vực Kraken (world.js m.krCrack) */
+    if (!ST.cfg) return;
+    for (const mo of ST.list) if (mo.slams || mo.beams || mo.kr) drawWarnGround(g, mo, cx, cy);
   },
   draw(g, ctx, cx, cy) {   /* plan-26 B1: hiệu ứng nổi trên mọi thứ — vòng điện của Lươn Mẹ */
     for (const mo of ST.list) if (mo.ringR > 0 && mo.gap != null) drawRing(g, mo, cx, cy);
   },
   drawUI(ug, ctx, cx, cy, scale) {   /* plan-26: thanh máu trùm canh cổng (khi đang giao chiến / ở gần) */
     const b = ST.list.find(m => m.c.boss); if (!b || ctx.S.mode !== 'play') return;
-    const p = ctx.S.player; if (!b.angry && !b.st2 && Math.hypot(b.x - p.x, b.y - p.y) > 150) return;
+    const p = ctx.S.player; if (!b.angry && !b.st2 && !((b.c.ai === 'kraken' || b.c.ai === 'xealist') && b.warned && Math.hypot(b.x - p.x, b.y - p.y) < 420) && Math.hypot(b.x - p.x, b.y - p.y) > 150) return;
     const W = ug.canvas.width, H = ug.canvas.height, fs = Math.max(12, Math.round(scale * 3.6)), bw = Math.min(W * 0.5, 420), bh = Math.max(8, Math.round(scale * 2.6)), bx = Math.round((W - bw) / 2), by = H - Math.max(118, Math.round(scale * 40));
     ug.save(); ug.fillStyle = 'rgba(13,11,20,.78)'; ug.beginPath(); ug.roundRect(bx - 10, by - fs - 8, bw + 20, bh + fs + 16, 7); ug.fill();
     const ol = b.c.openLbl ? (vi(ctx) ? b.c.openLbl.vi : b.c.openLbl.en) : (vi(ctx) ? 'GIƠ CÀNG!' : 'CLAWS UP!');
-    ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e'; ug.fillText(`${nm(ctx, b.c)}${b.open ? ' · ' + ol : ''}`, W / 2, by - fs / 2 - 2);
+    ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e'; ug.fillText(`${nm(ctx, b.c)}${b.open ? ' · ' + ol : ''}${b.ph ? ` · ${vi(ctx) ? 'Pha' : 'Phase'} ${b.ph}/3` : ''}`, W / 2, by - fs / 2 - 2);
     ug.fillStyle = '#352022'; ug.fillRect(bx, by, bw, bh); ug.fillStyle = b.open ? '#ff6b3a' : '#e84a3a'; ug.fillRect(bx, by, Math.max(1, Math.round(bw * Math.max(0, b.hp) / b.max)), bh);
     ug.restore();
   },
@@ -594,6 +756,9 @@ const TAU_M = Math.PI * 2;
 
 /* ---- hình: sheet PixelLab (manifest monsters.<key>), chưa có thì vẽ code ---- */
 function drawMonster(g, c, mo, x, y) {
+  if (c.ai === 'kraken') return drawKraken(g, mo, x, y);   /* plan-26 B2 */
+  if (c.ai === 'xealist') return drawXealist(g, mo, x, y);
+  if (c.drawFn) return c.drawFn(g, mo, x, y);   /* spar.js */
   let sh = ART.monsters && ART.monsters[c.key], f = null, scale = 1;
   if (mo.st2 && c.ai === 'puffer' && ART.monsters && ART.monsters.puffer_puff) {   /* phồng gai: clip 'puff' (nam) — phồng dần · giữ khung gai nhất (to ra) · xẹp */
     sh = ART.monsters.puffer_puff; const n = sh.n;

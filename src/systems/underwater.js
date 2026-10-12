@@ -7,7 +7,9 @@
 //    ≤ 10 s: thanh hơi thở đỏ + bọt khí trồi lên; 0 s: mất máu mỗi giây (ctx.hero.hit); ngất → nổi lên bến cảng Làng (Biển 'back'), không mất đồ.
 //  · Điểm lặn: vòng xoáy phát sáng sát cầu tàu (S.map.dive, world.js) → E. B1: đã tới tầng nào (save.underwater.reached) thì bảng chọn tầng → lặn thẳng xuống đó.
 //  · 4 tầng nối bằng cổng xoáy (world.js buildU1..U4): hạ trùm canh cổng (monsters.js gọi ctx.onBossDown) → cổng mở, lưu save, trùm không hồi sinh;
-//    cổng ra phía dưới lên tầng trên (entry 'back' = cạnh cổng xoáy đã mở). Cổng cuối (u4) dẫn tới Vực Kraken = B2 → "sắp mở".
+//    cổng ra phía dưới lên tầng trên (entry 'back' = cạnh cổng xoáy đã mở). Cổng cuối (u4) dẫn tới Vực Kraken · Hang Ổ ('kraken', B2), cổng của nó dẫn tới Pháo Đài Xealist ('xfort').
+//  · B2: ctx.petrifyPlayer(sec) — tia hóa đá của Xealist: đứng im, vẽ xám; Rocky (pet.js, đọc vị trí qua window.__pet) ở ≤ 60 px thì đập vỡ sau 1 s.
+//    Thanh hơi thở (drawUI) vẽ mờ 0,35 khi người chơi / trùm nằm dưới khung của nó.
 //  · Cơ chế riêng: u2 tảo cao che người + quái (ctx.uwHide), u3 dòng chảy đẩy người (m.current) + mực của Mực Ma làm tối nhẹ ngắn (ctx.uwInk),
 //    u4 hang tối đen — chỉ sáng quanh người, pha lê, lỗ phun khí, mồi Cá Đèn Lồng (mo.lure). Chảy máu / trúng độc = mất máu theo nhịp (ctx.uwDot).
 //  · Mỗi tầng: lỗ phun khí (+12 s, cạn 45 s), 1–3 rương (loot riêng, lưu), góc bí mật (báo lần đầu), đồ rải dưới đáy (m.pickups → rơi 1 lần / save).
@@ -16,6 +18,9 @@ import { obj as defObj } from '../gfx.js';
 import { ART } from '../art.js';
 import { PILLS, BREATH_CAP } from '../items.js';
 import { ZONES } from '../world.js';
+import { WRECK_HP, isWreck, hitWreck } from './monsters.js';
+import * as RLV from './petlv.js';   /* plan-27: Sách luyện Rocky ở quầy Heathcliff */   /* 2026-10-11: xác tàu đánh vỡ được */
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 const TAU = Math.PI * 2, TS = 16;
 const SWIM_SPEED = 0.75, LOW = 10, DIVE_MIN = 10, DROWN_EVERY = 1, DROWN_PCT = 0.1;
@@ -26,7 +31,9 @@ const FLOOR_IDS = ['u1', 'u2', 'u3', 'u4'];
 const FLOORS = {
   u1: { n: 1, boss: { vi: 'Cua Hoàng Đế', en: 'Emperor Crab' } }, u2: { n: 2, boss: { vi: 'Lươn Mẹ', en: 'Mother Eel' } },
   u3: { n: 3, boss: { vi: 'Cá Mập Bọc Giáp', en: 'Armored Shark' } }, u4: { n: 4, boss: { vi: 'Rắn Biển Khổng Lồ', en: 'Giant Sea Serpent' } },
+  kraken: { n: 5, boss: { vi: 'Kraken', en: 'Kraken' } }, xfort: { n: 6, boss: { vi: 'Xealist', en: 'Xealist' } },   /* plan-26 B2 (không nằm trong bảng chọn tầng) */
 };
+const PETRI_ROCKY = 1, PETRI_ROCKY_R = 60;   /* plan-26 B2: bị hóa đá — Rocky ở gần (≤ 60 px) thì đập vỡ đá sau 1 s */
 const vi = ctx => ctx.lang() === 'vi';
 const zname = (ctx, id) => { const z = ZONES[id]; return z ? (vi(ctx) ? z.name.vi : z.name.en) : id; };
 const bossName = (ctx, id) => { const f = FLOORS[id]; return f ? (vi(ctx) ? f.boss.vi : f.boss.en) : ''; };
@@ -41,8 +48,9 @@ const L = ctx => (vi(ctx) ? {
   drink: n => `Uống ${n}`, drank: (n, s) => `Đã uống ${n} · hơi thở ${s} giây`, full: `Hơi thở đã đầy (tối đa ${BREATH_CAP / 60} phút)`,
   low: 'Sắp hết hơi! Uống viên thở hoặc bơi về cổng ra', lowNo: 'Sắp hết hơi! Bơi về cổng ra phía dưới', out: 'Hết hơi! Mất máu mỗi giây',
   up: 'Bạn được kéo lên bến cảng Làng — không mất đồ. Heathcliff ở chân cầu tàu bán thêm viên thở.',
+  wreckHit: (h, m, k) => `Đập ${/^coral/.test(k) ? 'san hô' : /^caverock/.test(k) ? 'đá' : /^xwall/.test(k) ? 'tường' : 'xác tàu'} (${h}/${m})`, wreckBroke: 'Vỡ rồi — mở được lối đi!',
   vent: s => `Lỗ phun khí · +${s} giây thở`, chest: 'Mở rương', chestGot: 'Rương:', gateSealed: 'Cổng xoáy bị phong ấn', gateHint: b => `Hạ ${b} canh cổng thì cổng xoáy mới mở`,
-  gateOpen: 'Cổng xoáy đã mở!', gateGo: (n, name) => `Xuống tầng ${n} · ${name}`, gateKraken: 'Cổng xoáy · Vực Kraken', soon: 'Vực Kraken — sắp mở! Dòng xoáy dưới kia còn bị chặn.',
+  gateOpen: 'Cổng xoáy đã mở!', gateGo: (n, name) => `Xuống tầng ${n} · ${name}`, gateKraken: 'Cổng xoáy · Vực Kraken', gateTo: name => `Cổng xoáy · ${name}`, petri: 'Bạn bị hóa đá! Không cử động được…', rockyFree: 'Rocky đập vỡ lớp đá cho bạn!', unstone: 'Lớp đá vỡ ra — cử động lại được rồi', soon: 'Vực Kraken — sắp mở! Dòng xoáy dưới kia còn bị chặn.',
   atk: 'Dưới nước: −50% sức mạnh', breath: 'Hơi thở', stunned: 'Bị điện giật — tê người!', secret: 'Góc bí mật! Có rương và ngọc trai giấu ở đây',
   current: 'Dòng chảy mạnh đẩy bạn đi — bơi ngược dòng thì chậm', dark: 'Hang tối đen — đèn của bạn chỉ soi quanh người. Pha lê và lỗ phun khí cho chút ánh sáng',
   inked: 'Mực phun — tối mắt một lúc!', bleed: 'Bị cắn — chảy máu!', poison: 'Trúng độc rắn biển!', lured: 'Ánh sáng lạ đang dụ bạn lại gần… bơi ra xa!',
@@ -58,8 +66,9 @@ const L = ctx => (vi(ctx) ? {
   drink: n => `Take ${n}`, drank: (n, s) => `Took ${n} · breath ${s} s`, full: `Breath is full (max ${BREATH_CAP / 60} minutes)`,
   low: 'Almost out of breath! Take a pill or swim to the exit', lowNo: 'Almost out of breath! Swim to the exit at the bottom', out: 'Out of breath! Losing health every second',
   up: 'You were pulled up to the Harbor Village pier — nothing lost. Heathcliff sells more pills at the foot of the pier.',
+  wreckHit: (h, m, k) => `Smash the ${/^coral/.test(k) ? 'coral' : /^caverock/.test(k) ? 'rock' : /^xwall/.test(k) ? 'wall' : 'wreck'} (${h}/${m})`, wreckBroke: 'It breaks — a new way through!',
   vent: s => `Air vent · +${s} s of breath`, chest: 'Open the chest', chestGot: 'Chest:', gateSealed: 'The whirl gate is sealed', gateHint: b => `Defeat the ${b} guarding it to open the whirl gate`,
-  gateOpen: 'The whirl gate is open!', gateGo: (n, name) => `Down to layer ${n} · ${name}`, gateKraken: 'Whirl gate · Kraken Trench', soon: 'Kraken Trench — coming soon! The whirl below is still blocked.',
+  gateOpen: 'The whirl gate is open!', gateGo: (n, name) => `Down to layer ${n} · ${name}`, gateKraken: 'Whirl gate · Kraken Trench', gateTo: name => `Whirl gate · ${name}`, petri: 'You are turned to stone! You cannot move…', rockyFree: 'Rocky smashes the stone off you!', unstone: 'The stone cracks — you can move again', soon: 'Kraken Trench — coming soon! The whirl below is still blocked.',
   atk: 'Underwater: −50% power', breath: 'Breath', stunned: 'Zapped — you are stunned!', secret: 'Secret corner! A chest and pearls are hidden here',
   current: 'A strong current pushes you — swimming against it is slow', dark: 'Pitch-dark cave — your lamp only lights around you. Crystals and vents give a little light',
   inked: 'Ink cloud — you can barely see!', bleed: 'Bitten — you are bleeding!', poison: 'Sea snake venom — poisoned!', lured: 'A strange light is luring you closer… swim away!',
@@ -75,11 +84,13 @@ defObj('uwgate_sealed', 32, 32, 2, 1, ringArt(false)); defObj('uwgate', 32, 32, 
 defObj('vent_spent', 16, 16, 1, 1, g => { px(g, 2, 8, '#352022', 12, 8); px(g, 3, 9, '#74747e', 10, 6); px(g, 6, 6, '#352022', 4, 3); }, { solid: false });
 defObj('tallkelp', 24, 24, 1, 1, g => { for (let i = 0; i < 3; i++) for (let y = 2 + i * 3; y < 22; y++) px(g, 7 + i * 4 + Math.round(Math.sin(y / 3 + i) * 1.5), y, i % 2 ? '#8a7a2a' : '#b09a3a', 2, 1); px(g, 6, 21, '#5a5560', 12, 3); }, { solid: false });
 defObj('wreckwall', 16, 16, 1, 1, g => { px(g, 0, 2, '#352022', 16, 14); px(g, 1, 3, '#6a4a2a', 14, 12); for (const y of [6, 10]) px(g, 1, y, '#4a3018', 14, 1); });
+defObj('wreckwall2', 16, 16, 1, 1, g => { px(g, 0, 3, '#352022', 16, 13); px(g, 1, 4, '#3e4a48', 14, 11); px(g, 6, 8, '#c8a040', 4, 4); });   /* mảnh thân tàu có cửa sổ tròn — ảnh PixelLab zones/u3/obj/wreckwall2_t8.png; vẽ code chỉ dự phòng */
+defObj('wreckwall3', 16, 16, 1, 1, g => { px(g, 6, 0, '#352022', 5, 16); px(g, 7, 1, '#9a7a48', 3, 14); px(g, 3, 4, '#d8d0b8', 4, 6); });   /* cột buồm gãy — ảnh PixelLab zones/u3/obj/wreckwall3_t8.png */
 const rockArt = flip => g => { px(g, 1, 3, '#352022', 14, 13); px(g, 2, 4, '#3a4a66', 12, 11); px(g, flip ? 4 : 9, 6, '#5fe0e8', 2, 2); px(g, flip ? 10 : 4, 11, '#5fe0e8', 1, 1); };
 defObj('caverock', 16, 16, 1, 1, rockArt(false)); defObj('caverock2', 16, 16, 1, 1, rockArt(true));
 
 const ST = { ctx: null, t: 0, hc: null, placed: false, shopEl: null, menuEl: null, drownT: 0, lowWarned: false, outWarned: false, bubT: 0, lowBubT: 0, stun: 0, stunMsgT: 0, full: 60, saveT: 0, surfaced: false, fx: [], icon: null,
-  ink: 0, inkDur: 0, dots: [], darkCv: null, curWarn: false, secretIn: false, msgT: {} };
+  ink: 0, inkDur: 0, dots: [], darkCv: null, curWarn: false, secretIn: false, msgT: {}, petri: 0, petriT: 0 };
 function sv(ctx) {
   const s = ctx.S.save; s.sys ||= {}; const u = (s.sys.underwater ||= {});
   if (typeof u.breath !== 'number' || !isFinite(u.breath)) u.breath = 0;
@@ -131,7 +142,7 @@ function placeHc(ctx) {
   let at = null; for (const [dx, dy] of [[2, 2], [3, 2], [-2, 2], [2, 1], [3, 1]]) { const x = m.dock.x + dx, y = m.dock.y + dy; if (!ctx.isSolid(m, x, y) && !ctx.hasObjectAt(m, x, y)) { at = { x, y }; break; } }   /* bãi cát chân cầu tàu */
   if (!at) return;
   const n = new ctx.NPC({ staff: 'heathcliff', n: 'Heathcliff', tag: 'Heathcliff · CM' }, at.x * TS + 8, at.y * TS + 14, hcSheet(ctx), () => 0.5);   /* bảng tên kiểu 'Noxx · CM' */
-  n.busy = true; n.radius = 0; n.staffStill = true; n.dir = 1;
+  n.busy = false; n.radius = 30; n.staffStill = false; n.rng = Math.random; n.dir = 1;   /* 2026-10-11 anh: Heathcliff đi lại quanh chân cầu tàu như Noxx */
   ST.hc = n; (S.staff ||= []).push(n);
 }
 function hcDialog(ctx, pages, onClose) {
@@ -152,11 +163,37 @@ function renderShop(ctx) {
       + `<span class="hnum"><b>×${inv[id] || 0}</b></span><button class="btn primary" data-pill="${id}" style="${BS}${can ? '' : ';opacity:.35;cursor:default'}"${can ? '' : ' disabled'}>${t.buy}</button></div>`; };
   const html = `<h2>${t.shopTitle}<span class="chip">🪨 ${inv.stone || 0}</span></h2>
     <div class="shopw"><div class="shop-side"><div class="shop-port">${port ? `<img src="${port}" alt="">` : `<img src="assets/px/ui/items/pill_l.png" alt="" style="image-rendering:pixelated">`}</div><p class="shop-say">${t.lead}</p></div>
-    <div class="scroll shop-main">${row('pill_s')}${row('pill_l')}<p class="dim" style="margin:10px 0 4px">${t.have(Math.ceil(u.breath))}</p></div></div>
+    <div class="scroll shop-main">${row('pill_s')}${row('pill_l')}<p class="dim" style="margin:10px 0 4px">${t.have(Math.ceil(u.breath))}</p>${bookRows(ctx)}</div></div>
     <button class="btn" id="uw-close">${t.close}</button>`;
   const el = ctx.panel('uwshop', html); ST.shopEl = el; el.panel.classList.add('wide', 'shop'); el.hidden = false;
   el.querySelector('#uw-close').onclick = () => closeShop(ctx);
   for (const b of el.querySelectorAll('[data-pill]')) b.onclick = () => buyPill(ctx, b.dataset.pill);
+  for (const b of el.querySelectorAll('[data-rkbook]')) b.onclick = () => buyBook(ctx, b.dataset.rkbook);
+}
+/* ---------------- plan-27: Sách luyện Rocky — 3 loại × 7 bậc; bậc N cần chiêu đang N−1 + Rocky đủ cấp; giá đá tăng dần; mua xong Rocky đọc luôn ---------------- */
+function bookRows(ctx) {
+  const vi = ctx.lang() === 'vi', pt = ctx.rocky && ctx.rocky.pet(), inv = ctx.S.save.inv || {};
+  const head = `<h3 style="margin:12px 0 4px">${vi ? '📚 Sách luyện Rocky' : '📚 Rocky training books'}</h3>`;
+  if (!pt) return head + `<p class="dim">${vi ? 'Cần có Rocky đi cùng.' : 'You need Rocky with you.'}</p>`;
+  const lv = RLV.levelFromXp(pt.xp || 0).lv;
+  return head + RLV.SKILL_IDS.map(id => {
+    const S2 = RLV.SKILLS[id], cur = RLV.tierOf(pt, id), n = Math.max(2, cur + 1), nm = vi ? S2.vi : S2.en;
+    const ic = ART.man && ART.man.ui && ART.man.ui.items && (ART.man.ui.items[`rkbook_${id}_${RLV.vfxTier(Math.min(7, n))}`] || ART.man.ui.items[`rkbook_${id}`]);
+    const img = ic ? `<img src="assets/px/${ic}" alt="" style="width:32px;height:32px;image-rendering:pixelated;vertical-align:middle">` : '';
+    if (cur >= RLV.TIER_MAX) return `<div class="hrow"><span class="hwho">${img} <b>${nm}</b> <span class="dim">${vi ? 'đã bậc 7/7 — tối đa' : 'tier 7/7 — maxed'}</span></span></div>`;
+    const c = RLV.canBook(pt, id, n), price = RLV.bookPrice(id, n), poor = (inv.stone || 0) < price, ok = c.ok && !poor;
+    const why = !c.ok ? (c.why === 'lv' ? (vi ? `cần Rocky cấp ${c.lv} (đang ${lv})` : `needs Rocky Lv ${c.lv} (now ${lv})`) : c.why === 'prev' ? (cur === 0 ? (vi ? `chiêu mở ở cấp ${S2.unlock}` : `skill unlocks at Lv ${S2.unlock}`) : (vi ? `cần bậc ${n - 1} trước` : `needs tier ${n - 1} first`)) : '') : poor ? (vi ? 'chưa đủ đá' : 'not enough stones') : '';
+    return `<div class="hrow"><span class="hwho">${img} <b>${vi ? 'Sách' : 'Book'} ${nm} ${vi ? 'bậc' : 'tier'} ${n}</b> <span class="chip">${price} 🪨</span> <span class="dim">${vi ? 'đang' : 'now'} ${cur}/7${why ? ' · ' + why : ''}</span></span>`
+      + `<button class="btn primary" data-rkbook="${id}:${n}" style="${BS}${ok ? '' : ';opacity:.35;cursor:default'}"${ok ? '' : ' disabled'}>${L(ctx).buy}</button></div>`;
+  }).join('');
+}
+function buyBook(ctx, spec) {
+  const [id, a] = spec.split(':'), n = +a, inv = ctx.S.save.inv, pt = ctx.rocky && ctx.rocky.pet(); if (!pt) return false;
+  const c = RLV.canBook(pt, id, n), price = RLV.bookPrice(id, n);
+  if (!c.ok) { ctx.sfx('fail'); return false; }
+  if ((inv.stone || 0) < price) { ctx.toast(L(ctx).poor); ctx.sfx('poor'); return false; }
+  inv.stone -= price; const r = ctx.rocky.readBook(id, n); if (!r.ok) { inv.stone += price; return false; }
+  ctx.sfx('buy'); ctx.persist(); renderShop(ctx); return true;
 }
 function openShop(ctx) { ctx.setMode('uwshop'); ctx.registerCloser('uwshop', () => closeShop(ctx)); renderShop(ctx); }
 function closeShop(ctx) { if (ST.shopEl) ST.shopEl.hidden = true; if (ctx.S.mode === 'uwshop') ctx.setMode('play'); }
@@ -202,8 +239,12 @@ function openMenu(ctx) { ctx.setMode('uwdive'); ctx.registerCloser('uwdive', () 
 function closeMenu(ctx) { if (ST.menuEl) ST.menuEl.hidden = true; if (ctx.S.mode === 'uwdive') ctx.setMode('play'); }
 
 /* ---------------- dưới nước: người chơi bơi ---------------- */
-function drawSwim(g, ent) {
-  const x = Math.round(ent.x), y = Math.round(ent.y), tm = ST.t, bob = Math.round(Math.sin(tm * 2.4) * 1.2) - 3;
+function drawSwim(g, ent) {   /* plan-26 B2: đang hóa đá → vẽ xám như tượng đá, không nhấp nhô */
+  if (!(ST.petri > 0)) return drawSwim0(g, ent);
+  g.save(); g.filter = 'grayscale(1) brightness(1.35) contrast(0.8)'; const a = ent.moving; ent.moving = false; drawSwim0(g, ent, true); ent.moving = a; g.restore();
+}
+function drawSwim0(g, ent, still) {
+  const x = Math.round(ent.x), y = Math.round(ent.y), tm = still ? 0 : ST.t, bob = Math.round(Math.sin(tm * 2.4) * 1.2) - 3;
   g.fillStyle = 'rgba(0,25,45,.22)'; g.beginPath(); g.ellipse(x, y + 1, 7, 2.5, 0, 0, TAU); g.fill();   /* bóng trên đáy cát */
   const a = ent.action, acts = ent.sheet && ent.sheet.actions;
   if (a && acts && acts[a.name] && a.name !== 'swim') { const c = ent.custom; ent.custom = null; g.save(); g.translate(0, bob); ent.draw(g); g.restore(); ent.custom = c; return; }   /* chém / bị đánh vẫn hiện clip PixelLab dưới nước */
@@ -212,9 +253,9 @@ function drawSwim(g, ent) {
     const seq = ent.moving ? SWIM_LOOP : SWIM_IDLE, f = seq[Math.floor(tm * (ent.moving ? 9 : 3)) % seq.length], cw = sw.cw || 32, ch = sw.ch || 24;
     g.drawImage(sw.img, f * cw, (ent.dir & 3) * ch, cw, ch, x - (cw >> 1), y - 18 - (ch - 20) + bob, cw, ch); return;
   }
-  g.drawImage(ent.sheet, (ent.moving ? ent.frame : 0) * 16, (ent.dir & 3) * 20, 16, 20, x - 8, y - 18 + bob, 16, 20);   /* dự phòng: sheet đi */
+  drawBody(g, ent, (ent.moving ? ent.frame : 0) * 16, (ent.dir & 3) * 20, 20, x - 8, y - 18 + bob);   /* dự phòng: sheet đi */
 }
-function applySwim(ctx) { const p = ctx.S.player; p.custom = drawSwim; p.passable = null; p.ghost = false; p.boxW = 10; p.boxH = 6; p.speedMul = ST.stun > 0 ? 0 : SWIM_SPEED; }
+function applySwim(ctx) { const p = ctx.S.player; p.custom = drawSwim; p.passable = null; p.ghost = false; p.boxW = 10; p.boxH = 6; p.speedMul = ST.stun > 0 || ST.petri > 0 ? 0 : SWIM_SPEED; if (ST.petri > 0) p.autoPath = null; }
 function restore(p) { if (p.custom === drawSwim) p.custom = null; p.speedMul = 1; p.passable = null; p.ghost = false; p.boxW = 10; p.boxH = 6; }
 
 /* ---------------- cổng xoáy / rương / lỗ phun / đồ rải ---------------- */
@@ -237,6 +278,26 @@ function useGate(ctx) {
   ctx.sfx('dive'); bubbles(ctx, (g.x + 1) * TS, (g.y + 1) * TS - 6, 6); ctx.travel(next, 'default');
 }
 const DEFAULT_LOOT = { c1: [['stone', 8], ['pearl', 1], ['seagem', 1]], c2: [['stone', 10], ['pill_s', 1], ['shell', 2]] };
+function wreckFront(ctx) {   /* ô xác tàu NGAY TRƯỚC MẶT (khi cầm kiếm / rìu / cuốc) — không cầm gì thì không hiện nhãn, đi trong mê cung khỏi rối */
+  const p = ctx.S.player, m = ctx.S.map; if (!p || !m) return null;
+  if (ctx.holding && !(ctx.holding('sword') || ctx.holding('axe') || ctx.holding('pickaxe'))) return null;
+  const lk = ctx.target && ctx.target.obj();   /* 2026-10-11: vật đã khóa (target.js) ở sát bên → đập ĐÚNG nó (không cần quay mặt); xa thì main tự đi tới */
+  if (lk && isWreck(m, lk) && ctx.target.objGap(lk) <= 12) { const dd = ctx.O && ctx.O[lk.type], w = (dd && dd.fw) || 1, h = (dd && dd.fh) || 1; ST.wreckTile = { x: Math.max(lk.x, Math.min(lk.x + w - 1, Math.floor(p.x / TS))), y: Math.max(lk.y, Math.min(lk.y + h - 1, Math.floor((p.y - 2) / TS))) }; ST.wreckLock = true; return lk; }
+  ST.wreckLock = false;
+  const d = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir & 3], tx = Math.floor(p.x / TS) + d[0], ty = Math.floor((p.y - 2) / TS) + d[1];
+  const o = m.objects.find(o => { if (!isWreck(m, o)) return false; const d = ctx.O && ctx.O[o.type], w = (d && d.fw) || 1, h = (d && d.fh) || 1; return tx >= o.x && tx < o.x + w && ty >= o.y && ty < o.y + h; });
+  if (o) ST.wreckTile = { x: tx, y: ty };   /* ô đang nhắm (vật to nhiều ô: tính khoảng cách tới ô này, không tới góc vật) */
+  return o || null;
+}
+function hitWreckByPlayer(ctx, o) {   /* 6 lần mới vỡ; mỗi lần một nhịp vung */
+  const m = ctx.S.map, p = ctx.S.player; if (!m.objects.includes(o) || !isWreck(m, o)) return;
+  const now = ctx.S.time; if ((ST.wreckT || 0) > now) return; ST.wreckT = now + 0.32;
+  if (ST.wreckLock && p.faceTo && ST.wreckTile) p.faceTo(ST.wreckTile.x * TS + 8, ST.wreckTile.y * TS + 8);
+  if (p.hasAct) { if (p.hasAct('attack')) p.act('attack', 0.35); else if (p.hasAct('chop')) p.act('chop', 0.35); }
+  const broke = hitWreck(ctx, o, 1);
+  ctx.sfx(broke ? 'collapse' : 'chop');
+  if (broke) { ctx.quake && ctx.quake(0.25); ctx.toast(L(ctx).wreckBroke); }
+}
 function openChest(ctx, o) {
   const u = sv(ctx), z = zid(ctx), t = L(ctx), list = (u.chests[z] ||= []); if (list.includes(o.uchest)) return;
   list.push(o.uchest); o.type = 'uchest_open'; ctx.persist();
@@ -294,6 +355,12 @@ export const underwater = {
     ctx.uwInk = sec => { if (!under(ctx)) return; ST.inkDur = Math.max(ST.ink > 0 ? ST.inkDur : 0, sec); ST.ink = Math.max(ST.ink, sec); once(ctx, 'ink', L(ctx).inked, false, 6); };
     ctx.uwDot = (kind, dmg, ticks) => { if (!under(ctx)) return; const d = ST.dots.find(o => o.kind === kind); if (d) { d.left = Math.max(d.left, ticks); d.dmg = Math.max(d.dmg, dmg); } else ST.dots.push({ kind, dmg: Math.max(1, Math.round(dmg)), left: ticks, t: 1 }); once(ctx, kind, kind === 'poison' ? L(ctx).poison : L(ctx).bleed, false, 6); };
     ctx.uwSay = (key, txt, big, gap) => once(ctx, key, txt, big, gap);
+    ST.petri = 0; ST.petriT = 0;
+    ctx.petrifyPlayer = sec => {   /* plan-26 B2: tia hóa đá của Xealist — đứng im sec giây (Rocky ở gần thì đập vỡ sớm) */
+      if (!under(ctx)) return; const p = ctx.S.player, first = !(ST.petri > 0);
+      ST.petri = Math.max(ST.petri, sec); if (first) ST.petriT = 0; p.autoPath = null;
+      if (first) { ctx.sfx('petrify'); vfx(ctx, 'petrify', p.x, p.y + 2, true); ctx.toast(L(ctx).petri); }
+    };
     if (!ST.icon && typeof Image !== 'undefined') { const f = ART.man && ART.man.ui && ART.man.ui.items && ART.man.ui.items.st_breath; if (f) { ST.icon = new Image(); ST.icon.src = 'assets/px/' + f; } }
     if (under(ctx)) {
       applySwim(ctx);
@@ -306,7 +373,8 @@ export const underwater = {
       else if (m.kelp) setTimeout(() => once(ctx, 'kelp', L(ctx).kelp, false, 60), 1400);
     } else if (ST.surfaced && ctx.S.map && ctx.S.map.sea) { ST.surfaced = false; setTimeout(() => ctx.toast(L(ctx).up, true), 900); }
     if (typeof window !== 'undefined') window.__uw = {
-      state: () => ({ zone: zid(ctx), under: under(ctx), breath: +sv(ctx).breath.toFixed(2), gates: { ...sv(ctx).gates }, chests: JSON.parse(JSON.stringify(sv(ctx).chests)), reached: reachedFloors(ctx), secrets: { ...sv(ctx).secrets }, stun: +ST.stun.toFixed(2), mode: ctx.S.mode, speedMul: ctx.S.player.speedMul, swim: ctx.S.player.custom === drawSwim, atkMul: ctx.atkMul ? ctx.atkMul() : 1, ink: +ST.ink.toFixed(2), dots: ST.dots.map(d => ({ ...d })) }),
+      state: () => ({ zone: zid(ctx), under: under(ctx), breath: +sv(ctx).breath.toFixed(2), gates: { ...sv(ctx).gates }, chests: JSON.parse(JSON.stringify(sv(ctx).chests)), reached: reachedFloors(ctx), secrets: { ...sv(ctx).secrets }, stun: +ST.stun.toFixed(2), mode: ctx.S.mode, speedMul: ctx.S.player.speedMul, swim: ctx.S.player.custom === drawSwim, atkMul: ctx.atkMul ? ctx.atkMul() : 1, ink: +ST.ink.toFixed(2), dots: ST.dots.map(d => ({ ...d })), petri: +ST.petri.toFixed(2), barA: ST.barA }),
+      openShop: () => openShop(ctx), buyBook: spec => buyBook(ctx, spec),   /* plan-27 test */
       hc: () => ST.hc && { x: ST.hc.x, y: ST.hc.y }, dive: () => diveAt(ctx), setBreath: s => { sv(ctx).breath = s; ST.full = Math.max(60, s); return s; }, drink: id => drink(ctx, id), openGate: () => openGate(ctx), diveTo: id => diveTo(ctx, id),
       gate: () => { const g = gateObj(ctx); return g && { x: g.x, y: g.y, type: g.type, open: gateOpen(ctx), to: g.uwgate }; },
       vents: () => ctx.S.map.objects.filter(o => o.vent).map(o => ({ x: o.x, y: o.y, spent: +(o.spent || 0).toFixed(1), type: o.type })),
@@ -315,7 +383,7 @@ export const underwater = {
       darkness: () => !!(ctx.S.map && ctx.S.map.cave), lamp: () => LAMP_R,
     };
   },
-  onZoneLeave(ctx) { if (ctx.S.mode === 'uwshop') closeShop(ctx); if (ctx.S.mode === 'uwdive') closeMenu(ctx); restore(ctx.S.player); ST.hc = null; ST.stun = 0; ST.fx = []; ST.ink = 0; ST.dots = []; ctx.persist(); },
+  onZoneLeave(ctx) { if (ctx.S.mode === 'uwshop') closeShop(ctx); if (ctx.S.mode === 'uwdive') closeMenu(ctx); restore(ctx.S.player); ST.hc = null; ST.stun = 0; ST.petri = 0; ST.fx = []; ST.ink = 0; ST.dots = []; ctx.persist(); },
   update(dt, ctx) {
     ST.t += dt; ST.ctx = ctx;
     if (!ST.placed && ctx.S.map) { ST.placed = true; try { placeHc(ctx); } catch (e) { console.error('underwater hc', e); } }
@@ -324,6 +392,13 @@ export const underwater = {
     const p = ctx.S.player, u = sv(ctx), t = L(ctx), play = ctx.S.mode === 'play', m = ctx.S.map;
     if (ST.stun > 0) ST.stun -= dt;
     if (ST.ink > 0) ST.ink -= dt;
+    if (ST.petri > 0) {   /* plan-26 B2: hóa đá — Rocky ở gần (≤ 60 px) đập vỡ sau 1 s; hết giờ thì tự vỡ */
+      ST.petri -= dt; ST.petriT += dt;
+      let rocky = null; try { rocky = typeof window !== 'undefined' && window.__pet && window.__pet.state().ent; } catch (e) { rocky = null; }
+      const near = rocky && Math.hypot(rocky.x - p.x, rocky.y - p.y) <= PETRI_ROCKY_R;
+      if (near && ST.petriT >= PETRI_ROCKY && ST.petri > 0) { ST.petri = 0; ctx.sfx('smash'); vfx(ctx, 'stone_free', p.x, p.y + 2, true); ctx.toast(t.rockyFree); }
+      else if (ST.petri <= 0) { ST.petri = 0; ctx.sfx('unstone'); vfx(ctx, 'stone_free', p.x, p.y + 2, true); once(ctx, 'unstone', t.unstone, false, 4); }
+    }
     applySwim(ctx);   /* hệ khác (chụp ảnh…) có thể vừa gỡ dáng bơi → gắn lại mỗi khung */
     if (!play || (ctx.hero && ctx.hero.fainted)) return;
     u.breath = Math.max(0, u.breath - dt);
@@ -349,9 +424,10 @@ export const underwater = {
     const d = m.sea && diveAt(ctx); if (d && Math.hypot(d.x - p.x, d.y - p.y) < 40) { const fl = reachedFloors(ctx); return { label: `${fl.length > 1 ? t.diveAny : t.dive(zname(ctx, 'u1'))} · 🫧 ${Math.ceil(u.breath)}s`, x: d.x, y: d.y, limit: 42, priority: 2, data: { dive: true } }; }
     if (under(ctx)) {
       const g = gateObj(ctx);
-      if (g) { const gx = (g.x + 1) * TS, gy = (g.y + 1) * TS + 6; if (Math.hypot(gx - p.x, gy - p.y) < 30) { const nx = g.uwgate, lbl = g.type !== 'uwgate' ? t.gateSealed : FLOORS[nx] ? t.gateGo(FLOORS[nx].n, zname(ctx, nx)) : t.gateKraken; return { label: lbl, x: gx, y: gy, limit: 32, priority: 1.5, data: { gate: true } }; } }
+      if (g) { const gx = (g.x + 1) * TS, gy = (g.y + 1) * TS + 6; if (Math.hypot(gx - p.x, gy - p.y) < 30) { const nx = g.uwgate, lbl = g.type !== 'uwgate' ? t.gateSealed : FLOORS[nx] && FLOORS[nx].n <= 4 ? t.gateGo(FLOORS[nx].n, zname(ctx, nx)) : ZONES[nx] ? t.gateTo(zname(ctx, nx)) : t.gateKraken; return { label: lbl, x: gx, y: gy, limit: 32, priority: 1.5, data: { gate: true } }; } }
       let best = null, bd = 26; for (const o of m.objects) { if (!o.uchest || o.type !== 'uchest') continue; const dd = Math.hypot(o.x * TS + 8 - p.x, (o.y + 1) * TS + 4 - p.y); if (dd < bd) { bd = dd; best = o; } }
       if (best) return { label: t.chest, x: best.x * TS + 8, y: (best.y + 1) * TS + 4, limit: 28, priority: 1.5, data: { chest: best } };
+      const wk = wreckFront(ctx); if (wk) return ST.wreckLock ? { label: `🎯 ${t.wreckHit(wk.hp ?? WRECK_HP, WRECK_HP, wk.type)}`, x: p.x, y: p.y - 4, limit: 999, priority: 4.1, isLock: true, data: { wreck: wk } } : { label: t.wreckHit(wk.hp ?? WRECK_HP, WRECK_HP, wk.type), x: ST.wreckTile.x * TS + 8, y: ST.wreckTile.y * TS + 8, limit: 30, priority: 0.6, data: { wreck: wk } };
     }
     const held = ctx.held ? ctx.held() : null;   /* cầm viên thở (hoặc dưới nước sắp hết hơi mà túi còn viên) → E vào chỗ trống = uống */
     const id = held && PILLS[held] ? held : under(ctx) && u.breath <= 20 ? pickPill(ctx) : null;
@@ -365,6 +441,7 @@ export const underwater = {
     else if (d.drink) drink(ctx, d.drink);
     else if (d.chest) openChest(ctx, d.chest);
     else if (d.gate) useGate(ctx);
+    else if (d.wreck) hitWreckByPlayer(ctx, d.wreck);
   },
   onKey(ctx, code) {   /* bảng chọn tầng: phím 1–4 */
     if (ctx.S.mode !== 'uwdive') return false;
@@ -437,7 +514,13 @@ export const underwater = {
     if (!under(ctx) || (ctx.S.mode !== 'play' && ctx.S.mode !== 'menu')) return;
     const u = sv(ctx), t = L(ctx), W = ug.canvas.width, fs = Math.max(12, Math.round(scale * 4)), bw = Math.min(W * 0.36, 300), bh = Math.max(10, Math.round(scale * 3.2));
     const bx = Math.round((W - bw) / 2), by = Math.max(58, Math.round(scale * 19)), low = u.breath <= LOW, k = Math.max(0, Math.min(1, u.breath / Math.max(1, ST.full))), isz = Math.round(fs * 1.5);
-    ug.save(); ug.imageSmoothingEnabled = false;
+    /* plan-26 B2 (P3): người chơi hoặc trùm (đầu Kraken / Xealist) nằm dưới khung thanh hơi thở → vẽ mờ 0,35 cho thấy bên dưới */
+    const rx0 = bx - 12, rx1 = bx + bw + 12, ry0 = by - fs * 1.5, ry1 = by + bh + fs * 1.4;
+    const covers = (wx, wy0, wy1, hw) => { const sx0 = (wx - hw - cx) * scale, sx1 = (wx + hw - cx) * scale, sy0 = (wy0 - cy) * scale, sy1 = (wy1 - cy) * scale; return sx1 > rx0 && sx0 < rx1 && sy1 > ry0 && sy0 < ry1; };
+    const pl = ctx.S.player; let under_ = covers(pl.x, pl.y - 22, pl.y + 2, 8);
+    if (!under_ && ctx.monsters) for (const mo of ctx.monsters.list()) { if (!mo.c || !mo.c.boss) continue; const hh = mo.c.ai === 'kraken' ? 48 : Math.max(24, mo.c.h + 8); if (covers(mo.x, mo.y - hh, mo.y + 2, Math.max(12, mo.c.w / 2 + 4))) { under_ = true; break; } }
+    ST.barA = under_ ? 0.35 : 1;
+    ug.save(); ug.imageSmoothingEnabled = false; ug.globalAlpha = ST.barA;
     ug.fillStyle = 'rgba(13,11,20,.75)'; ug.beginPath(); ug.roundRect(bx - 12, by - fs * 1.5, bw + 24, bh + fs * 2.9, 8); ug.fill();
     if (low) { ug.strokeStyle = '#ff4d4d'; ug.lineWidth = 2; ug.stroke(); }
     ug.font = `bold ${Math.round(fs * 0.95)}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle';

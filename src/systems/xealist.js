@@ -25,7 +25,11 @@ function breakMonument(ctx, o) {
   d.broken[z] = ctx.clock ? ctx.clock.dayIndex : 0; ctx.persist();
   if (ctx.vfx) { ctx.vfx('rock_debris', cx, cy); ctx.vfx('monster_poof', cx, cy, 0, true); ctx.vfx('petrify', cx, cy + 2, 0, true); } ctx.quake && ctx.quake(0.6); ctx.sfx('collapse');
   ctx.toast(t.monBroken(zoneName(ctx)), true);
-  const n = Object.keys(d.broken).filter(k => /^m[1-9]$/.test(k)).length; if (n >= 9 && !d.ended) { d.ended = true; ctx.persist(); setTimeout(() => ending(ctx), 1500); }
+  const n = Object.keys(d.broken).filter(k => /^m[1-9]$/.test(k)).length;
+  if (n >= 9 && !d.ended) {   /* polish 2026-10-10: khoá tương tác NGAY khi bia cuối vỡ (trước đây 1,5 s chờ vẫn bấm E mở bảng bia đè lên màn kết) */
+    d.ended = true; ctx.persist(); ST.endPending = true; ctx.setMode('xending');
+    setTimeout(() => { ST.endPending = false; try { ending(ctx); } catch (e) { console.error('xealist', e); ctx.setMode('play'); } }, 1500);
+  }
 }
 function applyBroken(ctx) { const d = dk(ctx); if (!d.broken[zid(ctx)]) return; for (const o of ctx.S.map.objects) if (o.hall && !o.ruined) { o.orig = o.type; o.ruined = true; o.hp = 0; } }
 function ending(ctx) {
@@ -74,15 +78,21 @@ function witness(ctx, actor) {   /* dân khác gần đó trông thấy → nghi
   ctx.bubble && ctx.bubble(n, '!!', 2); ctx.toast(t.seen(nameOf(n))); if (d.sus >= 3) ctx.toast(t.susp, true);
 }
 function placeNpc(ctx) {
-  ST.npc = null; if (!isDark(ctx) || !ctx.S.map || ctx.S.map.sea || !ctx.NPC) return;
-  const m = ctx.S.map, e = m.entries && (m.entries.default || Object.values(m.entries)[0]); if (!e) return;
+  ST.npc = null; if (!ctx.S.map || ctx.S.map.sea || !ctx.NPC) return;
+  const m = ctx.S.map;
+  if (m.promoter) {   /* 2026-10-11 anh: Sàn Đấu Ngầm — Xealist đứng mép sàn làm 'bầu sô' cho CẢ HAI phe (gọi bạn tập); không còn ở lối vào Làng */
+    const n = new ctx.NPC({ staff: 'xealist', n: 'Xealist', tag: 'Xealist' }, m.promoter.x * 16 + 8, m.promoter.y * 16 + 14, ctx.charSheetOf({ hero: 'xealist' }), () => 0.5);
+    n.busy = true; n.radius = 0; n.staffStill = true; n.dir = 3; n.rng = Math.random; ST.npc = n; (ctx.S.staff ||= []).push(n); return;
+  }
+  if (!isDark(ctx)) return;   /* phe Xealist: Xealist (nhiệm vụ đen) gần lối vào mỗi vùng như cũ — nhưng KHÔNG còn mời đấu tập ở đó */
+  const e = m.entries && (m.entries.default || Object.values(m.entries)[0]); if (!e) return;
   let at = null; for (let r = 2; r < 7 && !at; r++) for (const [dx, dy] of [[r, 0], [-r, 0], [0, -r], [r, -r], [-r, -r]]) { const x = e.x + dx, y = e.y + dy; if (x > 1 && y > 1 && x < m.w - 1 && y < m.h - 1 && !ctx.isSolid(m, x, y) && !ctx.hasObjectAt(m, x, y)) { at = { x, y }; break; } }
   if (!at) return;
   const n = new ctx.NPC({ staff: 'xealist', n: 'Xealist', tag: 'Xealist' }, at.x * 16 + 8, at.y * 16 + 14, ctx.charSheetOf({ hero: 'xealist' }), () => 0.5);
-  n.busy = true; n.radius = 0; n.staffStill = true;
+  n.busy = false; n.radius = 40; n.staffStill = false; n.rng = Math.random;   /* 2026-10-11 anh: Xealist đi lại như Noxx (không đứng im như quầy) */
   ST.npc = n; (ctx.S.staff ||= []).push(n);
 }
-function dialog(ctx, pages, onClose) { if (!ctx.openDialog) return; ctx.setMode('dialog'); const done = () => { ctx.setMode('play'); if (onClose) onClose(); }; ctx.openDialog({ m: { n: 'Xealist', k: 'Xealist', id: 'xealist', friend: true, a: 'assets/px/ui/port_xealist.png', title: { vi: 'Thủ lĩnh phe Xealist', en: 'Head of the Xealist faction' }, ro: [] }, pages, onClose: done }); }   /* chân dung PixelLab */
+function dialog(ctx, pages, onClose) { if (!ctx.openDialog) return; if (!(ctx.S.map && ctx.S.map.sparRing)) pages = pages.concat([vi(ctx) ? 'Muốn tập đấu? Ra Sàn Đấu Ngầm ở phía đông làng.' : 'Want to spar? Head to the Underground Ring on the east side of the village.']);   /* 2026-10-11: đấu tập đã dời sang Sàn Đấu Ngầm */ ctx.setMode('dialog'); const done = () => { ctx.setMode('play'); if (onClose) onClose(); }; ctx.openDialog({ m: { n: 'Xealist', k: 'Xealist', id: 'xealist', friend: true, a: 'assets/px/ui/port_xealist.png', title: { vi: 'Thủ lĩnh phe Xealist', en: 'Head of the Xealist faction' }, ro: [] }, pages, onClose: done }); }   /* chân dung PixelLab */
 export const xealist = {
   id: 'xealist',
   onZoneEnter(ctx) {
@@ -91,6 +101,7 @@ export const xealist = {
     ctx.isDarkRevealed = () => isDark(ctx) && !!dk(ctx).revealed;
     if (isDark(ctx)) applyBroken(ctx);
     ctx.isDarkPath = () => isDark(ctx);
+    ctx.xealistDeed = (type, actor) => { if (!isDark(ctx)) return; if (type) progress(ctx, type); witness(ctx, actor); };   /* petgun.js: bắn hóa đá dân → tiến độ nhiệm vụ đen + dân khác thấy thì nghi ngờ */
     if (typeof window !== 'undefined') window.__xea = { state: () => ({ path: path(ctx), ...JSON.parse(JSON.stringify(dk(ctx))) }), quest: () => newQuest(ctx), npc: () => ST.npc && { x: ST.npc.x, y: ST.npc.y }, reveal: () => { dk(ctx).pts = Math.max(dk(ctx).pts, REVEAL_PTS); reveal(ctx); }, breakAll: () => { const d = dk(ctx); for (let i = 1; i <= 8; i++) d.broken['m' + i] = 0; ctx.persist(); return Object.keys(d.broken).length; }, ending: () => ending(ctx) };
   },
   update(dt, ctx) {
@@ -103,6 +114,8 @@ export const xealist = {
   },
   near(ctx) {
     const t = L(ctx), p = ctx.S.player, d = dk(ctx);
+    if (ST.endPending || ctx.S.mode === 'end' || ctx.S.mode === 'xending') return null;   /* màn kết đang mở / sắp mở → không mời tương tác */
+    if (ST.npc && ctx.sparOn && ctx.sparOn() && ctx.S.map && ctx.S.map.sparRing) return null;   /* đang đấu ở Sàn Đấu Ngầm: E là đòn đánh, Xealist mép sàn không giành */
     if (ST.npc && Math.hypot(ST.npc.x - p.x, ST.npc.y - p.y) < 30) return { label: d.quest && d.quest.got >= d.quest.need ? t.report : t.talk, x: ST.npc.x, y: ST.npc.y - 4, limit: 30, priority: true, data: { talk: true } };
     if (isDark(ctx) && d.revealed) { const mo = monumentNear(ctx); if (mo) { const armedM = ctx.holding ? (ctx.holding('sword') || ctx.holding('pickaxe') || ctx.holding('axe')) : true; if (armedM) return { label: t.smashMon(ST.hits.get(mo) || 0), x: mo.x * 16 + 16, y: (mo.y + 1) * 16, limit: 40, priority: 2, data: { mon: mo } }; } }
     if (isDark(ctx) && !d.revealed && ctx.S.zone && ctx.S.zone.id === 'village') {   /* hối cải ở Vườn Tượng Đá */
@@ -113,7 +126,10 @@ export const xealist = {
     const armed = ctx.holding ? (ctx.holding('sword') || ctx.holding('pickaxe') || ctx.holding('axe')) : true;
     if (ctx.villagers) {   /* dân gần nhất: hóa đá (cầm vũ khí) / móc túi (tay không) */
       let best = null, bd = 22; for (const n of ctx.villagers.alive()) { if (n.hurtSit) continue; const dd = Math.hypot(n.x - p.x, n.y - p.y); if (dd < bd) { bd = dd; best = n; } }
-      if (best) { const h = ST.hits.get(best) || 0; return armed ? { label: `${t.petrify(nameOf(best))} (${h}/3)`, x: best.x, y: best.y - 6, limit: 22, priority: 1.5, data: { pet: best } } : { label: t.steal(nameOf(best)), x: best.x, y: best.y - 6, limit: 22, priority: 1.5, data: { steal: best } }; }
+      const lk = ctx.target && ctx.target.npc(), lkOk = lk && !lk.hurtSit && (ctx.villagers.alive().includes(lk) || (lk.chief && armed)) && Math.hypot(lk.x - p.x, lk.y - p.y) < 22 && armed;   /* (chỉ khi cầm vũ khí: hóa đá bằng E; tay không + khóa = nói chuyện) 2026-10-11: đã khóa dân (target.js) → làm ĐÚNG người đó */
+      if (lkOk) best = lk;
+      const pr = lkOk ? 4.2 : 1.5;
+      if (best) { const h = ST.hits.get(best) || 0; return armed ? { label: (vi(ctx) ? 'Đánh ' : 'Hit ') + nameOf(best), x: best.x, y: best.y - 6, limit: 22, priority: pr, isLock: !!lkOk, data: { pet: best } } : { label: t.steal(nameOf(best)), x: best.x, y: best.y - 6, limit: 22, priority: pr, isLock: !!lkOk, data: { steal: best } }; }
     }
     if (armed) {   /* công trình khu gần nhất */
       let best = null, bd = 26; for (const o of ctx.S.map.objects) { if (o.plot === undefined || o.ruined || !['wall', 'corner', 'board', 'light', 'house', 'fountain'].includes(o.piece)) continue; const dd = Math.hypot(o.x * 16 + 8 - p.x, o.y * 16 + 14 - p.y); if (dd < bd) { bd = dd; best = o; } }
@@ -129,9 +145,10 @@ export const xealist = {
       if (h >= MON_HITS) { ST.hits.delete(o); breakMonument(ctx, o); }
       return;
     }
+    if (c.talk && !c.direct && ctx.sparAsk && ctx.S.map && ctx.S.map.sparRing && !(isDark(ctx) && d.quest && d.quest.got >= d.quest.need)) { ctx.sparAsk(() => xealist.interact(ctx, { data: { talk: true, direct: true } }), cand.label); return; }   /* 2026-10-11 spar.js: hỏi 'nói chuyện hay gọi bạn tập' (báo cáo nhiệm vụ thì vào thẳng) */
     if (c.talk) {
       if (isDark(ctx) && d.revealed) { const n = Object.keys(d.broken).filter(k => /^m[1-9]$/.test(k)).length; dialog(ctx, n >= 9 ? [t.endBody(n, d.pts).replace(/<br>/g, ' ')] : t.revealSay.slice(1)); return; }
-      if (!isDark(ctx)) { dialog(ctx, [vi(ctx) ? 'Cậu đã chọn Noxx rồi. Tiếc thật.' : 'You chose Noxx. A pity.']); return; }
+      if (!isDark(ctx)) { dialog(ctx, vi(ctx) ? ['Cậu đã chọn Noxx rồi. Tiếc thật.', 'Nhưng sàn đấu này không phân phe. Ai muốn mạnh lên đều được bước lên cát.'] : ['You chose Noxx. A pity.', 'But this ring takes no sides. Anyone who wants to get stronger can step onto the sand.']); return; }
       if (d.quest && d.quest.got >= d.quest.need) {
         const k = 30 + 15 * lvOf(ctx); d.pts += 20; d.done++; d.quest = null; ctx.persist();
         dialog(ctx, t.paid(k, d.pts), () => { ctx.give('stone', k, ST.npc.x, ST.npc.y + 10); if (ctx.vfx) ctx.vfx('petrify', p.x, p.y + 4, 0, true); });
@@ -148,10 +165,13 @@ export const xealist = {
       if (ctx.damage(o, 1)) { progress(ctx, 'wreck'); if (ctx.vfx) ctx.vfx('dirt_puff', o.x * 16 + 8, o.y * 16 + 12); ctx.quake && ctx.quake(0.2); }
       witness(ctx, null);
     } else if (c.pet) {
-      const n = c.pet, h = (ST.hits.get(n) || 0) + 1; ST.hits.set(n, h);
+      /* 2026-10-11 anh: kiếm đánh dân mà dân hóa đá là vô lý → kiếm chỉ GÂY THƯƠNG TÍCH (mất máu, kêu cứu, bỏ chạy; còn 1 máu thì ngồi bệt tới sáng). Hóa đá chỉ bằng Súng Hóa Đá. */
+      const n = c.pet, hv = ctx.hero && ctx.hero.lv, lv = (typeof hv === 'function' ? hv() : hv) || 1, dmg = 6 + 2 * lv;
       if (p.hasAct && p.hasAct('attack')) p.act('attack', 0.3); ctx.sfx('sword_hit');
-      if (ctx.vfx) ctx.vfx('slash_t2', n.x, n.y - 2); n.flash = 0.2; n.goal = null; n.path = null; n.busy = true; n.stunT = 1.5;   /* trúng đòn → choáng, đứng yên */ ctx.bubble && ctx.bubble(n, vi(ctx) ? 'Dừng lại!' : 'Stop!', 1.5);
-      if (h >= 3) { ST.hits.delete(n); if (ctx.villagers.petrify(n)) progress(ctx, 'petrify'); }
+      if (ctx.vfx) ctx.vfx('slash_t2', n.x, n.y - 2); n.flash = 0.2; n.path = null; n.stunT = 0;
+      n.hpMax ||= 30; if (n.hp == null) n.hp = n.hpMax;
+      ctx.villagers.hurt(n, Math.max(0, Math.min(dmg, n.hp - 1)), p);   /* không bao giờ về 0 → không thành đá */
+      if (n.hp <= 1) { n.hp = 1; n.goal = null; n.busy = true; n.hurtSit = true; if (!n.hurtToast) { n.hurtToast = true; ctx.toast(vi(ctx) ? `${nameOf(n)} bị thương, ngồi nghỉ tới sáng` : `${nameOf(n)} is hurt and rests until morning`); } }
       witness(ctx, n);
     } else if (c.steal) {
       const n = c.steal; if (n.stolen) { ctx.toast(vi(ctx) ? 'Người này hết đá rồi' : 'Nothing left on them'); return; }

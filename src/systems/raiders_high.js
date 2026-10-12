@@ -7,7 +7,7 @@
 //                               Repel: the Leaders' ritual drum (6 beats in rhythm) or Rocky (5).
 // One raid at a time, 25 s of warning first, damage capped at 40% of a district.
 import { mkCanvas, HOOK } from '../gfx.js';
-import { faceOfV, dirFrame } from './animals.js';
+import { faceOfV, dirFrame, hasFish as fishAny, takeFish } from './animals.js';
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -446,17 +446,8 @@ function throwStone(ctx) {
     damageRaider(ctx, 1);
   }, 260);
 }
-function giveFish(ctx) {
-  const s = ctx.S.save.sys && ctx.S.save.sys.animals, c = s && Array.isArray(s.carry) ? s.carry : null;
-  if (!c) return false;
-  const i = c.findIndex(it => (typeof it === 'string' ? it === 'fish' : it && it.kind === 'fish'));
-  if (i < 0) return false;
-  c.splice(i, 1);
-  const inv = (ctx.S.save.inv = ctx.S.save.inv || {});        // keep the HUD mirror honest
-  for (const k of ['cow', 'chicken', 'bird', 'fish']) inv[k] = 0;
-  for (const it of c) { const k = typeof it === 'string' ? it : (it && it.kind); if (k in inv) inv[k]++; }
-  ctx.persist();
-  return true;
+function giveFish(ctx) {   /* 2026-10-11 bỏ xô: cá trên tay hoặc trong túi (animals.takeFish lo cả gương HUD) */
+  return !!takeFish(ctx);
 }
 // ---- the Leaders' ritual drum
 function openRitual(ctx) {
@@ -764,7 +755,4 @@ export const raidersHigh = {
   }
 };
 
-function hasFish(ctx) {
-  const s = ctx.S.save.sys && ctx.S.save.sys.animals, c = s && Array.isArray(s.carry) ? s.carry : null;
-  return !!c && c.some(it => (typeof it === 'string' ? it === 'fish' : it && it.kind === 'fish'));
-}
+function hasFish(ctx) { return fishAny(ctx); }   /* cá trên tay hoặc trong túi (bỏ xô 2026-10-11) */

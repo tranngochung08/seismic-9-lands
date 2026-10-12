@@ -5,6 +5,7 @@ import { HOOK } from '../gfx.js';
 import { WATER } from '../anim.js';
 import { getCarry, removeCarry, catOf } from './animals.js';
 import * as UI from '../ui.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 const STR = {
   en: { wade: 'Wading', swim: 'Swimming', stam: 'Stamina', tired: 'You are exhausted… you float like driftwood', boat: n => `A boat is coming — ${n} spotted you!`,
@@ -30,7 +31,7 @@ function nearLand(ctx, tx, ty, r = 2) {
   return false;
 }
 function depthAt(ctx, x, y) {   /* 'none' | 'wade' | 'swim' */
-  const tx = tileOf(x), ty = tileOf(y), g0 = ctx.getG(ctx.S.map, tx, ty);
+  const tx = tileOf(x), ty = tileOf(y - 4), g0 = ctx.getG(ctx.S.map, tx, ty);   /* 2026-10-11 anh: đứng trên bờ (chân chạm mép ô nước) đã bị vẽ như đang lội → xét điểm cao hơn chân 4 px: phải bước hẳn vào nước mới lội */
   if (isDeep(ctx, g0)) return 'swim';
   if (isShallow(ctx, g0) || g0 === ctx.T.REEF) return nearLand(ctx, tx, ty) ? 'wade' : 'swim';
   return 'none';
@@ -43,7 +44,7 @@ function drawInWater(g, ent, depth) {   // depth: 6 (lội) | 11 (bơi) hàng px
   const x = Math.round(ent.x), y = Math.round(ent.y), t = performance.now() / 1000, bob = depth > 8 ? Math.round(Math.sin(t * 3) * 1) : 0;
   const h = 20 - depth;
   g.fillStyle = 'rgba(20,80,120,.28)'; g.beginPath(); g.ellipse(x, y - 18 + h + bob + 1, 9, 3.5, 0, 0, Math.PI * 2); g.fill();   /* bóng ngay dưới mép nước */
-  g.drawImage(ent.sheet, ent.frame * 16, ent.dir * 20, 16, h, x - 8, y - 18 + bob, 16, h);
+  drawBody(g, ent, ent.frame * 16, ent.dir * 20, h, x - 8, y - 18 + bob);
   g.fillStyle = 'rgba(230,246,255,.8)';
   for (let i = -7; i <= 7; i += 3) { const w = Math.sin(t * 4 + i) * 1; g.fillRect(x + i, y - 18 + h + bob + Math.round(w), 2, 1); }   // mép nước lượn
   if (depth > 8 && ent.moving) { const k = Math.floor(t * 8) % 2; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(x - 10 + k * 2, y - 12 + bob, 3, 1); g.fillRect(x + 8 - k * 2, y - 11 + bob, 3, 1); }   // tay quạt nước
@@ -51,7 +52,7 @@ function drawInWater(g, ent, depth) {   // depth: 6 (lội) | 11 (bơi) hàng px
 function drawDrowned(g, ent) {   // nổi ngửa: sheet hướng nam, xoay 90°, nhấp nhô
   const x = Math.round(ent.x), y = Math.round(ent.y), t = performance.now() / 1000, bob = Math.sin(t * 2.2) * 1.2;
   g.fillStyle = 'rgba(20,80,120,.3)'; g.beginPath(); g.ellipse(x, y, 14, 4, 0, 0, Math.PI * 2); g.fill();
-  g.save(); g.translate(x, y - 4 + bob); g.rotate(Math.PI / 2 + Math.sin(t * 1.3) * 0.08); g.globalAlpha = 0.92; g.drawImage(ent.sheet, 0, 0, 16, 20, -8, -10, 16, 20); g.restore();
+  g.save(); g.translate(x, y - 4 + bob); g.rotate(Math.PI / 2 + Math.sin(t * 1.3) * 0.08); g.globalAlpha = 0.92; drawBody(g, ent, 0, 0, 20, -8, -10); g.restore();
   g.fillStyle = 'rgba(230,246,255,.8)'; for (let i = -12; i <= 12; i += 4) g.fillRect(x + i, y - 3 + Math.round(Math.sin(t * 3 + i) * 1), 2, 1);
 }
 /* người chơi được đi vào ô DEEP (bơi) — chỉ đặt p.passable khi không module nào khác đang giữ */
@@ -190,6 +191,6 @@ function drawBoat(g, ctx, r, cx, cy) {
   const img = HOOK.images[r.dir < 0 ? 'boat_1_0' : 'boat_2_0'] || null, x = Math.round(r.x) - cx, y = Math.round(r.y) - cy, t = performance.now() / 1000, bob = Math.round(Math.sin(t * 2) * 1);
   g.fillStyle = 'rgba(20,60,110,.3)'; g.beginPath(); g.ellipse(x, y + 4, 16, 5, 0, 0, Math.PI * 2); g.fill();
   if (img) g.drawImage(img, x - 16, y - 12 + bob); else { g.fillStyle = '#7a4a22'; g.fillRect(x - 14, y - 6 + bob, 28, 10); }
-  const n = r.n; if (n && n.sheet) g.drawImage(n.sheet, 0, (r.dir < 0 ? 1 : 2) * 20, 16, 20, x - 8 - r.dir * 2, y - 26 + bob, 16, 20);
+  const n = r.n; if (n && n.sheet) drawBody(g, n, 0, (r.dir < 0 ? 1 : 2) * 20, 20, x - 8 - r.dir * 2, y - 26 + bob);
   if (r.phase !== 'come') { g.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 3; i++) g.fillRect(x - 12 + i * 10 + Math.round(Math.sin(t * 5 + i) * 2), y + 2 + bob, 3, 1); }
 }

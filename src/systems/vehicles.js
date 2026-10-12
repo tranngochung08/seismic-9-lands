@@ -1,4 +1,5 @@
 import { HOOK } from '../gfx.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 // vehicles.js — rideable vehicles, one family per land, plus the crafted upgrades.
 //   boat    (m1)          — only floats on WATER, 1.5× (3.0× with a sail)
 //   raft    (any land with water, needs `raft`) — 0.9×, carries everything the boat does
@@ -348,7 +349,7 @@ function drawBoat(g, ent) {
   // rower: head + torso only, sitting on the bench — clip chèo PixelLab nếu có (khung theo thời gian khi đang đi)
   const pad = false && !sail && ent.sheet.actions && ent.sheet.actions.paddle;   /* 2026-10-10: ảnh thuyền PixelLab đã có 2 mái chèo → không dùng clip cầm chèo (bị 2 mái chèo) */
   if (pad) { const s0 = Math.max(0, pad.n - 4), pf = ent.moving ? s0 + Math.floor(st.t * 7) % (pad.n - s0) : s0, ch = pad.ch || 20, cw = pad.cw || 16, ex = ch - 20; g.drawImage(pad.img, pf * cw, d * ch, cw, 13 + ex, x - (cw >> 1), y - 22 + bob - ex, cw, 13 + ex); }
-  else g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 13, x - 8, y - 22 + bob, 16, 13);
+  else drawBody(g, ent, (ent.frame || 0) * 16, d * 20, 13, x - 8, y - 22 + bob);
   px(g, x - 5, y - 10 + bob, C.out, 10, 2); px(g, x - 4, y - 9 + bob, C.woodD, 8, 1);   // bench in front of the rower
   if (sail && d !== 3) g.drawImage(SAIL[d][Math.floor(st.t * 3) & 1], x - 15, y - 44 + bob);
 }
@@ -358,7 +359,7 @@ function drawRaft(g, ent) {
   const sw = ent.moving ? Math.round(Math.sin(st.t * 6) * 2) : 0;
   g.fillStyle = 'rgba(20,60,110,.28)'; g.beginPath(); g.ellipse(x, y + 3, 16, 5, 0, 0, 7); g.fill();
   g.drawImage(RAFT, x - 16, y - 13 + bob);
-  g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 20, x - 8, y - 26 + bob, 16, 20);
+  drawBody(g, ent, (ent.frame || 0) * 16, d * 20, 20, x - 8, y - 26 + bob);
   ln(g, x + 7, y - 20 + bob, x + 12 + sw, y - 2 + bob, C.out, 2);            // punt pole
   ln(g, x + 7, y - 20 + bob, x + 12 + sw, y - 2 + bob, C.woodL, 1);
 }
@@ -367,7 +368,7 @@ function drawSkier(g, ent) {
   g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, Math.round(ent.y), st.jump ? 7 : 10, 3, 0, 0, 7); g.fill();
   if (side) { px(g, x - 11, y - 4, C.out, 22, 2); px(g, x - 11, y - 4, C.ski, 21, 1); px(g, x - 9, y - 1, C.out, 22, 2); px(g, x - 9, y - 1, C.skiD, 21, 1); }
   else for (const [sx, col] of [[-6, C.ski], [4, C.skiD]]) { px(g, x + sx, y - 9, C.out, 2, 15); px(g, x + sx, y - 8, col, 2, 13); px(g, x + sx, d === 3 ? y - 9 : y + 4, C.pole, 2, 1); }
-  g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 20, x - 8, y - 18, 16, 20);
+  drawBody(g, ent, (ent.frame || 0) * 16, d * 20, 20, x - 8, y - 18);
   const sw = ent.moving ? Math.round(Math.sin(st.t * 11) * 2) : 0;
   ln(g, x - 8, y - 12, x - 11, y - 1 + sw, C.out, 2); ln(g, x - 8, y - 12, x - 11, y - 1 + sw, C.pole, 1);
   ln(g, x + 8, y - 12, x + 11, y - 1 - sw, C.out, 2); ln(g, x + 8, y - 12, x + 11, y - 1 - sw, C.pole, 1);
@@ -380,18 +381,18 @@ function drawJeep(g, ent) {
   g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x, y, 12, 4, 0, 0, 7); g.fill();
   const oy = y - 14 - jolt;
   // sides/back: head + shoulders behind the body; front view: the head shows over the windshield
-  if (d !== 0) g.drawImage(ent.sheet, 0, d * 20, 16, 10, x - 8, oy - 4, 16, 10);
+  if (d !== 0) drawBody(g, ent, 0, d * 20, 10, x - 8, oy - 4);
   g.drawImage(sheets[d][f], x - 12, oy);
-  if (d === 0) g.drawImage(ent.sheet, 0, 0, 16, 10, x - 8, oy - 4, 16, 10);
+  if (d === 0) drawBody(g, ent, 0, 0, 10, x - 8, oy - 4);
 }
 function drawCart(g, ent) {
   const x = Math.round(ent.x), y = Math.round(ent.y), d = ent.dir & 3;
   const f = Math.floor(st.t * 16) & 1;
   g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x, y, 11, 4, 0, 0, 7); g.fill();
   const oy = y - 15;
-  if (d !== 0) g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 12, x - 8, oy - 6, 16, 12);
+  if (d !== 0) drawBody(g, ent, (ent.frame || 0) * 16, d * 20, 12, x - 8, oy - 6);
   g.drawImage(CART[d][f], x - 12, oy);
-  if (d === 0) g.drawImage(ent.sheet, (ent.frame || 0) * 16, 0, 16, 12, x - 8, oy - 8, 16, 12);
+  if (d === 0) drawBody(g, ent, (ent.frame || 0) * 16, 0, 12, x - 8, oy - 8);
 }
 function drawBalloonFly(g, ent) {
   const x = Math.round(ent.x), y = Math.round(ent.y), alt = st.fly ? Math.round(st.fly.alt) : FLY_ALT;
@@ -399,7 +400,7 @@ function drawBalloonFly(g, ent) {
   g.fillStyle = `rgba(0,0,0,${(0.3 * k).toFixed(3)})`; g.beginPath(); g.ellipse(x, y, 9 * k + 3, 4 * k + 1, 0, 0, 7); g.fill();
   const sway = Math.round(Math.sin(st.t * 1.5) * (alt > 6 ? 1 : 0));
   const top = y - alt - 48;
-  g.drawImage(ent.sheet, (ent.frame || 0) * 16, (ent.dir & 3) * 20, 16, 11, x - 8 + sway, top + 24, 16, 11);
+  drawBody(g, ent, (ent.frame || 0) * 16, (ent.dir & 3) * 20, 11, x - 8 + sway, top + 24);
   g.drawImage(BALLOON, x - 16 + sway, top);
   if ((Math.floor(st.t * 10) & 1) === 0) { px(g, x - 2 + sway, top + 29, '#ffd45e', 4, 3); px(g, x - 1 + sway, top + 28, '#ff8c1a', 2, 2); }
 }

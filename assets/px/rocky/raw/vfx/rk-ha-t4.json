@@ -1,0 +1,209 @@
+{
+ "frames": [
+  {
+   "filename": "rk-ha-t4 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 264,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.015151515151515152,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-ha-t4 1.png",
+   "frame": {
+    "x": 264,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 264,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.015151515151515152,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-ha-t4 2.png",
+   "frame": {
+    "x": 528,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 264,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.015151515151515152,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-ha-t4 3.png",
+   "frame": {
+    "x": 0,
+    "y": 40,
+    "w": 264,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 264,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.015151515151515152,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-ha-t4 4.png",
+   "frame": {
+    "x": 264,
+    "y": 40,
+    "w": 264,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 264,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.015151515151515152,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-ha-t4 5.png",
+   "frame": {
+    "x": 528,
+    "y": 40,
+    "w": 264,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 264,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.015151515151515152,
+    "y": 0.5
+   },
+   "duration": 71
+  },
+  {
+   "filename": "rk-ha-t4 6.png",
+   "frame": {
+    "x": 0,
+    "y": 80,
+    "w": 264,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 264,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 264,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.015151515151515152,
+    "y": 0.5
+   },
+   "duration": 71
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "rk-ha-t4.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 792,
+   "h": 120
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 4,
+   "y": 20
+  },
+  "frameTags": [
+   {
+    "name": "rk-ha-t4",
+    "from": 0,
+    "to": 6,
+    "direction": "forward"
+   }
+  ]
+ }
+}

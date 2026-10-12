@@ -9,26 +9,27 @@ import * as UI from './ui.js';
 import { questRows } from './systems/quests.js';
 import { bagPrice, sellFromBag } from './systems/market.js';
 import * as HB from './hotbar.js';   /* plan-20: đưa món lên hotbar */
-import { pxText } from './hud.js';   /* plan-22: emoji → icon pixel */
-import * as AUDIO from './audio.js';   /* 2026-10-10: 2 thanh âm lượng nhạc / hiệu ứng */
+import { pxText, keyHint, isTouchUI } from './hud.js';   /* plan-22: emoji → icon pixel */
+import * as AUDIO from './audio.js';
+import * as RLV from './systems/petlv.js';   /* plan-27: thẻ Rocky (cấp, chỉ số, chiêu) */   /* 2026-10-10: 2 thanh âm lượng nhạc / hiệu ứng */
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ROMAN = ['', 'I', 'II', 'III'];
-const TABS = ['bag', 'shop', 'hero', 'quest', 'gear'];   /* 2026-10-10 anh yêu cầu: 'Mua nhanh' công cụ bằng đá Seismic, không qua NPC (phím O) */
+const TABS = ['bag', 'shop', 'hero', 'rocky', 'quest', 'gear'];   /* plan-27: thẻ Rocky */   /* 2026-10-10 anh yêu cầu: 'Mua nhanh' công cụ bằng đá Seismic, không qua NPC (phím O) */
 const STR = {
   en: {
-    tabs: { bag: 'Bag', shop: 'Quick buy', hero: 'Character', quest: 'Quests', gear: 'Settings' }, foot: 'Esc · close   ·   ← → or 1-5 · tabs   ·   B bag · O quick buy · Q quests',
+    tabs: { bag: 'Bag', shop: 'Quick buy', hero: 'Character', rocky: 'Rocky', quest: 'Quests', gear: 'Settings' }, foot: 'Esc · close   ·   ← → or 1-6 · tabs   ·   B bag · O quick buy · Q quests', footTouch: 'Esc · close   ·   tap a tab to switch',
     shopHint: 'Buy tools and supplies instantly with Seismic stones — no need to find a trader. Bought goods drop at your feet.', tier: 'tier', buyT: (n, p) => `Tier ${n} · ${p} 🪨`, maxT: 'Max tier', buyN: (n, p) => `×${n} · ${p} 🪨`, poor: 'Not enough Seismic stones', boughtT: (n, k) => `${n} tier ${k} — ready on your hotbar`, supplies: 'Supplies', tools: 'Tools',
     equip: 'Equipment', progress: 'Progress', tool: 'Tool tier', currency: 'Currency — gift it to villagers so they can fight', food: 'Food — right-click / E to eat', seedK: 'Seed — plant on tilled soil', dragHint: 'Drag to rearrange · top row = hotbar', trash: 'Drop here to throw away', sort: 'Sort', noTrash: "That can't be thrown away.", trashAsk: (n, k) => `Throw away ${n}${k > 1 ? ' (×' + k + ')' : ''}?`, trash1: 'Throw 1', trashAll: 'Throw all', shards: 'Tremor shards', met: 'Artists met', items: 'Items', load: 'Bag load', empty: 'Nothing in the bag yet — chop, mine, gather.', tipHint: 'Hover or tap a slot to read about it.',
     locked: 'Not crafted yet', weight: 'weight', count: 'count', sell: 'Sell at the village trader', sell1: 'Sell 1', sellAll: 'Sell all', toBar: k => `To slot ${k}`, onBar: (n, k) => `${n} → hotbar slot ${k}`, eat: 'Eat', ate: n => `Yum, ${n}! You feel lively — walking faster for 30 s`, sellHere: 'sell right from the bag', material: 'Crafting / building material', story: 'Story item',
     fl: { raft: 'Raft', sail: 'Sail', wax: 'Ski wax', tires: 'Obsidian tires', cape: 'Rocky cape', armor: 'Rocky armour', coat: 'Warm coat', lamps: 'Crystal lamps', charged: 'Rocky charges' },
-    stats: { str: 'Strength', agi: 'Agility', def: 'Defense', cap: 'Capacity', skill: 'Skill', rep: 'Reputation' },
-    statHint: { str: 'Axe & pickaxe tiers', agi: 'Walk · ski wax · obsidian tires · sail · saddle', def: 'Rocky armour · warm coat · iron bucket', cap: 'Bag · bucket · cage · cart', skill: 'Fishing rod · crystal lamps · Rocky charges', rep: 'Artists met · badges · Rockies woken' },
+    stats: { str: 'Strength', agi: 'Agility', def: 'Defense', skill: 'Skill', rep: 'Reputation' },
+    statHint: { str: 'Axe & pickaxe tiers', agi: 'Walk · ski wax · obsidian tires · sail · tamed horse', def: 'Rocky armour · warm coat', skill: 'Fishing rod · crystal lamps · Rocky charges', rep: 'Artists met · badges · Rockies woken' },
     next: 'Next: ', up: 'up since last time', down: 'down since last time', same: '',
     nextStr: { 1: 'Axe I at the workbench (5 wood) · Pickaxe I (6 wood + 2 rock)', 2: 'Axe/Pickaxe II at the furnace M4/M5 (3 iron + 2 wood)', 3: 'Axe/Pickaxe III at the forge M7/M8 (4 obsidian + 2 iron)' },
-    nextAgi: 'Ski wax (M8 workbench: 2 wax) · Obsidian tires (forge) · Sail (loom: 6 wool + 2 rope) · Saddle (workbench)',
-    nextDef: 'Rocky armour (forge: worm hide + 4 obsidian) · Warm coat (loom: yeti fur + 4 wool) · Iron bucket (furnace: 2 iron)',
-    nextCap: 'Bucket / Cage / Cart at the workbench, upgrade at the furnace and forge', nextSkill: 'Rod II (furnace) · Rod III (altar M9) · Crystal lamp (altar: 2 crystal + 1 glass) · Rocky charge (altar: 3 crystal)',
+    nextAgi: 'Ski wax (M8 workbench: 2 wax) · Obsidian tires (forge) · Sail (loom: 6 wool + 2 rope) · Tame a horse (M2: feed it 3 hay)',
+    nextDef: 'Rocky armour (forge: worm hide + 4 obsidian) · Warm coat (loom: yeti fur + 4 wool)',
+    nextSkill: 'Rod II (furnace) · Rod III (altar M9) · Crystal lamp (altar: 2 crystal + 1 glass) · Rocky charge (altar: 3 crystal)',
     nextRep: 'Meet artists in each land (E to talk) · finish land quests for badges · wake Rockies',
     main: 'Main story', side: 'Requests', none: 'No requests taken — look for a yellow ! above an artist.', reward: 'reward', here: 'here',
     qSea: 'Sea of Origins', qSeaText: 'Drift on the plank, meet Lyron, paddle the raft to the harbour.',
@@ -38,18 +39,18 @@ const STR = {
     resume: 'Resume', lang: 'Tiếng Việt', musicVol: 'Music', sfxVol: 'Sound effects', music: 'Music', fs: 'Fullscreen', quit: 'Save & quit to title', on: 'on', off: 'off'
   },
   vi: {
-    tabs: { bag: 'Túi đồ', shop: 'Mua nhanh', hero: 'Nhân vật', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-5 · đổi thẻ   ·   B túi · O mua nhanh · Q nhiệm vụ',
+    tabs: { bag: 'Túi đồ', shop: 'Mua nhanh', hero: 'Nhân vật', rocky: 'Rocky', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-6 · đổi thẻ   ·   B túi · O mua nhanh · Q nhiệm vụ', footTouch: 'Esc · đóng   ·   chạm thẻ để đổi',
     shopHint: 'Mua công cụ và vật tư ngay bằng đá Seismic — không cần tìm thương nhân. Đồ mua rơi ngay dưới chân.', tier: 'cấp', buyT: (n, p) => `Cấp ${n} · ${p} 🪨`, maxT: 'Cấp tối đa', buyN: (n, p) => `×${n} · ${p} 🪨`, poor: 'Không đủ đá Seismic', boughtT: (n, k) => `${n} cấp ${k} — đã lên thanh công cụ`, supplies: 'Vật tư', tools: 'Công cụ',
     equip: 'Trang bị', progress: 'Tiến độ', tool: 'Dụng cụ cấp', currency: 'Tiền — tặng dân làng để họ biết chiến đấu', food: 'Đồ ăn — chuột phải / E để ăn', seedK: 'Hạt giống — gieo trên đất đã cày', dragHint: 'Kéo để xếp · hàng trên = thanh công cụ', trash: 'Thả vào đây để vứt', sort: 'Xếp gọn', noTrash: 'Món này không vứt được.', trashAsk: (n, k) => `Vứt ${n}${k > 1 ? ' (×' + k + ')' : ''}?`, trash1: 'Vứt 1', trashAll: 'Vứt hết', shards: 'Mảnh địa chấn', met: 'Nghệ sĩ đã gặp', items: 'Vật phẩm', load: 'Tải túi', empty: 'Túi chưa có gì — chặt cây, đập đá, nhặt đồ đi.', tipHint: 'Rê chuột hoặc chạm ô để xem mô tả.',
     locked: 'Chưa chế', weight: 'nặng', count: 'số lượng', sell: 'Bán ở Thương nhân Làng', sell1: 'Bán 1', sellAll: 'Bán hết', toBar: k => `Lên ô ${k}`, onBar: (n, k) => `${n} → ô ${k} trên thanh`, eat: 'Ăn', ate: n => `Ngon quá, ${n}! Thấy khoẻ khoắn — đi nhanh hơn 30 giây`, sellHere: 'bán ngay tại túi', material: 'Nguyên liệu chế tạo / xây dựng', story: 'Vật phẩm cốt truyện',
     fl: { raft: 'Bè', sail: 'Buồm', wax: 'Sáp trượt', tires: 'Lốp obsidian', cape: 'Áo choàng Rocky', armor: 'Giáp Rocky', coat: 'Áo ấm', lamps: 'Đèn tinh thể', charged: 'Pin Rocky' },
-    stats: { str: 'Sức mạnh', agi: 'Nhanh nhẹn', def: 'Phòng thủ', cap: 'Sức chứa', skill: 'Kỹ năng', rep: 'Uy tín' },
-    statHint: { str: 'Cấp rìu và cuốc', agi: 'Đi bộ · sáp trượt · lốp obsidian · buồm · yên ngựa', def: 'Giáp Rocky · áo ấm · xô sắt', cap: 'Túi · xô · lồng · xe chở', skill: 'Cần câu · đèn tinh thể · pin Rocky', rep: 'Nghệ sĩ đã gặp · huy hiệu · Rocky đã thức' },
+    stats: { str: 'Sức mạnh', agi: 'Nhanh nhẹn', def: 'Phòng thủ', skill: 'Kỹ năng', rep: 'Uy tín' },
+    statHint: { str: 'Cấp rìu và cuốc', agi: 'Đi bộ · sáp trượt · lốp obsidian · buồm · ngựa đã thuần', def: 'Giáp Rocky · áo ấm', skill: 'Cần câu · đèn tinh thể · pin Rocky', rep: 'Nghệ sĩ đã gặp · huy hiệu · Rocky đã thức' },
     next: 'Tăng tiếp: ', up: 'tăng so với lần trước', down: 'giảm so với lần trước', same: '',
     nextStr: { 1: 'Rìu I ở Bàn mộc (5 gỗ) · Cuốc I (6 gỗ + 2 đá)', 2: 'Rìu/Cuốc II ở Lò nung M4/M5 (3 sắt + 2 gỗ)', 3: 'Rìu/Cuốc III ở Lò rèn M7/M8 (4 obsidian + 2 sắt)' },
-    nextAgi: 'Sáp trượt (Bàn mộc M8: 2 sáp) · Lốp obsidian (Lò rèn) · Buồm (Khung dệt: 6 len + 2 dây) · Yên ngựa (Bàn mộc)',
-    nextDef: 'Giáp Rocky (Lò rèn: da sâu + 4 obsidian) · Áo ấm (Khung dệt: lông yeti + 4 len) · Xô sắt (Lò nung: 2 sắt)',
-    nextCap: 'Xô / Lồng / Xe chở ở Bàn mộc, nâng cấp ở Lò nung và Lò rèn', nextSkill: 'Cần câu II (Lò nung) · Cần câu III (Bàn thờ M9) · Đèn tinh thể (Bàn thờ: 2 tinh thể + 1 kính) · Pin Rocky (Bàn thờ: 3 tinh thể)',
+    nextAgi: 'Sáp trượt (Bàn mộc M8: 2 sáp) · Lốp obsidian (Lò rèn) · Buồm (Khung dệt: 6 len + 2 dây) · Thuần ngựa (M2: cho ăn 3 rơm)',
+    nextDef: 'Giáp Rocky (Lò rèn: da sâu + 4 obsidian) · Áo ấm (Khung dệt: lông yeti + 4 len)',
+    nextSkill: 'Cần câu II (Lò nung) · Cần câu III (Bàn thờ M9) · Đèn tinh thể (Bàn thờ: 2 tinh thể + 1 kính) · Pin Rocky (Bàn thờ: 3 tinh thể)',
     nextRep: 'Gặp nghệ sĩ ở từng vùng (bấm E nói chuyện) · xong nhiệm vụ vùng để lấy huy hiệu · đánh thức Rocky',
     main: 'Cốt truyện chính', side: 'Lời nhờ riêng', none: 'Chưa nhận việc nào — tìm dấu ! vàng trên đầu nghệ sĩ.', reward: 'thưởng', here: 'ở đây',
     qSea: 'Biển Khởi Nguồn', qSeaText: 'Trôi trên ván, gặp Lyron, chèo bè về bến cảng.',
@@ -68,7 +69,7 @@ const img = (path, cls = 'pxi') => `<img class="${cls}" src="assets/px/${path}" 
 function icon(id) { const u = ui(), p = u && u.items && u.items[id], d = ITEMS[id] || TOOLS[id]; return p ? img(p) : `<span class="emo">${d ? d.icon : '▪'}</span>`; }
 function stIcon(k, fb) { const u = ui(), p = u && u.status && u.status[k]; return p ? img(p, 'pxi st ' + k) : `<span class="emo st">${fb}</span>`; }
 function tabIcon(k, fb) { const u = ui(), p = u && u.tabs && (u.tabs[k] || (k === 'shop' && u.items && u.items.stone)); return p ? img(p, 'pxi st') : `<span class="emo st">${fb}</span>`; }
-const TAB_FB = { bag: '🎒', shop: '🪨', hero: '☺', quest: '📜', gear: '⚙' };
+const TAB_FB = { bag: '🎒', shop: '🪨', hero: '☺', rocky: '🗿', quest: '📜', gear: '⚙' };
 
 export function initMenu(d) {
   deps = d; el = document.createElement('div'); el.id = 'menu'; el.className = 'ov'; el.hidden = true; document.body.appendChild(el);
@@ -89,6 +90,8 @@ export function initMenu(d) {
     const a = e.target.closest('[data-act]'); if (a) { e.preventDefault(); act(a.dataset.act); }
     const b = e.target.closest('[data-sell]'); if (b) { e.preventDefault(); doSell(b.dataset.sell, b.dataset.w); }
     const f = e.target.closest('[data-eat]'); if (f) { e.preventDefault(); doEat(f.dataset.eat); }
+    const dg = e.target.closest('[data-dragon]'); if (dg) { e.preventDefault(); closeMenu(); if (deps.CTX.dragon) deps.CTX.dragon.summon(); return; }   /* plan-29 */
+    const lk = e.target.closest('[data-look]'); if (lk) { e.preventDefault(); if (deps.CTX.dragon) deps.CTX.dragon.wear(lk.dataset.look === 'chad'); render(); return; }   /* plan-29: thẻ Ngoại hình */
     const h = e.target.closest('[data-hb]'); if (h) { e.preventDefault(); HB.setSlot(deps.S.save.hotSel || 0, h.dataset.hb); deps.CTX.toast(L().onBar(deps.CTX.itemName(h.dataset.hb), HB.label(deps.S.save.hotSel || 0))); }
     if (s && s.dataset.id) selId = s.dataset.id;
   });
@@ -102,7 +105,7 @@ function doEat(id) {   /* plan-19: đóng túi để thấy nhân vật ăn (cli
   const C = deps.CTX, p = C.S.player, t = L(); if (!C.bag.has(id, 1)) return;
   C.bag.remove(id, 1); closeMenu();
   if (p.hasAct && p.hasAct('eat') && !p.custom) { p.dir = 0; p.act('eat', 0); }
-  p.fedT = 30; if (C.hero) C.hero.heal(25); C.sfx('eat'); C.toast(t.ate(itemName(id, UI.lang()))); if (C.persist) C.persist();
+  p.fedT = 30; if (C.hero) C.hero.heal(ITEMS[id] && ITEMS[id].heal ? Math.round(C.hero.max * ITEMS[id].heal) : 25);   /* plan-28: viên hồi máu hồi theo % máu tối đa */ C.sfx('eat'); C.toast(t.ate(itemName(id, UI.lang()))); if (C.persist) C.persist();
 }
 function setTip(t) { tip = t || ''; const b = el.querySelector('#mtip'); if (b) b.innerHTML = tip; }
 function act(k) {
@@ -128,7 +131,7 @@ export function menuKey(code) {
   const i = TABS.indexOf(tab);
   if (code === 'ArrowLeft' || code === 'KeyA') { tab = TABS[(i + TABS.length - 1) % TABS.length]; render(); return true; }
   if (code === 'ArrowRight' || code === 'KeyD') { tab = TABS[(i + 1) % TABS.length]; render(); return true; }
-  if (/^Digit[1-5]$/.test(code)) { tab = TABS[+code[5] - 1] || tab; render(); return true; }
+  if (/^Digit[1-6]$/.test(code)) { tab = TABS[+code[5] - 1] || tab; render(); return true; }
   return code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS';   /* nuốt phím di chuyển cho người chơi không đi */
 }
 
@@ -137,10 +140,10 @@ function render(soft) {
   const t = L(), u = ui(), px = !!(u && u.frame);
   const body = el.querySelector('.mbody'), scroll = soft && body ? body.scrollTop : 0;
   const tabs = TABS.map(k => `<div class="mtab ${k === tab ? 'on' : ''}" data-tab="${k}">${tabIcon(k, TAB_FB[k])}<span>${t.tabs[k]}</span></div>`).join('');
-  const inner = tab === 'bag' ? bagBody() : tab === 'shop' ? shopBody() : tab === 'hero' ? heroBody() : tab === 'quest' ? questBody() : gearBody();
+  const inner = tab === 'bag' ? bagBody() : tab === 'shop' ? shopBody() : tab === 'hero' ? heroBody() : tab === 'rocky' ? rockyBody() : tab === 'quest' ? questBody() : gearBody();
   const cls = `<button class="px-x m-x" type="button" data-act="resume" aria-label="${esc(t.resume)}"><img src="assets/px/ui/hud/close.png" alt=""></button>`;   /* plan-25 B5: ✕ đóng túi trên điện thoại (CSS ẩn ở desktop) */
   el.innerHTML = `<div class="mframe ${px ? 'px' : ''}"><div class="mtabs">${tabs}${cls}</div><div class="mbody">${inner}</div>` +
-    (tab === 'bag' ? `<div id="mtip" class="mtip">${tip || `<span class="mhint">${t.tipHint}</span>`}</div>` : '') + `<div class="mfoot">${t.foot}</div></div>`;
+    (tab === 'bag' ? `<div id="mtip" class="mtip">${tip || `<span class="mhint">${t.tipHint}</span>`}</div>` : '') + `<div class="mfoot">${isTouchUI() ? keyHint(t.footTouch) : t.foot}</div></div>`;
   if (tab === 'hero') drawAvatar();
   if (soft) { const b = el.querySelector('.mbody'); if (b) b.scrollTop = scroll; }
 }
@@ -162,8 +165,9 @@ function tipOf(id) {
   const pr = !d || id === 'stone' ? null : bagPrice(C, id);
   const eat = d && d.tags.includes('food') ? `<button class="btn" data-eat="${id}">${esc(t.eat)}</button>` : '';
   const sb = pr ? `<button class="btn" data-sell="${id}" data-w="1">${esc(t.sell1)} · +${pr.one} 🪨</button>${pr.n > 1 ? `<button class="btn primary" data-sell="${id}" data-w="all">${esc(t.sellAll)} · +${pr.all} 🪨</button>` : ''}` : '';
-  const btn = eat || sb ? ` <span class="msell">${eat}${sb}</span>` : '';
-  return pxText(`${itemName(id, lg)}${n > 1 ? ' ×' + n : ''} · ${kindText(id)}${pr ? ' · ' + t.sellHere : ''}`) + btn.replace(/🪨/g, img('ui/items/stone.png'));
+  const dr = /^dball\d$/.test(id) && C.dragon && C.dragon.hasAll() ? `<button class="btn primary" data-dragon="1">${esc(C.dragon.label())}</button>` : '';   /* plan-29: đủ 7 Ngọc Rồng → gọi Rồng Thần */
+  const btn = eat || sb || dr ? ` <span class="msell">${dr}${eat}${sb}</span>` : '';
+  return pxText(`${itemName(id, lg)}${n > 1 ? ' ×' + n : ''} · ${d && d.desc ? d.desc[lg] || d.desc.en : kindText(id)}${pr ? ' · ' + t.sellHere : ''}`) + btn.replace(/🪨/g, img('ui/items/stone.png'));
 }
 function invSlot(pos, id, key) {
   const S = deps.S, C = deps.CTX, n = id && !TOOLS[id] ? S.save.inv[id] || 0 : 0, tier = id && TOOLS[id] ? C.tool.tier(id) : 0;
@@ -223,8 +227,8 @@ function moveTT(e) { if (!tt || tt.hidden) return; const w = tt.offsetWidth, x =
 function hideTT() { if (tt) tt.hidden = true; }
 
 // ---------------------------------------------------------------- mua nhanh (phím O)
-const TOOL_MAX = { axe: 3, pickaxe: 3, rod: 3, shovel: 1, scythe: 1, knife: 1, bucket: 3, cage: 3, cart: 3, lasso: 1, trap: 1, saddle: 1, torch: 1, sword: 6 };
-const TOOL_BASE = { axe: 20, pickaxe: 25, rod: 20, shovel: 15, scythe: 15, knife: 15, bucket: 15, cage: 30, cart: 40, lasso: 25, trap: 20, saddle: 50, torch: 10, sword: 30 };
+const TOOL_MAX = { axe: 3, pickaxe: 3, rod: 3, shovel: 1, scythe: 1, knife: 1, torch: 1, sword: 6 };   /* bỏ xe chở, thòng lọng, bẫy, yên 2026-10-11 */
+const TOOL_BASE = { axe: 20, pickaxe: 25, rod: 20, shovel: 15, scythe: 15, knife: 15, torch: 10, sword: 30 };
 const toolPrice = (id, tier) => (id === 'sword' ? 30 * tier * tier : TOOL_BASE[id] * [1, 3, 8][tier - 1]);
 const SUPPLY = [['pen1', 15, 1], ['pen2', 40, 1], ['scarecrow', 10, 1], ['hay', 1, 5], ['revive', 30, 1], ['stone_seed', 0, 0]];   /* [id, giá, số lượng]; hạt giống thêm theo mùa */
 function supplyList() {
@@ -266,13 +270,14 @@ function statsOf() {
   const here = S.zone && S.zone.lv != null ? membersOfLevel(S.zone.lv) : [], metSet = new Set(S.save.met || []), hereMet = here.filter(m => metSet.has(m.id)).length;   /* Uy tín: đã gặp ở vùng này / số nghệ sĩ vùng này · tổng đã gặp */
   const met = (S.save.met || []).filter(id => inLands.has(id)).length, badges = (S.save.badges || []).filter(b => b >= 1).length, pilots = cnt('rocky', 'pilots');
   const R = k => ROMAN[tt(k)] || '–', lo = Math.min(tt('axe'), tt('pickaxe'));
+  const horse = !!(((sys.ecology || {}).horse || {}).tamed);   /* 2026-10-11 bỏ yên ngựa: điểm Nhanh nhẹn tính theo ngựa đã thuần (cưỡi không cần yên) */
   return [
     { k: 'str', ic: '⚔', v: tt('axe') + tt('pickaxe'), max: 6, detail: `🪓 ${R('axe')} · ⛏ ${R('pickaxe')}`, next: lo < 3 ? t.nextStr[lo + 1] : '' },
-    { k: 'agi', ic: '🏃', v: 1 + (fl('vehicles', 'wax') ? 1 : 0) + (fl('vehicles', 'tires') ? 1 : 0) + (fl('vehicles', 'sail') ? 1 : 0) + (tt('saddle') ? 1 : 0), max: 5,
-      detail: ['🚶', fl('vehicles', 'wax') ? '🎿' : '', fl('vehicles', 'tires') ? '🛞' : '', fl('vehicles', 'sail') ? '⛵' : '', tt('saddle') ? '🐎' : ''].filter(Boolean).join(' '), next: t.nextAgi },
-    { k: 'def', ic: '🛡', v: (fl('rocky', 'armor') ? 1 : 0) + (fl('ecology', 'coat') ? 1 : 0) + (tt('bucket') >= 2 ? 1 : 0), max: 3,
-      detail: [fl('rocky', 'armor') ? '🛡' : '', fl('ecology', 'coat') ? '🧥' : '', tt('bucket') >= 2 ? '🪣' : ''].filter(Boolean).join(' ') || '–', next: t.nextDef },
-    { k: 'cap', ic: '🎒', v: tt('bucket') + tt('cage') + tt('cart'), max: 9, detail: `🎒 ∞ · 🪣 ${R('bucket')} · 🧺 ${R('cage')} · 🛒 ${R('cart')}`, next: t.nextCap },
+    { k: 'agi', ic: '🏃', v: 1 + (fl('vehicles', 'wax') ? 1 : 0) + (fl('vehicles', 'tires') ? 1 : 0) + (fl('vehicles', 'sail') ? 1 : 0) + (horse ? 1 : 0), max: 5,
+      detail: ['🚶', fl('vehicles', 'wax') ? '🎿' : '', fl('vehicles', 'tires') ? '🛞' : '', fl('vehicles', 'sail') ? '⛵' : '', horse ? '🐎' : ''].filter(Boolean).join(' '), next: t.nextAgi },
+    { k: 'def', ic: '🛡', v: (fl('rocky', 'armor') ? 1 : 0) + (fl('ecology', 'coat') ? 1 : 0), max: 2,
+      detail: [fl('rocky', 'armor') ? '🛡' : '', fl('ecology', 'coat') ? '🧥' : ''].filter(Boolean).join(' ') || '–', next: t.nextDef },
+    /* 2026-10-11 bỏ dòng Sức chứa: túi vô hạn, xe chở đã bỏ */
     { k: 'skill', ic: '🎣', v: tt('rod') + (cnt('crafting', 'lamps') > 0 ? 1 : 0) + (cnt('rocky', 'charged') > 0 ? 1 : 0), max: 5, detail: `🎣 ${R('rod')} · 🏮 ${cnt('crafting', 'lamps')} · ⚡ ${cnt('rocky', 'charged')}`, next: t.nextSkill },
     { k: 'rep', ic: '⭐', v: badges, max: 9, detail: `☺ ${hereMet}/${here.length} · ${UI.lang() === 'vi' ? 'tổng' : 'total'} ${met} · 🏅 ${badges}/9 · 🗿 ${pilots}`, next: t.nextRep },
   ];
@@ -303,8 +308,37 @@ function heroBody() {
   return `<div class="mhero"><canvas class="mav" id="mav" width="64" height="80"></canvas><div><b style="font-size:17px">${name}</b><div class="mhint">${zone}</div>
     <div class="mhint">◆ ${esc(t.shards)} ${S.save.shards || 0} · ${esc(t.met)} ${hereMet}/${here.length} (${UI.lang() === 'vi' ? 'tổng' : 'total'} ${met})</div></div></div>${rows}
     <h3>${UI.lang() === 'vi' ? 'Đất của tôi' : 'My land'}</h3>${landList()}
+    ${C.dragon && C.dragon.lookHTML ? C.dragon.lookHTML() : ''}
     <h3>${t.equip}</h3><div class="mgrid">${eq.join('')}</div><h3>${t.progress}</h3><div class="mgrid">${fl.join('')}</div>
     <div id="mtip" class="mtip"><span class="mhint">${t.tipHint}</span></div>`;
+}
+/* ---------------------------------------------------------------- thẻ Rocky (plan-27) */
+function rockyBody() {
+  const vi = UI.lang() === 'vi', C = deps.CTX, R = C.rocky, pt = R && R.pet();
+  if (!pt) return `<p class="dim" style="padding:8px">${vi ? 'Chưa có Rocky — gặp Lyron trên biển (hoặc ủ trứng tinh thể ở M9).' : 'No Rocky yet — meet Lyron at sea (or warm the crystal egg in M9).'}</p>`;
+  const st = R.stats(), lv = RLV.levelFromXp(pt.xp || 0), u = ui(), port = u && u.port_rocky, pct = lv.need ? Math.round(lv.into / lv.need * 100) : 100;
+  const bondN = ['Rocky con', 'Bạn thân', 'Tri kỷ'], bondE = ['Hatchling', 'Buddy', 'Best friend'], bl = pt.bond >= 15 ? 2 : pt.bond >= 5 ? 1 : 0;
+  const ko = (pt.koT || 0) > 0, sup = (pt.superT || 0) > 0;
+  const cmdTxt = ko ? (vi ? `Đang nghỉ ở ổ (${Math.ceil(pt.koT)} giây)` : `Resting at the nest (${Math.ceil(pt.koT)}s)`) : R.cmdName(pt.cmd);
+  const row = (k, v) => `<div class="mhint" style="display:flex;justify-content:space-between;gap:10px;font-size:15px"><span>${k}</span><b style="color:var(--gold)">${v}</b></div>`;
+  const skills = RLV.SKILL_IDS.map(id => {
+    const S2 = RLV.SKILLS[id], t = RLV.tierOf(pt, id), on = t > 0, ic = u && u.items && u.items['rk_skill_' + id];
+    const desc = id === 'punch' ? (vi ? 'Lao tới đấm liên hoàn. Bậc 4: đòn cuối hất văng · bậc 7: sóng chấn' : 'Dash in, punch combo. Tier 4: launcher finisher · tier 7: shockwave')
+      : id === 'ha' ? (vi ? 'Gồng 0,8 s, bắn luồng sáng thẳng vào mục tiêu, xuyên mọi quái trên đường' : 'Charge 0.8 s, fire a straight beam at the target, piercing every monster in line')
+      : (vi ? `Biến hình ${RLV.superOf(Math.max(1, t)).dur} giây, hồi ${RLV.superOf(Math.max(1, t)).cd} giây` : `Transform for ${RLV.superOf(Math.max(1, t)).dur}s, cooldown ${RLV.superOf(Math.max(1, t)).cd}s`);
+    const tip = `<b>${esc(vi ? S2.vi : S2.en)}</b> — ${on ? `${vi ? 'bậc' : 'tier'} ${t}/7` : `${vi ? 'mở ở cấp' : 'unlocks at Lv'} ${S2.unlock}`} · ${esc(desc)}`;
+    return `<div class="rk-sk" data-tip="${esc(tip)}" style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:86px">
+      <div class="slot ${on ? '' : 'off'}" data-tip="${esc(tip)}" style="width:44px;height:44px">${ic ? img(ic) : `<span class="emo">${S2.icon}</span>`}${on ? `<b class="n">${t}/7</b>` : `<span class="lock">${stIcon('lock', '🔒')}</span>`}</div>
+      <span style="font:16px VT323,monospace;color:${on ? 'var(--gold)' : 'var(--dim)'}">${esc(vi ? S2.vi : S2.en)}</span><span class="mhint" style="font-size:13px">${on ? `${vi ? 'Bậc' : 'Tier'} ${t}/7` : `${vi ? 'Cấp' : 'Lv'} ${S2.unlock}`}</span></div>`;
+  }).join('');
+  return `<div class="mhero" style="align-items:flex-start;gap:12px">${port ? `<img src="assets/px/${port}" alt="" style="width:92px;height:92px;image-rendering:pixelated;background:#241e34;border:2px solid var(--line);border-radius:6px">` : ''}
+    <div style="flex:1;min-width:0"><b style="font-size:20px">${esc(pt.name)}</b> <span class="lvb" style="background:var(--gold)">Lv ${lv.lv}${lv.lv >= RLV.LV_CAP ? ' MAX' : ''}</span>${sup ? ` <span class="lvb" style="background:#ffd45e">⚡ ${vi ? 'Siêu Cấp' : 'Super'}</span>` : ''}
+      <div class="pbar" title="XP"><div style="width:${pct}%"></div></div><div class="mhint" style="font-size:13px">${lv.need ? `${lv.into}/${lv.need} ${vi ? 'kinh nghiệm tới cấp' : 'XP to Lv'} ${lv.lv + 1}` : (vi ? 'Cấp tối đa' : 'Max level')}</div>
+      ${row(vi ? 'Máu' : 'HP', `${Math.round(ko ? pt.hp || 0 : pt.hp ?? st.max)}/${st.max}`)}${row(vi ? 'Công' : 'Attack', st.atk)}${row(vi ? 'Thủ' : 'Defense', st.def)}
+      ${row(vi ? 'Độ no' : 'Fullness', Math.round(pt.hunger) + '%')}${row(vi ? 'Độ thân' : 'Bond', `${vi ? bondN[bl] : bondE[bl]} (${Math.round(pt.bond)})`)}${row(vi ? 'Lệnh' : 'Command', esc(cmdTxt))}</div></div>
+    <h3>${vi ? 'Chiêu' : 'Skills'}</h3><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-around">${skills}</div>
+    <p class="mhint" style="margin-top:8px">${vi ? 'Ra lệnh: bấm Enter (điện thoại: nút chat cạnh nút chụp ảnh) rồi gõ <b>bảo vệ</b> · <b>tấn công</b> · <b>đi theo</b> · <b>về nhà</b>. Khi được đánh, Rocky luôn dùng chiêu mạnh nhất đã hồi: Siêu Cấp → Rocky-ha → Đấm. Sách luyện chiêu: Heathcliff ở chân cầu tàu Biển.' : 'Commands: press Enter (phone: the chat button next to the camera) and type <b>protect</b> · <b>attack</b> · <b>follow</b> · <b>home</b>. When allowed to fight, Rocky always uses its strongest ready skill: Super → Rocky-ha → Punch. Skill books: Heathcliff at the foot of the Sea pier.'}</p>
+    <div id="mtip" class="mtip"><span class="mhint">${L().tipHint}</span></div>`;
 }
 function landList() {   /* plan-25: mảnh đất đã mua (vùng · quốc gia · cỡ) */
   const vi = UI.lang() === 'vi', all = (deps.S.save.lands) || {}, rows = [];
@@ -314,7 +348,8 @@ function landList() {   /* plan-25: mảnh đất đã mua (vùng · quốc gia 
 function drawAvatar() {
   const c = el.querySelector('#mav'), p = deps.S.player; if (!c || !p || !p.sheet) return;
   const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 64, 80);
-  try { g.drawImage(p.sheet, 0, 0, 16, 20, 0, 0, 64, 80); } catch (e) { /* sheet chưa sẵn */ }
+  const sk = p.sheet.skin;   /* plan-29: ngoại hình Chad: vẽ khung đứng hướng nam, 2 px màn / 1 px ảnh (giữ pixel nguyên) */
+  try { if (sk) g.drawImage(sk.img, 0, 0, sk.cw, sk.ch, Math.round(32 - sk.cw), Math.round(80 - sk.ch * 2), sk.cw * 2, sk.ch * 2); else g.drawImage(p.sheet, 0, 0, 16, 20, 0, 0, 64, 80); } catch (e) { /* sheet chưa sẵn */ }
 }
 
 // ---------------------------------------------------------------- nhiệm vụ

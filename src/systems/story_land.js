@@ -4,6 +4,7 @@
 //   Lyron living in Harbor Village with festival lanterns (act 4), and the scarf keepsake for saves that skipped the prologue.
 // Persisted: S.save.story (shared, via ctx.story()) and S.save.sys.storyLand = { talks }.
 import { NPC } from '../entities.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 const TS = 16;
 const STR = {
@@ -121,7 +122,7 @@ const diveOffer = ctx => { const S = ctx.S, s = story(ctx); return !!(s && s.act
 // ---------------------------------------------------------------- Lyron in the village (act 4)
 function drawLyron(ctx, g, ent) {
   const x = Math.round(ent.x) - 8, y = Math.round(ent.y) - 18;
-  g.drawImage(ent.sheet, ent.frame * 16, ent.dir * 20, 16, 20, x, y, 16, 20);
+  drawBody(g, ent, ent.frame * 16, ent.dir * 20, 20, x, y);
   ctx.drawScarf(g, x, y, ent.dir, ctx.S.time);
 }
 function spawnLyron(ctx) {

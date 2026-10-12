@@ -1,0 +1,29 @@
+{
+ "id": "dae7928d-46d6-429f-a4e5-9edcdba9f5e6",
+ "status": "completed",
+ "mode": "v3",
+ "size": 56,
+ "phase": "polo (30 s đầu, rồi xé áo → chars/chad)",
+ "skin": "#8fc6d0",
+ "west": "mirror of east",
+ "ref": "assets/px/ref/chad_ref3_squid.png (không upload)",
+ "actions": {
+  "idle": {
+   "file": "chars/chad_polo_act_idle.png",
+   "n": 4,
+   "ch": 29,
+   "cw": 32
+  },
+  "rip": {
+   "file": "chars/chad_polo_act_rip.png",
+   "n": 11,
+   "ch": 30,
+   "cw": 32
+  }
+ },
+ "walk_sheet": {
+  "file": "chars/chad_polo.png",
+  "cw": 47,
+  "ch": 58
+ }
+}

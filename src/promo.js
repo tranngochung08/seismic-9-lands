@@ -60,7 +60,7 @@ export function runPromo(G) {
     if (!FROM) caption(0, 'SEISMIC · 9 LANDS', T('A pixel journey through the 9 Magnitude lands', 'Hành trình pixel qua 9 Vùng Đất Magnitude'));
     if (!FROM) await wait(6); capOff();
     const sv = defaultSave(); sv.zone = 'village'; sv.entry = 'default'; sv.story = { act: 2, seaDone: true, flashback: false, guideStoryTold: true }; sv.name = vi() ? 'Hùng' : 'Tuong';   /* bản tiếng Anh: Tuong */ sv.nation = 'Vietnamese';   /* bỏ đoạn mở đầu trên biển */ sv.lang = vi() ? 'vi' : 'en';
-    sv.inv.stone = 60; sv.toolTier = { axe: 1, pickaxe: 1, shovel: 1, bucket: 2, cage: 2, cart: 2, rod: 1 }; sv.tools = { ...(sv.tools || {}), rod: true, rodBought: true };
+    sv.inv.stone = 60; sv.toolTier = { axe: 1, pickaxe: 1, shovel: 1, rod: 1 }; sv.tools = { ...(sv.tools || {}), rod: true, rodBought: true };
     await fadeOut(); startGame(sv); await wait(1.5); await fadeIn();
 
     await scene(1, T('Your hero', 'Nhân vật của bạn'), T('Hand-drawn with PixelLab from a real avatar — walks in 4 directions', 'Vẽ bằng PixelLab từ avatar thật — đi đủ 4 hướng'), async ph => {
@@ -88,12 +88,10 @@ export function runPromo(G) {
       if (ph === 'pre') { F.tools(); for (const id of Object.keys(CTX.ITEMS)) if (id.startsWith('seed_')) CTX.bag.add(id, 6); const my = CTX.myPlot(); const sp = my.spawn || my; tp(sp.x + 1, sp.y + 2, 2); clearNpcs(80); st.farmAt = { x: sp.x + 1, y: sp.y + 2 }; return; }
       const b = st.farmAt;
       for (let i = 1; i <= 3; i++) { const wx = (b.x + i) * 16 + 8, wy = b.y * 16 + 8; mouseAt(wx, wy); await wait(0.45); mouseAt(wx, wy, true); await wait(0.7); mouseAt(wx, wy, true); await wait(0.7); }
-      const w = S.map.objects.find(o => o.type === 'well'); if (w) { tp(w.x + 1, w.y + 3, 3); await wait(0.4); await E(0.6); }
       for (let n = 0; n < 3; n++) {
         tp(b.x, b.y, 2);
         for (let i = 1; i <= 3; i++) { const wx = (b.x + i) * 16 + 8, wy = b.y * 16 + 8; mouseAt(wx, wy); await wait(0.25); mouseAt(wx, wy, true); await wait(0.4); }
         if (st.skip) return; CTX.clock.sleep(); await wait(1.6); if (S.mode === 'summary' && S.closers && S.closers.summary) S.closers.summary(); await wait(0.9);
-        if (F.state().bucketWater <= 1 && w) { tp(w.x + 1, w.y + 3, 3); await wait(0.2); await E(0.3); }
       }
       tp(b.x, b.y + 1, 3); await wait(1.5);
     });

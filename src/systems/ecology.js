@@ -1,10 +1,12 @@
 // ecology.js — the ecology module: new wild animals (sheep, horse, rabbit, crab, bat, fire
 // salamander, snow fox, crystal moth) and the products you get from them (wool, taming + riding,
-// rabbit traps, lava samples, a pet fox that digs, a chicken coop that lays eggs).
+// rabbits caught by hand (traps removed 2026-10-11), lava samples, a pet fox that digs, a chicken coop that lays eggs).
 // Head-carried kinds added here: 'sheep', 'rabbit', 'crab', 'bat'. See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
-import { waterDraw } from '../anim.js';
-import { getCarry, removeCarry, canCarry, carryDeny, registerHead, faceOf, dirFrame } from './animals.js';
+import { waterDraw, WATER } from '../anim.js';
+import { thirst, drawThirsty } from './thirst.js';   /* 2026-10-11 anh: thú thấy nước chỉ uống, không xuống */
+import { getCarry, removeCarry, canCarry, carryDeny, registerHead, faceOf, dirFrame, hasFish, takeFish } from './animals.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -12,12 +14,11 @@ const STR = {
     sheep: 'Catch sheep', shear: 'Shear', gotSheep: 'Caught a sheep! 🐑', gotWool: 'Sheared: +2 🐑 wool', shorn: 'This one is already shorn',
     full: 'Hands full — sell at the trader',
     feedHay: 'Feed hay', needHay: 'Needs hay 🌾 — cut tall grass with a scythe (workbench: 3 wood + 1 rock)', horseAte: n => `The horse eats the hay (${n}/3)`, horseTame: 'The horse trusts you now! 💛',
-    ride: 'Ride', off: 'Dismount', needSaddle: 'Needs a saddle — craft it at the workbench (2 fur + 2 rope + 1 wood)', busy: 'Get off what you are riding first',
-    setTrap: 'Set a trap', trapDone: 'Trap set — stay back and wait', trapTake: 'Take the rabbit',
-    trapSprung: 'A rabbit is in the trap! 🐰', gotRabbit: 'Caught a rabbit! 🐰',
+    ride: 'Ride', off: 'Dismount', busy: 'Get off what you are riding first',   /* 2026-10-11 anh bỏ YÊN NGỰA: cưỡi không cần yên */
+    rabbit: 'Catch rabbit', gotRabbit: 'Caught a rabbit! 🐰',   /* 2026-10-11 anh bỏ BẪY: bắt thỏ bằng tay như gà */
     crab: 'Catch crab', gotCrab: 'Caught a crab! 🦀', pinch: 'Ouch — the crab pinched you! −1 🪨', pinch0: 'Ouch — the crab pinched you!',
     bat: 'Catch bat', gotBat: 'Caught a bat! 🦇',
-    scoop: 'Scoop', gotLava: 'Lava sample scooped! 🌋', needBucket: 'Needs an iron bucket — forge it at the furnace in M4/M5 (2 iron bars)',
+    scoop: 'Scoop', gotLava: 'Lava sample scooped! 🌋',
     moth: 'Catch moth', gotCrystal: 'Crystal dust! +1 💎', mothGone: 'The moth slipped away',
     foxFeed: 'Feed a fish', foxNeed: 'Wants a fish — catch one at a shore with the fishing rod and bring it here', foxAte: n => `The snow fox eats (${n}/3)`, foxPet: 'The snow fox follows you now! 🦊',
     foxDug: n => `The fox digs up ${n}`,
@@ -28,12 +29,11 @@ const STR = {
     sheep: 'Bắt cừu', shear: 'Xén lông', gotSheep: 'Bắt được cừu! 🐑', gotWool: 'Xén xong: +2 🐑 len', shorn: 'Con này vừa xén rồi',
     full: 'Đầy tay rồi — đem bán ở Thương nhân',
     feedHay: 'Cho ăn rơm', needHay: 'Cần rơm 🌾 — cắt cỏ cao bằng liềm (chế ở Bàn mộc: 3 gỗ + 1 đá)', horseAte: n => `Ngựa ăn rơm (${n}/3)`, horseTame: 'Ngựa đã tin bạn! 💛',
-    ride: 'Cưỡi ngựa', off: 'Xuống ngựa', needSaddle: 'Cần yên ngựa — chế ở Bàn mộc (2 lông thú + 2 dây thừng + 1 gỗ)', busy: 'Xuống khỏi thứ đang cưỡi/lái đã',
-    setTrap: 'Đặt bẫy', trapDone: 'Đã đặt bẫy — lùi ra chờ', trapTake: 'Lấy con thỏ',
-    trapSprung: 'Có thỏ dính bẫy! 🐰', gotRabbit: 'Bắt được thỏ! 🐰',
+    ride: 'Cưỡi ngựa', off: 'Xuống ngựa', busy: 'Xuống khỏi thứ đang cưỡi/lái đã',
+    rabbit: 'Bắt thỏ', gotRabbit: 'Bắt được thỏ! 🐰',
     crab: 'Bắt cua', gotCrab: 'Bắt được cua! 🦀', pinch: 'Á — cua kẹp tay! −1 🪨', pinch0: 'Á — cua kẹp tay!',
     bat: 'Bắt dơi', gotBat: 'Bắt được dơi! 🦇',
-    scoop: 'Múc', gotLava: 'Múc được mẫu dung nham! 🌋', needBucket: 'Cần Xô sắt — rèn ở Lò nung M4/M5 (2 thanh sắt)',
+    scoop: 'Múc', gotLava: 'Múc được mẫu dung nham! 🌋',
     moth: 'Bắt bướm', gotCrystal: 'Bụi tinh thể! +1 💎', mothGone: 'Bướm bay mất rồi',
     foxFeed: 'Cho ăn cá', foxNeed: 'Nó muốn cá — câu một con ở bờ nước bằng cần câu rồi mang tới', foxAte: n => `Cáo tuyết ăn cá (${n}/3)`, foxPet: 'Cáo tuyết theo bạn rồi! 🦊',
     foxDug: n => `Cáo đào được ${n}`,
@@ -214,7 +214,7 @@ for (const [k, v] of Object.entries(HEAD)) registerHead(k, v);   /* plan-9: anim
 const K = {
   sheep: { sp: 11, flee: 20, anim: 3.0, idle: 0.8, lim: 26 },
   horse: { sp: 15, flee: 0, anim: 4.0, idle: 0.9, lim: 30 },
-  rabbit: { sp: 52, flee: 104, anim: 10.0, idle: 1.6, lim: 0 },
+  rabbit: { sp: 40, flee: 70, anim: 10.0, idle: 1.6, lim: 24 },   /* 2026-10-11 bỏ bẫy: bắt tay → chạy chậm lại, sợ ở cự ly gần như thú khác */
   crab: { sp: 15, flee: 34, anim: 5.0, idle: 1.0, lim: 24 },
   sala: { sp: 13, flee: 22, anim: 4.0, idle: 1.0, lim: 26 },
   fox: { sp: 26, flee: 44, anim: 6.0, idle: 1.2, lim: 30 }
@@ -238,7 +238,6 @@ const GRASSY = t => t === 1 || t === 2 || t === 3 || t === 17;   // GRASS GRASS2
 // ---------------------------------------------------------------- state
 let list = [];          // wild animals of this zone
 let fx = [];            // particles
-let trap = null;        // { x, y, obj, rabbit, t }
 let coop = null;        // { x, y, obj }
 let eggs = [];          // [{x,y,t}]
 let pet = null;         // the tame fox that follows the player
@@ -337,18 +336,27 @@ function freeTile(ctx, tx, ty) {
   const map = ctx.S.map;
   if (tx < 2 || ty < 2 || tx > map.w - 3 || ty > map.h - 3) return false;
   if (ctx.isSolid(map, tx, ty)) return false;
+  { const g0 = ctx.getG(map, tx, ty); if (g0 === ctx.T.WATER || g0 === ctx.T.DEEP) return false; }   /* thú cạn không bao giờ bước xuống nước */
   return !inPlot(map, tx, ty, 1) && !onRoad(map, tx, ty);
 }
 function walkable(ctx, x, y) { return freeTile(ctx, tileOf(x), tileOf(y)); }
 function objAt(ctx, tx, ty) {
   return ctx.S.map.objects.some(o => { const d = ctx.O[o.type]; return d && tx >= o.x && tx < o.x + d.fw && ty >= o.y && ty < o.y + d.fh; });
 }
+/* 2026-10-11 anh: cua (thú nước) được lội ô nước NÔNG ngoài khu nhà; thú khác giữ nguyên (nước = vật chắn) */
+function crabWet(ctx, x, y) {
+  const map = ctx.S.map, tx = tileOf(x), ty = tileOf(y);
+  if (tx < 2 || ty < 2 || tx > map.w - 3 || ty > map.h - 3 || ctx.getG(map, tx, ty) !== ctx.T.WATER || inPlot(map, tx, ty, 1)) return false;
+  return !!(WATER.depth && WATER.depth(tx * TILE + 8, ty * TILE + 12) === 6) && !objAt(ctx, tx, ty);
+}
 function stepTo(ctx, a, dx, dy) {
   let moved = false;
-  if (dx && walkable(ctx, a.x + dx, a.y)) { a.x += dx; moved = true; }
-  if (dy && walkable(ctx, a.x, a.y + dy)) { a.y += dy; moved = true; }
+  const ok = (x, y) => walkable(ctx, x, y) || (a.kind === 'crab' && crabWet(ctx, x, y));
+  if (dx && ok(a.x + dx, a.y)) { a.x += dx; moved = true; }
+  if (dy && ok(a.x, a.y + dy)) { a.y += dy; moved = true; }
   return moved;
 }
+const DRINKS = new Set(['sheep', 'horse', 'rabbit']);   /* gia súc / thú cạn biết đi uống nước (thirst.js); cua là thú nước, cáo/kỳ nhông/dơi/bướm không */
 
 // ---------------------------------------------------------------- spawning
 function mk(kind, x, y, rng, extra) {
@@ -417,20 +425,8 @@ function spawnHorses(ctx, rng, n) {
   if (p && walkable(ctx, p.x, p.y)) { tame.x = p.x; tame.y = p.y; tame.hx = p.x; tame.hy = p.y; }
 }
 
-// ---------------------------------------------------------------- objects (trap, coop, egg)
+// ---------------------------------------------------------------- objects (coop, egg)
 function defineObjects(ctx) {
-  ctx.defineObject('eco_trap', 16, 12, 1, 1, g => {                            // sprung: the jaws snapped shut
-    px(g, 2, 6, OUT, 12, 5); px(g, 3, 7, '#8a5a2b', 10, 3); px(g, 3, 10, '#5f3d1c', 10, 1);
-    px(g, 3, 3, OUT, 10, 4); px(g, 4, 4, '#9a9aa3', 8, 2);
-    for (let i = 4; i < 12; i += 2) px(g, i, 2, '#dcdce4', 1, 2);
-  }, { solid: false });
-  ctx.defineObject('eco_trap_set', 16, 12, 1, 1, g => {                        // armed: open jaws around the bait
-    px(g, 2, 5, OUT, 12, 6); px(g, 3, 6, '#8a5a2b', 10, 4); px(g, 3, 9, '#5f3d1c', 10, 1);
-    px(g, 0, 4, OUT, 3, 6); px(g, 13, 4, OUT, 3, 6);                            // jaws swung open
-    px(g, 1, 5, '#b9b9c2', 1, 4); px(g, 14, 5, '#b9b9c2', 1, 4);
-    for (let i = 3; i < 13; i += 3) { px(g, i, 4, '#dcdce4', 1, 2); px(g, i, 10, '#dcdce4', 1, 2); }
-    px(g, 6, 6, '#ffd45e', 4, 3); px(g, 7, 5, '#e8dcc0', 2, 1);                 // hay bait
-  }, { solid: false });
   ctx.defineObject('eco_coop', 32, 34, 2, 2, g => {
     px(g, 2, 14, OUT, 28, 20); px(g, 3, 15, '#8a5a2b', 26, 18); px(g, 3, 29, '#5f3d1c', 26, 4);   // body
     for (let x = 5; x < 29; x += 4) px(g, x, 16, '#7a4d24', 2, 13);
@@ -441,26 +437,6 @@ function defineObjects(ctx) {
     px(g, 22, 18, OUT, 6, 6); px(g, 23, 19, '#ffd45e', 4, 4);                                        // hatch window
     px(g, 14, 0, OUT, 4, 5); px(g, 15, 1, '#e04b4b', 2, 3);                                          // weather vane
   }, { solid: true });
-}
-function placeTrap(ctx, tx, ty) {
-  const o = ctx.place(ctx.S.map, 'eco_trap_set', tx, ty, {});
-  trap = { x: tx * TILE + 8, y: ty * TILE + 12, tx, ty, obj: o, rabbit: false, t: 0 };
-}
-function springTrap(ctx) {
-  trap.rabbit = true; trap.t = 0;
-  ctx.removeObject(ctx.S.map, trap.obj);
-  trap.obj = ctx.place(ctx.S.map, 'eco_trap', trap.tx, trap.ty, {});
-  puff(trap.x, trap.y - 4, 8, '#e8e3d8'); bits(trap.x, trap.y - 4, 5, '#c3bcae');
-  ctx.sfx('squeak'); ctx.toast(L(ctx).trapSprung);
-}
-function takeTrap(ctx) {
-  if (ctx.trespass && !ctx.trespass(trap.tx, trap.ty, 'catch')) return;   /* plan-18 */
-  if (headFull(ctx)) return;
-  addCarry(ctx, 'rabbit');
-  ctx.removeObject(ctx.S.map, trap.obj);
-  puff(trap.x, trap.y - 6, 8);
-  trap = null;
-  ctx.sfx('pickup'); ctx.toast(L(ctx).gotRabbit);
 }
 // a 2×2 patch as close to the village plaza as we can get: off the roads, out of the nation yards
 function coopSpot(ctx) {
@@ -514,18 +490,17 @@ function drawHorseRider(g, ent) {
   g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x, y, 11, 3.5, 0, 0, TAU); g.fill();
   if (d === 1 || d === 2) {
     g.drawImage(RIDE.side[f][d === 1 ? 1 : 0], x - 12, y - 18 - bob);
-    g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 15, x - 8, y - 29 - bob, 16, 15);
+    drawBody(g, ent, (ent.frame || 0) * 16, d * 20, 15, x - 8, y - 29 - bob);
     const lx = d === 1 ? x + 1 : x - 4;                                  // the rider's near leg, over the flank
     px(g, lx, y - 15 - bob, OUT, 3, 5); px(g, lx, y - 15 - bob, '#2f3b5e', 2, 3); px(g, lx, y - 12 - bob, '#3a2f22', 2, 2);
   } else {
     g.drawImage(d === 0 ? RIDE.front[f] : RIDE.back[f], x - 8, y - 18 - bob);
-    g.drawImage(ent.sheet, (ent.frame || 0) * 16, d * 20, 16, 15, x - 8, y - 29 - bob, 16, 15);
+    drawBody(g, ent, (ent.frame || 0) * 16, d * 20, 15, x - 8, y - 29 - bob);
   }
 }
 function ride(ctx, a) {
   const p = ctx.S.player, S = L(ctx);
   if (p.custom) { ctx.toast(S.busy); return; }               // already on a boat / jeep / ski / Rocky
-  if (ctx.tool.tier('saddle') < 1) { ctx.toast(S.needSaddle); ctx.sfx('fail'); return; }
   const i = list.indexOf(a); if (i >= 0) list.splice(i, 1);
   mount = a;
   p.speedMul = 1.8; p.boxW = 14; p.custom = drawHorseRider;
@@ -593,7 +568,7 @@ function catchCrab(ctx, a) {
 }
 function scoopLava(ctx, a) {
   const S = L(ctx);
-  if (ctx.tool.tier('bucket') < 2) { ctx.toast(S.needBucket); ctx.sfx('fail'); return; }
+  /* 2026-10-11 anh bỏ xô: múc kỳ nhông dung nham bằng tay không */
   const n = ctx.give('lava', 1, a.x, a.y);
   const i = list.indexOf(a); if (i >= 0) list.splice(i, 1);
   bits(a.x, a.y - 4, 10, '#ff8c1a', 26, 30); bits(a.x, a.y - 4, 6, '#ffd45e', 20, 24);
@@ -608,9 +583,8 @@ function catchMoth(ctx, a) {
 }
 function feedFox(ctx, a) {
   const S = L(ctx), e = sv(ctx);
-  const items = getCarry(ctx), i = items.findIndex(it => it.kind === 'fish');
-  if (i < 0) { ctx.toast(S.foxNeed); ctx.sfx('fail'); return; }
-  removeCarry(ctx, i); syncInv(ctx);
+  if (!takeFish(ctx)) { ctx.toast(S.foxNeed); ctx.sfx('fail'); return; }   /* 2026-10-11: cá ở trong túi (bỏ xô) */
+  syncInv(ctx);
   e.foxFeeds = Math.min(3, e.foxFeeds + 1);
   bits(a.x, a.y - 6, 6, '#a8d8f5', 20, 20);
   if (e.foxFeeds >= 3 && !e.fox) {
@@ -648,8 +622,8 @@ function foxDig(ctx) {
 function wander(dt, ctx, a, p, playing) {
   const k = K[a.kind]; if (!k) return;
   a.t -= dt;
-  if (playing && k.flee && Math.hypot(a.x - p.x, a.y - p.y) < (a.kind === 'rabbit' ? 42 : 13) && a.st !== 'flee') {
-    a.st = 'flee'; a.t = a.kind === 'rabbit' ? 1.6 : 1.2;
+  if (playing && k.flee && Math.hypot(a.x - p.x, a.y - p.y) < 13 && a.st !== 'flee') {
+    a.st = 'flee'; a.t = 1.2;
     a.ang = Math.atan2(a.y - p.y, a.x - p.x) + (Math.random() - 0.5) * 0.6;
   }
   if (a.st === 'flee') {
@@ -664,9 +638,6 @@ function wander(dt, ctx, a, p, playing) {
   } else if (a.t <= 0) {
     a.st = 'walk'; a.t = 0.5 + Math.random() * 1.6;
     a.ang = Math.random() * TAU;
-    if (a.kind === 'rabbit' && trap && !trap.rabbit && Math.hypot(trap.x - a.x, trap.y - a.y) < 220 && Math.random() < 0.55) {
-      a.ang = Math.atan2(trap.y - a.y, trap.x - a.x) + (Math.random() - 0.5) * 0.5;   // the bait pulls it in
-    }
     if (a.hr && Math.hypot(a.x - a.hx, a.y - a.hy) > a.hr * 0.8) a.ang = Math.atan2(a.hy - a.y, a.hx - a.x) + (Math.random() - 0.5) * 0.8;
   }
   if (a.st !== 'idle') { a.dir = Math.cos(a.ang) >= 0 ? 1 : -1; a.face = faceOf(a); }
@@ -737,7 +708,7 @@ export const ecology = {
 
   onZoneEnter(ctx) {
     if (mount) restorePlayer(ctx);                       // a reload straight into a ride: put the player back
-    list = []; fx = []; eggs = []; trap = null; coop = null; crystals = []; mount = null; pet = null;
+    list = []; fx = []; eggs = []; coop = null; crystals = []; mount = null; pet = null;
     defineObjects(ctx);
     syncInv(ctx);
     const e = sv(ctx), id = ctx.S.zone.id;
@@ -762,11 +733,12 @@ export const ecology = {
       state: () => ({
         zone: ctx.S.zone.id, n: list.length,
         kinds: list.reduce((o, a) => (o[a.kind] = (o[a.kind] || 0) + 1, o), {}),
-        mounted: !!mount, pet: !!pet, digT, trap: trap && { x: trap.x, y: trap.y, rabbit: trap.rabbit },
+        mounted: !!mount, pet: !!pet, digT,
         coop: coop && { x: coop.x, y: coop.y, t: Math.round(coop.t) },
         eggs: eggs.length, eggsAt: eggs.map(e => ({ x: Math.round(e.x), y: Math.round(e.y) })), save: sv(ctx)
       }),
-      list: () => list.map(a => ({ kind: a.kind, x: Math.round(a.x), y: Math.round(a.y), st: a.st, shorn: !!a.shorn, tame: !!a.tame })),
+      list: () => list.map(a => ({ kind: a.kind, x: Math.round(a.x), y: Math.round(a.y), st: a.st, shorn: !!a.shorn, tame: !!a.tame, drink: a.dr ? a.dr.ph : null, drinkN: a.drinkN || 0 })),
+      thirsty: (kind, x, y) => { const a = list.find(o => o.kind === kind); if (!a) return null; if (x !== undefined) { a.x = x; a.y = y; a.hx = x; a.hy = y; } a.st = 'idle'; a.t = 1; a.dr = null; a.thirstT = 0; a.badK = null; return { x: a.x, y: a.y }; },   /* test thirst.js */
       warp: (kind, dx = 16) => { const a = list.find(x => x.kind === kind); if (!a) return null; ctx.S.player.x = a.x + dx; ctx.S.player.y = a.y + 4; return { x: a.x, y: a.y }; },
       bring: (kind) => {
         const a = list.find(x => x.kind === kind), p = ctx.S.player; if (!a) return null;
@@ -776,7 +748,6 @@ export const ecology = {
         return { x: a.x, y: a.y };
       },
       perch: () => { const a = list.find(x => x.kind === 'bat'); if (!a) return null; a.st = 'sit'; a.x = a.perch.x; a.y = a.perch.y; a.t = 20; ctx.S.player.x = a.x; ctx.S.player.y = a.y + 22; return { x: a.x, y: a.y }; },
-      trapNow: () => { if (trap && !trap.rabbit) springTrap(ctx); return !!trap; },
       eggNow: () => { if (coop) { coop.t = 0.05; } return !!coop; },
       digNow: () => { digT = 0.05; return !!pet; },
       shearReset: () => { for (const a of list) { a.shorn = false; a.shearT = 0; } return true; }
@@ -786,7 +757,7 @@ export const ecology = {
   onZoneLeave(ctx) {
     if (mount) dismount(ctx, true);
     restorePlayer(ctx);
-    list = []; fx = []; eggs = []; trap = null; coop = null; crystals = []; pet = null;
+    list = []; fx = []; eggs = []; coop = null; crystals = []; pet = null;
   },
 
   update(dt, ctx) {
@@ -796,6 +767,7 @@ export const ecology = {
       if (a.kind === 'bat') updateBat(dt, ctx, a);
       else if (a.kind === 'moth') updateMoth(dt, ctx, a);
       else if (a.kind === 'fox') wanderFox(dt, ctx, a, p, playing);
+      else if (DRINKS.has(a.kind) && !(playing && Math.hypot(a.x - p.x, a.y - p.y) < 13) && thirst(dt, ctx, a, { walk: (x, y) => walkable(ctx, x, y), step: (dx, dy) => stepTo(ctx, a, dx, dy), sp: K[a.kind].sp })) { if (a.st === 'walk') { a.ft += dt * K[a.kind].anim; a.fr = (a.ft | 0) % 2; } }   /* khát → ra mép nước uống */
       else wander(dt, ctx, a, p, playing);
       if (a.shearT > 0) { a.shearT -= dt; if (a.shearT <= 0) a.shorn = false; }
     }
@@ -807,14 +779,6 @@ export const ecology = {
       if (p.custom !== drawHorseRider) {                              // something else took the player over
         mount.st = 'idle'; mount.t = 1.5; list.push(mount); mount = null;
         ctx.bag.setBonus(prevBonus); ctx.persist();
-      }
-    }
-    // trap
-    if (trap) {
-      if (!trap.rabbit) {
-        for (const a of list) if (a.kind === 'rabbit' && Math.hypot(a.x - trap.x, a.y - trap.y) < 10) { const i = list.indexOf(a); list.splice(i, 1); springTrap(ctx); break; }
-      } else if (playing && Math.hypot(p.x - trap.x, p.y - trap.y) < 12) {
-        if (!headFull(ctx)) takeTrap(ctx);
       }
     }
     // chicken coop + eggs
@@ -858,13 +822,8 @@ export const ecology = {
       if (a.kind === 'bat' || a.kind === 'moth') {
         push(a, img, dx, dy, 1e5 + a.y);                                     // flyers draw over everything
       } else {
-        out.push({ y: a.y, f: () => waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => g.drawImage(img, dx, dy)) });   /* thú lội nước vẽ ngập */
+        out.push({ y: a.y, f: () => waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => drawThirsty(g, img, dx, dy, a)) });   /* thú lội nước vẽ ngập; đang uống → cúi đầu (thirst.js) */
       }
-    }
-    if (trap && trap.rabbit) {                                     // the catch sits in the jaws until you fetch it
-      const img = SPR.rabbit[((T_ACC * 1.5) | 0) % 2][0];
-      const dx = Math.round(trap.x) - (img.width >> 1) - cx, dy = Math.round(trap.y) - 5 - img.height - cy;
-      out.push({ y: trap.y + 0.2, f: () => g.drawImage(img, dx, dy) });
     }
     if (pet) {
       const img = SPR.fox[pet.fr][pet.dir < 0 ? 1 : 0];
@@ -909,29 +868,20 @@ export const ecology = {
       } else if (a.kind === 'horse') {
         if (e.horse.tamed && a.tame) {
           if (p.custom) continue;                                        // on a boat / jeep / Rocky: no riding
-          take(a, a.x, a.y, K.horse.lim, ctx.tool.tier('saddle') >= 1 ? S.ride : S.needSaddle, 'ride');
+          take(a, a.x, a.y, K.horse.lim, S.ride, 'ride');   /* không cần yên (2026-10-11) */
         } else take(a, a.x, a.y, K.horse.lim, ctx.bag.has('hay', 1) ? S.feedHay : S.needHay, 'hay', ctx.bag.has('hay', 1) && !H('hay') ? 'hay' : null);
-      } else if (a.kind === 'crab') take(a, a.x, a.y, K.crab.lim, S.crab, 'crab');
+      } else if (a.kind === 'rabbit') take(a, a.x, a.y, K.rabbit.lim, S.rabbit, 'rabbit');   /* bắt tay như gà (bỏ bẫy 2026-10-11) */
+      else if (a.kind === 'crab') take(a, a.x, a.y, K.crab.lim, S.crab, 'crab');
       else if (a.kind === 'bat') { if (a.st === 'sit') take(a, a.x, a.y + 14, 32, S.bat, 'bat'); }
-      else if (a.kind === 'sala') take(a, a.x, a.y, K.sala.lim, ctx.tool.tier('bucket') >= 2 ? S.scoop : S.needBucket, 'sala', ctx.tool.tier('bucket') >= 2 && !H('bucket') ? 'bucket' : null);
-      else if (a.kind === 'fox') take(a, a.x, a.y, K.fox.lim, getCarry(ctx).some(it => it.kind === 'fish') ? S.foxFeed : S.foxNeed, 'fox');
+      else if (a.kind === 'sala') take(a, a.x, a.y, K.sala.lim, S.scoop, 'sala');   /* tay không (bỏ xô 2026-10-11) */
+      else if (a.kind === 'fox') take(a, a.x, a.y, K.fox.lim, hasFish(ctx) ? S.foxFeed : S.foxNeed, 'fox');   /* cá trên tay hoặc trong túi */
       else if (a.kind === 'moth') take(a, a.x, a.y + 10, 26, S.moth, 'moth');
     }
     if (best) return best;
-    if (trap && trap.rabbit) {
-      const d = Math.hypot(trap.x - p.x, trap.y - p.y);
-      if (d < 26) return { label: S.trapTake, x: trap.x, y: trap.y, limit: 26, data: { act: 'trapTake' } };
-    }
     if (coop) {
       const d = Math.hypot(coop.x - p.x, coop.y - p.y);
       if (d < 34) { if (e.coop.hay < 3 && ctx.bag.has('hay', 1) && !H('hay')) return { label: ctx.needHold('hay'), x: coop.x, y: coop.y - 8, limit: 34, need: true, needId: 'hay', data: { need: true } };
         return { label: e.coop.hay >= 3 ? S.coopOk : S.coopFeed(e.coop.hay), x: coop.x, y: coop.y - 8, limit: 34, data: { act: 'coop' } }; }
-    }
-    if (!trap && ctx.tool.tier('trap') >= 1 && H('trap') && list.some(a => a.kind === 'rabbit')) {
-      const tx = tileOf(p.x), ty = tileOf(p.y);
-      if (GRASSY(ctx.getG(ctx.S.map, tx, ty)) && freeTile(ctx, tx, ty) && !objAt(ctx, tx, ty)) {
-        return { label: S.setTrap, x: p.x, y: p.y, limit: 20, data: { act: 'trapSet', tx, ty } };
-      }
     }
     return null;
   },
@@ -942,6 +892,7 @@ export const ecology = {
     switch (d.act) {
       case 'off': dismount(ctx); break;
       case 'catch': catchAnimal(ctx, d.a, 'sheep', S.gotSheep); break;
+      case 'rabbit': catchAnimal(ctx, d.a, 'rabbit', S.gotRabbit); break;
       case 'shear': if (d.a.shorn) ctx.toast(S.shorn); else shear(ctx, d.a); break;
       case 'hay': feedHorse(ctx, d.a); break;
       case 'ride': ride(ctx, d.a); break;
@@ -950,8 +901,6 @@ export const ecology = {
       case 'sala': scoopLava(ctx, d.a); break;
       case 'fox': feedFox(ctx, d.a); break;
       case 'moth': catchMoth(ctx, d.a); break;
-      case 'trapSet': placeTrap(ctx, d.tx, d.ty); ctx.sfx('build'); ctx.toast(S.trapDone); break;
-      case 'trapTake': if (trap && trap.rabbit) takeTrap(ctx); break;
       case 'coop': feedCoop(ctx); break;
     }
   },
@@ -965,7 +914,6 @@ export const ecology = {
     if (carried.length) out.push(carried.join(' '));
     if (mount) out.push('🐎');
     if (pet) out.push('🦊');
-    if (trap) out.push(trap.rabbit ? '🪤 🐰' : '🪤');
     return out;
   }
 };

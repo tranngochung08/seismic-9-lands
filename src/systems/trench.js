@@ -9,6 +9,7 @@
 // No continuous screen shake: the only quakes are single short events (Rocky's Ground Pound, the head sinking).
 import { mkCanvas, HOOK } from '../gfx.js';
 import { NPC } from '../entities.js';
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -177,7 +178,7 @@ function applyDiver(ctx) {
   p.passable = (m, tx, ty) => !ctx.isSolid(m, tx, ty) && !pillarAt(tx, ty);
   p.custom = (g, ent) => {
     const x = Math.round(ent.x), y = Math.round(ent.y);
-    g.drawImage(ent.sheet, ent.frame * 16, ent.dir * 20, 16, 20, x - 8, y - 18, 16, 20);
+    drawBody(g, ent, ent.frame * 16, ent.dir * 20, 20, x - 8, y - 18);
     const b = ent.frame === 0 ? 0 : -1, hx = x, hy = y - 13 + b;                       // the head sits at rows 1..9 of the frame
     g.fillStyle = 'rgba(170,225,255,.42)'; g.beginPath(); g.arc(hx, hy, 6.5, 0, TAU); g.fill();
     g.strokeStyle = '#c9a24a'; g.lineWidth = 1; g.beginPath(); g.arc(hx, hy, 6.5, 0, TAU); g.stroke();
@@ -505,7 +506,7 @@ function updateWin(dt, ctx) {
     const cx = m.cage ? (m.cage.x + 1) * TILE : h.x, cy = m.cage ? (m.cage.y + 2) * TILE + 2 : h.y;
     lyron = new NPC(ctx.FRIEND, cx, cy, ctx.friendSheet(), ctx.rngFrom(3));
     lyron.ghost = true; lyron.radius = 8; lyron.speedMul = 1.6;
-    lyron.custom = (g, ent) => { const x = Math.round(ent.x) - 8, y = Math.round(ent.y) - 18; g.drawImage(ent.sheet, ent.frame * 16, ent.dir * 20, 16, 20, x, y, 16, 20); ctx.drawScarf(g, x, y, ent.dir, ctx.S.time); };
+    lyron.custom = (g, ent) => { const x = Math.round(ent.x) - 8, y = Math.round(ent.y) - 18; drawBody(g, ent, ent.frame * 16, ent.dir * 20, 20, x, y); ctx.drawScarf(g, x, y, ent.dir, ctx.S.time); };
     ctx.S.npcs.push(lyron);
     lyron.goal = { x: p.x, y: p.y + 22 };
   }

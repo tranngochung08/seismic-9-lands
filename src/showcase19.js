@@ -2,7 +2,7 @@
 // Mỗi nút dựng sẵn cảnh rồi chạy 1 tính năng mới để anh xem. Chế độ này KHÔNG ghi save thật (saveOff). Phím F9 ẩn/hiện bảng.
 import { saveOff } from './save.js';
 import { toggleMenu } from './menu.js';
-import { addCarry } from './systems/animals.js';
+import { addCarry, catchToBag } from './systems/animals.js';
 
 let deps = null, el = null;
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -45,7 +45,7 @@ const STEPS = {
   },
   async water() {
     if (!farmTile) { await STEPS.hoe(); await wait(500); await STEPS.sow(); await wait(300); }
-    standAbove(farmTile); window.__farm.act('fill'); C().hold('bucket'); await wait(250); const ok = /Tưới|Water/.test(press('farm') || '');
+    standAbove(farmTile); { const sv = S().save, i = sv.hotbar ? sv.hotbar.indexOf(null) : -1; if (i >= 0) sv.hotSel = i; } await wait(250);   /* tưới tay không (bỏ xô 2026-10-11) */ const ok = /Tưới|Water/.test(press('farm') || '');
     say(ok ? 'Tưới: clip cầm bình tưới, nước bắn ra ở khung 2.' : 'Ô đã tưới hôm nay — bấm "Thu hoạch" (tự qua ngày) hoặc cuốc ô khác.');
   },
   async harvest() {
@@ -84,7 +84,7 @@ const STEPS = {
   },
   async give() {
     await goZone('village'); const c = C();
-    for (const id of ['axe', 'pickaxe', 'shovel', 'bucket', 'scythe', 'knife', 'rod', 'torch']) if (c.tool.tier(id) < 1) c.tool.set(id, 1);
+    for (const id of ['axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'rod', 'torch']) if (c.tool.tier(id) < 1) c.tool.set(id, 1);
     c.bag.add('seed_turnip', 5); c.bag.add('berry', 3); c.bag.add('hay', 3); c.bag.add('scarecrow', 1); c.hotbarSync(); c.hold('axe');
     say('Đã cấp đủ dụng cụ + hạt, quả, rơm, bù nhìn. Chọn ô bằng phím 1–9, 0, −, = / lăn chuột / bấm ô. Con trỏ đổi theo món đang cầm.');
   },
@@ -122,7 +122,7 @@ const STEPS = {
   async uishop() { C().bag.add('stone', 300); toggleMenu('shop'); say('MUA NHANH (phím O): công cụ lên cấp + vật tư bằng đá Seismic, không cần NPC. Đồ mua rơi dưới chân rồi tự hút.'); },
   async trader() { const t = (S().staff || []).find(n => n.m.staff === 'trader'); if (!t) { say('Vùng này không có Thương nhân.'); return; } C().bag.add('wood', 5); warpPx(t.x, t.y + 16, 3); await wait(300); press('market'); say('Quầy Thương nhân = NPC + bảng tên; bảng 2 cột có chân dung. Bán/mua → đá rơi trước mặt rồi hút.'); },
   async talk() { const n = S().npcs.find(x => !x.m.friend); if (!n) return; n.busy = true; warpPx(n.x, n.y + 14, 3); await wait(300); key('KeyE', true); await wait(60); key('KeyE', false); say('Hộp thoại kiểu Stardew: đáy màn, chân dung to bên phải, chữ chạy từng ký tự, emoji → icon pixel.'); },
-  async fishsp() { addCarry(C(), { kind: 'fish', sp: 'salmon', cm: 75 }); addCarry(C(), { kind: 'fish', sp: 'tuna', big: true, cm: 120 }); say('Câu được loài nào bưng đúng con đó: cá hồi + cá ngừ to trên đầu (ảnh PixelLab như thẻ cá). Bấm T → ném vào ô thanh công cụ (bay vòng cung, lấp lánh, +1).'); },
+  async fishsp() { catchToBag(C(), { kind: 'fish', sp: 'tuna', big: true, cm: 120 }); say('Câu được loài nào giơ đúng con đó: cá ngừ to trên đầu ~2,6 giây (ảnh PixelLab như thẻ cá) rồi bay vào ô/túi — bỏ xô 2026-10-11, cá vào thẳng túi.'); },
   async throwT() { if (!C().carry.get().length) addCarry(C(), { kind: 'fish', sp: 'carp' }); key('KeyT', true); await wait(60); key('KeyT', false); say('Phím T: con vật trên đầu bay vòng cung vào ô trống (hoặc ô có sẵn), bung lấp lánh, ô nảy, "+1". Thanh đầy → bay vào nút Túi.'); },
   async hudfx() { C().pop(P().x, P().y - 20, '+3 🪵 Gỗ'); C().toast('Túi đầy!'); window.__hero.hit(15); setTimeout(() => C().toast('Lên cấp 2! Máu và sức đánh tăng', true), 600); say('HUD Stardew: đồng hồ + đá góc phải, icon trạng thái, thông báo gộp góc dưới trái, băng đỏ việc lớn, máu/KN dọc, nhãn cạnh con trỏ.'); },
   async seafish() { Object.assign(S().save.story, { act: 2, seaDone: true, step: 127 }); S().save.story.path ||= 'noxx'; C().tool.set('rod', 1); await goZone('village'); await goZone('sea'); C().hold && C().hold('rod'); say('Ở biển: lên bè (E), cầm cần câu, E vào nước → vung cần, phao, thanh kéo, thẻ loài — y như trên bờ. Rocky ngồi mép bè đối diện Lyron.'); },

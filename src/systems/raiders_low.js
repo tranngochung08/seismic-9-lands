@@ -6,7 +6,7 @@
 // See systems/API.md. Only one raid runs at a time; it damages at most 40% of a district's pieces.
 
 import { mkCanvas, HOOK } from '../gfx.js';
-import { faceOfV, dirFrame } from './animals.js';
+import { faceOfV, dirFrame, hasFish, takeFish } from './animals.js';
 import { guardedByScarecrow } from './farm.js';   /* F02: bù nhìn Rocky đuổi thú phá trong bán kính 6 ô */
 
 // ---------------------------------------------------------------- strings
@@ -740,7 +740,7 @@ export const raidersLow = {
     }
     if (!best) return null;
     let label = S.shoo;
-    if (best.kind === 'monkey') label = carryArr(ctx).some(it => kindOf(it) === 'fish') ? S.giveFish : S.catchM;
+    if (best.kind === 'monkey') label = hasFish(ctx) ? S.giveFish : S.catchM;   /* cá trên tay hoặc trong túi (bỏ xô 2026-10-11) */
     else if (best.kind === 'boar') label = hasAxe(ctx) ? S.hitAxe : S.needAxe;
     else if (best.kind === 'beaver') label = (!carryArr(ctx).length && woodOf(ctx) >= 5) ? S.offerWood : (hasAxe(ctx) ? S.hitAxe : S.needAxe);
     return { label, x: best.x, y: best.y - 6, limit: 24, priority: true, data: { mob: best } };
@@ -752,9 +752,8 @@ export const raidersLow = {
     const S = L(ctx);
     if (m.kind === 'rat') { repel(ctx, m, false); return; }
     if (m.kind === 'monkey') {
-      const c = carryArr(ctx), i = c.findIndex(it => kindOf(it) === 'fish');
-      if (i >= 0) {                                                    // pay the troop off with a fish
-        c.splice(i, 1); syncCarry(ctx);
+      if (takeFish(ctx)) {                                             // pay the troop off with a fish (hand or bag)
+        syncCarry(ctx);
         ctx.toast(S.fishPaid, true);
         for (const q of mobs) if (!q.gone && q.st !== 'flee') { if (q.held) { putCarry(ctx, q.held); q.held = null; } fleeOff(ctx, q); }
         return;

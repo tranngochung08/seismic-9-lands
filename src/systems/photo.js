@@ -1,5 +1,6 @@
 // photo.js — Photo mode (P): freeze the scene, pick a frame / sticker / filter / pose, then download or copy a PNG
 // of exactly what is on screen (pixel canvas ×scale, nearest-neighbour + the crisp overlay). See systems/API.md.
+import { keyHint, isTouchUI } from '../hud.js';   /* polish 2026-10-10: cảm ứng → Ⓐ / ☰ thay E / Esc */
 
 const STR = {
   en: {
@@ -8,7 +9,7 @@ const STR = {
     stickers: { none: 'None', rocky: 'Rocky', mark: 'Wordmark', land: 'Land', me: 'Me + flags' },
     filters: { none: 'None', warm: 'Warm', cool: 'Cool', night: 'Night' },
     download: '📷 Download PNG', copy: '📋 Copy', close: 'Close',
-    hint: 'E / Space: snap · Arrows: pose · Esc: close',
+    hint: 'E / Space: snap · Arrows: pose · Esc: close', hintTouch: 'E: snap · Esc: close',
     saved: 'Photo saved!', copied: 'Copied to clipboard!', copyFail: 'Copy not allowed here — use Download', cheese: 'Say cheese! 📷', ach: 'Achievement: Photographer',
     shots: n => `${n} photo${n === 1 ? '' : 's'}`, mark: 'SEISMIC', mark2: '· 9 LANDS', caption: 'Seismic · 9 Lands'
   },
@@ -18,7 +19,7 @@ const STR = {
     stickers: { none: 'Không', rocky: 'Rocky', mark: 'Logo', land: 'Tên vùng', me: 'Tôi + cờ' },
     filters: { none: 'Không', warm: 'Ấm', cool: 'Lạnh', night: 'Đêm' },
     download: '📷 Tải PNG', copy: '📋 Sao chép', close: 'Đóng',
-    hint: 'E / Space: chụp · Mũi tên: đổi dáng · Esc: đóng',
+    hint: 'E / Space: chụp · Mũi tên: đổi dáng · Esc: đóng', hintTouch: 'E: chụp · Esc: đóng',
     saved: 'Đã lưu ảnh!', copied: 'Đã sao chép vào clipboard!', copyFail: 'Không sao chép được — hãy bấm Tải', cheese: 'Cười lên nào! 📷', ach: 'Thành tựu: Nhiếp ảnh gia',
     shots: n => `${n} ảnh`, mark: 'SEISMIC', mark2: '· 9 LANDS', caption: 'Seismic · 9 Lands'
   }
@@ -203,7 +204,7 @@ function buildPanel(ctx) {
       <button class="btn" id="ph-copy" style="margin:0;padding:9px 6px;font-size:13px">${T.copy}</button>
       <button class="btn" id="ph-close" style="margin:0;padding:9px 6px;font-size:13px;width:auto">${T.close}</button>
     </div>
-    <p class="dim tiny" style="margin:6px 0 0">${T.hint}</p>`;
+    <p class="dim tiny" style="margin:6px 0 0">${isTouchUI() ? keyHint(T.hintTouch) : T.hint}</p>`;
   const el = ctx.panel('photo', html);
   // dock bottom-right, let clicks pass through to nothing else (the .ov is full-screen)
   el.style.cssText = 'justify-content:flex-end;align-items:flex-end;pointer-events:none;background:transparent;padding:10px';

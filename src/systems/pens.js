@@ -6,11 +6,12 @@
 //  · Cho ăn: E ở máng với rơm 🌾 hoặc bắp 🌽 → mỗi lần 1 con no. Vuốt ve: E cạnh thú → +1 tim/ngày (tối đa 5).
 //  · Hết ngày (ctx.clock.onDayEnd): no → giữ tim + sản phẩm sáng (gà→trứng, bò→sữa, cừu→len, thỏ→lông thỏ, chim→lông chim);
 //    đói → −1 tim, KHÔNG chết (quyết định 3: không hình phạt). Tim ≥ 4 → bậc vàng (q=2, nhận ×2 vì items.js chưa có chất lượng).
-//  · Bảng chuồng: E ở bảng tên → ctx.panel: tên (đổi được), tim, no/đói, sản phẩm chờ → E/nút 'Lấy'. Sữa cần xô (ctx.tool.tier('bucket') ≥ 1).
+//  · Bảng chuồng: E ở bảng tên → ctx.panel: tên (đổi được), tim, no/đói, sản phẩm chờ → E/nút 'Lấy'. Sữa vắt bằng tay không (2026-10-11 anh bỏ xô).
 //  · Save: save.sys.pens[zone] = [{ x, y, tier, animals: [{kind, name, heart, fed, pet}], products: [{id, q}] }]. Save cũ thiếu → {}.
 //  · Chuồng gà cũ eco_coop (ecology.js) giữ nguyên, nằm ngoài plot nên không đụng nhau.
 import { HOOK, mkCanvas, PAL } from '../gfx.js';
 import { dirFrame } from './animals.js';
+import { drawThirsty } from './thirst.js';   /* 2026-10-11: thú trong chuồng ra máng uống (cúi đầu) */
 
 const TILE = 16, TAU = Math.PI * 2;
 const PW = 4, PH = 3;                                   /* dấu chân chuồng chuẩn: 4 ngang × 3 dọc ô (rào quanh, trong 2×1 ô); khu chật (bậc ≥4, tượng Rocky cao + nhà) → bản hẹp 3×3 */
@@ -19,7 +20,7 @@ const HEART_MAX = 5, PROD_MAX = 12;
 const KINDS = {
   chicken: { cat: 'small', prod: 'egg', icon: '🐔' }, bird: { cat: 'small', prod: 'feather', icon: '🐦' },
   rabbit: { cat: 'small', prod: 'fur_rabbit', icon: '🐰' }, crab: { cat: 'small', prod: null, icon: '🦀' },
-  cow: { cat: 'large', prod: 'milk', icon: '🐄', tool: 'bucket' }, sheep: { cat: 'large', prod: 'wool', icon: '🐑' }
+  cow: { cat: 'large', prod: 'milk', icon: '🐄' }, sheep: { cat: 'large', prod: 'wool', icon: '🐑' }
 };
 const SLOT = { small: 1, large: 2 };
 const CAP = { 1: 4, 2: 8 };
@@ -41,7 +42,7 @@ const STR = {
     released: n => `${n} settles into the pen`, feed: (n, m) => `Feed 🌾 (${n}/${m} fed)`, feedNeed: 'Needs hay 🌾 (cut tall grass with a scythe) or corn 🌽',
     allFed: 'Everyone in the pen has eaten today', noAnimals: 'The pen is empty — carry an animal to the gate first',
     pet: n => `Pet ${n}`, petted: n => `${n} is happy ♥`, board: 'Pen board', boardN: n => `Pen board · ${n} to collect`,
-    collect: 'Collect', needBucket: 'Milk needs a bucket — craft Bucket I at the workbench (3 wood + 1 resin)', got: s => `Collected: ${s}`, bagFull: 'Bag is full — some products stay in the pen',
+    collect: 'Collect', got: s => `Collected: ${s}`, bagFull: 'Bag is full — some products stay in the pen',
     heart: 'Hearts', fed: 'Fed', hungry: 'Hungry', products: 'Waiting to collect', none: 'Nothing yet — feed them and sleep', empty: 'No animals yet. Carry one to the gate and press E.',
     rename: 'Rename', ok: 'OK', close: 'Close', gold: 'gold', hint: 'Feed every day (hay/corn), pet for +1 ♥ · hungry animals lose 1 ♥ but never die · 4 ♥ = gold products',
     log: (icon, n, item) => `${icon} ${n} ${item}`, logHungry: n => `${n} pen animal(s) went hungry (−1 ♥)`
@@ -56,7 +57,7 @@ const STR = {
     released: n => `${n} đã vào chuồng`, feed: (n, m) => `Cho ăn 🌾 (${n}/${m} no)`, feedNeed: 'Cần rơm 🌾 (cắt cỏ cao bằng liềm) hoặc bắp 🌽',
     allFed: 'Cả chuồng đã no hôm nay', noAnimals: 'Chuồng trống — bế thú tới cổng thả vào trước',
     pet: n => `Vuốt ve ${n}`, petted: n => `${n} vui ♥`, board: 'Bảng chuồng', boardN: n => `Bảng chuồng · ${n} sản phẩm chờ`,
-    collect: 'Lấy', needBucket: 'Vắt sữa cần xô — chế Xô I ở Bàn mộc (3 gỗ + 1 nhựa thông)', got: s => `Thu: ${s}`, bagFull: 'Túi đầy — phần còn lại để ở chuồng',
+    collect: 'Lấy', got: s => `Thu: ${s}`, bagFull: 'Túi đầy — phần còn lại để ở chuồng',
     heart: 'Tim', fed: 'No', hungry: 'Đói', products: 'Sản phẩm chờ lấy', none: 'Chưa có — cho ăn rồi đi ngủ', empty: 'Chưa có thú. Bế thú tới cổng rồi bấm E.',
     rename: 'Đổi tên', ok: 'OK', close: 'Đóng', gold: 'vàng', hint: 'Cho ăn mỗi ngày (rơm/bắp), vuốt ve +1 ♥ · đói −1 ♥ nhưng không chết · 4 ♥ = sản phẩm vàng',
     log: (icon, n, item) => `${icon} ${n} ${item}`, logHungry: n => `${n} con trong chuồng bị đói (−1 ♥)`
@@ -219,14 +220,11 @@ function pet(ctx, e) {
   a.pet = true; a.heart = Math.min(HEART_MAX, a.heart + 1);
   hearts(e.x, e.y - 10, 5); ctx.sfx('squeak'); ctx.toast(t.petted(a.name)); ctx.persist();
 }
-/* lấy sản phẩm ở bảng: sữa cần xô; túi đầy → phần còn lại giữ ở chuồng */
+/* lấy sản phẩm ở bảng (sữa vắt tay không, bỏ xô 2026-10-11); túi đầy → phần còn lại giữ ở chuồng */
 function collect(ctx, pen) {
   const t = L(ctx), rec = pen.rec; if (!rec.products.length) return false;
-  if (ctx.hold && ctx.tool.tier('bucket') >= 1 && !ctx.holding('bucket') && rec.products.some(p => p.id === 'milk')) ctx.hold('bucket');   /* có sữa → tự cầm xô */
-  const keep = [], got = {}; let needBucket = false, full = false;
+  const keep = [], got = {}; let full = false;
   for (const p of rec.products) {
-    const k = KINDS[Object.keys(KINDS).find(x => KINDS[x].prod === p.id)] || {};
-    if (k.tool && (ctx.tool.tier(k.tool) < 1 || (ctx.holding && !ctx.holding(k.tool)))) { keep.push(p); needBucket = true; continue; }   /* plan-20: vắt sữa phải CẦM xô */
     if (full) { keep.push(p); continue; }
     const n = p.q === 2 ? 2 : 1, add = ctx.give(p.id, n);   /* plan-24: rơi ra cạnh người lấy */
     if (add < n) { full = true; if (add === 0) { keep.push(p); continue; } }
@@ -235,7 +233,6 @@ function collect(ctx, pen) {
   rec.products = keep;
   const s = Object.entries(got).map(([id, n]) => `${ctx.itemIcon(id)} ${ctx.itemName(id)} ×${n}`).join(' · ');
   if (s) { ctx.sfx('coin'); ctx.toast(t.got(s)); const c = cen(signT(rec)); ctx.pop(c.x, c.y - 16, '+' + Object.values(got).reduce((a, b) => a + b, 0)); }
-  if (needBucket) ctx.toast(ctx.tool.tier('bucket') >= 1 && ctx.needHold ? ctx.needHold('bucket') : t.needBucket);
   if (full) ctx.toast(t.bagFull);
   ctx.persist();
   return !!s;
@@ -324,8 +321,24 @@ function drawFx(g, cx, cy) {
 
 /* ---------------------------------------------------------------- thú đi lại trong rào */
 function faceOfAng(ang) { const vx = Math.cos(ang), vy = Math.sin(ang); return Math.abs(vx) >= Math.abs(vy) ? (vx >= 0 ? 'e' : 'w') : (vy >= 0 ? 's' : 'n'); }
+/* 2026-10-11 anh: thú thấy nước chỉ uống — trong chuồng, nước duy nhất là MÁNG (hàng rào dưới): khát → đi tới sát máng, cúi uống 2–3 s, no rồi quay vào trong */
+function drinkEnt(dt, pen, e, k, rc) {
+  if (e.thirstT === undefined) e.thirstT = 15 + Math.random() * 40;
+  if (!e.dr) { e.thirstT -= dt; if (e.thirstT > 0) return false; const tr = troughT(pen.rec); e.dr = { ph: 'go', x: Math.max(rc.x0, Math.min(rc.x1, tr.x * TILE + 8 + (Math.random() - 0.5) * 8)), y: rc.y1, dx: 0, dy: 1, t: 0 }; }
+  const d = e.dr;
+  if (d.ph === 'go') {
+    const vx = d.x - e.x, vy = d.y - e.y, dist = Math.hypot(vx, vy); d.t += dt;
+    if (dist < 1 || d.t > 8) { e.x = d.x; e.y = d.y; d.ph = 'drink'; d.t = 0; d.T = 2 + Math.random(); e.st = 'idle'; e.face = 's'; return true; }
+    const s = Math.min(dist, k.sp * dt) / dist; e.x += vx * s; e.y += vy * s; e.st = 'walk'; e.ang = Math.atan2(vy, vx); e.dir = vx >= 0 ? 1 : -1; e.face = faceOfAng(e.ang);
+    e.ft += dt * k.anim; e.fr = (e.ft | 0) % 2; return true;
+  }
+  d.t += dt; e.st = 'idle'; e.fr = 0; d.dip = d.t < 0.2 || d.t > d.T - 0.2 || Math.abs(d.t - d.T / 2) < 0.15 ? 1 : 2;
+  if (d.t >= d.T) { e.dr = null; e.drinkN = (e.drinkN || 0) + 1; e.thirstT = 60 + Math.random() * 60; e.st = 'walk'; e.t = 1 + Math.random(); e.ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.2; return false; }
+  return true;
+}
 function updateEnt(dt, pen, e) {
   const k = MOVE[e.kind] || MOVE.chicken, rc = rect(pen.rec);
+  if (drinkEnt(dt, pen, e, k, rc)) return;
   e.t -= dt;
   if (e.st === 'walk') {
     let nx = e.x + Math.cos(e.ang) * k.sp * dt, ny = e.y + Math.sin(e.ang) * k.sp * dt;
@@ -387,7 +400,8 @@ export const pens = {
       list.forEach((raw, i) => { const rec = normPen(raw); if (rec.x >= 0 && rec.y >= 0 && rec.x + wOf(rec) <= map.w && rec.y + PH <= map.h) placePen(ctx, rec, i); });
     }
     if (typeof window !== 'undefined') window.__pens = {
-      state: () => PENS.map(p => ({ x: p.rec.x, y: p.rec.y, w: wOf(p.rec), g: gCol(p.rec), tier: p.rec.tier, cap: capOf(p.rec), used: slotsUsed(p.rec), animals: p.rec.animals.map(a => ({ ...a })), products: p.rec.products.map(q => ({ ...q })), ents: p.ents.map(e => ({ kind: e.kind, x: Math.round(e.x), y: Math.round(e.y), st: e.st })) })),
+      state: () => PENS.map(p => ({ x: p.rec.x, y: p.rec.y, w: wOf(p.rec), g: gCol(p.rec), tier: p.rec.tier, cap: capOf(p.rec), used: slotsUsed(p.rec), animals: p.rec.animals.map(a => ({ ...a })), products: p.rec.products.map(q => ({ ...q })), ents: p.ents.map(e => ({ kind: e.kind, x: Math.round(e.x), y: Math.round(e.y), st: e.st, drink: e.dr ? e.dr.ph : null, drinkN: e.drinkN || 0 })) })),
+      thirsty: () => { for (const p of PENS) for (const e of p.ents) { e.dr = null; e.thirstT = 0; } return true; },   /* test: cả chuồng khát ngay */
       save: () => JSON.parse(JSON.stringify(sv(ctx))),
       spot: () => {   /* ô gốc dựng được đầu tiên trong plot của mình (quét) → { x0, y0, gate } */
         const my = ctx.myPlot(); if (!my) return null;
@@ -445,7 +459,7 @@ export const pens = {
       }
       for (const e of pen.ents) {
         const img = spriteOf(e), ex = Math.round(e.x), ey = Math.round(e.y);
-        if (img) { const dx = ex - (img.width >> 1) - cx, dy = ey - img.height - cy; out.push({ y: e.y, f: () => g.drawImage(img, dx, dy) }); }
+        if (img) { const dx = ex - (img.width >> 1) - cx, dy = ey - img.height - cy; out.push({ y: e.y, f: () => drawThirsty(g, img, dx, dy, e) }); }   /* đang uống ở máng → cúi đầu */
         else out.push({ y: e.y, f: () => { g.fillStyle = '#c9a86b'; g.fillRect(ex - 5 - cx, ey - 8 - cy, 10, 8); } });
       }
     }

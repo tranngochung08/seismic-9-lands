@@ -149,6 +149,7 @@ input:focus{border-color:var(--accent)}
 #btn-a{right:24px;bottom:70px;width:68px!important;height:68px!important;background:rgba(255,148,38,.6)!important;font-weight:800}
 #btn-menu{right:24px;top:52px;width:40px!important;height:40px!important;font-size:14px!important}
 #btn-photo{right:70px;top:52px;width:40px!important;height:40px!important;font-size:16px!important}
+#btn-tgt{right:100px;bottom:24px;width:auto!important;height:34px!important;padding:0 10px;border-radius:17px!important;font-size:13px!important;white-space:nowrap;border-color:rgba(255,212,94,.7)!important;background:rgba(20,16,32,.7)!important;color:#ffd45e!important} #btn-tgt[hidden]{display:none}   /* 2026-10-11: đổi mục tiêu (chỉ hiện khi có ≥ 2 mục tiêu) */
 #touch-skills{position:absolute;right:16px;bottom:150px;display:flex;flex-direction:column;gap:8px;pointer-events:none} #touch-skills button{position:static;width:44px;height:44px;font-size:16px;border-color:rgba(255,212,94,.6)} #touch-skills[hidden]{display:none}
 @media (pointer:coarse){#seis{left:auto;right:10px;bottom:150px} #t-ctl{display:none}}
 /* ---- plan-10: menu phụ RPG pixel (#menu) ---- */
@@ -156,7 +157,7 @@ input:focus{border-color:var(--accent)}
 #menu .mframe.px{border:20px solid transparent;border-image:url(assets/px/ui/frame.png) 20 / 20px round;border-radius:0;image-rendering:pixelated;background:var(--panel);background-clip:padding-box;padding:6px 10px 10px}
 .pxi.st.play{transform:rotate(90deg)}
 .mtabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
-.mtab{display:flex;align-items:center;gap:6px;padding:5px 12px;border:2px solid var(--line);background:#241e34;color:var(--dim);cursor:pointer;font-size:14px;user-select:none}
+.mtab{display:flex;align-items:center;gap:6px;padding:5px 9px;border:2px solid var(--line);background:#241e34;color:var(--dim);cursor:pointer;font-size:14px;user-select:none}
 .mtab.on{color:var(--gold);border-color:var(--gold);background:#2b2440}
 .pxi{width:32px;height:32px;image-rendering:pixelated;display:block} .pxi.st{width:20px;height:20px;display:inline-block;vertical-align:middle}
 .emo{font-size:22px;line-height:32px;display:block;text-align:center;width:32px} .emo.st{font-size:16px;line-height:20px;width:auto;display:inline-block}
@@ -277,7 +278,7 @@ img,canvas{image-rendering:pixelated}
 #h-story,#h-quest,#h-task,#h-target{white-space:nowrap}
 
 /* ===== plan-22 B2: túi đồ kiểu Stardew (vô hạn, kéo-thả) ===== */
-#menu .mframe{width:min(700px,100%)}
+#menu .mframe{width:min(790px,100%)}
 #menu .inv{display:flex;flex-direction:column;gap:4px;align-items:center}
 #menu .inv-grid{display:grid;grid-template-columns:repeat(12,44px);gap:2px;justify-content:center}
 #menu .inv-sep{width:100%;height:4px;background:#352022;margin:2px 0}
@@ -464,6 +465,7 @@ img,canvas{image-rendering:pixelated}
   /* câu cá: bảng câu vẽ ở đáy màn → ẩn D-pad (không đi được khi câu), nút A nhích sát mép phải */
   body[data-mode=fish] #touch .dpad,body[data-mode=seafish] #touch .dpad{visibility:hidden}
   body[data-mode=fish] #btn-a,body[data-mode=seafish] #btn-a{right:8px}
+  body[data-mode=fish] #seis,body[data-mode=seafish] #seis{visibility:hidden}   /* polish 2026-10-10: máy đo địa chấn (đáy phải) đè chữ gợi ý của bảng câu */
   /* máy tính bảng: ☰ / 📷 cũng bị đồng hồ (192×112) che → xuống dưới đồng hồ (điện thoại dọc / ngang có luật riêng bên dưới) */
   #btn-menu{top:166px;right:10px}
   #btn-photo{top:166px;right:56px}
@@ -511,3 +513,58 @@ img,canvas{image-rendering:pixelated}
 #menu .mvol span{min-width:7em}
 #menu .mvol input{flex:1;accent-color:#ffd45e;min-height:28px}
 #menu .mvol b{min-width:3.2em;text-align:right;font-weight:normal}
+/* 2026-10-11 anh: nút ⟳ xoay ngang — chỉ hiện trên điện thoại đang cầm DỌC */
+#btn-rot{display:none;width:40px!important;height:40px!important;font-size:18px!important}
+@media (pointer:coarse) and (orientation:portrait){ #btn-rot{display:block;position:fixed;top:134px;right:102px} }
+/* 2026-10-11 anh: cần điều khiển tròn (kéo thả) thay D-pad 4 nút */
+#joy{position:absolute;left:10px;top:10px;width:140px;height:140px;border-radius:50%!important;pointer-events:auto;touch-action:none}
+#joy .jring{position:absolute;inset:0;border-radius:50%!important;background:rgba(20,16,32,.38);border:3px solid rgba(255,255,255,.28);box-shadow:inset 0 0 0 10px rgba(255,255,255,.05)}
+#joy .jknob{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%!important;background:rgba(255,212,94,.72);border:3px solid rgba(70,40,20,.85);box-shadow:0 3px 0 rgba(0,0,0,.35);transition:transform .08s}
+#joy.on .jknob{transition:none;background:rgba(255,212,94,.9)}
+/* 2026-10-11 anh: ĐIỆN THOẠI bỏ thanh công cụ PC → nút A THEO NGỮ CẢNH (icon + chữ việc sẽ làm) + nút ĂN tròn + nút Túi (src/mslots.js xếp theo tâm nút A) */
+#mslots{position:absolute;inset:0;pointer-events:none}
+#mslots[hidden]{display:none}
+#mslots .ms-eat,#mslots .ms-bag{position:absolute;pointer-events:auto;touch-action:none;-webkit-touch-callout:none;box-sizing:border-box;border-radius:50%;background:url(assets/px/ui/mslots/ring.png) no-repeat center/100% 100%;image-rendering:pixelated;display:flex;align-items:center;justify-content:center}
+#mslots .ms-eat{width:58px;height:58px}
+#mslots .ms-eat img{width:32px;height:32px;margin-top:-6px;image-rendering:pixelated;pointer-events:none}
+#mslots .ms-eat.dim{opacity:.5}
+#mslots .ms-eat .ms-v{position:absolute;left:0;right:0;bottom:-6px;text-align:center;font:16px/1 VT323,monospace;font-style:normal;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022;pointer-events:none}
+#mslots .ms-bag{width:48px;height:48px}
+#mslots .ms-bag img{width:30px;height:30px;image-rendering:pixelated;pointer-events:none}
+#mslots .ms-bag.hb-catch{animation:msCatch .5s steps(5)}
+@keyframes msCatch{0%{transform:scale(1.2)}60%{transform:scale(1.08)}100%{transform:none}}
+.ms-n{position:absolute;right:6px;top:4px;font:15px/1 VT323,monospace;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022;pointer-events:none}
+/* nút A tròn PixelLab: icon món/việc sẽ làm + chữ ngắn; thiếu dụng cụ → icon xám */
+#btn-a.ms-a{width:84px!important;height:84px!important;border:none!important;border-radius:50%!important;background:url(assets/px/ui/mslots/btn_a.png) no-repeat center/100% 100%!important;image-rendering:pixelated;padding:0;display:flex;align-items:center;justify-content:center}
+#btn-a.ms-a:active{transform:translateY(2px)}
+#btn-a .ms-a-l{font:40px/1 VT323,monospace;color:#fff6c8;text-shadow:2px 2px 0 #6b3416;pointer-events:none}
+#btn-a img{width:40px;height:40px;margin-top:-10px;image-rendering:pixelated;pointer-events:none}
+#btn-a .ms-a-v{position:absolute;left:-10px;right:-10px;bottom:6px;text-align:center;white-space:nowrap;font:17px/1 VT323,monospace;font-style:normal;color:#fff6c8;text-shadow:1px 1px 0 #6b3416,-1px 0 0 #6b3416,0 -1px 0 #6b3416,1px 0 0 #6b3416;pointer-events:none}
+#btn-a .ms-a-l:only-child{font-size:40px} #btn-a .ms-a-l:not(:only-child){font-size:32px;margin-top:-14px}
+#btn-a.ms-no img{filter:grayscale(1);opacity:.55}
+#btn-a.ms-no .ms-a-v{color:#c9b9a6}
+@media (pointer:coarse){
+  #hotbar{display:none!important}   /* thanh công cụ PC ẩn hẳn trên màn cảm ứng (dọc + ngang) */
+  #touch{z-index:8}   /* nút cảm ứng nằm TRÊN nhãn hành động / thông báo (#pxhud z 7), dưới bảng (.ov z 10) */
+  #btn-a{right:calc(28px + env(safe-area-inset-right))!important;bottom:calc(70px + env(safe-area-inset-bottom))!important}
+  body[data-mode=fish] #mslots,body[data-mode=seafish] #mslots{display:none}
+}
+@media (pointer:coarse) and (orientation:portrait){ #seis{left:10px;right:auto;top:auto;bottom:226px} }   /* máy đo địa chấn: trên cần tròn (đáy phải giờ là cụm A / Ăn / Túi) */
+@media (pointer:coarse) and (orientation:landscape) and (max-height:500px){
+  #btn-a{right:calc(22px + env(safe-area-inset-right))!important;bottom:calc(44px + env(safe-area-inset-bottom))!important}
+}
+/* 2026-10-11 anh (điện thoại thật, Chrome có thanh địa chỉ): nút cảm ứng + HUD bám VÙNG NHÌN THẤY THẬT (--vv* do main.js đo bằng visualViewport), không bao giờ nằm dưới mép thấy được */
+html,body{height:100%;height:100dvh}
+@media (pointer:coarse){
+  #touch,#pxhud{inset:auto;left:var(--vvl,0px);top:var(--vvt,0px);width:var(--vvw,100%);height:var(--vvh,100%)}
+  .dpad{margin-left:env(safe-area-inset-left);margin-bottom:env(safe-area-inset-bottom)}
+  #px-label{display:none!important}   /* nhãn hành động nổi trên đầu người: điện thoại đã có chữ việc làm ngay trên nút A → bỏ, không che nhân vật giữa màn */
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:500px){
+  /* chip trạng thái: cột gọn bên phải dưới đồng hồ (trước nằm ngang giữa màn, đè người chơi); không xuống tới cụm nút A */
+  #px-status{top:134px;right:120px;max-width:200px;flex-direction:column;align-items:flex-end;flex-wrap:nowrap;max-height:calc(var(--vvh,100vh) - 290px);overflow:hidden}
+  #px-status .ps{font-size:14px;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:430px){
+  #herobar .hb-hp{height:64px} #herobar .hb-xp{height:58px}   /* máy thấp: thanh máu ngắn lại để không chạm nút A */
+}

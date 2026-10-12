@@ -34,7 +34,14 @@ import { wreck } from './wreck.js';
 import { drops } from './drops.js';
 import { land } from './land.js';
 import { ponds } from './ponds.js';
+import { petgun } from './petgun.js';   /* 2026-10-11: Súng Hóa Đá (phe Xealist) — trước monsters để click khi cầm súng = bắn */
+import { knock } from './knock.js';   /* 2026-10-11: phản ứng trúng đòn của người chơi (ctx.knockPlayer) */
+import { spar } from './spar.js';
+import { road } from './road.js';   /* plan-28: đường đèo giữa các vùng (bạn tập chắn đường, cổng đèo) */
+import { arena } from './arena.js';   /* 2026-10-11: Sàn Đấu Ngầm (vật thể + Rocky chờ ở mép sàn) */   /* 2026-10-11: bạn tập gọi qua Xealist */
 import { xealist } from './xealist.js';   /* plan-25 B3: phe Xealist (nhiệm vụ đen, Bóng tối, hóa đá, hối cải) */   /* plan-25: đào ao nuôi cá */   /* plan-25: phe Noxx mua đất từ Leader */   /* plan-24: mọi vật phẩm rơi ra → nhặt → ném vào túi */   /* plan-23: quái phá làng ban đêm, dân tự sửa ban ngày */
+import { fortress } from './fortress.js';   /* plan-26 B2: Pháo Đài Xealist (màn thắng trùm cuối / NPC Xealist phe Xealist) — sau underwater: bọc ctx.onBossDown */
 import { underwater } from './underwater.js';   /* plan-26 B0: Heathcliff + viên thở + hơi thở + điểm lặn + tầng nước u1 (trước monsters: đặt ctx.uwGateOpen / onBossDown / stunPlayer) */
 
-export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, sumo, pet, storySea, storyLand, trench, hero, underwater, villagers, monsters, wreck, drops, land, ponds, xealist, vfx].filter(Boolean);
+import { dragon } from './dragon.js';   /* plan-29: 7 Ngọc Rồng → Rồng Thần, 5 điều ước, ngoại hình Chad, chiêu Rồng Thần Giáng (cuối danh sách: vẽ trên cùng, bắt clip động tác sau mọi hệ) */
+export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, sumo, pet, storySea, storyLand, trench, hero, underwater, fortress, villagers, petgun, monsters, spar, road, arena, knock, wreck, drops, land, ponds, xealist, vfx, dragon].filter(Boolean);

@@ -5,6 +5,8 @@
 //  · Planting: a seed on grass grows through 3 sapling stages (60 s each, ms game = 100 phút game/giai đoạn,
 //    persisted) and finally becomes a real tree that trees.js can chop.
 import { mkCanvas, rngFrom, hashStr, circle, line, PAL, TS, T } from '../gfx.js';
+import { ART } from '../art.js';
+const markImg = k => { const im = ART.on && ART.packs && ART.packs.village && ART.packs.village.images; return im ? im['mark_' + k] || null : null; };
 
 // ---------- text ----------
 const STR = {
@@ -15,7 +17,7 @@ const STR = {
     pickMush: 'Pick mushroom', takeHoney: 'Take honey', plant: 'Plant a seed',
     needPick: 'Needs a pickaxe — craft Pickaxe I at the workbench (6 wood + 2 rock)', needIron: 'Needs Pickaxe II — craft it at the furnace in M4/M5 (3 iron + 2 wood)', needKnife: 'Needs a knife — craft it at the workbench (2 rock + 1 wood)',
     needShovel: 'Needs a shovel — craft it at the workbench (4 wood)', needScythe: 'Needs a scythe — craft it at the workbench (3 wood + 1 rock)', needTorch: 'Bees! Bring a torch — craft it at the workbench (2 wood + 1 resin)',
-    bees: 'Bees! Bring a torch — craft it at the workbench (2 wood + 1 resin)', meltBucket: 'The wooden bucket would melt — forge an iron bucket at the furnace in M4/M5 (2 iron bars)',
+    bees: 'Bees! Bring a torch — craft it at the workbench (2 wood + 1 resin)',
     planted: 'Seed planted', grown: 'A sapling grew into a tree'
   },
   vi: {
@@ -25,7 +27,7 @@ const STR = {
     pickMush: 'Hái nấm', takeHoney: 'Lấy mật ong', plant: 'Trồng hạt',
     needPick: 'Cần cuốc — chế Cuốc I ở Bàn mộc (6 gỗ + 2 đá)', needIron: 'Cần Cuốc II — chế ở Lò nung M4/M5 (3 sắt + 2 gỗ)', needKnife: 'Cần dao — chế ở Bàn mộc (2 đá + 1 gỗ)',
     needShovel: 'Cần xẻng — chế ở Bàn mộc (4 gỗ)', needScythe: 'Cần liềm — chế ở Bàn mộc (3 gỗ + 1 đá)', needTorch: 'Ong! Cần đuốc — chế ở Bàn mộc (2 gỗ + 1 nhựa thông)',
-    bees: 'Ong! Cần đuốc — chế ở Bàn mộc (2 gỗ + 1 nhựa thông)', meltBucket: 'Xô gỗ sẽ chảy — rèn Xô sắt ở Lò nung M4/M5 (2 thanh sắt)',
+    bees: 'Ong! Cần đuốc — chế ở Bàn mộc (2 gỗ + 1 nhựa thông)',
     planted: 'Đã trồng hạt', grown: 'Cây non đã thành cây lớn'
   }
 };
@@ -65,6 +67,14 @@ const ST = {
   parts: [],         // particles
   prune: 0
 };
+/* 2026-10-11 bụi quả PixelLab (tools/px-berry.py): pack objects.bush = bản ĐÃ HÁI, objects.bush_ripe = bản CHÍN.
+   Bụi chưa hái → o.artImg = ảnh chín (main.js vẽ artImg thay d.img, cùng lớp sắp theo chiều sâu); đang hồi → về ảnh đã hái. */
+function ripeImg() {
+  if (!ART.on) return null;
+  let p = ART.packs[ART.zone]; const seen = new Set();
+  while (p && !seen.has(p.id)) { const m = p.objects && p.objects.bush_ripe; if (m) return m.img; seen.add(p.id); p = p.inherit ? ART.packs[p.inherit] : null; }
+  return null;
+}
 const tkey = (x, y) => x * 4096 + y;
 const okey = (def, o) => `${def.kind}:${o.x},${o.y}`;
 /* F01: 'ms' theo đồng hồ game (600 ms / phút game → GROW 60 s = 100 phút game ≈ 1 giai đoạn); chưa có clock → giờ máy như cũ */
@@ -203,7 +213,7 @@ function addNode(ctx, o) {
 function dropNode(ctx, o) {
   const d = ctx.O[o.type];
   if (d) for (let j = 0; j < d.fh; j++) for (let i = 0; i < d.fw; i++) { const e = ST.grid.get(tkey(o.x + i, o.y + j)); if (e && e.o === o) ST.grid.delete(tkey(o.x + i, o.y + j)); }
-  const i = ST.nodes.findIndex(e => e.o === o); if (i >= 0) ST.nodes.splice(i, 1);
+  const i = ST.nodes.findIndex(e => e.o === o); if (i >= 0) { if (ST.nodes[i].def.kind === 'berry') o.artImg = null; ST.nodes.splice(i, 1); }
 }
 // objects other systems may have removed (a chopped palm) must not linger in our grid
 function pruneNodes(ctx) {
@@ -342,10 +352,19 @@ function giveOut(ctx, def, o) {
   if (any && def.seed && Math.random() < SEED_CHANCE) ctx.give('seed', 1, ox, oy);
   return any;
 }
-function startAct(ctx, label, dur, wx, wy, run, by) {
+/* 2026-10-11: clip theo LOẠI việc (không đoán theo nhãn) — hái bằng tay = 'pick' (dự phòng 'harvest'), không bao giờ vung rìu */
+const ACT_CLIP = { rock: 'mine', ore: 'mine', obs: 'mine', cry: 'mine', seis: 'mine', ice: 'mine', sand: 'hoe', hay: 'attack', plant: 'harvest',
+  berry: 'pick', mush: 'pick', flower: 'pick', honey: 'pick', leaf: 'pick', resin: 'pick', lava: 'pick', wood: 'chop' };
+const ACT_FALLBACK = { pick: ['harvest'], hoe: ['mine'], attack: ['harvest'], harvest: ['pick'] };
+function clipFor(p, kind) {
+  const want = ACT_CLIP[kind] || 'chop';
+  for (const c of [want, ...(ACT_FALLBACK[want] || [])]) if (p.hasAct(c)) return c;
+  return null;
+}
+function startAct(ctx, label, dur, wx, wy, run, by, kind) {
   const p = ctx.S.player;
-  ST.act = { label, t: 0, dur, wx, wy, by: by === undefined ? wy - 16 : by, px: p.x, py: p.y, run };
-  if (p.act && p.faceTo) { p.faceTo(wx, wy); const clip = /sand|cát/i.test(label) && p.hasAct('hoe') ? 'hoe' : /mine|ore|obs|crystal|stone|đào|quặng|đá|khoáng/i.test(label) ? 'mine' : 'chop';   /* đào cát = clip cuốc (plan-20) */ /* nhãn đã dịch EN/VI */ if (p.hasAct(clip)) p.act(clip, dur, true); }   // clip PixelLab (lặp tới khi xong)
+  ST.act = { label, t: 0, dur, wx, wy, by: by === undefined ? wy - 16 : by, px: p.x, py: p.y, run, kind };
+  if (p.act && p.faceTo) { p.faceTo(wx, wy); const clip = p.hasAct ? clipFor(p, kind) : null; if (clip) p.act(clip, dur, true); }   /* clip PixelLab, lặp tới khi xong */
 }
 function finishAct(ctx) {
   const a = ST.act; ST.act = null; if (ctx.S.player.endAct) ctx.S.player.endAct(); if (!a) return;
@@ -373,7 +392,7 @@ function objInteract(ctx, o, def, wx, wy) {
     if (def.remove) { dropNode(ctx, o); ctx.removeObject(map, o); }
     else { o.gh = 0; setCd(zb(ctx).o, okey(def, o), def.cd || 60); }
     ctx.persist();
-  }, bar);
+  }, bar, def.kind);
 }
 
 function tileNode(ctx, tx, ty, any) {   /* any: chỉ cần CÓ dụng cụ (không cần đang cầm) — dùng khi trỏ chuột để click tự cầm; node.tool = món cần */
@@ -383,8 +402,8 @@ function tileNode(ctx, tx, ty, any) {   /* any: chỉ cần CÓ dụng cụ (kh�
     return { kind: 'sand', label: t.digSand, tx, ty, dur: 1.2, tool: 'shovel' };
   if (id === 'm8' && g0 === T.ICE && T1(ctx, 'pickaxe') && !cdLeft(b.t, 'ice:' + tx + ',' + ty))
     return { kind: 'ice', label: t.chipIce, tx, ty, dur: 1.2, tool: 'pickaxe' };
-  if (id === 'm7' && T1(ctx, 'bucket') && !cdLeft(b.t, 'lava') && nextToLava(ctx, tx, ty))
-    return { kind: 'lava', label: t.scoopLava, tx, ty, dur: 1.4, tool: 'bucket' };
+  if (id === 'm7' && T1(ctx, 'pickaxe') && !cdLeft(b.t, 'lava') && nextToLava(ctx, tx, ty))   /* 2026-10-11 anh bỏ xô: múc dung nham bằng Cuốc II */
+    return { kind: 'lava', label: t.scoopLava, tx, ty, dur: 1.4, tool: 'pickaxe' };
   if (g0 === T.FLOWER)
     return { kind: 'flower', label: t.pickFlowers, tx, ty, dur: 0.9 };
   if ((g0 === T.GRASS || g0 === T.GRASS2) && T1(ctx, 'scythe') && !cdLeft(b.t, 'hay:' + tx + ',' + ty))
@@ -401,8 +420,8 @@ function nextToLava(ctx, tx, ty) {
 function tileInteract(ctx, n) {
   const t = L(ctx), map = ctx.S.map, b = zb(ctx);
   const wx = n.tx * TS + 8, wy = n.ty * TS + 10, bar = n.ty * TS - 6;
-  if (n.kind === 'lava' && ctx.tool.tier('bucket') < 2) { ctx.toast(t.meltBucket); ctx.sfx('fail'); return; }
-  if (n.kind === 'plant') { if (ctx.trespass && !ctx.trespass(n.tx, n.ty, 'plant')) return; startAct(ctx, n.label, n.dur, wx, wy, () => doPlant(ctx, n.tx, n.ty), bar); return; }   /* plan-18: trồng cây khu nước khác */
+  if (n.kind === 'lava' && ctx.tool.tier('pickaxe') < 2) { ctx.toast(t.needIron); ctx.sfx('fail'); return; }
+  if (n.kind === 'plant') { if (ctx.trespass && !ctx.trespass(n.tx, n.ty, 'plant')) return; startAct(ctx, n.label, n.dur, wx, wy, () => doPlant(ctx, n.tx, n.ty), bar, 'plant'); return; }   /* plan-18: trồng cây khu nước khác */
   startAct(ctx, n.label, n.dur, wx, wy, () => {
     if (n.kind === 'sand') {
       if (!giveOut(ctx, { item: 'sand', n: 2 })) return;
@@ -426,7 +445,7 @@ function tileInteract(ctx, n) {
       burst(ctx, wx, wy, 8, ['#ffb03a', '#e8541e', '#a8300e']);
     }
     ctx.persist();
-  }, bar);
+  }, bar, n.kind);
 }
 
 // ---------- the system ----------
@@ -434,6 +453,7 @@ export const gather = {
   id: 'gather',
 
   onZoneEnter(ctx) {
+    ctx.plantTreeAt = (tx, ty) => { if (!ctx.bag.has('seed', 1)) return false; doPlant(ctx, tx, ty); return true; };   /* 2026-10-11 anh: hạt giống cây trồng được vào đất đã xới (farm.js gọi) */
     ensureSprites(ctx);
     ST.grid.clear(); ST.nodes.length = 0; ST.plants.length = 0; ST.parts.length = 0;
     ST.act = null; ST.prune = 0;
@@ -454,6 +474,10 @@ export const gather = {
       p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.g * dt;
     }
     if (!ctx.S.map || !ctx.S.zone) return;
+    {
+      const rip = ripeImg(), bo = zb(ctx).o;
+      for (const e of ST.nodes) if (e.def.kind === 'berry') { const o = e.o; o.artImg = rip && !o.claimed && !o.ruined && !cdLeft(bo, okey(e.def, o)) ? rip : null; }
+    }
     if (ST.act) {
       const p = ctx.S.player;
       if (ctx.S.mode !== 'play' || Math.hypot(p.x - ST.act.px, p.y - ST.act.py) > 8) { ST.act = null; if (p.endAct) p.endAct(); }
@@ -519,11 +543,10 @@ export const gather = {
     if (d.o) objInteract(ctx, d.o, d.def, d.wx, d.wy);
   },
 
-  draw(g, ctx, cx, cy) {
+  drawGround(g, ctx, cx, cy) {   /* 2026-10-11 anh: ô cát đã đào che người chơi → vết trên đất (cát đào, cỏ cắt, băng đục) vẽ ở LỚP NỀN, dưới mọi nhân vật */
     const map = ctx.S.map; if (!map) return;
     const b = zb(ctx), t = nowMs();
     const x0 = cx - 24, y0 = cy - 24, x1 = cx + ctx.VW + 24, y1 = cy + ctx.VH + 24;
-
     // tile marks left by harvesting: stubble on mown grass, a hollow in dug sand, a chip in the ice
     for (const k in b.t) {
       if (b.t[k] <= t) continue;
@@ -532,6 +555,7 @@ export const gather = {
       const tx = +pos[0], ty = +pos[1]; if (!isFinite(tx) || !isFinite(ty)) continue;
       const sx = tx * TS - cx, sy = ty * TS - cy;
       if (tx * TS < x0 || tx * TS > x1 || ty * TS < y0 || ty * TS > y1) continue;
+      { const mi = markImg(kind); if (mi) { g.drawImage(mi, 0, 0, mi.width, mi.height, sx, sy, TS, TS); continue; } }   /* 2026-10-11 anh: vết đào cát / cỏ cắt / đục băng = ảnh PixelLab (gói village: mark_*), vẽ code chỉ dự phòng */
       if (kind === 'hay') {
         g.fillStyle = '#b9a35e';
         for (const [ox, oy] of [[3, 11], [6, 13], [9, 10], [12, 12], [5, 8]]) g.fillRect(sx + ox, sy + oy, 1, 3);
@@ -545,6 +569,13 @@ export const gather = {
       }
     }
 
+  },
+
+  draw(g, ctx, cx, cy) {
+    const map = ctx.S.map; if (!map) return;
+    const b = zb(ctx), t = nowMs();
+    const x0 = cx - 24, y0 = cy - 24, x1 = cx + ctx.VW + 24, y1 = cy + ctx.VH + 24;
+
     // object marks: ripe berries, fresh cuts on palms / pines, a quiet hive
     for (const e of ST.nodes) {
       const o = e.o, def = e.def, d = ctx.O[o.type]; if (!d || o.claimed) continue;   /* plan-21: quái đang chiếm chỗ tài nguyên */
@@ -552,7 +583,7 @@ export const gather = {
       if (ox < x0 || ox > x1 || oy < y0 - 32 || oy > y1) continue;
       const sx = ox - cx, sy = oy - cy;
       const cooling = def.cd ? cdLeft(b.o, okey(def, o)) : 0;
-      if (def.kind === 'berry' && !cooling) {
+      if (def.kind === 'berry' && !cooling && !o.artImg) {   /* chỉ khi chưa có ảnh bụi chín PixelLab (ART tắt) */
         g.fillStyle = '#b3123a';
         for (const [px, py] of [[4, 7], [10, 6], [7, 11], [11, 10]]) { g.fillRect(sx + px, sy + py, 2, 2); }
         g.fillStyle = '#ff5a7a'; g.fillRect(sx + 4, sy + 7, 1, 1); g.fillRect(sx + 10, sy + 6, 1, 1);

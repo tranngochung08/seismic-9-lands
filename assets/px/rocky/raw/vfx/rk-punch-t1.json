@@ -1,0 +1,157 @@
+{
+ "frames": [
+  {
+   "filename": "rk-punch-t1 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "sourceSize": {
+    "w": 34,
+    "h": 31
+   },
+   "pivot": {
+    "x": 0.47058823529411764,
+    "y": 0.5161290322580645
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-punch-t1 1.png",
+   "frame": {
+    "x": 34,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "sourceSize": {
+    "w": 34,
+    "h": 31
+   },
+   "pivot": {
+    "x": 0.47058823529411764,
+    "y": 0.5161290322580645
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-punch-t1 2.png",
+   "frame": {
+    "x": 68,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "sourceSize": {
+    "w": 34,
+    "h": 31
+   },
+   "pivot": {
+    "x": 0.47058823529411764,
+    "y": 0.5161290322580645
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-punch-t1 3.png",
+   "frame": {
+    "x": 0,
+    "y": 31,
+    "w": 34,
+    "h": 31
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "sourceSize": {
+    "w": 34,
+    "h": 31
+   },
+   "pivot": {
+    "x": 0.47058823529411764,
+    "y": 0.5161290322580645
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-punch-t1 4.png",
+   "frame": {
+    "x": 34,
+    "y": 31,
+    "w": 34,
+    "h": 31
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 34,
+    "h": 31
+   },
+   "sourceSize": {
+    "w": 34,
+    "h": 31
+   },
+   "pivot": {
+    "x": 0.47058823529411764,
+    "y": 0.5161290322580645
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "rk-punch-t1.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 102,
+   "h": 62
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 16,
+   "y": 16
+  },
+  "frameTags": [
+   {
+    "name": "rk-punch-t1",
+    "from": 0,
+    "to": 4,
+    "direction": "forward"
+   }
+  ]
+ }
+}

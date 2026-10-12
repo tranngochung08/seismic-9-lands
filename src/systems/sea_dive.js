@@ -1,7 +1,9 @@
 // sea_dive.js — the Sea of Origins: reef diving (oxygen, pearls, shells, sea crystals), one shark patrolling the deep,
 // and fishing from the raft (schools, hot spots, the same tug-of-war as the pond). See systems/API.md.
 import { mkCanvas, HOOK } from '../gfx.js';
-import { canCarry, carryDeny, registerHead, seaCast, headSprite } from './animals.js';
+import { canCarry, carryDeny, registerHead, seaCast, headSprite, catchToBag } from './animals.js';
+import { keyHint } from '../hud.js';   /* cảm ứng → Ⓐ / ☰ thay E / Esc (như animals.js) */
+import { drawBody } from '../entities.js';   /* plan-29: thân người chơi có ngoại hình to (Chad) */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -176,7 +178,7 @@ function drawSwimmer(g, ent) {
   g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, y + 1, 8, 3, 0, 0, TAU); g.fill();               // shadow on the sea floor
   g.fillStyle = '#2f3b5e'; g.fillRect(x - 3, y - 6 + bob, 6, 6);                                                  // trunks
   g.fillStyle = '#2b2733'; g.fillRect(x - 3 + (st ? 0 : 1), y - 1 + bob, 2, 3); g.fillRect(x + 1 + (st ? 1 : 0), y - 1 + bob, 2, 3); // kicking legs
-  g.drawImage(ent.sheet, ent.frame * 16, ent.dir * 20, 16, 12, x - 8, y - 16 + bob, 16, 12);                     // head + shoulders from the player's own sheet
+  drawBody(g, ent, ent.frame * 16, ent.dir * 20, 12, x - 8, y - 16 + bob);                     // head + shoulders from the player's own sheet
   g.fillStyle = '#e8b892'; g.fillRect(x - 9, y - 6 + bob + (st ? 0 : 2), 3, 2); g.fillRect(x + 6, y - 6 + bob + (st ? 2 : 0), 3, 2);  // arms stroking
   g.strokeStyle = 'rgba(225,248,255,.55)'; g.lineWidth = 1; g.beginPath(); g.ellipse(x, y - 8 + bob, 10, 3, 0, 0, TAU); g.stroke();   // water line
 }
@@ -307,7 +309,6 @@ function castTarget(ctx) {
 }
 function startCast(ctx, t) {
   const S = L(ctx);
-  if (carryFull(ctx, 'fish')) { ctx.toast(carryDeny(ctx, 'fish')); return; }
   const d = densityAt(t.bx, t.by), luck = 0.7 + Math.random() * 0.6;
   const wait = Math.min(20, Math.max(2, (7 / d) * luck));
   fishing = { phase: 'wait', t: wait, wob: 0, bx: t.bx * TILE + 8, by: t.by * TILE + 9, dens: d, prog: 0, tens: 0, presses: [], pull: 0, kind: 'fish', big: false, yank: 0, life: 0 };
@@ -334,7 +335,7 @@ function succeedFish(ctx) {
   const S = L(ctx), f = fishing;
   splash(f.bx, f.by, 1.4);
   const item = f.kind === 'fish' ? { kind: 'fish', big: !!f.big } : f.kind;
-  const ok = addCarry(ctx, item);
+  const ok = catchToBag(ctx, item);   /* 2026-10-11 bỏ xô: cá vào thẳng túi */
   if (ok && ctx.pop) ctx.pop(ctx.S.player.x, ctx.S.player.y - 18, '+1 ' + ctx.itemIcon(f.kind === 'fish' ? 'fish' : f.kind));
   ctx.toast(!ok ? carryDeny(ctx, f.kind) : f.kind === 'goldfish' ? S.gotGold : f.kind === 'squid' ? S.gotSquid : f.big ? S.gotBig : S.gotFish);
   ctx.sfx(f.kind === 'goldfish' ? 'win' : 'pickup');
@@ -488,7 +489,7 @@ export const seaDive = {
         ug.fillStyle = 'rgba(13,11,20,.65)'; ug.beginPath(); ug.arc(bx, by, fs * (bite ? 1.1 : 0.9), 0, TAU); ug.fill();
         ug.fillStyle = bite ? '#ffd45e' : '#cfd8e6'; ug.fillText(bite ? S.bite : '…', bx, by + 2);
       }
-      const bw = Math.min(W * 0.62, 460), bh = Math.max(18, scale * 7), bx = (W - bw) / 2, th = Math.max(6, scale * 2.2);
+      const bw = Math.min(W * (W < 520 ? 0.86 : 0.62), 460), bh = Math.max(18, scale * 7), bx = (W - bw) / 2, th = Math.max(6, scale * 2.2);
       const extra = f.phase === 'reel' ? th + 6 + fs : 0, by = H - Math.max(96, scale * 34) - extra, pad = Math.max(8, scale * 3);
       ug.fillStyle = 'rgba(13,11,20,.82)'; ug.beginPath(); ug.roundRect(bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, 10); ug.fill();
       ug.strokeStyle = 'rgba(255,212,94,.35)'; ug.lineWidth = 2; ug.stroke();
@@ -504,10 +505,13 @@ export const seaDive = {
         ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, ty, bw, th, th / 2); ug.fill();
         ug.fillStyle = f.tens > 0.66 ? '#ff4d4d' : f.tens > 0.33 ? '#ffb347' : '#6fb2e0'; ug.beginPath(); ug.roundRect(bx, ty, Math.max(2, bw * f.tens), th, th / 2); ug.fill();
         ug.font = small; ug.fillStyle = '#a79a86'; ug.textAlign = 'left'; ug.fillText(S.tension, bx, ty + th + fs * 0.7);
-        ug.textAlign = 'right'; ug.fillText(S.reelHint, bx + bw, ty + th + fs * 0.7); ug.textAlign = 'center';
+        const rh = keyHint(S.reelHint);
+        if (ug.measureText(S.tension).width + ug.measureText(rh).width + 12 <= bw) { ug.textAlign = 'right'; ug.fillText(rh, bx + bw, ty + th + fs * 0.7); }
+        else { ug.textAlign = 'center'; ug.fillText(rh, W / 2, ty + th + fs * 1.55, bw); }   /* màn hẹp (390 px): gợi ý xuống dòng riêng, không đè chữ 'độ căng' */
+        ug.textAlign = 'center';
       } else {
-        ug.fillStyle = '#f2ebe0'; ug.fillText(f.phase === 'bite' ? S.biteHint : S.waiting, W / 2, by - fs * 0.6);
-        ug.font = small; ug.fillStyle = '#a79a86'; ug.fillText(S.castHint, W / 2, by + bh + fs * 0.9);
+        ug.fillStyle = '#f2ebe0'; ug.fillText(f.phase === 'bite' ? keyHint(S.biteHint) : S.waiting, W / 2, by - fs * 0.6);
+        ug.font = small; ug.fillStyle = '#a79a86'; ug.fillText(keyHint(S.castHint), W / 2, by + bh + fs * 0.9);
         ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, bh / 2); ug.fill();
         if (f.phase === 'bite') { ug.fillStyle = '#ffd45e'; ug.beginPath(); ug.roundRect(bx, by, Math.max(bh, bw * Math.max(0, f.t / 1.2)), bh, bh / 2); ug.fill(); }
         else { const k = (Math.sin(f.wob * 2) + 1) / 2; ug.fillStyle = '#3d6db5'; ug.beginPath(); ug.roundRect(bx + bw * 0.5 - bh, by, bh * 2 + bw * 0.06 * k, bh, bh / 2); ug.fill(); }
@@ -528,6 +532,7 @@ export const seaDive = {
     if (!hasRod(ctx)) return { label: S.needRod, x: t.x, y: t.y, limit: 44, data: { hint: true } };
     if (ctx.holding && !ctx.holding('rod')) { const mt = ctx.mouseTile && ctx.mouseTile(), p = ctx.S.player;   /* trỏ chuột vào nước gần bè → click tự cầm cần câu */
       if (mt && isWaterT(ctx, mt.tx, mt.ty) && Math.hypot(mt.wx - p.x, mt.wy - p.y) < 64) return { label: ctx.needHold('rod'), x: mt.wx, y: mt.wy, limit: 68, mouse: true, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };
+      if (ctx.touchA && ctx.touchA() && ctx.needHold) return { label: ctx.needHold('rod'), x: t.x, y: t.y, limit: 44, mouse: false, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };   /* điện thoại: trên bè cạnh nước → nút A tự cầm cần câu */
       return null; }
     return { label: S.cast, x: t.x, y: t.y, limit: 44, data: { cast: t } };
   },

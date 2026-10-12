@@ -12,6 +12,7 @@ const sv = ctx => { const s = ctx.S.save; s.hero ||= { lv: 1, xp: 0, hp: null };
 export const maxHp = lv => 100 + 15 * (lv - 1);
 export const baseAtk = lv => 10 + 3 * (lv - 1);
 export const needXp = lv => 50 * lv;
+export const MAX_LV = 50;   /* plan-29: cấp tối đa (điều ước 'Sức mạnh tối đa' của Rồng Thần) */
 
 function hud(ctx) {
   if (!ST.el) {
@@ -50,15 +51,18 @@ export const hero = {
       get fainted() { return ST.faintT > 0; },
       hit(dmg) {
         const hh = sv(ctx); if (ST.inv > 0 || ST.faintT > 0) return false;
+        if (ctx.sparOn && ctx.sparOn()) dmg = Math.min(dmg, Math.max(0, Math.ceil(hh.hp) - 1));   /* spar.js: trận tập không ngất — còn 1 máu là chịu thua */
         hh.hp -= dmg; ST.lastHit = ctx.S.time; ST.inv = 0.6;
         const p = ctx.S.player; if (p.hasAct && p.hasAct('hurt') && (!p.custom || (ctx.isUnderwater && ctx.isUnderwater())) && !p.action) p.act('hurt', 0);   /* plan-26: dưới nước người chơi vẽ kiểu bơi (custom) nhưng vẫn hiện clip bị đánh */
         if (ctx.pop) ctx.pop(p.x, p.y - 22, `-${dmg}`, '#ff6b6b');
         ctx.sfx('hit'); if (hh.hp <= 0) { hh.hp = 0; faint(ctx); } return true;
       },
+      iframes(sec) { ST.inv = sec; },   /* knock.js: miễn sát thương khi đang bị hất bay / vừa chạm đất */
       heal(n) { const hh = sv(ctx); hh.hp = Math.min(maxHp(hh.lv), hh.hp + n); },
       gainXp(n) {
         const hh = sv(ctx); hh.xp += n; let up = false;
-        while (hh.xp >= needXp(hh.lv)) { hh.xp -= needXp(hh.lv); hh.lv++; up = true; }
+        while (hh.lv < MAX_LV && hh.xp >= needXp(hh.lv)) { hh.xp -= needXp(hh.lv); hh.lv++; up = true; }
+        if (hh.lv >= MAX_LV) hh.xp = 0;
         if (up) { hh.hp = maxHp(hh.lv); ctx.toast(L(ctx).up(hh.lv), true); ctx.sfx('coin'); if (ctx.vfx) ctx.vfx('level_up', ctx.S.player.x, ctx.S.player.y + 2, 0, true); }
         ctx.persist();
       },

@@ -19,7 +19,9 @@ import { createClock } from './clock.js';   /* F01: đồng hồ, lịch, hết 
 import { FPS, loopFrame, clock } from './anim.js';   /* plan-19: FPS chung */
 import * as HB from './hotbar.js';   /* plan-20: hotbar kiểu Stardew */
 import * as HUD from './hud.js';
-import { setupStaff, tickStaff, drawStaffTags } from './staff.js';   /* plan-22: quầy/nhà → NPC */   /* plan-22: HUD kiểu Stardew, toàn pixel */
+import * as MS from './mslots.js';   /* 2026-10-11 anh: điện thoại — ô đồ tròn quanh nút A thay thanh công cụ PC */
+import { setupStaff, tickStaff, drawStaffTags } from './staff.js';
+import * as TGT from './systems/target.js';   /* 2026-10-11: khóa mục tiêu (click / Tab / 🎯) cho súng + mọi kỹ năng */   /* plan-22: quầy/nhà → NPC */   /* plan-22: HUD kiểu Stardew, toàn pixel */
 
 const $ = s => document.querySelector(s);
 const cv = $('#c'), g = cv.getContext('2d');
@@ -35,8 +37,13 @@ const MOUSE = { on: false, sx: 0, sy: 0 };
 function mouseAt(e) { const r = cv.getBoundingClientRect(); MOUSE.on = true; MOUSE.cx = e.clientX; MOUSE.cy = e.clientY; MOUSE.sx = (e.clientX - r.left) / scale; MOUSE.sy = (e.clientY - r.top) / scale; }
 cv.addEventListener('pointermove', e => { if (e.pointerType === 'touch') return; mouseAt(e); });
 cv.addEventListener('pointerleave', () => { MOUSE.on = false; });
-const CURSOR = { arrow: 'url(assets/px/ui/cursor_arrow.png) 1 1, auto', hand: 'url(assets/px/ui/cursor_hand.png) 9 2, pointer', tool: 'url(assets/px/ui/cursor_tool.png) 8 8, crosshair' };   /* PixelLab (px-farm2.py gen_cursors) */
-let cursorNow = ''; function applyCursor() { const want = heldCursor() || (MOUSE.on && MOUSE.hit && S.mode === 'play' ? (CURSOR[MOUSE.cursor] || CURSOR.hand) : CURSOR.arrow); if (want !== cursorNow) { cursorNow = want; cv.style.cursor = want; document.body.style.cursor = CURSOR.arrow; } }
+const CURSOR = { arrow: 'url(assets/px/ui/cur/arrow.png) 1 1, auto', hand: 'url(assets/px/ui/cursor_hand.png) 9 2, pointer', tool: 'url(assets/px/ui/cursor_tool.png) 8 8, crosshair' };   /* PixelLab (px-farm2.py gen_cursors) */
+let cursorNow = ''; function applyCursor() {   /* 2026-10-11: 1 mũi tên PixelLab + huy hiệu theo việc click sẽ làm (target.js cursorKind / bảng luật) */
+  let k = 'arrow';
+  if (MOUSE.on && S.mode === 'play' && CTX.mouseTile) { TGT.hoverAt(CTX.mouseTile()); k = TGT.cursorKind(MOUSE.hit, S.near, id => HB.owns(id)); } else { TGT.hoverAt(null); TGT.cursorKind(false, null); }
+  TGT.setCur(k); const want = TGT.CUR(k);
+  if (want !== cursorNow) { cursorNow = want; cv.style.cursor = want; document.body.style.cursor = TGT.CUR('arrow'); }
+}
 cv.addEventListener('pointerdown', e => { if (e.button !== 0) return; mouseAt(e); if (S.mode === 'play') { clickQueued = { touch: e.pointerType === 'touch' }; e.preventDefault(); } });   /* 2026-10-10: click = làm nếu trúng thứ trong tầm, không thì ĐI TỚI đó (chạm trên điện thoại cũng vậy) */
 let clickQueued = null;
 /* plan-20: con trỏ = icon món đang cầm (sáng khi trỏ chỗ làm được, mờ khi cầm sai/không có gì để làm); NPC, quầy… vẫn bàn tay */
@@ -66,7 +73,7 @@ const CTX = {
   hotbarSlotOf: id => HB.slotOf(id), flyItem: (id, slot, done, wx, wy, n) => HUD.flyToSlot(id, slot, done, null, wx, wy, n),   /* plan-24: nhặt đồ dưới đất → bay vào ô */
   hotbarFirstEmpty: id => HB.firstEmpty(id), hotbarPut: (i, id) => HB.putAt(i, id), flyToSlot: (kind, slot, done, file) => HUD.flyToSlot(kind, slot, done, file),   /* phím T ném thú */   /* plan-23 wreck.js: vật đổ nát không chắn đường */
   setMode: m => setMode(m), registerCloser: (mode, fn) => { S.closers[mode] = fn; }, onAction: (mode, fn) => { (S.actions ||= {})[mode] = fn; },
-  toast: (t, big) => UI.toast(t, big), bubble: (n, t, sec) => UI.bubble(n, t, sec), quake: s => quake(s), persist: () => persist(), lang: () => UI.lang(),
+  toast: (t, big) => UI.toast(t, big), bubble: (n, t, sec) => UI.bubble(n, t, sec), drawBubble: (ug, n, sx, sy, fs) => UI.drawBubble(ug, n, sx, sy, fs), quake: s => quake(s), persist: () => persist(), lang: () => UI.lang(),
   openDialog: o => UI.openDialog(o), levelBadge: UI.levelBadge, avatarHTML: UI.avatarHTML,
   pop: (x, y, text, color = '#ffd45e') => { if (/^\+\d/.test(String(text).trim())) HUD.notify(text); text = String(text).replace(/\p{Extended_Pictographic}️?/gu, '').replace(/\s{2,}/g, ' ').trim(); (S.pops ||= []).push({ x, y, text, color, t: 0 });   /* plan-22: nhặt đồ → thông báo góc dưới trái (icon pixel); số nổi không emoji */ if (S.pops.length > 12) S.pops.shift(); if (CTX.vfx) CTX.vfx('item_pickup_pop', x, y + 4, 0, true); },   /* plan-14: số nổi '+2 🪵'; plan-19: + VFX nhặt đồ */   /* plan-14: số nổi '+2 🪵' */
   panel: (id, inner) => { let el = document.getElementById('sys-' + id); if (!el) { el = document.createElement('div'); el.id = 'sys-' + id; el.className = 'ov'; el.hidden = true; el.innerHTML = `<div class="panel"></div>`; document.body.appendChild(el); el.panel = el.firstElementChild; } if (inner !== undefined) el.panel.innerHTML = inner; return el; },
@@ -94,7 +101,7 @@ const CTX = {
     setBonus: v => { S.bagBonus = v; }
   },
   held: () => HB.held(), holding: id => HB.holding(id), heldKind: () => HB.heldKind(), needHold: id => HB.needText(id),   /* plan-20: món đang cầm trên hotbar */
-  heldSeed: () => (HB.heldKind() === 'seed' ? HB.held() : null), hotbarSync: () => HB.sync(), hold: id => HB.hold(id),
+  heldSeed: () => (HB.heldKind() === 'seed' ? HB.held() : null), hotbarSync: () => HB.sync(), hold: id => HB.hold(id), touchA: () => HB.mobile(),   /* điện thoại: nút A theo ngữ cảnh (hệ trả ứng viên 'cần cầm X' cả khi không có chuột) */
   npcSheet: m => charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), NPC, charSheetOf: c => charSheet({ skin: '#f6d3b5', hair: '#2b1d14', shirt: '#ffffff', pants: '#2f3b5e', ...c }),   /* plan-25: tượng đá dân = hình của chính người đó tô đá */
   respawnNpc: (m, x, y) => { const n = new NPC(m, x, y, charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), rngFrom(hashStr(m.id))); S.npcs.push(n); return n; },   /* plan-21: hồi sinh dân */
   tool: { tier: id => (S.save.toolTier || {})[id] || (S.save.tools?.[id] ? 1 : 0), set: (id, t) => { (S.save.toolTier ||= {})[id] = t; if (S.save.tools) S.save.tools[id] = t > 0; if (id === 'rod' && t > 0) S.save.tools.rodBought = true; persist(); } },
@@ -143,6 +150,9 @@ const CLOCK = createClock({
   registerCloser: (m, fn) => { S.closers[m] = fn; }, onAction: (m, fn) => { (S.actions ||= {})[m] = fn; }, lang: () => UI.lang(), panel: id => CTX.panel(id), toast: t => UI.toast(t)
 });
 CTX.clock = CLOCK; CTX.season = () => CLOCK.season;
+/* 2026-10-11: khóa mục tiêu — các hệ hỏi ctx.target.* để nhắm đúng thứ người chơi đã chọn (src/systems/target.js) */
+CTX.target = { get: TGT.get, active: TGT.active, is: TGT.is, mon: TGT.mon, npc: TGT.npc, obj: TGT.obj, forGun: TGT.forGun, tag: TGT.tag, dist: TGT.dist, objGap: TGT.objGap, aimPoint: TGT.aimPoint, nameOf: TGT.nameOf, lock: TGT.lock, cycle: TGT.cycle, txt: TGT.TXT, mode: TGT.mode, sayFar: TGT.sayFar, confirmPetrify: TGT.confirmPetrify, petrifiable: TGT.petrifiable, faceTarget: TGT.faceTarget };
+TGT.init({ S, CTX, allNpcs: () => allNpcs(), interactNow: () => { S.near = findNear(); interact(true); }, talkTo: n => talkTo(n), mouseOn: () => !HUD.isTouchUI() });
 CTX.plotOf = (tx, ty) => { const i = CTX.plotAt(tx, ty); if (i < 0) return null; const p = S.map.plots[i]; p.idx = i; return p; };
 /* nước của người chơi: save.self (Discord) → nước gặp nhiều nhất trong save.talks → null */
 CTX.myNation = () => {
@@ -165,6 +175,7 @@ const pieceKey = o => `${o.orig || o.type}@${o.x},${o.y}`;
 function ruinStage(o) {
   if (o.ruined) return 'ruin';
   if (o.hp == null) return null;
+  if (o.hpMax) return o.hp < o.hpMax ? 'dmg' : null;   /* xác tàu dưới nước (monsters.hitWreck): sứt là nứt */
   const mx = o.plot !== undefined ? CTX.hpMax(o) : CTX.wreck ? CTX.wreck.maxOf(o) : 0;
   return mx && o.hp < mx && o.hp <= mx / 2 ? 'dmg' : null;
 }
@@ -202,9 +213,11 @@ async function boot() {
   const [, lore] = await Promise.all([loadRoster(), fetch('data/lore.json').then(r => r.json()), initArt(new URLSearchParams(location.search))]);
   { const dlg = ART.on && ART.man && ART.man.ui && ART.man.ui.dialog; if (dlg) { const im = f => { const i = new Image(); i.src = 'assets/px/' + f; return i; }; UI.setDialogArt({ px: !!dlg.frame, guide: dlg.guide ? dlg.guide.map(im) : null, bubble: dlg.bubble ? im(dlg.bubble) : null, tail: dlg.tail ? im(dlg.tail) : null }); } }   /* plan-12: asset hộp thoại */
   S.lore = lore;
-  resize(); window.addEventListener('resize', resize);
+  resize(); window.addEventListener('resize', resize); window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+  if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', viewSize); }   /* thanh địa chỉ hiện/ẩn, xoay máy */
   bindInput();
-  HB.initHotbar({ S, CTX, ART, canvas: cv, openBag: () => toggleMenu('bag') });
+  HB.initHotbar({ S, CTX, ART, canvas: cv, openBag: () => toggleMenu('bag'), onHold: () => MS.render(true) });
+  MS.initMslots({ S, CTX, ART, setMode, openFullBag: () => openMenu('bag') });
   HUD.initHud({ S, CTX, ART });
   const sv = loadSave();
   const qLang = new URLSearchParams(location.search).get('lang');
@@ -235,14 +248,14 @@ async function boot() {
   AUDIO.setEnabled(sv ? sv.music !== false : true); UI.setMusicLabel(AUDIO.isEnabled());
   for (const ev of ['keydown', 'pointerdown']) window.addEventListener(ev, () => AUDIO.initAudio(), { passive: true }); // browsers only allow audio after a user gesture
   document.addEventListener('fullscreenchange', resize);
-  setInterval(() => { if (cv.width !== VW * ART.hi || cv.height !== VH * ART.hi || Math.abs(cv.clientWidth - window.innerWidth) > 1 || Math.abs(cv.clientHeight - window.innerHeight) > 1) resize(); }, 500);
+  setInterval(() => { if (cv.width !== VW * ART.hi || cv.height !== VH * ART.hi || Math.abs(cv.clientWidth - viewSize().w) > 1 || Math.abs(cv.clientHeight - viewSize().h) > 1) resize(); }, 500);
   setupDiscord();
   $('#loading').hidden = true; $('#title').hidden = false;
   TITLE.initTitle({ resize, persist: () => { if (S.save) persist(); } }); TITLE.showTitle();   /* plan-13 */
   for (const b of document.querySelectorAll('#title .btn')) if (ART.on && ART.man && ART.man.ui && ART.man.ui.title && ART.man.ui.title.btn) b.classList.add('px');
   requestAnimationFrame(loop);
   const q = new URLSearchParams(location.search);
-  window.__S = S; window.__CTX = CTX; window.__enterZone = (id, e) => enterZone(id, e || 'default');
+  window.__S = S; window.__CTX = CTX; window.__enterZone = (id, e) => enterZone(id, e || 'default'); window.__target = { ...TGT, state: TGT.debug };
   if (q.has('demo') || q.has('promo') || q.get('showcase') === 'dot1') { HB.disable(CTX); CTX.noMonsters = true; }   /* kịch bản tự động: chơi kiểu cũ, không quái */   /* plan-20: kịch bản tự động chơi kiểu cũ */
   if (q.has('promo')) { import('./save.js').then(m => m.saveOff()); import('./promo.js').then(m => m.runPromo({ S, CTX, UI, enterZone, startGame, defaultSave, setMode, input })); return; }   /* video quảng bá: ?promo&art=px&lang=vi (không đụng save thật) */
   if (q.has('demo')) { clearSave(); import('./demo.js').then(m => m.runDemo({ S, CTX, UI, enterZone, startGame, defaultSave, setMode, input })); return; } // guided auto-tour
@@ -280,13 +293,13 @@ function findMe() {
 
 // ---------- zones ----------
 function enterZone(id, entry) {
-  const z = ZONES[id]; artEnterZone(id);
+  const z = ZONES[id]; artEnterZone(id); TGT.onZoneEnter();
   if (S.zone) for (const sys of S.sys) { try { sys.onZoneLeave?.(CTX); } catch (e) { console.error(sys.id, e); } }
   setNationLang(UI.lang());
   S.nations = nationGroups(z.lv); // nations present at this level, biggest first → one fenced district each (names localized)
   const saved = (S.save.districts || {})[id] || {};
   const map = z.build(rngFrom(hashStr(id)), { nations: S.nations.map((g, i) => ({ key: g.key, size: g.members.length, tier: saved[i]?.tier })) });
-  S.zone = z; z.tier = zoneTier(id); S.map = map; artMapBuilt(map); S.sys = z.systems ? SYSTEMS.filter(sy => z.systems.includes(sy.id)) : SYSTEMS; S.save.zone = id; S.save.entry = entry; S.hazards = []; S.hazNext = 3; S.talking = null;
+  S.zone = z; z.tier = zoneTier(id); S.map = map; artMapBuilt(map); S.sys = z.systems ? SYSTEMS.filter(sy => z.systems.includes(sy.id) || sy.always) : SYSTEMS;   /* sy.always: hệ chạy ở mọi vùng (plan-29 dragon: ngoại hình + báo 'không gọi được rồng ở đây') */ S.save.zone = id; S.save.entry = entry; S.hazards = []; S.hazNext = 3; S.talking = null;
   const e = map.entries[entry] || map.entries.default;
   S.player.x = e.x * TS + 8; S.player.y = e.y * TS + 14; S.player.dir = 0;
   const rng = rngFrom(hashStr(id) ^ Math.floor(Date.now() / 864e5));
@@ -394,6 +407,7 @@ function bindInput() {
     if (S.mode === 'quiz') { UI.quizKey(e.code); e.preventDefault(); return; }
     if (S.mode === 'menu' && menuKey(e.code)) { e.preventDefault(); return; }   /* plan-10: đổi thẻ, nuốt phím đi */
     if ((e.code === 'KeyB' || e.code === 'KeyI' || e.code === 'KeyQ' || e.code === 'KeyO') && (S.mode === 'play' || S.mode === 'menu') && S.save && S.map) { toggleMenu(e.code === 'KeyQ' ? 'quest' : e.code === 'KeyO' ? 'shop' : 'bag'); e.preventDefault(); return; }   /* O: mua nhanh (P đã dùng cho chụp ảnh) */
+    if (e.code === 'Tab' && S.mode === 'play' && S.save && S.map) { TGT.cycle(e.shiftKey ? -1 : 1); e.preventDefault(); return; }   /* khóa mục tiêu kế tiếp (Shift+Tab: lùi) */
     for (const sys of S.sys) if (sys.key && sys.key(e.code, CTX)) { e.preventDefault(); return; }
     if (S.mode === 'play' && HB.key(e.code)) { e.preventDefault(); return; }   /* plan-20: 1–9, 0, −, = chọn ô hotbar */
     if (KEYS[e.code]) { input[KEYS[e.code]] = true; e.preventDefault(); }
@@ -405,18 +419,43 @@ function bindInput() {
   });
   window.addEventListener('keyup', e => { if (KEYS[e.code]) input[KEYS[e.code]] = false; });
   window.addEventListener('blur', () => { for (const k in input) input[k] = false; });
+  { const joy = $('#joy'), knob = joy && joy.querySelector('.jknob');   /* 2026-10-11 anh: cần điều khiển tròn kéo thả (8 hướng) thay 4 nút mũi tên */
+    if (joy) { let pid = null; const R = 46, DEAD = 12;
+      const set = (cx, cy) => { const r = joy.getBoundingClientRect(), ox = r.left + r.width / 2, oy = r.top + r.height / 2; let dx = cx - ox, dy = cy - oy; const d = Math.hypot(dx, dy) || 1; if (d > R) { dx = dx / d * R; dy = dy / d * R; }
+        knob.style.transform = `translate(${dx}px,${dy}px)`; const on = d > DEAD, ax = dx / R, ay = dy / R;
+        input.left = on && ax < -0.38; input.right = on && ax > 0.38; input.up = on && ay < -0.38; input.down = on && ay > 0.38; };
+      const end = e => { if (pid !== e.pointerId) return; pid = null; joy.classList.remove('on'); knob.style.transform = ''; input.left = input.right = input.up = input.down = false; };
+      joy.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; try { joy.setPointerCapture(e.pointerId); } catch (err) { } joy.classList.add('on'); S.player && (S.player.autoPath = null); set(e.clientX, e.clientY); });
+      joy.addEventListener('pointermove', e => { if (pid === e.pointerId) { e.preventDefault(); set(e.clientX, e.clientY); } });
+      joy.addEventListener('pointerup', end); joy.addEventListener('pointercancel', end); joy.addEventListener('lostpointercapture', end);
+    } }
   for (const b of document.querySelectorAll('#touch [data-k]')) {
     const k = b.dataset.k, on = e => { e.preventDefault(); input[k] = true; }, off = e => { e.preventDefault(); input[k] = false; };
     b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
   }
   $('#btn-a').addEventListener('pointerdown', e => { e.preventDefault(); interactQueued = true; });
   $('#btn-menu').addEventListener('pointerdown', e => { e.preventDefault(); escQueued = true; });
+  { const bt = $('#btn-tgt'); if (bt) bt.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (S.mode === 'play') TGT.cycle(1); }); }   /* điện thoại: 🎯 đổi mục tiêu */
+  { const br = $('#btn-rot'); if (br) br.addEventListener('click', async e => {   /* 2026-10-11 anh: điện thoại chơi được XOAY NGANG — toàn màn hình + khóa chiều ngang (Android); máy không cho khóa (iPhone) → hướng dẫn tự xoay */
+    e.preventDefault(); const vi = UI.lang() === 'vi';
+    try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (err) { }
+    let ok = false; try { if (screen.orientation && screen.orientation.lock) { await screen.orientation.lock('landscape'); ok = true; } } catch (err) { }
+    if (!ok) CTX.toast(vi ? 'Máy chưa cho game tự xoay — bật "Tự động xoay" rồi xoay ngang điện thoại nhé' : 'Your phone blocks auto-rotate — turn on Auto-rotate and turn the phone sideways');
+    setTimeout(resize, 300);
+  }); }
   $('#btn-photo').addEventListener('pointerdown', e => { e.preventDefault(); window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyP', key: 'p' })); }); // touch: photo mode (photo.js listens for KeyP)
   for (const b of document.querySelectorAll('#touch-skills [data-skill]')) b.addEventListener('pointerdown', e => { e.preventDefault(); window.dispatchEvent(new KeyboardEvent('keydown', { code: b.dataset.skill, key: b.textContent })); }); // touch: Rocky skills in the trench (trench.js listens for Digit1..3)
   $('#dialog').addEventListener('pointerdown', e => { if (S.mode === 'dialog') { e.preventDefault(); UI.dialogAdvance(); } });
 }
+/* 2026-10-11 anh (điện thoại thật, Chrome xoay ngang có thanh địa chỉ): nút A / cần tròn bị cắt ở đáy → đo VÙNG NHÌN THẤY THẬT (visualViewport),
+   ghi ra biến CSS --vvh/--vvw/--vvt/--vvl cho #touch / #pxhud bám đáy vùng thấy được; canvas cũng không cao hơn vùng thấy được. */
+function viewSize() {
+  const vv = window.visualViewport, w = Math.round(Math.min(window.innerWidth, vv ? vv.width * (vv.scale || 1) : 1e9)), h = Math.round(Math.min(window.innerHeight, vv ? vv.height * (vv.scale || 1) : 1e9));
+  const r = document.documentElement.style; r.setProperty('--vvw', w + 'px'); r.setProperty('--vvh', h + 'px'); r.setProperty('--vvt', Math.round(vv ? vv.offsetTop : 0) + 'px'); r.setProperty('--vvl', Math.round(vv ? vv.offsetLeft : 0) + 'px');
+  return { w, h };
+}
 function resize() {
-  const w = window.innerWidth, h = window.innerHeight;
+  const { w, h } = viewSize();
   scale = Math.max(2, Math.round(w / 340)); if (h / scale < 150) scale = Math.max(2, Math.floor(h / 150));
   { let pref = 0; try { pref = +localStorage.getItem('seismic.scale') || 0; } catch (e) { } if (pref >= 2 && w / pref >= 200) scale = pref; }   /* plan-13: tỉ lệ pixel người chơi chọn */
   VW = Math.ceil(w / scale); VH = Math.ceil(h / scale);
@@ -434,11 +473,14 @@ function findNear() {
   /* chuột kiểu Stardew: thứ đang trỏ (NPC / vật thể / neo của hệ) trong tầm với (≤ 1,5× tầm E) thắng mọi thứ khác; MOUSE.hit → con trỏ bàn tay */
   const mt = CTX.mouseTile && CTX.mouseTile(); MOUSE.hit = false; let hitBest = null, hitD = Infinity;
   const hover = (cand, dist, limit, bias = 0) => { if (dist < limit * 1.5 && dist - bias < hitD) { hitD = dist - bias; hitBest = cand; } };   /* bias: hệ có priority thắng NPC/vật cùng chỗ trỏ (vd tặng đá cho dân) */
+  let needBest = null, needD = Infinity;
   const consider = (cand, dist, limit, bias = 0) => { if (dist < limit && dist - bias < bd) { bd = dist - bias; best = cand; } }; // bias: systems may claim priority over NPCs/objects
-  for (const n of allNpcs()) { if (n.m.friend) continue; const dist = Math.hypot(n.x - p.x, n.y - p.y); consider({ kind: 'npc', npc: n }, dist, 22); if (mt && Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) hover({ kind: 'npc', npc: n }, dist, 22); }   // the story friend is handled by the story systems' near()
+  const hk0 = CTX.heldKind ? CTX.heldKind() : null, busy0 = (hk0 === 'tool' || hk0 === 'seed') && !(CTX.holding && (CTX.holding('sword') || CTX.holding('petgun')));   /* đang cầm dụng cụ/hạt: nói chuyện nhường phím E cho việc của dụng cụ (farm_land 2026-10-11: dân đứng cạnh chiếm mất 'Cày đất'); click vào người vẫn nói chuyện */
+  const lkN = TGT.mode() === 'hand' ? TGT.npc() : null;   /* đã khóa dân/NPC + tay không → nói chuyện với ĐÚNG người đó */
+  for (const n of allNpcs()) { if (n.m.friend) continue; const dist = Math.hypot(n.x - p.x, n.y - p.y); consider(n === lkN ? { kind: 'npc', npc: n, isLock: true } : { kind: 'npc', npc: n }, dist, 22, n === lkN ? 4000 : busy0 ? -24 : 0); if (mt && Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) hover({ kind: 'npc', npc: n }, dist, 22); }   // the story friend is handled by the story systems' near()
   const hk = CTX.heldKind ? CTX.heldKind() : null, busy = hk === 'tool' || hk === 'seed';
   for (const o of S.map.objects) {
-    const kind = KIND(o); if (!kind) continue; if ((kind === 'fire' && o.lit) || (kind === 'lever' && o.on)) continue;
+    const kind = KIND(o); if (!kind) continue; if ((kind === 'fire' && o.lit) || (kind === 'lever' && o.on) || (kind === 'hall' && o.ruined)) continue;   /* bia đã bị Xealist đập vỡ: không mở bảng bia nữa */
     const d = O[o.type];
     const cx = o.x * TS + d.fw * 8, cy = (o.y + d.fh) * TS - 4, dist = Math.hypot(cx - p.x, cy - p.y), lim = 24 + d.fw * 4;
     consider({ kind, obj: o }, dist, lim, busy && INFO_KINDS.has(kind) ? -24 : 0);   /* đang cầm công cụ/hạt: bảng/biển/tượng chỉ-để-xem nhường phím E cho việc của công cụ (QA 2026-10-10: cày ngay dưới bảng Leader mở bảng) */
@@ -450,7 +492,9 @@ function findNear() {
     for (const n of allNpcs().concat(S.staff || [])) if (Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) { CTX.mouseOnSprite = true; break; }
     if (!CTX.mouseOnSprite) for (const o of S.map.objects) { const d = O[o.type]; if (!d || Math.abs(o.x - mt.tx) > 4 || o.y - mt.ty > 1 || mt.ty - o.y > 6) continue; const bx = (o.y + d.fh) * TS, lx = o.x * TS + (d.ox || 0); if (mt.wx >= lx && mt.wx < lx + d.w && mt.wy < bx + (d.oy || 0) && mt.wy >= bx - d.h + (d.oy || 0) && d.solid !== false) { CTX.mouseOnSprite = true; break; } }
   }
-  for (const sys of S.sys) { let c = null; try { c = sys.near && sys.near(CTX); } catch (e) { console.error(sys.id, e); } if (c) { const dist = Math.hypot(c.x - p.x, c.y - p.y), cand = { kind: 'sys', sys, cand: c, label: c.label }; consider(cand, dist, c.limit ?? 24, (typeof c.priority === 'number' ? c.priority : c.priority ? 1 : 0) * 1000); if (mt && c.mouse !== false && Math.hypot(mt.wx - c.x, mt.wy - c.y) < 14) hover(cand, dist, c.limit ?? 24, c.priority ? 1000 : 0); } } // priority: true 
+  for (const sys of S.sys) { let c = null; try { c = sys.near && sys.near(CTX); } catch (e) { console.error(sys.id, e); } if (c) { const dist = Math.hypot(c.x - p.x, c.y - p.y), cand = { kind: 'sys', sys, cand: c, label: c.label, isLock: !!c.isLock }; const pb = (typeof c.priority === 'number' ? c.priority : c.priority ? 1 : 0) * 1000; if (c.need && !c.urgent) { if (dist < (c.limit ?? 24) && dist - pb < needD) { needD = dist - pb; needBest = cand; } } else consider(cand, dist, c.limit ?? 24, pb);   /* gợi ý 'cần cầm X' không bao giờ thắng việc làm được ngay bằng món đang cầm */ if (mt && c.mouse !== false && Math.hypot(mt.wx - c.x, mt.wy - c.y) < 14 && TGT.preciseOK(c, mt)) hover(cand, dist, c.limit ?? 24, c.priority ? 1000 : 0); } } // priority: true 
+  if (!best && needBest) best = needBest;
+  else if (best && needBest && HB.mobile() && best.kind !== 'sys' && INFO_KINDS.has(best.kind) && needD < bd + 24) best = needBest;   /* điện thoại (nút A theo ngữ cảnh): bảng / biển / tượng chỉ-để-xem nhường việc cần dụng cụ ngay đó (đá cạnh biển báo…) */
   if (hitBest) { MOUSE.hit = true; MOUSE.cursor = hitBest.kind === 'sys' && hitBest.cand.cursor || 'hand'; return hitBest; }   /* priority: true (=1) or a number; higher wins */
   if (best && best.kind === 'sys' && best.cand.mouse) { MOUSE.hit = true; MOUSE.cursor = best.cand.cursor || 'hand'; }   /* hệ tự nhắm theo chuột (ruộng) → cũng đổi con trỏ */
   return best;
@@ -496,6 +540,10 @@ function walkTo(wx, wy) {
 }
 function onClick(c) {
   const mt = CTX.mouseTile(); if (!mt) return;
+  /* LUẬT CLICK (target.js clickVerdict): khóa mục tiêu, CẤM (⛔ không làm gì, không đi), xác nhận 2 lần việc không hoàn tác, súng + đất trống = thôi */
+  const v = TGT.clickVerdict(mt, () => { const n = findNear(); return MOUSE.hit ? n : null; });
+  if (v.stop) { S.clickGoal = null; if (c && c.touch) MOUSE.on = false; return; }
+  if (v.talk) { S.clickGoal = null; S.player.autoPath = null; talkTo(v.talk); if (c && c.touch) MOUSE.on = false; return; }   /* tay không + click dân = nói chuyện (không móc túi / hóa đá) */
   for (const sy of S.sys) { try { if (sy.onClick && sy.onClick(CTX, mt)) { S.clickGoal = null; if (c && c.touch) MOUSE.on = false; return; } } catch (e) { console.error(sy.id, e); } }   /* hệ tự xử lý click (đánh quái) */
   S.near = findNear();
   if (S.near && MOUSE.hit) { S.player.autoPath = null; S.clickGoal = null; interact(); }   /* trúng thứ trong tầm → làm luôn */
@@ -510,8 +558,15 @@ function clickArrive() {   /* mỗi khung khi đang tự đi: thứ ở điểm 
   finally { S.vm = null; }   /* giữ "điểm đã click" trong lúc làm (camera đã đi theo người, chuột thật không còn trên đích) */
 }
 let autoBusy = false;
-function interact() {
-  const n = S.near; if (!n) { HB.eatHeld(); return; } const lg = UI.lang(), o = n.obj;   /* plan-20: E vào chỗ trống khi cầm đồ ăn = ăn */
+function talkTo(npc) {   /* nói chuyện đúng người này (click tay không vào dân, đã trong tầm) */
+  if (Math.hypot(npc.x - S.player.x, npc.y - S.player.y) <= 33) { S.near = { kind: 'npc', npc }; interact(true); }
+}
+function interact(fromLock) {
+  if (!fromLock && TGT.tooFar(S.near)) { TGT.sayFar(); return; }   /* đã khóa mà ở xa: KHÔNG tự đi tới (anh chốt) — chỉ báo xa quá */
+  const n = S.near; if (!n) { HB.eatHeld(); return; } const lg = UI.lang(), o = n.obj;
+  { /* 2026-10-11 anh: đang đánh quái, quái chết thì A nhảy sang mở bảng khu / nói chuyện → mất hứng. Trong 1,5 s sau đòn đánh mà quanh đó (≤ 7 ô) còn quái: A chỉ dành cho việc đánh */
+    const lh = CTX.monsters && CTX.monsters.lastHitT ? CTX.monsters.lastHitT() : -99, d = n.kind === 'sys' && n.cand && n.cand.data, fight = !!(d && (d.mo || d.grab || d.tent || d.wreck));
+    if (S.time - lh < 1.5 && !fight && CTX.monsters.list().some(mo => !(mo.c && mo.c.spar) && mo.hp > 0 && Math.hypot(mo.x - S.player.x, mo.y - S.player.y) < 112)) return; }   /* plan-20: E vào chỗ trống khi cầm đồ ăn = ăn */
   if (n.kind === 'sys' && n.cand && n.cand.need) {   /* cầm sai món → TỰ CẦM đúng món rồi làm luôn (anh yêu cầu 2026-10-10: trỏ + click là xong) */
     const id = n.cand.needId;
     if (id && HB.owns(id) && !autoBusy) {
@@ -651,7 +706,7 @@ function stopCredits() { credits = null; $('#credits').hidden = true; setMode('p
 let last = 0;
 function loop(t) {
   const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t; S.time += dt; clock.t += dt;
-  if (S.mode !== 'title') { update(dt); render(); }
+  if (S.mode !== 'title') { update(dt * (S.timeScale ?? 1)); render(); }   /* S.timeScale: chậm thời gian ngắn (cảnh biến hình bạn tập, spar.js) */
   requestAnimationFrame(loop);
 }
 function update(dt) {
@@ -682,6 +737,7 @@ function update(dt) {
   if (S.mode === 'play' && !fadeCb) { S.player.update(dt, input, S.map, others); checkGates(); }
   else { S.player.moving = false; S.player.animate(dt); }
   for (const sys of S.sys) { try { sys.update?.(dt, CTX); } catch (e) { console.error(sys.id, e); } }
+  try { TGT.update(dt); } catch (e) { console.error('target', e); }
   for (const n of others) n.update(dt, S.map, others.concat([S.player]), S.talking === n ? S.player : null);
   tickStaff(S, dt);
   updateHazards(dt);
@@ -690,11 +746,12 @@ function update(dt) {
   S.near = S.mode === 'play' ? findNear() : null;
   /* plan-12: đứng cạnh nghệ sĩ ~0,8 s → họ nói một câu chào ngắn trong bong bóng (mỗi người tối đa 1 lần / 40 s) */
   if (S.near && S.near.npc && !S.near.npc.m.guide) { const n = S.near.npc; S.nearT = (S.nearT || 0) + dt; if (S.nearT > 0.8 && !n.bubble && (!n.bubbleAt || S.time - n.bubbleAt > 40)) { n.bubbleAt = S.time; const hi = UI.L.hi; if (hi) UI.bubble(n, hi[hashStr('hi' + n.m.id + Math.floor(S.time / 40)) % hi.length], 2.6); } } else S.nearT = 0;
-  { const lbl = S.near ? (S.near.kind === 'sys' ? S.near.label : UI.L[PROMPT[S.near.kind]]) : HB.heldKind() === 'food' && !HB.hidden() ? `🍽 ${UI.lang() === 'vi' ? 'Ăn' : 'Eat'} ${itemName(HB.held(), UI.lang())}` : null;   /* plan-22: nhãn cạnh con trỏ / trên vật, thay thanh 'E · …' */
+  { const apL = S.mode === 'play' && MOUSE.on && TGT.hoverLabel() || (S.mode === 'play' && TGT.tooFar(S.near) ? TGT.farLabel() : null);   /* trỏ vào mục tiêu: nhãn = click sẽ làm gì + tên; khóa ngoài tầm: '<tên> ở xa quá'   /* khóa ngoài tầm: nhãn '<tên> ở xa quá — lại gần hơn' */
+    const lbl = apL ? apL : S.near ? (S.near.kind === 'sys' ? S.near.label : UI.L[PROMPT[S.near.kind]]) : HB.heldKind() === 'food' && !HB.hidden() ? `🍽 ${UI.lang() === 'vi' ? 'Ăn' : 'Eat'} ${itemName(HB.held(), UI.lang())}` : null;   /* plan-22: nhãn cạnh con trỏ / trên vật, thay thanh 'E · …' */
     UI.showPrompt(null);
     if (!lbl || S.mode !== 'play' || !CTX.cam) HUD.setLabel(null);   /* CTX.cam có từ frame vẽ đầu tiên */ else if (MOUSE.on && MOUSE.cx != null) HUD.setLabel(lbl, MOUSE.cx + 18, MOUSE.cy + 14);
-    else { const r = cv.getBoundingClientRect(), k = r.width / VW, tx = S.near ? (S.near.kind === 'sys' ? S.near.cand.x : S.near.npc ? S.near.npc.x : S.near.obj ? S.near.obj.x * TS + 8 : S.player.x) : S.player.x, ty = S.near ? (S.near.kind === 'sys' ? S.near.cand.y : S.near.npc ? S.near.npc.y - 24 : S.near.obj ? S.near.obj.y * TS - 6 : S.player.y - 26) : S.player.y - 26; HUD.setLabel((MOUSE.on ? '' : 'E · ') + lbl, r.left + (tx - CTX.cam.cx) * k, r.top + (ty - CTX.cam.cy) * k - 34); } }
-  applyCursor(); HB.tick(dt); HUD.tick(dt);   /* plan-20/22 */
+    else { const r = cv.getBoundingClientRect(), k = r.width / VW, tx = !apL && S.near ? (S.near.kind === 'sys' ? S.near.cand.x : S.near.npc ? S.near.npc.x : S.near.obj ? S.near.obj.x * TS + 8 : S.player.x) : S.player.x, ty = !apL && S.near ? (S.near.kind === 'sys' ? S.near.cand.y : S.near.npc ? S.near.npc.y - 24 : S.near.obj ? S.near.obj.y * TS - 6 : S.player.y - 26) : S.player.y - 26; HUD.setLabel((MOUSE.on ? '' : HUD.keyHint('E') + ' · ') + lbl, r.left + (tx - CTX.cam.cx) * k, r.top + (ty - CTX.cam.cy) * k - 34); } }
+  applyCursor(); HB.tick(dt); MS.tick(dt); HUD.tick(dt);   /* plan-20/22 */
   let it = invText(); const stl = []; for (const sys of S.sys) { if (!sys.hudLines || sys.id === 'crafting' || sys.id === 'trees') continue; try { for (const l of sys.hudLines(CTX) || []) { it += ' · ' + l; stl.push(l); } } catch (e) { } }
   HUD.setStatus(stl);   /* plan-22: dòng dài → icon trạng thái nhỏ dưới đồng hồ (dụng cụ, thẻ tranh đã có ở hotbar/túi) */
   if (it !== S._inv) { S._inv = it; $('#h-inv').textContent = it; }
@@ -705,8 +762,8 @@ function update(dt) {
 function render() {
   const m = S.map, p = S.player;
   const mw = m.w * TS, mh = m.h * TS;
-  let cx = Math.round(p.x - VW / 2), cy = Math.round(p.y - 8 - VH / 2);
-  cx = Math.max(0, Math.min(mw - VW, cx)); cy = Math.max(0, Math.min(mh - VH, cy));
+  let cx = Math.round(p.x - VW / 2), cy = Math.round(p.y - 8 - VH / 2 + (S.camDY || 0));   /* plan-29: S.camDY — cảnh gọi Rồng Thần nhìn lên trời */
+  cx = Math.max(0, Math.min(mw - VW, cx)); if (!S.camFree) cy = Math.max(0, Math.min(mh - VH, cy));   /* plan-29: cảnh Rồng Thần được nhìn quá mép bản đồ theo chiều dọc (người chơi luôn ở giữa, dưới mặt rồng) */
   if (mw < VW) cx = -((VW - mw) >> 1); if (mh < VH) cy = -((VH - mh) >> 1);
   if (S.shakeAmp > 0) { cx += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); cy += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); }
   g.fillStyle = '#0d0b14'; g.fillRect(0, 0, VW, VH);
@@ -735,9 +792,10 @@ function render() {
   for (const gt of m.gates) { const open = !gt.requires || S.save.badges.includes(gt.requires); g.fillStyle = open ? 'rgba(255,212,94,.18)' : 'rgba(255,31,75,.15)'; g.fillRect(gt.x * TS - cx, gt.y * TS - cy, gt.w * TS, gt.h * TS); }
   // hazard warnings (shadows) under everything
   for (const h of S.hazards) if (h.phase === 'warn') { const k = 1 - h.t / (h.kind === 'rock' ? 1.0 : 0.8); g.fillStyle = h.kind === 'rock' ? `rgba(0,0,0,${0.15 + k * 0.4})` : `rgba(255,80,0,${0.2 + k * 0.5})`; g.beginPath(); g.ellipse(h.x * TS + 8 - cx, h.y * TS + 10 - cy, 3 + k * 5, 2 + k * 3, 0, 0, 7); g.fill(); }
+  for (const o of m.objects) if (o.exit) o.type = !o.exit.requires || S.save.badges.includes(o.exit.requires) ? 'exit_sign' : 'exit_sign_lock';   /* 2026-10-11: biển lối chuyển vùng — có huy hiệu là tự mở */
   // depth-sorted drawables
   const draws = [];
-  for (const o of m.objects) { if (o.ghost) continue; const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; draws.push({ y: by, f: () => { const rs = ruinStage(o), ri = rs && ART.ruinOf ? ART.ruinOf(o.orig || o.type, rs) : null;   /* plan-23: hư hỏng / đổ nát (PixelLab) */
+  for (const o of m.objects) { if (o.ghost) continue; const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; draws.push({ y: o.ruined ? o.y * TS + 1 : by, f: () => { const rs = ruinStage(o), ri = rs && ART.ruinOf ? ART.ruinOf(o.orig || o.type, rs) : null;   /* plan-23: hư hỏng / đổ nát (PixelLab) */
     if (ri) { const od = O[o.orig || o.type] || d, rby = (o.y + od.fh) * TS; g.drawImage(ri, o.x * TS - cx + (od.ox || 0), rby - ri.height / ART.hi - cy + (od.oy || 0)); return; }
     const im = o.artImg || (d.frames ? d.frames[loopFrame(d.frames.length, d.animFlag ? FPS.flag : FPS.loop, o.x * 3 + o.y)] : d.img); g.drawImage(im, o.x * TS - cx + (o.artImg ? 0 : (d.ox || 0)), by - (o.artImg ? im.height / ART.hi : d.h) - cy + (o.artImg ? 0 : (d.oy || 0))); } }); }
   for (const n of allNpcs().concat(S.staff || [])) draws.push({ y: n.y, n });
@@ -755,28 +813,33 @@ function render() {
     const n = d.n, mm = n.m;
     if (mm && isBooster(mm)) { g.strokeStyle = 'rgba(255,212,94,.9)'; g.lineWidth = 1; g.beginPath(); g.ellipse(Math.round(n.x), Math.round(n.y) - 1, 8, 3, 0, 0, 7); g.stroke(); }
     if (mm && (isLeader(mm) || mm.staff === 'chief')) {   /* plan-25: Leader = CHỈ vương miện PixelLab (anh chốt 2026-10-10: bỏ hào quang lặp vì nhấp nháy nhức mắt; vfx.leader_* giữ trong manifest, chưa dùng) */
-      const cr = ART.uiImg && ART.uiImg('crown'); if (cr) { const cw = Math.round(cr.width / 2), chh = Math.round(cr.height / 2); g.drawImage(cr, Math.round(n.x) - (cw >> 1), Math.round(n.y) - 22 - chh, cw, chh); }
+      const cr = ART.uiImg && ART.uiImg('crown'); if (cr) { const cw = Math.round(cr.width * 0.3), chh = Math.round(cr.height * 0.3); g.drawImage(cr, Math.round(n.x) - (cw >> 1), Math.round(n.y) - 16 - chh, cw, chh); }   /* (vẽ TRƯỚC thân → phải đặt hẳn trên đỉnh đầu, không bị đầu che) 2026-10-11 anh: vương miện nhỏ lại cho cân với người (≈ 7 px thay vì 12) */
       else { g.fillStyle = '#ffd45e'; g.fillRect(Math.round(n.x) - 2, Math.round(n.y) - 21, 5, 2); }
     }
     if (mm && mm.elder) g.drawImage(O.elder_mark.img, Math.round(n.x) - 8, Math.round(n.y) - 28);
     n.draw(g); g.restore();
   }
-  for (const gt of m.gates) if (gt.requires && !S.save.badges.includes(gt.requires)) g.drawImage(O.lock.img, gt.gx * TS + 16 - cx, gt.gy * TS - 12 - cy);
+  for (const gt of m.gates) if (gt.gx !== undefined && gt.requires && !S.save.badges.includes(gt.requires)) g.drawImage(O.lock.img, gt.gx * TS + 16 - cx, gt.gy * TS - 12 - cy);   /* lối đường-ra-mép (gt.path) không có vòm: khóa hiện trên biển exit_sign_lock */
   for (const sys of S.sys) { try { sys.draw?.(g, CTX, cx, cy); } catch (e) { console.error(sys.id, e); } }
+  try { TGT.drawWorld(g, cx, cy); } catch (e) { console.error('target', e); }   /* dấu mục tiêu đang khóa (PixelLab, tĩnh) */
   drawWeather();
   if (S.zone.tint) { g.fillStyle = S.zone.tint; g.fillRect(0, 0, VW, VH); }
   if (S.dark > 0.02) { // gentle night + warm glow around every lamp, torch, campfire and crystal light; the lighthouse sweeps the sea
     g.fillStyle = `rgba(10,12,40,${S.dark.toFixed(3)})`; g.fillRect(0, 0, VW, VH);
-    const LIGHT = { lantern: 22, torch: 20, campfire: 18, crystal_p: 24, crystal_b: 20, lighthouse: 30, gcrystal: 44, vent: 10 };
+    const LIGHT = { lantern: 22, torch: 20, arena_pillar: 26, campfire: 18, crystal_p: 24, crystal_b: 20, lighthouse: 30, gcrystal: 44, vent: 10 };
     g.save(); g.globalCompositeOperation = 'lighter';
     for (const o of m.objects) { const r = LIGHT[o.type]; if (!r || o.ruined) continue; const d = O[o.type], lx = o.x * TS + d.fw * 8 - cx, ly = (o.y + d.fh) * TS - 10 - cy; if (lx < -r || ly < -r || lx > VW + r || ly > VH + r) continue; const gr = g.createRadialGradient(lx, ly, 2, lx, ly, r); gr.addColorStop(0, `rgba(255,200,110,${(S.dark * 1.6).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,200,110,0)'); g.fillStyle = gr; g.fillRect(lx - r, ly - r, r * 2, r * 2); }
     g.restore();
   }
   if (m.sea) { const lh = m.objects.find(o => o.lighthouse); if (lh) { const lx = lh.x * TS + 16 - cx, ly = lh.y * TS + 32 - 58 - cy, a = S.time * 0.9; g.save(); g.globalAlpha = 0.22 + S.dark; g.fillStyle = '#fff3b0'; g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + Math.cos(a) * 160 - Math.sin(a) * 14, ly + Math.sin(a) * 160 + Math.cos(a) * 14); g.lineTo(lx + Math.cos(a) * 160 + Math.sin(a) * 14, ly + Math.sin(a) * 160 - Math.cos(a) * 14); g.closePath(); g.fill(); g.restore(); } }
+  if (S.camZoom > 1.01 && S.camFocus) {   /* phóng to cảnh quanh 1 điểm (cảnh biến hình, spar.js): cắt vùng giữa canvas rồi kéo giãn — giữ pixel sắc */
+    const z = S.camZoom, hi = cv.width / VW, fx = Math.max(VW / (2 * z), Math.min(VW - VW / (2 * z), S.camFocus.x - cx)), fy = Math.max(VH / (2 * z), Math.min(VH - VH / (2 * z), S.camFocus.y - cy));
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(cv, Math.round((fx - VW / (2 * z)) * hi), Math.round((fy - VH / (2 * z)) * hi), Math.round(VW / z * hi), Math.round(VH / z * hi), 0, 0, cv.width, cv.height); g.restore();
+  }
   if (S.zone.vignette) { const gr = g.createRadialGradient(VW / 2, VH / 2, VH * 0.3, VW / 2, VH / 2, VH * 0.9); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(10,0,30,.75)'); g.fillStyle = gr; g.fillRect(0, 0, VW, VH); }
   if (S.flash > 0) { g.fillStyle = `rgba(255,255,255,${(S.flash * 0.8).toFixed(2)})`; g.fillRect(0, 0, VW, VH); }
   if (fade > 0) { g.fillStyle = `rgba(0,0,0,${fade <= 1 ? fade : 2 - fade})`; g.fillRect(0, 0, VW, VH); }
-  drawLabels(cx, cy);
+  if (!(S.camZoom > 1.01)) drawLabels(cx, cy);
   drawSeis(tr());
 }
 const tr = () => S.zone.tremor;
@@ -798,6 +861,7 @@ function drawLabels(cx, cy) {
   if (credits) { drawCredits(); return; }
   ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
   const label = (text, x, y, color, mark) => {
+    if (S.hideLabels) return;   /* plan-29: cảnh Rồng Thần — ẩn tên/biển chữ để không đè rồng */
     const sx = Math.round((x - cx) * scale), sy = Math.round((y - 20 - cy) * scale);
     if (sx < -100 || sx > uiCv.width + 100 || sy < -20 || sy > uiCv.height + 20) return;
     const w = ug.measureText(text).width + 8, h = fs + 4;
@@ -815,16 +879,26 @@ function drawLabels(cx, cy) {
   }
   ug.font = `${Math.max(9, scale * 2.6)}px VT323, monospace`;
   for (const o of S.map.objects) if (o.flag && o.label) { const grp = S.nations.find(n => n.key === o.flag); label(UI.flagLabel(o.flag) + (grp ? ` · ${grp.members.length}` : ''), o.x * TS + 24, o.y * TS - 14, '#f2ebe0', false); }
+  for (const o of S.map.objects) if (o.tag) { const d = O[o.type]; label(o.tag[UI.lang()] || o.tag.en, o.x * TS + d.w / 2 + (d.ox || 0), (o.y + d.fh) * TS - d.h + 18, '#ffd45e', false); }   /* 2026-10-11: tên trên biển chỉ đường (Sàn Đấu Ngầm) */
+  { const ef = Math.round(fs * 1.4); ug.font = `bold ${ef}px VT323, monospace`;   /* 2026-10-11: nhãn biển lối chuyển vùng (thay vòm cổng) — tên vùng đích, chữ to hơn tên người cho dễ đọc; lối khóa: hồng + 'Cần huy hiệu Mx' */
+    for (const o of S.map.objects) if (o.exit && !S.hideLabels) { const d = O[o.type], e = o.exit, vi = UI.lang() === 'vi', lk = e.requires && !S.save.badges.includes(e.requires);
+      const text = (e.name[UI.lang()] || e.name.en) + e.ar + (lk ? (vi ? ` · Cần huy hiệu M${e.requires}` : ` · Needs M${e.requires} badge`) : '');
+      const sx = Math.round((o.x * TS + d.w / 2 + (d.ox || 0) - cx) * scale), sy = Math.round(((o.y + d.fh) * TS - d.h - 2 - cy) * scale);
+      if (sx < -300 || sx > uiCv.width + 300 || sy < -20 || sy > uiCv.height + 40) continue;
+      const w = ug.measureText(text).width + 10, h = ef + 4, x0 = Math.max(2, Math.min(uiCv.width - w - 2, sx - w / 2)), y0 = Math.max(2, sy - h);
+      ug.fillStyle = 'rgba(13,11,20,.7)'; ug.beginPath(); ug.roundRect(x0, y0, w, h, 3); ug.fill(); ug.fillStyle = lk ? '#ff9a9a' : '#ffd45e'; ug.fillText(text, x0 + w / 2, y0 + h - 2); } }
   ug.font = `bold ${fs}px VT323, monospace`;
   const av = selfAvatar();
-  if (av) { const sx = Math.round((p.x - cx) * scale), sy = Math.round((p.y - 22 - cy) * scale), r = Math.round(scale * 4); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
-  else if (S.save.name) label(S.save.name, p.x, p.y, '#ffd45e', false);
+  const headUp = (p.sheet && p.sheet.skin && p.sheet.skin.headUp) || 0;   /* plan-29: ngoại hình cao (Chad) → tên/ảnh đại diện lên trên đầu */
+  if (av) { const sx = Math.round((p.x - cx) * scale), sy = Math.round((p.y - 22 - headUp - cy) * scale), r = Math.round(scale * 4); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
+  else if (S.save.name) label(S.save.name, p.x, p.y - headUp, '#ffd45e', false);
   if (S.pops && S.pops.length) {   /* plan-14: số nổi bay lên rồi mờ (dùng label() sẵn có cho chắc) */
     ug.font = `bold ${Math.max(11, Math.round(scale * 3.6))}px VT323, VT323, monospace`;
     for (const q of S.pops) { const k = q.t / 1.1; ug.globalAlpha = k < 0.7 ? 1 : Math.max(0, 1 - (k - 0.7) / 0.3); label(q.text, q.x, q.y + 12 - k * 18, q.color, false); }
     ug.globalAlpha = 1; ug.font = `bold ${fs}px VT323, monospace`;
   }
   for (const sys of S.sys) { try { sys.drawUI?.(ug, CTX, cx, cy, scale); } catch (e) { console.error(sys.id, e); } }
+  try { TGT.drawUI(ug, cx, cy, scale); } catch (e) { console.error('target', e); }
 }
 function drawCredits() {
   const W = uiCv.width, H = uiCv.height, cols = W < 600 ? 2 : 4, colW = W / cols, lh = 22 * (scale / 2), fs = Math.max(11, scale * 4);

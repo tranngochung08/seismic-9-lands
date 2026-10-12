@@ -171,6 +171,7 @@ export const TRACKS = {
   m4: ['m4'], 'm4:night': ['m4', 'night'], m5: ['m5'], 'm5:night': ['m5', 'night'], m6: ['m6'], 'm6:night': ['m6', 'night'],
   m7: ['m7'], 'm7:night': ['m7', 'night'], m8: ['m8'], 'm8:night': ['m8', 'night'], m9: ['m9'], 'm9:night': ['m9', 'night'],
   u1: ['u1'], trench: ['trench'], boss: ['boss'],
+  arena: ['m4', { name: 'Sàn Đấu Ngầm', mood: 'hầm đấu, trống dồn', bpm: 118, drums: { vol: 0.46, pat: 'K . t k S . T t', fill: 'K t t T S T T T' }, bass: { ins: 'pbass', vol: 0.5, pat: 'R . R . R R 5 .' }, arp: { vol: 0.1 } }],   /* 2026-10-11 */
   credits: ['village', { name: 'Danh sách nghệ sĩ (kết)', bpm: 76, lead: { ins: 'bell', vol: 0.4 }, pad: { ins: 'pad', vol: 0.12, center: 60 }, drums: null, arp: { vol: 0.18 } }],
 };
 export const STINGERS = { levelup: 'st_levelup', badge: 'st_badge', quest: 'st_quest', noxx: 'st_noxx', xea: 'st_xea', boss: 'st_boss', reveal: 'st_reveal', ending: 'st_ending' };
