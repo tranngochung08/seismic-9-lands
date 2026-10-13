@@ -36582,5 +36582,25 @@
   "pivot": "bottom-center",
   "impact": null,
   "date": "2026-10-12"
+ },
+ "vfx/sky_gust_11f_55x29.png": {
+  "status": "draft",
+  "id": null,
+  "prompt": "vfx_workbench effect None",
+  "size": {
+   "file": [
+    110,
+    58
+   ],
+   "logic": [
+    55,
+    29
+   ]
+  },
+  "frames": 11,
+  "fps": 12,
+  "pivot": "bottom-center",
+  "impact": null,
+  "date": "2026-10-13"
  }
 }

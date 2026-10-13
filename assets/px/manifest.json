@@ -167,6 +167,18 @@
       "n": 5,
       "ch": 24,
       "cw": 32
+     },
+     "hover": {
+      "file": "chars/hung_b_act_hover.png",
+      "n": 6,
+      "ch": 24,
+      "cw": 32
+     },
+     "puton": {
+      "file": "chars/hung_b_act_puton.png",
+      "n": 7,
+      "ch": 24,
+      "cw": 32
      }
     }
    },
@@ -376,6 +388,12 @@
       "n": 6,
       "ch": 28.5,
       "cw": 32
+     },
+     "hover": {
+      "file": "chars/chad_act_hover.png",
+      "n": 6,
+      "ch": 24,
+      "cw": 32
      }
     }
    },
@@ -444,7 +462,17 @@
   "rift2": "zones/rift2.json",
   "rift3": "zones/rift3.json",
   "rift4": "zones/rift4.json",
-  "rift5": "zones/rift5.json"
+  "rift5": "zones/rift5.json",
+  "sky": "zones/sky.json",
+  "sky_m1": "zones/sky_m1.json",
+  "sky_m2": "zones/sky_m2.json",
+  "sky_m3": "zones/sky_m3.json",
+  "sky_m4": "zones/sky_m4.json",
+  "sky_m5": "zones/sky_m5.json",
+  "sky_m6": "zones/sky_m6.json",
+  "sky_m7": "zones/sky_m7.json",
+  "sky_m8": "zones/sky_m8.json",
+  "sky_m9": "zones/sky_m9.json"
  },
  "ui": {
   "items": {
@@ -610,7 +638,18 @@
    "rkbook_super_5": "ui/items/rkbook_super.png",
    "rkbook_super_6": "ui/items/rkbook_super.png",
    "rkbook_super_7": "ui/items/rkbook_super.png",
-   "rkbook8": "ui/items/rkbook8.png"
+   "rkbook8": "ui/items/rkbook8.png",
+   "tfeather": "zones/sky/items/it_tfeather_s21.png",
+   "cloudsilk": "zones/sky/items/it_cloudsilk_s22.png",
+   "floatstone": "zones/sky/items/it_floatstone_s23.png",
+   "rkbook_fly": "zones/sky/items/it_rkbook_fly_s24.png",
+   "copter": "zones/sky/items/it_copter2.png",
+   "binoc": "zones/sky/scout/it_binoc.png",
+   "parcel": "zones/sky/scout/it_parcel.png",
+   "starshard": "zones/sky/scout/it_starshard.png",
+   "jar": "zones/sky/scout/it_jar.png",
+   "boltjar": "zones/sky/scout/it_boltjar.png",
+   "rarefeather": "zones/sky/scout/it_rarefeather.png"
   },
   "tabs": {
    "bag": "ui/tab_bag.png",
@@ -2211,6 +2250,60 @@
    "ay": 20.5,
    "loop": false,
    "trigger": "Hố Đen (hoden.js)"
+  },
+  "sky_jet": {
+   "file": "vfx/sky_jet_8f_31x10.png",
+   "n": 8,
+   "w": 31,
+   "h": 10,
+   "fps": 12,
+   "pivot": "left-middle",
+   "loop": true
+  },
+  "sky_wind": {
+   "file": "vfx/sky_wind_12f_51x29.png",
+   "n": 12,
+   "w": 51,
+   "h": 29,
+   "fps": 10,
+   "pivot": "left-middle",
+   "loop": true
+  },
+  "sky_updraft": {
+   "file": "vfx/sky_updraft_12f_33x41.png",
+   "n": 12,
+   "w": 33,
+   "h": 41,
+   "fps": 10,
+   "pivot": "left-middle",
+   "loop": true
+  },
+  "sky_gust": {
+   "file": "vfx/sky_gust_11f_55x29.png",
+   "n": 11,
+   "w": 55,
+   "h": 29,
+   "fps": 12,
+   "pivot": "bottom-center",
+   "loop": false
+  },
+  "sky_jet2": {
+   "file": "vfx/sky_jet2_8f_22x10.png",
+   "n": 8,
+   "w": 22,
+   "h": 10,
+   "fps": 12,
+   "pivot": "left-middle",
+   "loop": true
+  },
+  "sky_trail": {
+   "file": "vfx/sky_trail_8f_35x16.png",
+   "n": 8,
+   "w": 35,
+   "h": 16,
+   "fps": 12,
+   "pivot": "left-middle",
+   "loop": true
   }
  },
  "cursors": {
@@ -2672,6 +2765,76 @@
    "cw": 32,
    "ch": 24,
    "fps": 1
+  },
+  "sky_thunder": {
+   "file": "monsters/sky_thunder.png",
+   "n": 4,
+   "cw": 24,
+   "ch": 24,
+   "fps": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "sky_jelly": {
+   "file": "monsters/sky_jelly.png",
+   "n": 4,
+   "cw": 24,
+   "ch": 24,
+   "fps": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "sky_hawk": {
+   "file": "monsters/sky_hawk.png",
+   "n": 4,
+   "cw": 34,
+   "ch": 34,
+   "fps": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "sky_pirate": {
+   "file": "monsters/sky_pirate.png",
+   "n": 4,
+   "cw": 49,
+   "ch": 49,
+   "fps": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "sky_whale": {
+   "file": "monsters/sky_whale.png",
+   "n": 4,
+   "cw": 85,
+   "ch": 85,
+   "fps": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
   }
  },
  "ruins": {

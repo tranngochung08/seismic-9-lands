@@ -819,6 +819,24 @@ function buildRoad(R, idx) {
   };
 }
 
+/* ---------------- plan-31: Quần Đảo Mây (sky) — lơ lửng NGAY TRÊN Làng (cùng cỡ 80×64 → rơi khỏi đảo = xuống Làng đúng chỗ đó).
+   Nền T.CHASM = biển mây (CỨNG khi đi bộ: muốn qua khoảng trống phải bay; sky.js cho người đang bay đi qua). 3 đảo lớn (Bến Mây Nam, Đảo Gió Tây, Đảo Trung Tâm Bắc)
+   nối bằng cầu mây T.BRIDGE (đi bộ được); đảo nhỏ phía Đông chỉ tới được bằng bay. Ảnh PixelLab: zones/sky.json (Wang biển mây / cỏ đảo / cầu mây, td8 cổng trời + đền gió). */
+defObj('sky_gate', 32, 32, 2, 1, g => { px1(g, 2, 4, '#c8c0b0', 6, 28); px1(g, 24, 4, '#c8c0b0', 6, 28); px1(g, 2, 2, '#e8d070', 28, 5); px1(g, 8, 8, 'rgba(160,210,255,.7)', 16, 24); px1(g, 13, 16, '#ffd45e', 6, 6); });
+defObj('sky_shrine', 32, 32, 2, 1, g => { px1(g, 6, 14, '#d8d4cc', 20, 16); px1(g, 8, 10, '#f2efe8', 16, 6); px1(g, 14, 2, '#8ad0ff', 4, 8); });
+for (let i = 1; i <= 8; i++) defObj('sky_lm_m' + i, 32, 32, 2, 1, g => { px1(g, 6, 8, '#d8d4cc', 20, 22); px1(g, 10, 4, '#a8c8e8', 12, 6); });   /* vật mốc trời từng vùng (ảnh td8 PixelLab trong zones/sky.json) */
+/* 2026-10-13 anh đổi: MỖI vùng có 1 khoảng trời riêng (bay lên bằng CHONG CHÓNG TRE) — 48×40, nhỏ hơn Quần Đảo Mây (trời của Làng).
+   Toạ độ ứng 1:1 theo tỉ lệ với vùng dưới (80×64): cất cánh ở đâu → hiện ở chỗ tương ứng trên trời; hạ cánh ngược lại. M9: Cổng Trời (Bakunawa, đang khoá). */
+/* 2026-10-13 (anh đổi hướng): TẠM BỎ đảo + quái trên trời. Mỗi vùng ngoài trời (Biển, Làng, M1–M9, đèo road1–9) có 1 KHOẢNG TRỜI
+   CÙNG KÍCH THƯỚC + CÙNG TOẠ ĐỘ (1 ô trời = 1 ô đất). Trời = bay tự do trên biển sương mây, nhìn xuyên xuống bản đồ thật của vùng dưới (sky.js vẽ).
+   Không vật cản (chỉ giới hạn mép); mép Bắc / Nam nối sang trời của vùng kề đúng như lối đi dưới đất (sky.js SKY_LINK). Ảnh đảo cũ giữ trong assets/px/zones/sky/isles (không dùng). */
+function buildSkyOver(below, w, h) {
+  return () => {
+    const m = makeMap(w, h, T.CHASM); m.solid.fill(1); m.sky = true; m.below = below; m.theme = { tier: 0 }; m.tier = 0; m.islands = []; m.bridges = [];
+    const c = { x: w >> 1, y: h >> 1 }; m.entries = { default: c, back: c }; m.reserved.push(c); m.npcArea = { x: 2, y: 2, w: w - 4, h: h - 4 };
+    return m;
+  };
+}
 export const ZONES = {
   u1: { id: 'u1', lv: -2, order: 98, hidden: true, under: true, uLv: [2, 3], name: S('Shallow Coral Reef', 'Rạn San Hô Nông'), tremor: 0, build: buildU1,
     systems: ['underwater', 'petgun', 'monsters', 'hero', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(40,170,200,.12)',   /* hero phải có trong danh sách, không thì máu/ngất không chạy (bẫy cũ của Vực Kraken) */
@@ -888,4 +906,10 @@ ROADS.forEach((R, i) => { const up = ZONES[R.upper];
   ZONES[R.id] = { id: R.id, lv: -2, order: i + 0.6, hidden: true, road: R, roadIdx: i + 1, name: S('Pass → ' + up.name.en, 'Đèo → ' + up.name.vi), tremor: 0, build: buildRoad(R, i + 1),
     systems: ['hero', 'monsters', 'knock', 'spar', 'road', 'drops', 'vfx', 'pet', 'photo', 'petgun'], tint: ZONES[R.lower].tint,
     flavor: S(['The pass is narrow. Someone big is waiting halfway up.'], ['Đường đèo hẹp. Lưng chừng dốc có người to con đang chờ.']) }; });
+/* plan-31 (2026-10-13): khoảng trời của từng vùng ngoài trời — id: Làng → 'sky' (giữ id cũ cho save / preset), còn lại 'sky_<vùng>' */
+for (const lo of ['sea', 'village', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', ...ROADS.map(R => R.id)]) {
+  const Z = ZONES[lo], id = lo === 'village' ? 'sky' : 'sky_' + lo, rd = /^road/.test(lo), w = rd ? ROAD.W : W, h = rd ? ROAD.len + 6 : H;
+  ZONES[id] = { id, lv: -2, order: (Z.order || 0) + 0.7, hidden: true, name: S('Sky over ' + Z.name.en, 'Trời ' + Z.name.vi), tremor: 0, build: buildSkyOver(lo, w, h), sky: true,
+    systems: ['hero', 'sky', 'vfx', 'pet', 'photo'], flavor: S(['Far below, the land drifts under the mist.'], ['Xa phía dưới, mặt đất trôi dưới lớp sương.']) };
+}
 export const ZONE_LIST = Object.values(ZONES).sort((a, b) => a.order - b.order);

@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "sky-gust 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 1.png",
+   "frame": {
+    "x": 110,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 2.png",
+   "frame": {
+    "x": 220,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 3.png",
+   "frame": {
+    "x": 330,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 4.png",
+   "frame": {
+    "x": 0,
+    "y": 57,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 5.png",
+   "frame": {
+    "x": 110,
+    "y": 57,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 6.png",
+   "frame": {
+    "x": 220,
+    "y": 57,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 7.png",
+   "frame": {
+    "x": 330,
+    "y": 57,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 8.png",
+   "frame": {
+    "x": 0,
+    "y": 114,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 9.png",
+   "frame": {
+    "x": 110,
+    "y": 114,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 10.png",
+   "frame": {
+    "x": 220,
+    "y": 114,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-gust 11.png",
+   "frame": {
+    "x": 330,
+    "y": 114,
+    "w": 110,
+    "h": 57
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 110,
+    "h": 57
+   },
+   "sourceSize": {
+    "w": 110,
+    "h": 57
+   },
+   "pivot": {
+    "x": 0.509090909090909,
+    "y": 0.45614035087719296
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "sky-gust.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 440,
+   "h": 171
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 56,
+   "y": 26
+  },
+  "frameTags": [
+   {
+    "name": "sky-gust",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

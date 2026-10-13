@@ -833,6 +833,9 @@ function updatePet(dt, ctx) {
   }
   const e = ST.ent || spawnEnt(ctx);
   if (e.state === 'home') { e.state = 'follow'; e.sit = false; }
+  { const mnt = ctx.skyMount ? ctx.skyMount() : null;   /* plan-31: người chơi đang CƯỠI Rocky bay (sky.js vẽ cả hai) — Rocky bám theo chỗ cưỡi, chỉ chạy luồng Rocky-ha đã ra lệnh */
+    if (mnt) { e.state = 'mount'; e.x = mnt.x; e.y = mnt.y; e.px = e.x; e.py = e.y; e.face = mnt.face; e.dir = mnt.dir; e.moving = false; e.sit = false; e.kfly = null; e.kdown = 0; if (ST.sparkle) cancelFetch(); ST.tgt = null; if (ST.beam) beamTick(ctx, pt, dt); return; }
+    if (e.state === 'mount') { e.state = 'follow'; e.ghost = 1; } }
   const hungry = pt.hunger < HUNGRY_AT;
   const riding = !!(ctx.S.sea && ctx.S.sea.riding && !ctx.S.sea.diving);   /* anh báo 2026-10-10: chỉ ngồi khi đang trên bè/ván, không phải cả vùng Biển */
   if (e.ghost > 0) { e.ghost -= dt; if (e.ghost <= 0 && !passable(ctx, e.x, e.y)) { const f = freeNear(ctx, e.x, e.y); e.x = f.x; e.y = f.y; } }   /* 2026-10-12 tối anh (ảnh Rocky lẫn trong cây): hết xuyên mà còn đứng trong thân cây / vật → dời ra ô trống gần nhất */
@@ -1055,6 +1058,7 @@ export const pet = {
 
   near(ctx) {
     if (ctx.S.mode !== 'play') return null;
+    if (ST.ent && ST.ent.state === 'mount') return null;   /* plan-31: đang cưỡi Rocky bay */
     const t = L(ctx), s = sv(ctx), p = ctx.S.player;
     if (ST.eggObj && ctx.S.map.objects.includes(ST.eggObj)) {
       const x = ST.eggObj.x * TS + 8, y = ST.eggObj.y * TS + 12;
@@ -1103,7 +1107,7 @@ export const pet = {
         out.push({ y: n.y - 3, f: () => ctx.g.drawImage(im, Math.round(n.x - w / 2) - cx, Math.round(n.y + 3 - h) - cy, w, h) });   /* 5 tham số: canvas __hi — shim không nhân đôi toạ độ nguồn (bài học 2026-09-25) */
       }
     }
-    if (!s.pet || !e) return out;
+    if (!s.pet || !e || e.state === 'mount') return out;   /* plan-31: đang chở người bay — sky.js vẽ */
     const g = ctx.g, sx = e.x - cx, sy = e.y - cy;
     if (sx < -40 || sy < -50 || sx > ctx.VW + 40 || sy > ctx.VH + 40) return out;
     const pt = s.pet, scarfSet = frames(scarfFor(ctx)), pk = pickImg(ctx, pt, e, scarfSet), img = pk.img, setPx = pk.px || !!scarfSet.px;

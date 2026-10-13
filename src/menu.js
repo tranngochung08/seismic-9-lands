@@ -125,6 +125,7 @@ function rkWhy(pt, id, n) {
 function doRead(id) {
   const C = deps.CTX, d = ITEMS[id]; if (!d || !d.rk || !C.bag.has(id, 1)) return false;
   const pt = C.rocky && C.rocky.pet(), fail = m => { selId = id; setTip(tipOf(id) + `<div class="mhint rk-why" style="color:#ffb4a0">⚠ ${esc(m)}</div>`); C.toast(m); if (C.sfx) C.sfx('fail'); return false; };
+  if (d.rk.fly) { const r = C.skyFly ? C.skyFly.read() : { ok: false, why: '…' }; if (!r || !r.ok) return fail((r && r.why) || '…'); C.bag.remove(id, 1); tip = ''; selId = null; closeMenu(); if (C.persist) C.persist(); return true; }   /* plan-31: sách Rocky 'Bay' (sky.js) */
   if (!pt) return fail(rkWhy(null));
   if (!d.rk.id) {   /* sách bậc 8 */
     if (!RLV.SKILL_IDS.some(k => RLV.tierOf(pt, k) === RLV.TIER_SHOP)) return fail(UI.lang() === 'vi' ? 'Chưa chiêu nào của Rocky ở bậc 7 — đọc đủ sách tới bậc 7 rồi dùng sách bậc 8.' : 'No Rocky skill at tier 7 yet — reach tier 7 first.');

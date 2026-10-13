@@ -1,0 +1,68 @@
+[
+ {
+  "what": "wang a,b",
+  "b0": 680.0,
+  "b1": 648.0,
+  "t": "15:46:00"
+ },
+ {
+  "what": "pix cloud_s,cloud_m,cloud_l,underside,it_tfeather,it_cloudsilk,it_floatstone,it_rkbook_fly,hook",
+  "b0": 603.0,
+  "b1": 595.0,
+  "t": "15:51:28"
+ },
+ {
+  "what": "td8 sky_gate,sky_shrine",
+  "b0": 594.0,
+  "b1": 559.0,
+  "t": "15:53:36"
+ },
+ {
+  "what": "td8 sky_gate",
+  "b0": 556.0,
+  "b1": 546.0,
+  "t": "15:56:35"
+ },
+ {
+  "what": "pix far_a,far_b,gap,under_a,under_b",
+  "b0": 546.0,
+  "b1": 542.0,
+  "t": "16:31:38"
+ },
+ {
+  "what": "wang c",
+  "b0": 541.0,
+  "b1": 537.0,
+  "t": "16:32:54"
+ },
+ {
+  "what": "pix far_a,far_b,gap",
+  "b0": 537.0,
+  "b1": 534.0,
+  "t": "16:33:54"
+ },
+ {
+  "what": "pix cloud_s",
+  "b0": 534.0,
+  "b1": 534.0,
+  "t": "16:42:08"
+ },
+ {
+  "what": "td8 sky_lm_m1,sky_lm_m2,sky_lm_m3,sky_lm_m4",
+  "b0": 504.0,
+  "b1": 464.0,
+  "t": "17:19:12"
+ },
+ {
+  "what": "td8 sky_lm_m5,sky_lm_m6,sky_lm_m7,sky_lm_m8",
+  "b0": 464.0,
+  "b1": 424.0,
+  "t": "17:23:10"
+ },
+ {
+  "what": "wang3 sky,sky_m1,sky_m2,sky_m3,sky_m4,sky_m5,sky_m6,sky_m7,sky_m8,sky_m9",
+  "b0": 424.0,
+  "b1": 368.0,
+  "t": "18:09:14"
+ }
+]

@@ -1,0 +1,235 @@
+{
+ "frames": [
+  {
+   "filename": "sky-jet 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-jet 1.png",
+   "frame": {
+    "x": 61,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-jet 2.png",
+   "frame": {
+    "x": 122,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-jet 3.png",
+   "frame": {
+    "x": 0,
+    "y": 20,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-jet 4.png",
+   "frame": {
+    "x": 61,
+    "y": 20,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-jet 5.png",
+   "frame": {
+    "x": 122,
+    "y": 20,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-jet 6.png",
+   "frame": {
+    "x": 0,
+    "y": 40,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "sky-jet 7.png",
+   "frame": {
+    "x": 61,
+    "y": 40,
+    "w": 61,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 61,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 61,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.9344262295081968,
+    "y": 0.5
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "sky-jet.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 183,
+   "h": 60
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 57,
+   "y": 10
+  },
+  "frameTags": [
+   {
+    "name": "sky-jet",
+    "from": 0,
+    "to": 7,
+    "direction": "forward"
+   }
+  ]
+ }
+}

@@ -1,0 +1,152 @@
+{
+ "inherit": "village",
+ "classes": {
+  "__base": "sky",
+  "CHASM": "sky",
+  "GRASS": "skygrass",
+  "GRASS2": "skygrass",
+  "FLOWER": "skygrass",
+  "BRIDGE": "cloud",
+  "STONE": "stone",
+  "COBBLE": "stone",
+  "DIRT": "skygrass",
+  "SAND": "skygrass"
+ },
+ "wang": [
+  {
+   "dir": "zones/sky/wang/v_sky",
+   "upper": "skygrass"
+  },
+  {
+   "dir": "zones/sky/wang/b2_sky",
+   "upper": "cloud"
+  },
+  {
+   "dir": "wang/c2",
+   "upper": "stone"
+  }
+ ],
+ "objects": {
+  "sky_lm_m1": {
+   "file": "zones/sky/obj/sky_lm_m1_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_lm_m2": {
+   "file": "zones/sky/obj/sky_lm_m2_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_lm_m3": {
+   "file": "zones/sky/obj/sky_lm_m3_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_lm_m4": {
+   "file": "zones/sky/obj/sky_lm_m4_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_lm_m5": {
+   "file": "zones/sky/obj/sky_lm_m5_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_lm_m6": {
+   "file": "zones/sky/obj/sky_lm_m6_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_lm_m7": {
+   "file": "zones/sky/obj/sky_lm_m7_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_lm_m8": {
+   "file": "zones/sky/obj/sky_lm_m8_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_gate": {
+   "file": "zones/sky/obj/sky_gate_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "sky_shrine": {
+   "file": "zones/sky/obj/sky_shrine_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "images": {
+  "cloud_s": "zones/sky/bg/cloud_s_s61.png",
+  "cloud_m": "zones/sky/bg/cloud_m_s12.png",
+  "cloud_l": "zones/sky/bg/cloud_l_s13.png",
+  "underside": "zones/sky/bg/underside_s14.png",
+  "far_a": "zones/sky/bg/far_a_s51.png",
+  "far_b": "zones/sky/bg/far_b_s52.png",
+  "gap": "zones/sky/bg/gap_s53.png",
+  "under_a": "zones/sky/bg/under_a_s44.png",
+  "under_b": "zones/sky/bg/under_b_s45.png",
+  "hook": "zones/sky/fx/hook_s25.png",
+  "isle_sky_big0": "zones/sky/isles/sky_big0.png",
+  "isle_sky_big1": "zones/sky/isles/sky_big1.png",
+  "isle_sky_big2": "zones/sky/isles/sky_big2.png",
+  "isle_sky_m1_big0": "zones/sky/isles/sky_m1_big0.png",
+  "isle_sky_m1_big1": "zones/sky/isles/sky_m1_big1.png",
+  "isle_sky_m1_big2": "zones/sky/isles/sky_m1_big2.png",
+  "isle_sky_m1_small0": "zones/sky/isles/sky_m1_small0.png",
+  "isle_sky_m1_small1": "zones/sky/isles/sky_m1_small1.png",
+  "isle_sky_m1_small2": "zones/sky/isles/sky_m1_small2.png",
+  "isle_sky_small0": "zones/sky/isles/sky_small0.png",
+  "isle_sky_small1": "zones/sky/isles/sky_small1.png",
+  "isle_sky_small2": "zones/sky/isles/sky_small2.png",
+  "isle_sky_small3": "zones/sky/isles/sky_small3.png",
+  "fog_0": "zones/sky/fog/fog_0.png",
+  "fog_1": "zones/sky/fog/fog_1.png",
+  "fog_2": "zones/sky/fog/fog_2.png",
+  "fog_3": "zones/sky/fog/fog_3.png",
+  "isle_sky_m2_big0": "zones/sky/isles/sky_m2_big0.png",
+  "isle_sky_m2_big1": "zones/sky/isles/sky_m2_big1.png",
+  "isle_sky_m2_small0": "zones/sky/isles/sky_m2_small0.png",
+  "isle_sky_m3_big0": "zones/sky/isles/sky_m3_big0.png",
+  "isle_sky_m3_big1": "zones/sky/isles/sky_m3_big1.png",
+  "isle_sky_m3_small0": "zones/sky/isles/sky_m3_small0.png",
+  "isle_sky_m4_big0": "zones/sky/isles/sky_m4_big0.png",
+  "isle_sky_m4_big1": "zones/sky/isles/sky_m4_big1.png",
+  "isle_sky_m4_small0": "zones/sky/isles/sky_m4_small0.png",
+  "isle_sky_m5_big0": "zones/sky/isles/sky_m5_big0.png",
+  "isle_sky_m5_big1": "zones/sky/isles/sky_m5_big1.png",
+  "isle_sky_m5_small0": "zones/sky/isles/sky_m5_small0.png",
+  "isle_sky_m6_big0": "zones/sky/isles/sky_m6_big0.png",
+  "isle_sky_m6_big1": "zones/sky/isles/sky_m6_big1.png",
+  "isle_sky_m6_small0": "zones/sky/isles/sky_m6_small0.png",
+  "isle_sky_m7_big0": "zones/sky/isles/sky_m7_big0.png",
+  "isle_sky_m7_big1": "zones/sky/isles/sky_m7_big1.png",
+  "isle_sky_m7_small0": "zones/sky/isles/sky_m7_small0.png",
+  "isle_sky_m8_big0": "zones/sky/isles/sky_m8_big0.png",
+  "isle_sky_m8_big1": "zones/sky/isles/sky_m8_big1.png",
+  "isle_sky_m8_small0": "zones/sky/isles/sky_m8_small0.png",
+  "isle_sky_m9_big0": "zones/sky/isles/sky_m9_big0.png",
+  "isle_sky_m9_big1": "zones/sky/isles/sky_m9_big1.png",
+  "isle_sky_m9_small0": "zones/sky/isles/sky_m9_small0.png",
+  "isle_logp_0": "zones/sky/isles/logp_0.png",
+  "isle_logp_1": "zones/sky/isles/logp_1.png",
+  "isle_logp_2": "zones/sky/isles/logp_2.png",
+  "isle_logp_3": "zones/sky/isles/logp_3.png"
+ },
+ "decor": {
+  "GRASS": [
+   {
+    "file": "zones/sky/decor/dc_sky_0_s70.png",
+    "p": 0.1,
+    "n": 1
+   },
+   {
+    "file": "zones/sky/decor/dc_sky_1_s71.png",
+    "p": 0.07,
+    "n": 1
+   }
+  ]
+ }
+}

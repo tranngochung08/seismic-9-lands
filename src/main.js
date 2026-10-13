@@ -103,6 +103,7 @@ const CTX = {
   held: () => HB.held(), holding: id => HB.holding(id), heldKind: () => HB.heldKind(), needHold: id => HB.needText(id),   /* plan-20: món đang cầm trên hotbar */
   heldSeed: () => (HB.heldKind() === 'seed' ? HB.held() : null), hotbarSync: () => HB.sync(), hold: id => HB.hold(id), touchA: () => HB.mobile(),   /* điện thoại: nút A theo ngữ cảnh (hệ trả ứng viên 'cần cầm X' cả khi không có chuột) */
   npcSheet: m => charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), NPC, charSheetOf: c => charSheet({ skin: '#f6d3b5', hair: '#2b1d14', shirt: '#ffffff', pants: '#2f3b5e', ...c }),   /* plan-25: tượng đá dân = hình của chính người đó tô đá */
+  peekNpcs: (id, map) => { const z = ZONES[id]; if (!z || !map) return []; const { members, placed } = placeNpcs(z, id, map, map.entries.default); return members.filter(m => placed.has(m)).map(m => { const sp = placed.get(m); return { id: m.id, name: m.n, lv: m.lv, x: sp.x * TS + 8, y: sp.y * TS + 14, leader: isLeader(m), elder: !!m.elder }; }); },   /* plan-32 A: trinh sát từ trời */
   respawnNpc: (m, x, y) => { const n = new NPC(m, x, y, charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), rngFrom(hashStr(m.id))); S.npcs.push(n); return n; },   /* plan-21: hồi sinh dân */
   tool: { tier: id => (S.save.toolTier || {})[id] || (S.save.tools?.[id] ? 1 : 0), set: (id, t) => { (S.save.toolTier ||= {})[id] = t; if (S.save.tools) S.save.tools[id] = t > 0; if (id === 'rod' && t > 0) S.save.tools.rodBought = true; persist(); } },
   defineObject: (name, w, h, fw, fh, fn, opts) => { if (!O[name]) defineObject(name, w, h, fw, fh, fn, opts); return name; },
@@ -292,16 +293,8 @@ function findMe() {
 }
 
 // ---------- zones ----------
-function enterZone(id, entry) {
-  const z = ZONES[id]; artEnterZone(id); TGT.onZoneEnter();
-  if (S.zone) for (const sys of S.sys) { try { sys.onZoneLeave?.(CTX); } catch (e) { console.error(sys.id, e); } }
-  setNationLang(UI.lang());
-  S.nations = nationGroups(z.lv); // nations present at this level, biggest first → one fenced district each (names localized)
-  const saved = (S.save.districts || {})[id] || {};
-  const map = z.build(rngFrom(hashStr(id)), { nations: S.nations.map((g, i) => ({ key: g.key, size: g.members.length, tier: saved[i]?.tier })) });
-  S.zone = z; z.tier = zoneTier(id); S.map = map; artMapBuilt(map); S.sys = z.systems ? SYSTEMS.filter(sy => z.systems.includes(sy.id) || sy.always) : SYSTEMS;   /* sy.always: hệ chạy ở mọi vùng (plan-29 dragon: ngoại hình + báo 'không gọi được rồng ở đây') */ S.save.zone = id; S.save.entry = entry; S.hazards = []; S.hazNext = 3; S.talking = null;
-  const e = map.entries[entry] || map.entries.default;
-  S.player.x = e.x * TS + 8; S.player.y = e.y * TS + 14; S.player.dir = 0;
+/* plan-32 A: chỗ đứng của dân (tách khỏi enterZone để trời 'nhìn trộm' được vùng dưới — ctx.peekNpcs) */
+function placeNpcs(z, id, map, e) {
   const rng = rngFrom(hashStr(id) ^ Math.floor(Date.now() / 864e5));
   let members = pickNpcs(z.lv, 48, rng);
   { const dead = S.save.dead || {}, fallen = new Set((S.save.fallen || []).map(f => f.id)); members = members.filter(m => !dead[m.id] && !fallen.has(m.id)); }   /* plan-21: dân đã ngã xuống (bia mộ / chết hẳn) không xuất hiện */
@@ -322,6 +315,19 @@ function enterZone(id, entry) {
   const spots = freeTiles(map, rng, map.npcArea, rest.length, avoid, 4);
   rest.forEach((m, i) => { if (spots[i]) placed.set(m, spots[i]); });
   if (target && target.lv === z.lv) { const near = freeTiles(map, rng, { x: e.x - 5, y: e.y - 5, w: 11, h: 6 }, 1, [e], 2); if (near.length) placed.set(target, near[0]); }
+  return { members, placed };
+}
+function enterZone(id, entry) {
+  const z = ZONES[id]; artEnterZone(id); TGT.onZoneEnter();
+  if (S.zone) for (const sys of S.sys) { try { sys.onZoneLeave?.(CTX); } catch (e) { console.error(sys.id, e); } }
+  setNationLang(UI.lang());
+  S.nations = nationGroups(z.lv); // nations present at this level, biggest first → one fenced district each (names localized)
+  const saved = (S.save.districts || {})[id] || {};
+  const map = z.build(rngFrom(hashStr(id)), { nations: S.nations.map((g, i) => ({ key: g.key, size: g.members.length, tier: saved[i]?.tier })) });
+  S.zone = z; z.tier = zoneTier(id); S.map = map; artMapBuilt(map); S.sys = z.systems ? SYSTEMS.filter(sy => z.systems.includes(sy.id) || sy.always) : SYSTEMS;   /* sy.always: hệ chạy ở mọi vùng (plan-29 dragon: ngoại hình + báo 'không gọi được rồng ở đây') */ S.save.zone = id; S.save.entry = entry; S.hazards = []; S.hazNext = 3; S.talking = null;
+  const e = map.entries[entry] || map.entries.default;
+  S.player.x = e.x * TS + 8; S.player.y = e.y * TS + 14; S.player.dir = 0;
+  const { members, placed } = placeNpcs(z, id, map, e);
   S.npcs = members.filter(m => placed.has(m)).map(m => { const s = placed.get(m); return new NPC(m, s.x * TS + 8, s.y * TS + 14, charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), rngFrom(hashStr(m.id))); });
   AUDIO.setZone(z);
   S.guide = null;
@@ -389,7 +395,8 @@ function checkAchievements() {
   for (const a of ACH) if (!S.save.achievements.includes(a.id) && a.test(S.save)) { S.save.achievements.push(a.id); setTimeout(() => UI.toast(UI.L.achGot(UI.L.ach[a.id][0])), 1600); }
 }
 const SHOWN_ZONES = () => ZONE_LIST.filter(z => !z.hidden);   // the Kraken Trench is reached from the pier, not from the map
-function openWorldMap() { setMode('map'); UI.openMap(SHOWN_ZONES(), S.save, S.zone.id, id => { setMode('play'); fadeTo(() => enterZone(id, 'default')); }); }
+function openWorldMap() { setMode('map'); const sb = S.map && S.map.sky && S.map.below, here = sb ? (ZONES[sb] && ZONES[sb].road ? ZONES[sb].road.lower : sb) : S.zone.id;   /* plan-31: đang ở trên trời → đánh dấu vùng đất bên dưới + ☁ */
+  UI.openMap(SHOWN_ZONES(), S.save, here, id => { setMode('play'); fadeTo(() => enterZone(id, 'default')); }, !!sb); }
 function openCodex() { setMode('codex'); UI.openCodex(S.save, SHOWN_ZONES(), ACH.map(a => ({ id: a.id, done: S.save.achievements.includes(a.id) })), ROSTER.length); }
 // the main quest line in the HUD
 function storyText() {
@@ -895,7 +902,7 @@ function drawLabels(cx, cy) {
       ug.fillStyle = 'rgba(13,11,20,.7)'; ug.beginPath(); ug.roundRect(x0, y0, w, h, 3); ug.fill(); ug.fillStyle = lk ? '#ff9a9a' : '#ffd45e'; ug.fillText(text, x0 + w / 2, y0 + h - 2); } }
   ug.font = `bold ${fs}px VT323, monospace`;
   const av = selfAvatar();
-  const headUp = (p.sheet && p.sheet.skin && p.sheet.skin.headUp) || 0;   /* plan-29: ngoại hình cao (Chad) → tên/ảnh đại diện lên trên đầu */
+  const headUp = ((p.sheet && p.sheet.skin && p.sheet.skin.headUp) || 0) + (p.labelUp || 0);   /* plan-31: p.labelUp — đang cưỡi Rocky bay (sky.js) thì tên lên trên đầu */   /* plan-29: ngoại hình cao (Chad) → tên/ảnh đại diện lên trên đầu */
   if (av) { const sx = Math.round((p.x - cx) * scale), sy = Math.round((p.y - 22 - headUp - cy) * scale), r = Math.round(scale * 4); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
   else if (S.save.name) label(S.save.name, p.x, p.y - headUp, '#ffd45e', false);
   if (S.pops && S.pops.length) {   /* plan-14: số nổi bay lên rồi mờ (dùng label() sẵn có cho chắc) */

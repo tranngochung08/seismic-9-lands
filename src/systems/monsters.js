@@ -151,6 +151,33 @@ function spawnBoss(ctx) {   /* trùm canh cổng: 1 con, đứng ở m.boss, kh�
   const mo = newMo(z.boss, m.boss.x * 16 + 8, m.boss.y * 16 + 12); mo.home = { x: mo.x, y: mo.y }; mo.dir = -1; mo.face = 0; ST.list.push(mo); return mo;
 }
 function want(ctx) { return night(ctx) ? ST.cfg.night : ST.cfg.day; }
+/* plan-32 A v2 (anh: 'hiện QUÁI từ trên trời'): BẢNG QUÁI DƯỚI ĐẤT của một vùng — nhất quán giữa trời và đất.
+   · Rời vùng ngoài trời → chụp danh sách quái thật (loài, chỗ, máu) vào save.sys.skyRoster[vùng].
+   · Bay trên trời vùng X mà chưa có bảng (hoặc cũ > 10 phút) → sky.js gọi planRoster: sinh trước THEO ĐÚNG LUẬT sinh quái của X (số con ngày/đêm, ô đi được, chỗ cố định của đèo) rồi lưu.
+   · Hạ cánh xuống X (ctx.skyRoster(X) trả bảng) → quái ĐÚNG là những con đó ở đúng chỗ; sau đó sống / hồi sinh như thường. */
+export const ROSTER_LIFE = 600;
+export function planRoster(ctx, z, m) {
+  const cfg = SP[z]; if (!cfg || !m) return []; const out = [], n = Math.min(MAX_ON, night(ctx) ? cfg.night : cfg.day);
+  for (let i = 0; i < n; i++) for (let k = 0; k < 40; k++) {
+    const c = cfg.mix ? cfg.mix[(Math.random() * cfg.mix.length) | 0] : cfg, tx = 2 + Math.floor(Math.random() * (m.w - 4)), ty = 2 + Math.floor(Math.random() * (m.h - 4));
+    if (!c.fly && (ctx.isSolid(m, tx, ty) || ctx.getG(m, tx, ty) === ctx.T.WATER || ctx.getG(m, tx, ty) === ctx.T.DEEP)) continue; if (cfg.boss && inRect(m.arena, tx, ty)) continue;
+    out.push({ k: c.key, x: tx * 16 + 8, y: ty * 16 + 12 }); break; }
+  if (cfg.road && m.monSpots) m.monSpots.forEach((sp, i) => { const c = sp.small ? SMALL[z] || cfg : cfg; out.push({ k: c.key, x: sp.x * 16 + 8, y: sp.y * 16 + 12, spot: i, small: !!sp.small }); });
+  return out;
+}
+export function rosterInfo(z, r) {   /* tên + sức của 1 con trong bảng (sky.js hiện khi bay sát) */
+  const cfg = SP[z]; if (!cfg) return null; const c = r.small ? SMALL[z] || cfg : cfg.mix ? cfg.mix.find(q => q.key === r.k) || cfg : cfg;
+  return { vi: c.vi, en: c.en, hp: c.hp, dmg: c.dmg, lv: NEED_LV[z] || 1, strong: !!cfg.road && !r.small };
+}
+function snapRoster(ctx) {
+  const z = ctx.S.zone && ctx.S.zone.id; if (!z || !SP[z] || SP[z].mix || !ctx.S.save) return; const s = ctx.S.save; s.sys ||= {};
+  (s.sys.skyRoster ||= {})[z] = { at: Date.now(), list: ST.list.filter(o => !o.c.boss && !o.c.spar && !o.c.sky && o.hp > 0 && !o.loot).map(o => ({ k: o.c.key, x: Math.round(o.x), y: Math.round(o.y), hp: Math.round(o.hp), ...(o.spot != null ? { spot: o.spot, small: o.c === SMALL[z] } : {}) })) };
+}
+function restoreRoster(ctx, list) {
+  const z = ctx.S.zone.id, cfg = ST.cfg;
+  for (const r of list) { const c = r.spot != null ? (r.small ? SMALL[z] || cfg : cfg) : cfg.mix ? cfg.mix.find(q => q.key === r.k) || cfg : cfg; const mo = newMo(c, r.x, r.y);
+    if (r.spot != null) { mo.spot = r.spot; mo.home = { x: mo.x, y: mo.y }; } if (r.hp) mo.hp = Math.max(1, Math.min(c.hp, r.hp)); ST.list.push(mo); }
+}
 function bestWeapon(ctx) { return ctx.tool.tier('sword') > 0 ? 'sword' : 'axe'; }
 function heldWeapon(ctx) { if (!ctx.holding) return bestWeapon(ctx); return WEAPONS.find(w => ctx.holding(w)) || null; }
 function warn(ctx, txt) { if (ctx.S.time - ST.warnT < 8) return; ST.warnT = ctx.S.time; ctx.toast(txt); }
@@ -235,7 +262,7 @@ function strike(ctx, mo, seg = -1, tent = null) {
 }
 function attack(ctx, mo, seg = -1, tent = null) {
   if (mo.c.ai === 'kraken' && krHeld(mo)) { krMash(ctx, mo); return; }   /* đang bị xúc tu túm: mỗi lần bấm = 1 lần vùng */
-  const p = ctx.S.player; if (ST.cd > 0) return; ST.cd = 0.45;
+  const p = ctx.S.player; if (ST.cd > 0) return; if (ctx.skyMelee && !ctx.skyMelee(mo)) return; ST.cd = 0.45;   /* plan-31: quái trời — kiếm chỉ trúng quái CÙNG TẦNG (sky.js báo 'Khác tầng') */
   if (ctx.hold && heldWeapon(ctx) && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* đang cầm rìu mà có kiếm → đổi sang kiếm */
   const tg = tent || seg >= 0 && mo.segs && mo.segs[seg] || mo; if (p.faceTo) p.faceTo(tg.x, tg.y);
   const clip = p.hasAct && p.hasAct('attack') ? 'attack' : p.hasAct && p.hasAct('chop') ? 'chop' : null;
@@ -590,8 +617,12 @@ export const monsters = {
   onZoneEnter(ctx) {
     ST.ctx = ctx; ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = ctx.noMonsters ? null : SP[ctx.S.zone.id] || null; if (ST.cfg && ST.cfg.noDark && ((ctx.story && ctx.story()) || {}).path === 'xealist') ST.cfg = null; ST.spawnT = 1.5; ST.respawnT = 0; ST.wasNight = night(ctx); ST.lastHit = null; ST.krDead = null; ST.chaseTent = null;
     ST.rq = [];
+    const rost = ST.cfg && ctx.skyRoster ? ctx.skyRoster(ctx.S.zone.id) : null;   /* plan-32: hạ cánh từ trời → đúng bảng quái đã thấy từ trên cao */
+    if (rost) { restoreRoster(ctx, rost); spawnBoss(ctx); }
+    else {
     if (ST.cfg) { for (let i = 0; i < Math.min(MAX_ON, want(ctx)); i++) spawnOne(ctx); spawnBoss(ctx); }
     if (ST.cfg && ST.cfg.road && ctx.S.map.monSpots) ctx.S.map.monSpots.forEach((sp, i) => spawnAt(ctx, i));   /* plan-28 */
+    }
     /* dân có đá Seismic đánh trả (villagers.js): đòn của dân — hạ quái thì người chơi được nửa kinh nghiệm */
     ctx.monsters = { list: () => ST.list, lastHitT: () => (ST.lastHit ? ST.lastHit.t : -99),   /* main.js: đang đánh → A không mở bảng/nói chuyện */ add: (c, x, y) => { if (!ST.cfg) ST.cfg = { key: '_spar', vi: '', en: '', day: 0, night: 0, mix: [] }; const mo = newMo(c, x, y); ST.list.push(mo); return mo; }, remove: mo => { ST.list = ST.list.filter(o => o !== mo); if (ST.chase === mo) ST.chase = null; },   /* spar.js: bạn tập (c.aiFn / c.drawFn / c.onDown) */ kill: mo => { if (ST.list.includes(mo)) killMonster(ctx, mo); },   /* petgun.js: tượng đá vỡ → đồ rơi + kinh nghiệm */ damage: (mo, dmg, src, xpMul = 0.5, kbPow = 80, noFx = false) => { if (!ST.list.includes(mo) || (mo.c.spar && !(ctx.sparFoe && ctx.sparFoe() === mo))) return; mo.hp -= dmg; mo.flash = 0.18; if (mo.loot && mo.hp > 0) dropLoot(ctx, mo); const d = Math.hypot(mo.x - src.x, mo.y - src.y) || 1; if (kbPow) mo.kb = { vx: (mo.x - src.x) / d * kbPow, vy: (mo.y - src.y) / d * kbPow, t: 0.12 }; if (ctx.pop) ctx.pop(mo.x, mo.y - 14, `-${dmg}`, '#8fd3ff'); if (ctx.vfx && !noFx) ctx.vfx('wood_chips', mo.x, mo.y + 2); if (mo.hp <= 0) killMonster(ctx, mo, xpMul); } };   /* plan-27: Rocky đánh → xpMul 1, lực hất (0 = không hất), tắt VFX gỗ vụn (Rocky có VFX riêng) */
     if (typeof window !== 'undefined') window.__monsters = {
@@ -600,12 +631,12 @@ export const monsters = {
       spawnNear: (n = 1) => { const p = ctx.S.player; for (let i = 0; i < n; i++) { if (!spawnOne(ctx)) break; const m = ST.list[ST.list.length - 1]; m.x = p.x + 30 + i * 10; m.y = p.y; } return ST.list.length; },
       spawnKind: (key, dx = 26, dy = 0) => { const c = UW[key] || Object.values(SP).find(s => s.key === key); if (!c) return null; const p = ctx.S.player, mo = newMo(c, p.x + dx, p.y + dy); if (c.boss) mo.home = { x: mo.x, y: mo.y }; ST.list.push(mo); return mo.id; },
       boss: () => { const b = ST.list.find(m => m.c.boss); return b ? { x: Math.round(b.x), y: Math.round(b.y), hp: b.hp, max: b.max, st2: b.st2 || null, open: !!b.open, key: b.c.key, ph: b.ph || null, slams: (b.slams || []).map(s => ({ x: Math.round(s.x), y: Math.round(s.y), st: s.st })), beams: (b.beams || []).map(s => ({ st: s.st, a: +s.a.toFixed(2) })), summoned: !!b.summoned, kr: b.kr ? { surf: +b.kr.surf.toFixed(2), sink: +b.kr.sink.toFixed(1), sweeps: b.kr.sweeps.map(w => w.st), rocks: b.kr.rocks.length, grab: b.kr.grab && { st: b.kr.grab.st, n: b.kr.grab.n }, anim: b.kr.anim && b.kr.anim.k } : null } : null; },
-      lastHit: () => ST.lastHit, killed: () => ST.killed, rq: () => (ST.rq || []).map(q => ({ ...q })), spots: () => ST.list.filter(m => m.spot != null).map(m => ({ spot: m.spot, x: Math.round(m.x), y: Math.round(m.y), hp: m.hp, max: m.max, key: m.c.key, small: !!m.c.small, xp: m.c.xp, dmg: m.c.dmg, armor: m.c.armor })),
+      lastHit: () => ST.lastHit, killed: () => ST.killed, airMiss: () => ST.airMiss || 0, rq: () => (ST.rq || []).map(q => ({ ...q })), spots: () => ST.list.filter(m => m.spot != null).map(m => ({ spot: m.spot, x: Math.round(m.x), y: Math.round(m.y), hp: m.hp, max: m.max, key: m.c.key, small: !!m.c.small, xp: m.c.xp, dmg: m.c.dmg, armor: m.c.armor })),
       killSpot: (i, t) => { const mo = ST.list.find(m => m.spot === i); if (mo) { killMonster(ctx, mo); const q = (ST.rq || []).find(q => q.spot === i); if (q && (t != null || mo.c.small)) q.t = t ?? 90; } return !!mo; },   /* móc test: dọn quái nhỏ thì để vắng 90 s (test khác cần sân yên); t = vắng bao lâu */
       smallCfg: () => SMALL, mainCfg: z => SP[z] && { hp: SP[z].hp, xp: SP[z].xp, dmg: SP[z].dmg }, active: () => ST.list.length, clear: () => { ST.list.forEach(release); ST.list = []; },
     };
   },
-  onZoneLeave() { ST.list.forEach(release); ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = null; },
+  onZoneLeave(ctx) { try { if (ctx && ST.cfg) snapRoster(ctx); } catch (e) { console.error('snapRoster', e); } ST.list.forEach(release); ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = null; },
   onClick(ctx, mt) {   /* click trúng quái → tự đuổi theo + chém */
     if (!ST.cfg || !mt) return false;
     for (const o of ST.list) if (o.c.ai === 'kraken') { if (krHeld(o)) { krMash(ctx, o); return true; } const k = krNearTent(o, ctx.S.player, mt); if (k && k.under) { ST.chase = o; ST.chaseTent = k.s; return true; } }   /* click xúc tu đang kẹt → đuổi chém xúc tu */
@@ -645,6 +676,7 @@ export const monsters = {
       }
       if (canHit && (mo.angry || dp < AGGRO)) {   /* đánh người chơi */
         if (dp > 12) steer(ctx, mo, p.x, p.y, c.sp, dt);
+        else if (mo.cd <= 0 && ctx.playerAir && ctx.playerAir() && !c.fly) { mo.cd = 1.3; mo.airMiss = (mo.airMiss || 0) + 1; ST.airMiss = (ST.airMiss || 0) + 1; }   /* 2026-10-13 khuya: người đang bay tầng Trung — quái đất với không tới (quái bay vẫn đánh) */
         else if (mo.cd <= 0) { mo.cd = 1.3; if (ctx.hero) ctx.hero.hit(Math.round(c.dmg * hurtMul(ctx)));
           if (c.steal === 'carry' && getCarry(ctx).length && !mo.loot) { const it = removeCarry(ctx, getCarry(ctx).length - 1); grab(mo, { carry: it }, p.x, p.y - 22); mo.state = 'flee'; mo.t = 5; mo.angry = false; ctx.toast(t.stole(nm(ctx, c))); } }
         if (dp > 200) mo.angry = false; continue;

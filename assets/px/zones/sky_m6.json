@@ -1,0 +1,40 @@
+{
+ "inherit": "sky",
+ "classes": {
+  "__base": "sky",
+  "CHASM": "sky",
+  "GRASS": "skygrass",
+  "GRASS2": "skygrass",
+  "FLOWER": "skygrass",
+  "BRIDGE": "cloud",
+  "STONE": "stone",
+  "COBBLE": "stone",
+  "DIRT": "skygrass",
+  "SAND": "skygrass"
+ },
+ "wang": [
+  {
+   "dir": "zones/sky/wang/v_sky_m6",
+   "upper": "skygrass"
+  },
+  {
+   "dir": "zones/sky/wang/b2_sky_m6",
+   "upper": "cloud"
+  },
+  {
+   "dir": "wang/c2",
+   "upper": "stone"
+  }
+ ],
+ "objects": {},
+ "images": {},
+ "decor": {
+  "GRASS": [
+   {
+    "file": "zones/sky/decor/dc_sky_m6_1_s71.png",
+    "p": 0.07,
+    "n": 1
+   }
+  ]
+ }
+}

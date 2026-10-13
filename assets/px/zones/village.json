@@ -325,6 +325,36 @@
      "n": 5,
      "ch": 24,
      "cw": 32
+    },
+    "hover": {
+     "file": "chars/c0_act_hover.png",
+     "n": 6,
+     "ch": 24,
+     "cw": 32
+    }
+   },
+   "c1": {
+    "hover": {
+     "file": "chars/c1_act_hover.png",
+     "n": 6,
+     "ch": 24,
+     "cw": 32
+    }
+   },
+   "c2": {
+    "hover": {
+     "file": "chars/c2_act_hover.png",
+     "n": 6,
+     "ch": 24,
+     "cw": 32
+    }
+   },
+   "c4": {
+    "hover": {
+     "file": "chars/c4_act_hover.png",
+     "n": 6,
+     "ch": 24,
+     "cw": 32
     }
    }
   }
@@ -1459,6 +1489,148 @@
    "zones/village/creatures/rockysup_knockdown_n_5.png",
    "zones/village/creatures/rockysup_knockdown_n_6.png",
    "zones/village/creatures/rockysup_knockdown_n_7.png"
+  ],
+  "rockyfly_s": [
+   "zones/village/creatures/rockyfly_s_0.png",
+   "zones/village/creatures/rockyfly_s_1.png",
+   "zones/village/creatures/rockyfly_s_2.png",
+   "zones/village/creatures/rockyfly_s_3.png",
+   "zones/village/creatures/rockyfly_s_4.png"
+  ],
+  "rockyfly_e": [
+   "zones/village/creatures/rockyfly_e_0.png",
+   "zones/village/creatures/rockyfly_e_1.png",
+   "zones/village/creatures/rockyfly_e_2.png",
+   "zones/village/creatures/rockyfly_e_3.png"
+  ],
+  "rockyfly_n": [
+   "zones/village/creatures/rockyfly_n_0.png",
+   "zones/village/creatures/rockyfly_n_1.png",
+   "zones/village/creatures/rockyfly_n_2.png",
+   "zones/village/creatures/rockyfly_n_3.png"
+  ],
+  "rockysup_hover_s": [
+   "zones/village/creatures/rockysup_hover_s_0.png",
+   "zones/village/creatures/rockysup_hover_s_1.png",
+   "zones/village/creatures/rockysup_hover_s_2.png",
+   "zones/village/creatures/rockysup_hover_s_3.png",
+   "zones/village/creatures/rockysup_hover_s_4.png",
+   "zones/village/creatures/rockysup_hover_s_5.png"
+  ],
+  "rockysup_hover_e": [
+   "zones/village/creatures/rockysup_hover_e_0.png",
+   "zones/village/creatures/rockysup_hover_e_1.png",
+   "zones/village/creatures/rockysup_hover_e_2.png",
+   "zones/village/creatures/rockysup_hover_e_3.png",
+   "zones/village/creatures/rockysup_hover_e_4.png",
+   "zones/village/creatures/rockysup_hover_e_5.png"
+  ],
+  "rockysup_hover_n": [
+   "zones/village/creatures/rockysup_hover_n_0.png",
+   "zones/village/creatures/rockysup_hover_n_1.png",
+   "zones/village/creatures/rockysup_hover_n_2.png",
+   "zones/village/creatures/rockysup_hover_n_3.png",
+   "zones/village/creatures/rockysup_hover_n_4.png",
+   "zones/village/creatures/rockysup_hover_n_5.png"
+  ],
+  "rockysup_cheer_s": [
+   "zones/village/creatures/rockysup_cheer_s_0.png",
+   "zones/village/creatures/rockysup_cheer_s_1.png",
+   "zones/village/creatures/rockysup_cheer_s_2.png",
+   "zones/village/creatures/rockysup_cheer_s_3.png",
+   "zones/village/creatures/rockysup_cheer_s_4.png",
+   "zones/village/creatures/rockysup_cheer_s_5.png"
+  ],
+  "rockybig_hover_s": [
+   "zones/village/creatures/rockybig_hover_s_0.png",
+   "zones/village/creatures/rockybig_hover_s_1.png",
+   "zones/village/creatures/rockybig_hover_s_2.png",
+   "zones/village/creatures/rockybig_hover_s_3.png",
+   "zones/village/creatures/rockybig_hover_s_4.png",
+   "zones/village/creatures/rockybig_hover_s_5.png"
+  ],
+  "rockybig_hover_e": [
+   "zones/village/creatures/rockybig_hover_e_0.png",
+   "zones/village/creatures/rockybig_hover_e_1.png",
+   "zones/village/creatures/rockybig_hover_e_2.png",
+   "zones/village/creatures/rockybig_hover_e_3.png",
+   "zones/village/creatures/rockybig_hover_e_4.png",
+   "zones/village/creatures/rockybig_hover_e_5.png"
+  ],
+  "rockybig_hover_n": [
+   "zones/village/creatures/rockybig_hover_n_0.png",
+   "zones/village/creatures/rockybig_hover_n_1.png",
+   "zones/village/creatures/rockybig_hover_n_2.png",
+   "zones/village/creatures/rockybig_hover_n_3.png",
+   "zones/village/creatures/rockybig_hover_n_4.png",
+   "zones/village/creatures/rockybig_hover_n_5.png"
+  ],
+  "rockybig_cheer_s": [
+   "zones/village/creatures/rockybig_cheer_s_0.png",
+   "zones/village/creatures/rockybig_cheer_s_1.png",
+   "zones/village/creatures/rockybig_cheer_s_2.png",
+   "zones/village/creatures/rockybig_cheer_s_3.png",
+   "zones/village/creatures/rockybig_cheer_s_4.png",
+   "zones/village/creatures/rockybig_cheer_s_5.png"
+  ],
+  "copter_e": [
+   "zones/village/creatures/copter_e_0.png",
+   "zones/village/creatures/copter_e_1.png",
+   "zones/village/creatures/copter_e_2.png",
+   "zones/village/creatures/copter_e_3.png"
+  ],
+  "copter_n": [
+   "zones/village/creatures/copter_n_0.png",
+   "zones/village/creatures/copter_n_1.png",
+   "zones/village/creatures/copter_n_2.png",
+   "zones/village/creatures/copter_n_3.png"
+  ],
+  "copter_s": [
+   "zones/village/creatures/copter_s_0.png",
+   "zones/village/creatures/copter_s_1.png",
+   "zones/village/creatures/copter_s_2.png",
+   "zones/village/creatures/copter_s_3.png"
+  ],
+  "rockypet_hover_e": [
+   "zones/village/creatures/rockypet_hover_e_0.png",
+   "zones/village/creatures/rockypet_hover_e_1.png",
+   "zones/village/creatures/rockypet_hover_e_2.png",
+   "zones/village/creatures/rockypet_hover_e_3.png",
+   "zones/village/creatures/rockypet_hover_e_4.png",
+   "zones/village/creatures/rockypet_hover_e_5.png"
+  ],
+  "rockypet_hover_n": [
+   "zones/village/creatures/rockypet_hover_n_0.png",
+   "zones/village/creatures/rockypet_hover_n_1.png",
+   "zones/village/creatures/rockypet_hover_n_2.png",
+   "zones/village/creatures/rockypet_hover_n_3.png",
+   "zones/village/creatures/rockypet_hover_n_4.png",
+   "zones/village/creatures/rockypet_hover_n_5.png"
+  ],
+  "rockypet_hover_s": [
+   "zones/village/creatures/rockypet_hover_s_0.png",
+   "zones/village/creatures/rockypet_hover_s_1.png",
+   "zones/village/creatures/rockypet_hover_s_2.png",
+   "zones/village/creatures/rockypet_hover_s_3.png",
+   "zones/village/creatures/rockypet_hover_s_4.png",
+   "zones/village/creatures/rockypet_hover_s_5.png"
+  ],
+  "rockypet_cheer_s": [
+   "zones/village/creatures/rockypet_cheer_s_0.png",
+   "zones/village/creatures/rockypet_cheer_s_1.png",
+   "zones/village/creatures/rockypet_cheer_s_2.png",
+   "zones/village/creatures/rockypet_cheer_s_3.png",
+   "zones/village/creatures/rockypet_cheer_s_4.png",
+   "zones/village/creatures/rockypet_cheer_s_5.png"
+  ],
+  "copter2_s": [
+   "zones/village/creatures/copter2_s_0.png",
+   "zones/village/creatures/copter2_s_1.png",
+   "zones/village/creatures/copter2_s_2.png",
+   "zones/village/creatures/copter2_s_3.png",
+   "zones/village/creatures/copter2_s_4.png",
+   "zones/village/creatures/copter2_s_5.png",
+   "zones/village/creatures/copter2_s_6.png"
   ]
  },
  "connect": {

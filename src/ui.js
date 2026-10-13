@@ -235,7 +235,8 @@ function memberRow(m) {
 export function closeHall() { $('#hall').hidden = true; }
 
 // ---- world map (spiral) ----
-export function openMap(zoneList, save, currentId, onTravel) {
+const PIN_IMG = typeof Image !== 'undefined' ? Object.assign(new Image(), { src: 'assets/px/zones/sky/scout/mk_pin.png' }) : {};   /* plan-32 A: ghim ống nhòm (PixelLab) */
+export function openMap(zoneList, save, currentId, onTravel, inSky = false) {
   const lg = lang(), p = $('#map'); $('#m-title').textContent = L.map; $('#m-hint').textContent = L.mapHint; $('#m-close').textContent = L.close;
   const c = $('#m-cv'), g = c.getContext('2d'), W = c.width, H = c.height;
   const nodes = zoneList.map((z, i) => { const k = i - 1, a = -Math.PI / 2 + k * 0.95, r = 150 - k * 13.5; const prev = zoneList[i - 1]; /* k = -1 puts the sea on the outer rim, before the village */ return { z, i, x: W / 2 + r * Math.cos(a), y: H / 2 + r * Math.sin(a), unlocked: !prev || prev.lv < 1 || save.badges.includes(prev.lv) }; });
@@ -246,13 +247,15 @@ export function openMap(zoneList, save, currentId, onTravel) {
   for (const n of nodes) {
     g.beginPath(); g.arc(n.x, n.y, 15, 0, 7); g.fillStyle = n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'; g.fill();
     if (n.z.id === currentId) { g.lineWidth = 3; g.strokeStyle = '#fff'; g.stroke(); }
+    if (n.z.id === currentId && inSky) { g.fillStyle = '#fff'; g.font = '16px sans-serif'; g.fillText('☁', n.x, n.y - 24); }   /* plan-31: đang bay trên trời vùng này */
+    { const pin = save.sys && save.sys.sky && save.sys.sky.pin; if (pin && pin.zone === n.z.id && PIN_IMG.complete && PIN_IMG.naturalWidth) g.drawImage(PIN_IMG, Math.round(n.x + 8), Math.round(n.y - 4), 16, 16); }   /* plan-32 A: chỗ đã ghim bằng ống nhòm */
     g.fillStyle = n.unlocked ? '#140a02' : '#6f6585'; g.font = 'bold 11px VT323, monospace'; g.fillText(n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv, n.x, n.y);
     if (save.badges.includes(n.z.lv)) { g.fillStyle = '#ffd45e'; g.font = 'bold 12px VT323, monospace'; g.fillText('★', n.x + 14, n.y - 12); }
   }
   const hit = (mx, my) => nodes.find(n => Math.hypot(n.x - mx, n.y - my) < 18);
   const go = n => { if (!n) return; if (!n.unlocked) { toast(L.mapLocked(zoneList[n.i - 1].lv)); return; } if (n.z.id === currentId) { closeMap(); return; } closeMap(); onTravel(n.z.id); };
   c.onclick = e => { const r = c.getBoundingClientRect(); go(hit((e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height)); };
-  $('#m-list').innerHTML = nodes.map(n => `<div class="mrow${n.unlocked ? '' : ' lk'}${n.z.id === currentId ? ' cur' : ''}" data-i="${n.i}"><span class="lvb" style="background:${n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'};color:${n.unlocked ? '#140a02' : '#6f6585'}">${n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv}</span><span>${esc(n.z.name[lg])}</span>${save.badges.includes(n.z.lv) ? '<span class="star">★</span>' : ''}</div>`).join('');
+  $('#m-list').innerHTML = nodes.map(n => `<div class="mrow${n.unlocked ? '' : ' lk'}${n.z.id === currentId ? ' cur' : ''}" data-i="${n.i}"><span class="lvb" style="background:${n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'};color:${n.unlocked ? '#140a02' : '#6f6585'}">${n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv}</span><span>${esc(n.z.name[lg])}${save.sys && save.sys.sky && save.sys.sky.pin && save.sys.sky.pin.zone === n.z.id ? ' <img src="assets/px/zones/sky/scout/mk_pin.png" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:middle"> ' + esc(save.sys.sky.pin.label || '') : ''}</span>${save.badges.includes(n.z.lv) ? '<span class="star">★</span>' : ''}</div>`).join('');
   $('#m-list').onclick = e => { const r = e.target.closest('.mrow'); if (r) go(nodes[+r.dataset.i]); };
   p.hidden = false;
 }

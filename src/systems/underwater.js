@@ -163,12 +163,44 @@ function renderShop(ctx) {
       + `<span class="hnum"><b>×${inv[id] || 0}</b></span><button class="btn primary" data-pill="${id}" style="${BS}${can ? '' : ';opacity:.35;cursor:default'}"${can ? '' : ' disabled'}>${t.buy}</button></div>`; };
   const html = `<h2>${t.shopTitle}<span class="chip">🪨 ${inv.stone || 0}</span></h2>
     <div class="shopw"><div class="shop-side"><div class="shop-port">${port ? `<img src="${port}" alt="">` : `<img src="assets/px/ui/items/pill_l.png" alt="" style="image-rendering:pixelated">`}</div><p class="shop-say">${t.lead}</p></div>
-    <div class="scroll shop-main">${row('pill_s')}${row('pill_l')}<p class="dim" style="margin:10px 0 4px">${t.have(Math.ceil(u.breath))}</p>${bookRows(ctx)}</div></div>
+    <div class="scroll shop-main">${row('pill_s')}${row('pill_l')}<p class="dim" style="margin:10px 0 4px">${t.have(Math.ceil(u.breath))}</p>${copterRow(ctx)}${binocRow(ctx)}${jarRow(ctx)}${bookRows(ctx)}</div></div>
     <button class="btn" id="uw-close">${t.close}</button>`;
   const el = ctx.panel('uwshop', html); ST.shopEl = el; el.panel.classList.add('wide', 'shop'); el.hidden = false;
   el.querySelector('#uw-close').onclick = () => closeShop(ctx);
   for (const b of el.querySelectorAll('[data-pill]')) b.onclick = () => buyPill(ctx, b.dataset.pill);
   for (const b of el.querySelectorAll('[data-rkbook]')) b.onclick = () => buyBook(ctx, b.dataset.rkbook);
+  for (const b of el.querySelectorAll('[data-copter]')) b.onclick = () => buyCopter(ctx, +b.dataset.copter);
+  for (const b of el.querySelectorAll('[data-binoc]')) b.onclick = () => buyBinoc(ctx);
+  for (const b of el.querySelectorAll('[data-jar]')) b.onclick = () => buyJar(ctx);
+}
+/* plan-31 v2 (2026-10-13 anh): CHONG CHÓNG TRE — 1 cho người chơi + 1 cho Rocky; vào thẳng túi (dùng: cầm + E / phím X / nút 🚁 ngoài trời ở Làng, M1–M9) */
+const COPTER_PRICE = 150;
+function copterRow(ctx) {
+  const vi = ctx.lang() === 'vi', inv = ctx.S.save.inv || {}, have = inv.copter || 0, ic = ART.man && ART.man.ui && ART.man.ui.items && ART.man.ui.items.copter, img = ic ? `<img src="assets/px/${ic}" alt="" style="width:32px;height:32px;image-rendering:pixelated;vertical-align:middle">` : '🚁';
+  const btn = (n, label) => { const ok = (inv.stone || 0) >= COPTER_PRICE * n; return `<button class="btn primary" data-copter="${n}" style="${BS}${ok ? '' : ';opacity:.35;cursor:default'}"${ok ? '' : ' disabled'}>${label} · ${COPTER_PRICE * n} 🪨</button>`; };
+  return `<h3 style="margin:12px 0 4px">${vi ? '🚁 Chong chóng tre' : '🚁 Bamboo copter'}</h3><p class="dim" style="margin:0 0 4px">${vi ? 'Gắn lên đầu để BAY lên khoảng trời của vùng đang đứng (mọi vùng ngoài trời: Biển, Làng, M1–M9, đèo). Cần 2 cái: 1 cho bạn, 1 cho Rocky.' : 'Pop it on your head to FLY up to the sky of the land you stand in (Village, M1–M9). Get 2: one for you, one for Rocky.'}</p>
+    <div class="hrow"><span class="hwho">${img} <b>${vi ? 'Chong chóng tre' : 'Bamboo copter'}</b> <span class="dim">${vi ? 'đang có' : 'owned'} ${have}/2</span></span>${btn(1, vi ? 'Mua 1' : 'Buy 1')}${have < 2 ? btn(2 - have > 1 ? 2 : 1, vi ? (have ? 'Mua cho Rocky' : 'Mua 2 (bạn + Rocky)') : (have ? 'Buy for Rocky' : 'Buy 2 (you + Rocky)')) : ''}</div>`;
+}
+/* plan-32 A: ỐNG NHÒM — trên trời ghim dấu sáng (nghệ sĩ chưa gặp, Leader, Ngọc Rồng / đồ hiếm nằm đất) */
+const BINOC_PRICE = 120;
+function binocRow(ctx) {
+  const vi = ctx.lang() === 'vi', inv = ctx.S.save.inv || {}, have = inv.binoc || 0, ic = ART.man && ART.man.ui && ART.man.ui.items && ART.man.ui.items.binoc, img = ic ? `<img src="assets/px/${ic}" alt="" style="width:32px;height:32px;image-rendering:pixelated;vertical-align:middle">` : '🔭', ok = (inv.stone || 0) >= BINOC_PRICE && !have;
+  return `<div class="hrow"><span class="hwho">${img} <b>${vi ? 'Ống nhòm' : 'Binoculars'}</b> <span class="dim">${vi ? 'trên trời: L / 🔭 ghim dấu sáng' : 'in the sky: L / 🔭 pins a glowing mark'}</span></span><span class="hnum"><b>×${have}</b></span><button class="btn primary" data-binoc="1" style="${BS}${ok ? '' : ';opacity:.35;cursor:default'}"${ok ? '' : ' disabled'}>${have ? (vi ? 'Đã có' : 'Owned') : (vi ? 'Mua' : 'Buy') + ' · ' + BINOC_PRICE + ' 🪨'}</button></div>`;
+}
+/* plan-32 C: CHAI THU SÉT — bay vào mây bão trên trời giữ ~2 s → sét đóng chai */
+const JAR_PRICE = 40;
+function jarRow(ctx) {
+  const vi = ctx.lang() === 'vi', inv = ctx.S.save.inv || {}, ic = ART.man && ART.man.ui && ART.man.ui.items && ART.man.ui.items.jar, img = ic ? `<img src="assets/px/${ic}" alt="" style="width:32px;height:32px;image-rendering:pixelated;vertical-align:middle">` : '🫙', ok = (inv.stone || 0) >= JAR_PRICE;
+  return `<div class="hrow"><span class="hwho">${img} <b>${vi ? 'Chai thu sét' : 'Lightning jar'}</b> <span class="dim">${vi ? 'bay vào mây bão ~2 s' : 'hold inside a storm cloud ~2 s'}</span></span><span class="hnum"><b>×${inv.jar || 0}</b></span><button class="btn primary" data-jar="1" style="${BS}${ok ? '' : ';opacity:.35;cursor:default'}"${ok ? '' : ' disabled'}>${vi ? 'Mua' : 'Buy'} · ${JAR_PRICE} 🪨</button></div>`;
+}
+function buyJar(ctx) { const inv = ctx.S.save.inv; if ((inv.stone || 0) < JAR_PRICE) { ctx.toast(L(ctx).poor); ctx.sfx('poor'); return false; } inv.stone -= JAR_PRICE; ctx.bag.add('jar', 1); ctx.sfx('buy'); ctx.toast(L(ctx).bought(ctx.itemName('jar'))); ctx.persist(); renderShop(ctx); return true; }
+function buyBinoc(ctx) {
+  const inv = ctx.S.save.inv; if ((inv.binoc || 0) > 0) return false; if ((inv.stone || 0) < BINOC_PRICE) { ctx.toast(L(ctx).poor); ctx.sfx('poor'); return false; }
+  inv.stone -= BINOC_PRICE; ctx.bag.add('binoc', 1); ctx.sfx('buy'); ctx.toast(L(ctx).bought(ctx.itemName('binoc'))); ctx.persist(); renderShop(ctx); return true;
+}
+function buyCopter(ctx, n) {
+  const inv = ctx.S.save.inv, price = COPTER_PRICE * (n || 1); if ((inv.stone || 0) < price) { ctx.toast(L(ctx).poor); ctx.sfx('poor'); return false; }
+  inv.stone -= price; ctx.bag.add('copter', n || 1); ctx.sfx('buy'); ctx.toast(L(ctx).bought(ctx.itemName('copter') + (n > 1 ? ' ×' + n : ''))); ctx.persist(); renderShop(ctx); return true;
 }
 /* ---------------- plan-27: Sách luyện Rocky — 3 loại × bậc 2..7; giá đá tăng dần.
    2026-10-13 anh: mua CHỈ CẦN ĐỦ ĐÁ (không khoá theo cấp Rocky) → sách vào TÚI (rkbook_<chiêu>_<bậc>); đọc trong túi đồ (menu.js nút Đọc) mới kiểm cấp Rocky.
@@ -381,7 +413,7 @@ export const underwater = {
     } else if (ST.surfaced && ctx.S.map && ctx.S.map.sea) { ST.surfaced = false; setTimeout(() => ctx.toast(L(ctx).up, true), 900); }
     if (typeof window !== 'undefined') window.__uw = {
       state: () => ({ zone: zid(ctx), under: under(ctx), breath: +sv(ctx).breath.toFixed(2), gates: { ...sv(ctx).gates }, chests: JSON.parse(JSON.stringify(sv(ctx).chests)), reached: reachedFloors(ctx), secrets: { ...sv(ctx).secrets }, stun: +ST.stun.toFixed(2), mode: ctx.S.mode, speedMul: ctx.S.player.speedMul, swim: ctx.S.player.custom === drawSwim, atkMul: ctx.atkMul ? ctx.atkMul() : 1, ink: +ST.ink.toFixed(2), dots: ST.dots.map(d => ({ ...d })), petri: +ST.petri.toFixed(2), barA: ST.barA }),
-      openShop: () => openShop(ctx), buyBook: spec => buyBook(ctx, spec),   /* plan-27 test */
+      openShop: () => openShop(ctx), buyBook: spec => buyBook(ctx, spec), buyCopter: n => buyCopter(ctx, n), buyBinoc: () => buyBinoc(ctx), buyJar: () => buyJar(ctx),   /* plan-27 test */
       hc: () => ST.hc && { x: ST.hc.x, y: ST.hc.y }, dive: () => diveAt(ctx), setBreath: s => { sv(ctx).breath = s; ST.full = Math.max(60, s); return s; }, drink: id => drink(ctx, id), openGate: () => openGate(ctx), diveTo: id => diveTo(ctx, id),
       gate: () => { const g = gateObj(ctx); return g && { x: g.x, y: g.y, type: g.type, open: gateOpen(ctx), to: g.uwgate }; },
       vents: () => ctx.S.map.objects.filter(o => o.vent).map(o => ({ x: o.x, y: o.y, spent: +(o.spent || 0).toFixed(1), type: o.type })),
