@@ -289,6 +289,7 @@ export function createMixer(ac, opt = {}) {
   }
   let cur = null;
   M.current = () => (cur ? cur.id : null);
+  M.clock = () => (cur ? { id: cur.id, t0: cur.t0, step: cur.C.stepDur, spb: cur.C.spb, now: ac.currentTime } : null);   /* plan-30 trùm 2: đồng hồ nhịp của bài đang phát (trống trùm gõ đúng nhịp nhạc) */
   M.compile = id => { const sp = mxSpec(id); return sp ? mxCompile(sp) : null; };
   M.playTrack = (id, o = {}) => {
     if (cur && cur.id === id && !cur.done) return cur;

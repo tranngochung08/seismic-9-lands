@@ -1,0 +1,86 @@
+{
+ "cw": 62,
+ "ch": 60,
+ "clips": {
+  "idle": {
+   "file": "boss/hoden/m_idle.png",
+   "n": 6,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "walk": {
+   "file": "boss/hoden/m_walk.png",
+   "n": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "lift": {
+   "file": "boss/hoden/m_lift.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "throw": {
+   "file": "boss/hoden/m_throw.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "swing": {
+   "file": "boss/hoden/m_swing.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "stun": {
+   "file": "boss/hoden/m_stun.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "fall": {
+   "file": "boss/hoden/m_fall.png",
+   "n": 9,
+   "rows": [
+    "south",
+    "east"
+   ]
+  }
+ },
+ "mirror": {
+  "west": "east",
+  "south-west": "south-east",
+  "north-west": "north-east"
+ },
+ "note": "ảnh 2× — vẽ ô cỡ cw/2 × ch/2 logic, chân ở đáy ô − 1 px logic; hướng tây = lật hướng đông tương ứng"
+}

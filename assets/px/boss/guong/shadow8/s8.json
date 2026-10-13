@@ -1,0 +1,23 @@
+{
+ "cw": 46,
+ "ch": 44,
+ "clips": {
+  "walk": {
+   "file": "boss/guong/shadow8/s8_walk.png",
+   "n": 8,
+   "rows": [
+    "south-east",
+    "north-east"
+   ]
+  },
+  "attack": {
+   "file": "boss/guong/shadow8/s8_attack.png",
+   "n": 7,
+   "rows": [
+    "south-east",
+    "north-east"
+   ]
+  }
+ },
+ "note": "ảnh 2× — ô cw/2 × ch/2 logic, chân ở đáy ô − 1 px; tây = lật đông"
+}

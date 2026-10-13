@@ -1,0 +1,287 @@
+{
+ "frames": [
+  {
+   "filename": "td-cracks 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 1.png",
+   "frame": {
+    "x": 91,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 2.png",
+   "frame": {
+    "x": 182,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 3.png",
+   "frame": {
+    "x": 273,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 4.png",
+   "frame": {
+    "x": 0,
+    "y": 37,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 5.png",
+   "frame": {
+    "x": 91,
+    "y": 37,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 6.png",
+   "frame": {
+    "x": 182,
+    "y": 37,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 7.png",
+   "frame": {
+    "x": 273,
+    "y": 37,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 8.png",
+   "frame": {
+    "x": 0,
+    "y": 74,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-cracks 9.png",
+   "frame": {
+    "x": 91,
+    "y": 74,
+    "w": 91,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4945054945054945,
+    "y": 0.4864864864864865
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "td-cracks.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 364,
+   "h": 111
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 45,
+   "y": 18
+  },
+  "frameTags": [
+   {
+    "name": "td-cracks",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   }
+  ]
+ }
+}

@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "hr-clash 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 1.png",
+   "frame": {
+    "x": 67,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 2.png",
+   "frame": {
+    "x": 134,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 3.png",
+   "frame": {
+    "x": 201,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 4.png",
+   "frame": {
+    "x": 0,
+    "y": 95,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 5.png",
+   "frame": {
+    "x": 67,
+    "y": 95,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 6.png",
+   "frame": {
+    "x": 134,
+    "y": 95,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 7.png",
+   "frame": {
+    "x": 201,
+    "y": 95,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 8.png",
+   "frame": {
+    "x": 0,
+    "y": 190,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 9.png",
+   "frame": {
+    "x": 67,
+    "y": 190,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 10.png",
+   "frame": {
+    "x": 134,
+    "y": 190,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clash 11.png",
+   "frame": {
+    "x": 201,
+    "y": 190,
+    "w": 67,
+    "h": 95
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 67,
+    "h": 95
+   },
+   "sourceSize": {
+    "w": 67,
+    "h": 95
+   },
+   "pivot": {
+    "x": 0.4925373134328358,
+    "y": 0.49473684210526314
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "hr-clash.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 268,
+   "h": 285
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 33,
+   "y": 47
+  },
+  "frameTags": [
+   {
+    "name": "hr-clash",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

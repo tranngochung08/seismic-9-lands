@@ -1,0 +1,313 @@
+{
+ "frames": [
+  {
+   "filename": "hd-nova 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 1.png",
+   "frame": {
+    "x": 82,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 2.png",
+   "frame": {
+    "x": 164,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 3.png",
+   "frame": {
+    "x": 246,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 4.png",
+   "frame": {
+    "x": 0,
+    "y": 82,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 5.png",
+   "frame": {
+    "x": 82,
+    "y": 82,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 6.png",
+   "frame": {
+    "x": 164,
+    "y": 82,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 7.png",
+   "frame": {
+    "x": 246,
+    "y": 82,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 8.png",
+   "frame": {
+    "x": 0,
+    "y": 164,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 9.png",
+   "frame": {
+    "x": 82,
+    "y": 164,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hd-nova 10.png",
+   "frame": {
+    "x": 164,
+    "y": 164,
+    "w": 82,
+    "h": 82
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 82,
+    "h": 82
+   },
+   "sourceSize": {
+    "w": 82,
+    "h": 82
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "hd-nova.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 328,
+   "h": 246
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 41,
+   "y": 41
+  },
+  "frameTags": [
+   {
+    "name": "hd-nova",
+    "from": 0,
+    "to": 10,
+    "direction": "forward"
+   }
+  ]
+ }
+}

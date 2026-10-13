@@ -1,0 +1,59 @@
+{
+ "inherit": "arena",
+ "objects": {
+  "crystal_p": {
+   "file": "zones/m9/obj/crystal_p_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "hexpillar": {
+   "file": "zones/m9/obj/hexpillar_s7.png",
+   "ox": 0,
+   "oy": 0
+  }
+ },
+ "classes": {
+  "__base": "riftfloor",
+  "ROCK": "riftfloor",
+  "GRAVEL": "riftvein",
+  "DARK": "cavewall",
+  "STONE": "stone",
+  "COBBLE": "stone",
+  "DIRT": "gravel",
+  "GRASS": "rock",
+  "GRASS2": "rock",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled",
+  "SAND": "sand",
+  "SAND2": "sand",
+  "CHASM": "dark"
+ },
+ "wang": [
+  {
+   "dir": "zones/rift1/wang/b",
+   "upper": "riftvein"
+  },
+  {
+   "dir": "zones/arena/wang/w3",
+   "upper": "cavewall"
+  },
+  {
+   "dir": "zones/m4/wang/b",
+   "upper": "dark"
+  }
+ ],
+ "decor": {
+  "ROCK": [
+   {
+    "file": "zones/rift1/decor/rd_crystals.png",
+    "p": 0.04,
+    "n": 1
+   },
+   {
+    "file": "zones/rift1/decor/rd_pebbles.png",
+    "p": 0.05,
+    "n": 1
+   }
+  ]
+ }
+}

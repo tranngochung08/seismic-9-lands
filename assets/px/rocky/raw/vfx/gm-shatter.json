@@ -1,0 +1,287 @@
+{
+ "frames": [
+  {
+   "filename": "gm-shatter 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 1.png",
+   "frame": {
+    "x": 65,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 2.png",
+   "frame": {
+    "x": 130,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 3.png",
+   "frame": {
+    "x": 195,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 4.png",
+   "frame": {
+    "x": 0,
+    "y": 78,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 5.png",
+   "frame": {
+    "x": 65,
+    "y": 78,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 6.png",
+   "frame": {
+    "x": 130,
+    "y": 78,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 7.png",
+   "frame": {
+    "x": 195,
+    "y": 78,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 8.png",
+   "frame": {
+    "x": 0,
+    "y": 156,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-shatter 9.png",
+   "frame": {
+    "x": 65,
+    "y": 156,
+    "w": 65,
+    "h": 78
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 65,
+    "h": 78
+   },
+   "sourceSize": {
+    "w": 65,
+    "h": 78
+   },
+   "pivot": {
+    "x": 0.47692307692307695,
+    "y": 0.3717948717948718
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "gm-shatter.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 260,
+   "h": 234
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 31,
+   "y": 29
+  },
+  "frameTags": [
+   {
+    "name": "gm-shatter",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   }
+  ]
+ }
+}

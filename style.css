@@ -172,6 +172,13 @@ input:focus{border-color:var(--accent)}
 .mtip{min-height:36px;margin-top:8px;padding:6px 10px;border:2px solid var(--line);background:#120f1c;font-size:13px}
 .mhero{display:flex;gap:12px;align-items:center;padding:4px 2px 8px;border-bottom:1px solid var(--line)}
 .mav{width:64px;height:80px;image-rendering:pixelated;border:2px solid var(--line);background:#120f1c;flex:0 0 auto}
+.hcard{align-items:flex-start} .hcard .mav{background:#241e34;border-radius:6px}
+.hcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px} .hcol .hst+.hst{border-top:1px dashed var(--line);padding-top:2px}
+.hcard .hst{display:flex;justify-content:space-between;gap:10px;font:17px VT323,monospace;color:#d8cbe8;line-height:1.15} .hcard .hst b{font:17px VT323,monospace;color:var(--gold);font-weight:normal;letter-spacing:0} .hcard .dim{color:var(--dim)}
+.hcard .hbar{display:grid;grid-template-columns:42px 1fr auto;gap:8px;align-items:center;font:17px VT323,monospace;color:#d8cbe8} .hcard .hbar b{font-size:17px;color:var(--gold);font-weight:normal;min-width:70px;text-align:right} .pbar.hp>div{background:#e0524f}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:24px} .hgrid .hst:nth-child(n+3){border-top:1px dashed var(--line);padding-top:2px} .hgrid .hst:nth-child(2){border-top:0;padding-top:0}
+.hbless{display:flex;flex-wrap:wrap;gap:8px} .hb1{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:6px;background:#241e34}
+.hb1 img{width:32px;height:32px;image-rendering:pixelated;object-fit:contain} .hb1 span{display:flex;flex-direction:column;line-height:1.1} .hb1 b{font:17px VT323,monospace;color:#ffd45e;font-weight:normal} .hb1 i{font-style:normal;font-size:12px;color:var(--dim)}
 .mstat{display:grid;grid-template-columns:28px 130px 1fr 26px;gap:8px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line);font-size:14px}
 .mbar{height:12px;background:#120f1c;border:2px solid var(--line);display:flex;gap:2px;padding:1px;margin:2px 0} .mbar i{flex:1;background:#2b2440} .mbar i.on{background:var(--gold)}
 .mbar.big{height:10px;display:block;padding:0} .mbar.big i{display:block;height:100%}
@@ -217,6 +224,9 @@ input:focus{border-color:var(--accent)}
 #hotbar .hb-emo{font-size:20px;line-height:1;pointer-events:none}
 #hotbar .hb-k{position:absolute;left:-5px;top:-7px;font:11px VT323,monospace;color:#3b2412;font-style:normal;pointer-events:none}
 #hotbar .hb-n{position:absolute;right:-6px;bottom:-8px;font:14px VT323,monospace;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022;pointer-events:none}
+#hotbar .hb-eat{margin-left:8px} #hotbar .hb-rk{margin-left:4px}
+#hotbar .hb-eat.dim img{filter:grayscale(1);opacity:.5}
+#hotbar .hb-v{position:absolute;left:-6px;top:-9px;font:14px VT323,monospace;color:#fff6c8;font-style:normal;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022;pointer-events:none}
 #hotbar .hb-tip{font:18px VT323,monospace;color:#fff6c8;background:rgba(53,32,34,.85);padding:1px 10px;border-radius:4px}
 #hotbar .hb-tip[hidden]{display:none}
 @media (pointer:coarse){#hotbar{bottom:216px}}   /* trên nút cảm ứng (D-pad, A) */
@@ -568,3 +578,13 @@ html,body{height:100%;height:100dvh}
 @media (pointer:coarse) and (orientation:landscape) and (max-height:430px){
   #herobar .hb-hp{height:64px} #herobar .hb-xp{height:58px}   /* máy thấp: thanh máu ngắn lại để không chạm nút A */
 }
+/* 2026-10-13 (sửa): ngất gọn — số đếm trên đầu xác + 2 ô vuông dưới xác (hero.js placeFaint); màn chỉ ngả xám nhẹ, KHÔNG tối */
+/* KHÔNG dùng CSS filter lên canvas game: Safari điện thoại + Chrome headless vẽ ra màn ĐEN (anh chụp 2026-10-13) → lớp phủ mờ */
+#faint-ui::before{content:'';position:fixed;inset:0;background:rgba(30,24,40,.28);pointer-events:none}
+body.fainted #faint-ui{position:fixed;left:0;top:0;width:0;height:0;z-index:9;pointer-events:none}
+#faint-ui .fa-cd{position:absolute;transform:translate(-50%,-100%);font:28px VT323,monospace;color:#fff6c8;text-shadow:2px 0 #352022,-2px 0 #352022,0 2px #352022,0 -2px #352022;line-height:1}
+#faint-ui .fa-row{position:absolute;transform:translateX(-50%);display:flex;gap:4px;pointer-events:auto}
+#faint-ui button{position:relative;width:var(--cell);height:var(--cell);padding:3px;border:3px solid #352022;background:#f3e2c0;box-shadow:inset -2px -2px #c9a874;cursor:pointer;display:flex;align-items:center;justify-content:center;image-rendering:pixelated}
+#faint-ui button img{width:100%;height:100%;image-rendering:pixelated}
+#faint-ui button i{position:absolute;right:1px;bottom:-1px;font:13px VT323,monospace;font-style:normal;color:#352022}
+#faint-ui button:disabled{filter:grayscale(1);opacity:.5}

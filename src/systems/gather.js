@@ -453,6 +453,9 @@ export const gather = {
   id: 'gather',
 
   onZoneEnter(ctx) {
+    /* 2026-10-12 tối: Rocky-ha bắn vỡ đá / mỏ / tinh thể như đục (rơi đồ qua giveOut = ctx.give, như người chơi đục) — chỉ nút 'remove' (bụi quả, cọ, thông giữ nguyên) */
+    ctx.gatherBreak = Object.assign(o => { const def = OBJ[o.type], map = ctx.S.map; if (!def || !def.remove || !map.objects.includes(o)) return false; giveOut(ctx, def, o); dropNode(ctx, o); ctx.removeObject(map, o); ctx.sfx('rock_break'); ctx.persist(); return true; },
+      { can: o => { const def = OBJ[o.type]; return !!(def && def.remove && o.plot === undefined); } });
     ctx.plantTreeAt = (tx, ty) => { if (!ctx.bag.has('seed', 1)) return false; doPlant(ctx, tx, ty); return true; };   /* 2026-10-11 anh: hạt giống cây trồng được vào đất đã xới (farm.js gọi) */
     ensureSprites(ctx);
     ST.grid.clear(); ST.nodes.length = 0; ST.plants.length = 0; ST.parts.length = 0;

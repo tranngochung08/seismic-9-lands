@@ -190,7 +190,7 @@ function restorePiece(o) {
 }
 function saveDistricts() {
   const z = (S.save.districts ||= {})[S.zone.id] ||= {};
-  S.map.plots.forEach((p, i) => { const pcs = S.map.objects.filter(o => o.plot === i); z[i] = { tier: p.tier, ruined: pcs.filter(o => o.ruined).map(pieceKey), hp: Object.fromEntries(pcs.filter(o => !o.ruined && o.hp !== undefined && o.hp < CTX.hpMax(o)).map(o => [pieceKey(o), o.hp])) }; });
+  S.map.plots.forEach((p, i) => { const pcs = S.map.objects.filter(o => o.plot === i).map(o => (o.rkMax != null ? { x: o.x, y: o.y, type: o.orig || o.type, piece: o.piece, plot: o.plot, ruined: false, hp: o.rkPrev } : o));   /* 2026-10-12 tối: hư / sập do Rocky-ha (blast.js) chỉ tạm — không ghi save, giữ máu cũ */ z[i] = { tier: p.tier, ruined: pcs.filter(o => o.ruined).map(pieceKey), hp: Object.fromEntries(pcs.filter(o => !o.ruined && o.hp !== undefined && o.hp < CTX.hpMax(o)).map(o => [pieceKey(o), o.hp])) }; });
   clearTimeout(S._dsT); S._dsT = setTimeout(persist, 400); // raids hit many pieces per second: batch the localStorage write
 }
 function applyDistricts() {
@@ -383,7 +383,7 @@ const ACH = [
   { id: 'nations', test: s => new Set(s.met.map(id => { const n = nationOf(byId.get(id) || {}); return n && n.key; }).filter(Boolean)).size >= 10 },
   { id: 'shop', test: s => s.owned.length >= 1 }, { id: 'scholar', test: s => Object.values(s.tasks).some(t => t.quiz >= 1) },
   // granted by systems (photo / sea_life / sumo / pet push the id themselves); listed here so the Codex shows them
-  ...['photographer', 'captain', 'sumo', 'pet', 'rescue', 'keepsake'].map(id => ({ id, test: s => s.achievements.includes(id) }))
+  ...['photographer', 'captain', 'pet', 'rescue', 'keepsake', 'hacrocky', 'trongdong', 'guong', 'hoden', 'dongho'].map(id => ({ id, test: s => s.achievements.includes(id) }))
 ];
 function checkAchievements() {
   for (const a of ACH) if (!S.save.achievements.includes(a.id) && a.test(S.save)) { S.save.achievements.push(a.id); setTimeout(() => UI.toast(UI.L.achGot(UI.L.ach[a.id][0])), 1600); }
@@ -409,7 +409,7 @@ function bindInput() {
     if ((e.code === 'KeyB' || e.code === 'KeyI' || e.code === 'KeyQ' || e.code === 'KeyO') && (S.mode === 'play' || S.mode === 'menu') && S.save && S.map) { toggleMenu(e.code === 'KeyQ' ? 'quest' : e.code === 'KeyO' ? 'shop' : 'bag'); e.preventDefault(); return; }   /* O: mua nhanh (P đã dùng cho chụp ảnh) */
     if (e.code === 'Tab' && S.mode === 'play' && S.save && S.map) { TGT.cycle(e.shiftKey ? -1 : 1); e.preventDefault(); return; }   /* khóa mục tiêu kế tiếp (Shift+Tab: lùi) */
     for (const sys of S.sys) if (sys.key && sys.key(e.code, CTX)) { e.preventDefault(); return; }
-    if (S.mode === 'play' && HB.key(e.code)) { e.preventDefault(); return; }   /* plan-20: 1–9, 0, −, = chọn ô hotbar */
+    if (S.mode === 'play' && HB.key(e.code, e.repeat)) { e.preventDefault(); return; }   /* plan-20: 1–9, 0, −, = chọn ô hotbar */
     if (KEYS[e.code]) { input[KEYS[e.code]] = true; e.preventDefault(); }
     if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { if (!e.repeat) interactQueued = true; e.preventDefault(); } // holding the key must not count as mashing
     if (e.code === 'Escape') escQueued = true;
@@ -468,6 +468,7 @@ function resize() {
 
 // ---------- interaction ----------
 const KIND = o => o.bed ? 'bed' : o.hall ? 'hall' : o.rocky ? 'rocky' : o.nation ? 'nation' : o.shop ? 'shop' : o.fire ? 'fire' : o.ore ? 'ore' : o.lever ? 'lever' : o.quiz ? 'quiz' : o.item ? 'item' : o.text ? 'sign' : null;
+const RK_FREE = new Set(['monsters', 'drops', 'pet', 'rubble', 'road', 'spar', 'dragon', 'hero', 'petgun', 'target']);
 function findNear() {
   const p = S.player; let best = null, bd = Infinity;
   /* chuột kiểu Stardew: thứ đang trỏ (NPC / vật thể / neo của hệ) trong tầm với (≤ 1,5× tầm E) thắng mọi thứ khác; MOUSE.hit → con trỏ bàn tay */
@@ -480,7 +481,7 @@ function findNear() {
   for (const n of allNpcs()) { if (n.m.friend) continue; const dist = Math.hypot(n.x - p.x, n.y - p.y); consider(n === lkN ? { kind: 'npc', npc: n, isLock: true } : { kind: 'npc', npc: n }, dist, 22, n === lkN ? 4000 : busy0 ? -24 : 0); if (mt && Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) hover({ kind: 'npc', npc: n }, dist, 22); }   // the story friend is handled by the story systems' near()
   const hk = CTX.heldKind ? CTX.heldKind() : null, busy = hk === 'tool' || hk === 'seed';
   for (const o of S.map.objects) {
-    const kind = KIND(o); if (!kind) continue; if ((kind === 'fire' && o.lit) || (kind === 'lever' && o.on) || (kind === 'hall' && o.ruined)) continue;   /* bia đã bị Xealist đập vỡ: không mở bảng bia nữa */
+    const kind = KIND(o); if (!kind || o.rkRuin) continue;   /* vật bị Rocky-ha bắn sập: tạm không tương tác tới khi vào lại vùng */ if ((kind === 'fire' && o.lit) || (kind === 'lever' && o.on) || (kind === 'hall' && o.ruined)) continue;   /* bia đã bị Xealist đập vỡ: không mở bảng bia nữa */
     const d = O[o.type];
     const cx = o.x * TS + d.fw * 8, cy = (o.y + d.fh) * TS - 4, dist = Math.hypot(cx - p.x, cy - p.y), lim = 24 + d.fw * 4;
     consider({ kind, obj: o }, dist, lim, busy && INFO_KINDS.has(kind) ? -24 : 0);   /* đang cầm công cụ/hạt: bảng/biển/tượng chỉ-để-xem nhường phím E cho việc của công cụ (QA 2026-10-10: cày ngay dưới bảng Leader mở bảng) */
@@ -492,7 +493,8 @@ function findNear() {
     for (const n of allNpcs().concat(S.staff || [])) if (Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) { CTX.mouseOnSprite = true; break; }
     if (!CTX.mouseOnSprite) for (const o of S.map.objects) { const d = O[o.type]; if (!d || Math.abs(o.x - mt.tx) > 4 || o.y - mt.ty > 1 || mt.ty - o.y > 6) continue; const bx = (o.y + d.fh) * TS, lx = o.x * TS + (d.ox || 0); if (mt.wx >= lx && mt.wx < lx + d.w && mt.wy < bx + (d.oy || 0) && mt.wy >= bx - d.h + (d.oy || 0) && d.solid !== false) { CTX.mouseOnSprite = true; break; } }
   }
-  for (const sys of S.sys) { let c = null; try { c = sys.near && sys.near(CTX); } catch (e) { console.error(sys.id, e); } if (c) { const dist = Math.hypot(c.x - p.x, c.y - p.y), cand = { kind: 'sys', sys, cand: c, label: c.label, isLock: !!c.isLock }; const pb = (typeof c.priority === 'number' ? c.priority : c.priority ? 1 : 0) * 1000; if (c.need && !c.urgent) { if (dist < (c.limit ?? 24) && dist - pb < needD) { needD = dist - pb; needBest = cand; } } else consider(cand, dist, c.limit ?? 24, pb);   /* gợi ý 'cần cầm X' không bao giờ thắng việc làm được ngay bằng món đang cầm */ if (mt && c.mouse !== false && Math.hypot(mt.wx - c.x, mt.wy - c.y) < 14 && TGT.preciseOK(c, mt)) hover(cand, dist, c.limit ?? 24, c.priority ? 1000 : 0); } } // priority: true 
+  const rkR = S.map.rkRuins && S.map.rkRuins.length ? S.map.rkRuins : null, rkBlock = (c, id) => rkR && !RK_FREE.has(id) && !(c.data && (c.data.mo || c.data.dare)) && rkR.some(o => { const d = O[o.orig || o.type] || { fw: 1, fh: 1 }; return c.x >= o.x * TS - 4 && c.x < (o.x + d.fw) * TS + 4 && c.y >= o.y * TS - 6 && c.y < (o.y + d.fh + 1) * TS + 2; });   /* việc của vật đã bị Rocky-ha bắn sập (quầy, bàn chế tạo…) tạm tắt */
+  for (const sys of S.sys) { let c = null; try { c = sys.near && sys.near(CTX); } catch (e) { console.error(sys.id, e); } if (c && rkBlock(c, sys.id)) c = null; if (c) { const dist = Math.hypot(c.x - p.x, c.y - p.y), cand = { kind: 'sys', sys, cand: c, label: c.label, isLock: !!c.isLock }; const pb = (typeof c.priority === 'number' ? c.priority : c.priority ? 1 : 0) * 1000; if (c.need && !c.urgent) { if (dist < (c.limit ?? 24) && dist - pb < needD) { needD = dist - pb; needBest = cand; } } else consider(cand, dist, c.limit ?? 24, pb);   /* gợi ý 'cần cầm X' không bao giờ thắng việc làm được ngay bằng món đang cầm */ if (mt && c.mouse !== false && Math.hypot(mt.wx - c.x, mt.wy - c.y) < 14 && TGT.preciseOK(c, mt)) hover(cand, dist, c.limit ?? 24, c.priority ? 1000 : 0); } } // priority: true 
   if (!best && needBest) best = needBest;
   else if (best && needBest && HB.mobile() && best.kind !== 'sys' && INFO_KINDS.has(best.kind) && needD < bd + 24) best = needBest;   /* điện thoại (nút A theo ngữ cảnh): bảng / biển / tượng chỉ-để-xem nhường việc cần dụng cụ ngay đó (đá cạnh biển báo…) */
   if (hitBest) { MOUSE.hit = true; MOUSE.cursor = hitBest.kind === 'sys' && hitBest.cand.cursor || 'hand'; return hitBest; }   /* priority: true (=1) or a number; higher wins */
@@ -565,7 +567,7 @@ function interact(fromLock) {
   if (!fromLock && TGT.tooFar(S.near)) { TGT.sayFar(); return; }   /* đã khóa mà ở xa: KHÔNG tự đi tới (anh chốt) — chỉ báo xa quá */
   const n = S.near; if (!n) { HB.eatHeld(); return; } const lg = UI.lang(), o = n.obj;
   { /* 2026-10-11 anh: đang đánh quái, quái chết thì A nhảy sang mở bảng khu / nói chuyện → mất hứng. Trong 1,5 s sau đòn đánh mà quanh đó (≤ 7 ô) còn quái: A chỉ dành cho việc đánh */
-    const lh = CTX.monsters && CTX.monsters.lastHitT ? CTX.monsters.lastHitT() : -99, d = n.kind === 'sys' && n.cand && n.cand.data, fight = !!(d && (d.mo || d.grab || d.tent || d.wreck));
+    const lh = CTX.monsters && CTX.monsters.lastHitT ? CTX.monsters.lastHitT() : -99, d = n.kind === 'sys' && n.cand && n.cand.data, fight = !!(d && (d.mo || d.grab || d.tent || d.wreck || d.fight));   /* d.fight: việc trong trận (hoden.js đẩy đá vào hố / đập khối đá) */
     if (S.time - lh < 1.5 && !fight && CTX.monsters.list().some(mo => !(mo.c && mo.c.spar) && mo.hp > 0 && Math.hypot(mo.x - S.player.x, mo.y - S.player.y) < 112)) return; }   /* plan-20: E vào chỗ trống khi cầm đồ ăn = ăn */
   if (n.kind === 'sys' && n.cand && n.cand.need) {   /* cầm sai món → TỰ CẦM đúng món rồi làm luôn (anh yêu cầu 2026-10-10: trỏ + click là xong) */
     const id = n.cand.needId;
@@ -762,16 +764,16 @@ function update(dt) {
 function render() {
   const m = S.map, p = S.player;
   const mw = m.w * TS, mh = m.h * TS;
-  let cx = Math.round(p.x - VW / 2), cy = Math.round(p.y - 8 - VH / 2 + (S.camDY || 0));   /* plan-29: S.camDY — cảnh gọi Rồng Thần nhìn lên trời */
-  cx = Math.max(0, Math.min(mw - VW, cx)); if (!S.camFree) cy = Math.max(0, Math.min(mh - VH, cy));   /* plan-29: cảnh Rồng Thần được nhìn quá mép bản đồ theo chiều dọc (người chơi luôn ở giữa, dưới mặt rồng) */
-  if (mw < VW) cx = -((VW - mw) >> 1); if (mh < VH) cy = -((VH - mh) >> 1);
+  let cx = Math.round(p.x - VW / 2 + (S.camDX || 0)), cy = Math.round(p.y - 8 - VH / 2 + (S.camDY || 0));   /* plan-30: S.camDX — camera trận trùm (bosscam.js) giữ cả người + trùm trong khung */   /* plan-29: S.camDY — cảnh gọi Rồng Thần nhìn lên trời */
+  /* 2026-10-13 anh: nhân vật LUÔN ở giữa màn hình (không kẹp camera ở mép bản đồ) — ngoài mép: nối tiếp nền ô mép rồi tối dần (sương), xem vẽ ở vòng ô dưới */
   if (S.shakeAmp > 0) { cx += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); cy += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); }
   g.fillStyle = '#0d0b14'; g.fillRect(0, 0, VW, VH);
   const wf = Math.floor(S.time * 2) % 2;
-  const x0 = Math.max(0, Math.floor(cx / TS)), y0 = Math.max(0, Math.floor(cy / TS)), x1 = Math.min(m.w - 1, Math.ceil((cx + VW) / TS) + (ART.ground ? 1 : 0)), y1 = Math.min(m.h - 1, Math.ceil((cy + VH) / TS) + (ART.ground ? 1 : 0));
-  for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+  const x0 = Math.floor(cx / TS) - 1, y0 = Math.floor(cy / TS) - 1, x1 = Math.ceil((cx + VW) / TS) + 1, y1 = Math.ceil((cy + VH) / TS) + 1;
+  for (let ty0 = y0; ty0 <= y1; ty0++) for (let tx0 = x0; tx0 <= x1; tx0++) {
+    const tx = Math.max(0, Math.min(m.w - 1, tx0)), ty = Math.max(0, Math.min(m.h - 1, ty0));   /* ngoài bản đồ → lặp ô mép gần nhất */
     const t = m.ground[ty * m.w + tx]; const fr = tiles[t]; if (!fr) continue;
-    const sx = tx * TS - cx, sy = ty * TS - cy;
+    const sx = tx0 * TS - cx, sy = ty0 * TS - cy;
     const handled = !!(ART.ground && ART.ground(g, m, tx, ty, sx, sy)); if (!handled) g.drawImage(fr.pick ? fr.pick(tx, ty) : fr[wf % fr.length], sx, sy);
     if (!handled && (t === T.WATER || t === T.DEEP)) {   // viền bọt theo ô chỉ cho art code; nền Wang có bờ hữu cơ riêng
       g.fillStyle = '#dff3ff'; const wat = v => v === T.WATER || v === T.DEEP || v === T.REEF;
@@ -788,6 +790,10 @@ function render() {
     } }
   }
   if (ART.groundDone) ART.groundDone(g);   /* decor Wang tràn ô vẽ sau cùng */
+  for (let ty0 = y0; ty0 <= y1; ty0++) for (let tx0 = x0; tx0 <= x1; tx0++) {   /* sương tối ngoài mép bản đồ: bậc theo ô (pixel), xa mép càng tối */
+    const dx = tx0 < 0 ? -tx0 : tx0 >= m.w ? tx0 - m.w + 1 : 0, dy = ty0 < 0 ? -ty0 : ty0 >= m.h ? ty0 - m.h + 1 : 0, d = Math.max(dx, dy); if (!d) continue;
+    g.fillStyle = `rgba(13,11,20,${Math.min(1, 0.45 + d * 0.18).toFixed(2)})`; g.fillRect(tx0 * TS - cx, ty0 * TS - cy, TS, TS);
+  }
   for (const sys of S.sys) { if (!sys.drawGround) continue; try { sys.drawGround(g, CTX, cx, cy); } catch (e) { console.error(sys.id, e); } }   /* lớp nền của hệ (ao…): dưới mọi nhân vật / vật thể */
   for (const gt of m.gates) { const open = !gt.requires || S.save.badges.includes(gt.requires); g.fillStyle = open ? 'rgba(255,212,94,.18)' : 'rgba(255,31,75,.15)'; g.fillRect(gt.x * TS - cx, gt.y * TS - cy, gt.w * TS, gt.h * TS); }
   // hazard warnings (shadows) under everything

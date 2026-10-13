@@ -170,30 +170,37 @@ function renderShop(ctx) {
   for (const b of el.querySelectorAll('[data-pill]')) b.onclick = () => buyPill(ctx, b.dataset.pill);
   for (const b of el.querySelectorAll('[data-rkbook]')) b.onclick = () => buyBook(ctx, b.dataset.rkbook);
 }
-/* ---------------- plan-27: Sách luyện Rocky — 3 loại × 7 bậc; bậc N cần chiêu đang N−1 + Rocky đủ cấp; giá đá tăng dần; mua xong Rocky đọc luôn ---------------- */
+/* ---------------- plan-27: Sách luyện Rocky — 3 loại × bậc 2..7; giá đá tăng dần.
+   2026-10-13 anh: mua CHỈ CẦN ĐỦ ĐÁ (không khoá theo cấp Rocky) → sách vào TÚI (rkbook_<chiêu>_<bậc>); đọc trong túi đồ (menu.js nút Đọc) mới kiểm cấp Rocky.
+   Bậc đang bán = max(bậc chiêu Rocky, bậc sách cao nhất đã có trong túi) + 1 → mua được nhiều bậc liên tiếp. ---------------- */
+function bookNext(ctx, id) {   /* → { cur, own, n } — n > TIER_SHOP: quầy hết bậc */
+  const pt = ctx.rocky && ctx.rocky.pet(), inv = ctx.S.save.inv || {}, cur = pt ? RLV.tierOf(pt, id) : 0;
+  let own = 0; for (let k = 2; k <= RLV.TIER_SHOP; k++) if ((inv[`rkbook_${id}_${k}`] || 0) > 0) own = k;
+  return { cur, own, n: Math.max(2, cur + 1, own + 1) };
+}
 function bookRows(ctx) {
   const vi = ctx.lang() === 'vi', pt = ctx.rocky && ctx.rocky.pet(), inv = ctx.S.save.inv || {};
-  const head = `<h3 style="margin:12px 0 4px">${vi ? '📚 Sách luyện Rocky' : '📚 Rocky training books'}</h3>`;
-  if (!pt) return head + `<p class="dim">${vi ? 'Cần có Rocky đi cùng.' : 'You need Rocky with you.'}</p>`;
-  const lv = RLV.levelFromXp(pt.xp || 0).lv;
+  const head = `<h3 style="margin:12px 0 4px">${vi ? '📚 Sách luyện Rocky' : '📚 Rocky training books'}</h3><p class="dim" style="margin:0 0 4px">${vi ? 'Mua xong sách vào túi đồ — mở túi, chạm sách, bấm <b>Đọc</b> cho Rocky.' : 'Books go to your bag — open the bag, tap a book, press <b>Read</b>.'}${pt ? '' : (vi ? ' Chưa có Rocky: vẫn mua được, đọc sau.' : ' No Rocky yet: you can still buy, read later.')}</p>`;
+  const lv = pt ? RLV.levelFromXp(pt.xp || 0).lv : 0;
   return head + RLV.SKILL_IDS.map(id => {
-    const S2 = RLV.SKILLS[id], cur = RLV.tierOf(pt, id), n = Math.max(2, cur + 1), nm = vi ? S2.vi : S2.en;
-    const ic = ART.man && ART.man.ui && ART.man.ui.items && (ART.man.ui.items[`rkbook_${id}_${RLV.vfxTier(Math.min(7, n))}`] || ART.man.ui.items[`rkbook_${id}`]);
+    const S2 = RLV.SKILLS[id], { cur, own, n } = bookNext(ctx, id), nm = vi ? S2.vi : S2.en;
+    const ic = ART.man && ART.man.ui && ART.man.ui.items && (ART.man.ui.items[`rkbook_${id}_${Math.min(RLV.TIER_SHOP, n)}`] || ART.man.ui.items[`rkbook_${id}`]);
     const img = ic ? `<img src="assets/px/${ic}" alt="" style="width:32px;height:32px;image-rendering:pixelated;vertical-align:middle">` : '';
-    if (cur >= RLV.TIER_MAX) return `<div class="hrow"><span class="hwho">${img} <b>${nm}</b> <span class="dim">${vi ? 'đã bậc 7/7 — tối đa' : 'tier 7/7 — maxed'}</span></span></div>`;
-    const c = RLV.canBook(pt, id, n), price = RLV.bookPrice(id, n), poor = (inv.stone || 0) < price, ok = c.ok && !poor;
-    const why = !c.ok ? (c.why === 'lv' ? (vi ? `cần Rocky cấp ${c.lv} (đang ${lv})` : `needs Rocky Lv ${c.lv} (now ${lv})`) : c.why === 'prev' ? (cur === 0 ? (vi ? `chiêu mở ở cấp ${S2.unlock}` : `skill unlocks at Lv ${S2.unlock}`) : (vi ? `cần bậc ${n - 1} trước` : `needs tier ${n - 1} first`)) : '') : poor ? (vi ? 'chưa đủ đá' : 'not enough stones') : '';
-    return `<div class="hrow"><span class="hwho">${img} <b>${vi ? 'Sách' : 'Book'} ${nm} ${vi ? 'bậc' : 'tier'} ${n}</b> <span class="chip">${price} 🪨</span> <span class="dim">${vi ? 'đang' : 'now'} ${cur}/7${why ? ' · ' + why : ''}</span></span>`
+    const st = `${vi ? 'Rocky' : 'Rocky'} ${pt ? `${vi ? 'cấp' : 'Lv'} ${lv} · ${vi ? 'bậc' : 'tier'} ${cur}/${RLV.TIER_MAX}` : (vi ? 'chưa có' : 'none')}${own ? ` · ${vi ? 'túi có tới bậc' : 'bag up to tier'} ${own}` : ''}`;
+    if (n > RLV.TIER_SHOP) return `<div class="hrow"><span class="hwho">${img} <b>${nm}</b> <span class="dim">${st} · ${vi ? 'quầy hết bậc (bậc 8: sách trùm Vết Nứt)' : 'shop maxed (tier 8: rift boss book)'}</span></span></div>`;
+    const price = RLV.bookPrice(id, n), ok = (inv.stone || 0) >= price;
+    return `<div class="hrow"><span class="hwho">${img} <b>${vi ? 'Sách' : 'Book'} ${nm} ${vi ? 'bậc' : 'tier'} ${n}</b> <span class="chip">${price} 🪨</span> <span class="dim">${vi ? 'đọc cần Rocky cấp' : 'read needs Rocky Lv'} ${RLV.bookNeedLv(id, n)} · ${st}${ok ? '' : ' · ' + (vi ? 'chưa đủ đá' : 'not enough stones')}</span></span>`
       + `<button class="btn primary" data-rkbook="${id}:${n}" style="${BS}${ok ? '' : ';opacity:.35;cursor:default'}"${ok ? '' : ' disabled'}>${L(ctx).buy}</button></div>`;
   }).join('');
 }
 function buyBook(ctx, spec) {
-  const [id, a] = spec.split(':'), n = +a, inv = ctx.S.save.inv, pt = ctx.rocky && ctx.rocky.pet(); if (!pt) return false;
-  const c = RLV.canBook(pt, id, n), price = RLV.bookPrice(id, n);
-  if (!c.ok) { ctx.sfx('fail'); return false; }
+  const [id, a] = spec.split(':'), n = +a, inv = ctx.S.save.inv; if (!RLV.SKILLS[id]) return false;
+  if (n !== bookNext(ctx, id).n || n < 2 || n > RLV.TIER_SHOP) { ctx.sfx('fail'); renderShop(ctx); return false; }   /* bảng cũ (đã mua bậc này) → vẽ lại */
+  const price = RLV.bookPrice(id, n);
   if ((inv.stone || 0) < price) { ctx.toast(L(ctx).poor); ctx.sfx('poor'); return false; }
-  inv.stone -= price; const r = ctx.rocky.readBook(id, n); if (!r.ok) { inv.stone += price; return false; }
-  ctx.sfx('buy'); ctx.persist(); renderShop(ctx); return true;
+  const item = `rkbook_${id}_${n}`; inv.stone -= price;
+  ctx.bag.add(item, 1);   /* vào thẳng túi (bảng shop phải thấy bậc kế tiếp ngay) */
+  ctx.sfx('buy'); ctx.toast(L(ctx).bought(ctx.itemName(item))); ctx.persist(); renderShop(ctx); return true;
 }
 function openShop(ctx) { ctx.setMode('uwshop'); ctx.registerCloser('uwshop', () => closeShop(ctx)); renderShop(ctx); }
 function closeShop(ctx) { if (ST.shopEl) ST.shopEl.hidden = true; if (ctx.S.mode === 'uwshop') ctx.setMode('play'); }

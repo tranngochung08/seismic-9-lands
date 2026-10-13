@@ -88,7 +88,14 @@ export const hidden = () => off || !deps || !deps.S.save || !deps.S.map || deps.
 
 export function select(i) { const s = sv(); if (!s) return; s.hotSel = ((i % N) + N) % N; tipT = 1.6; render(true); }
 export function cycle(d) { select((sv().hotSel || 0) + d); }
-export function key(code) { if (hidden() || !(code in KEYS)) return false; select(KEYS[code]); return true; }
+export function key(code, rep) {
+  if (hidden()) return false;
+  if (code === 'KeyR') { if (!rep) eatBest(); return true; }   /* 2026-10-12 anh: phím R = ô Ăn riêng */
+  if (!(code in KEYS)) return false;
+  const i = KEYS[code], id = sv().hotbar[i]; select(i);
+  if (kindOf(id) === 'food' && !rep) eatTap(id);   /* 2026-10-12 anh: bấm số vào ô đồ ăn = ăn luôn (máu đầy thì chỉ cầm, để còn cho Rocky ăn) */
+  return true;
+}
 /* đưa món lên thanh (ô sẵn có / ô trống / ô đang chọn) rồi chọn — cho kịch bản tự động (demo, promo, bảng test) và móc test */
 export function hold(id) { const s = sv(); if (!s || !id) return false; sync(); if (mobile()) { s.mHeld = id; if (deps.onHold) deps.onHold(id); render(true); return true; } let i = s.hotbar.indexOf(id); if (i < 0) { i = s.hotbar.indexOf(null); if (i < 0) i = s.hotSel; s.hotbar[i] = id; } select(i); return true; }
 export function firstEmpty(id) { const s = sv(); if (!s) return -1; sync(); const j = s.hotbar.indexOf(id); if (j >= 0) return j; return s.hotbar.indexOf(null); }   /* phím T: ô sẽ nhận thú */
@@ -110,6 +117,23 @@ export function eatItem(id) {   /* ăn 1 món đồ ăn bất kỳ trong túi (n
   sync(); render(true); C.persist(); return true;
 }
 
+/* ---- 2026-10-12 anh: ăn nhanh trên máy tính (số vào ô đồ ăn, ô Ăn riêng / phím R) ---- */
+const hpFull = () => { const h = deps && deps.CTX.hero; return !!(h && h.hp >= h.max); };
+function eatTap(id) {
+  if (hpFull()) { deps.CTX.toast(deps.CTX.lang() === 'vi' ? 'Máu đang đầy — chưa cần ăn' : 'HP is full — no need to eat'); return false; }
+  return eatItem(id);
+}
+/* chọn món: mất ≥ 45 % máu và có viên hồi máu → viên; còn lại ăn món thường nhiều nhất (để dành viên); hết món thường mới dùng viên */
+export function pickFood() {
+  const s = sv(); if (!s) return null; const h = deps.CTX.hero, lost = h ? (h.max - h.hp) / h.max : 0;
+  const has = id => (s.inv[id] || 0) > 0, heal = Object.keys(ITEMS).filter(id => kindOf(id) === 'food' && ITEMS[id].heal && has(id)).sort((a, b) => ITEMS[b].heal - ITEMS[a].heal);
+  if (heal.length && lost >= ITEMS[heal[0]].heal) return heal[0];
+  let best = null, bn = 0;
+  for (const id of Object.keys(ITEMS)) { if (kindOf(id) !== 'food' || ITEMS[id].heal) continue; const n = s.inv[id] || 0; if (n > bn) { bn = n; best = id; } }
+  return best || heal[heal.length - 1] || null;
+}
+export function eatBest() { const id = pickFood(); if (!id) { deps.CTX.toast(deps.CTX.lang() === 'vi' ? 'Không có gì để ăn' : 'Nothing to eat'); return false; } return eatTap(id); }
+
 export const iconId = id => (id === 'sword' && deps ? `sword_t${Math.max(1, deps.CTX.tool.tier('sword'))}` : id);   /* kiếm: icon theo cấp 1–6 */
 function iconHTML(id) {
   const man = deps.ART && deps.ART.man, f = man && man.ui && man.ui.items && (man.ui.items[iconId(id)] || man.ui.items[id]);
@@ -120,20 +144,30 @@ export function render(force) {
   const hide = hidden(); el.hidden = hide; if (hide) return;
   sync();
   const s = sv(), lg = deps.CTX.lang() === 'vi' ? 'vi' : 'en';
-  const key = JSON.stringify([s.hotbar, s.hotSel, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0]);
+  const fd = pickFood(), key = JSON.stringify([hasRk(), fd, fd ? s.inv[fd] : 0, hpFull(), s.hotbar, s.hotSel, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0]);
   if (!force && key === sig) return; sig = key;
   const cur = held();
   el.innerHTML = `<div class="hb-tip"${tipT > 0 && cur ? '' : ' hidden'}>${cur ? itemName(cur, lg) : ''}</div><div class="hb-bar">` + s.hotbar.map((id, i) => {
     const n = id && !isTool(id) ? s.inv[id] || 0 : 0;
     return `<div class="hb-slot${i === s.hotSel ? ' on' : ''}" data-i="${i}" title="${id ? itemName(id, lg) : ''}"><i class="hb-k">${LABEL[i]}</i>${id ? iconHTML(id) : ''}${n > 1 ? `<b class="hb-n">${n}</b>` : ''}</div>`;
-  }).join('') + `<div class="hb-bag" title="${lg === 'vi' ? 'Túi đồ (B)' : 'Bag (B)'}"><img src="assets/px/ui/tab_bag.png" alt=""></div></div>`;   /* plan-24: đích bay khi đồ vào túi */
+  }).join('') + eatHTML(lg) + rkHTML(lg) + `<div class="hb-bag" title="${lg === 'vi' ? 'Túi đồ (B)' : 'Bag (B)'}"><img src="assets/px/ui/tab_bag.png" alt=""></div></div>`;   /* plan-24: đích bay khi đồ vào túi */
+}
+const hasRk = () => !!(deps.CTX.rocky && deps.CTX.rocky.pet && deps.CTX.rocky.pet());
+function rkHTML(lg) {   /* 2026-10-12 anh: nút Rocky (phím /) mở ô lệnh — thay Enter */
+  if (!hasRk()) return ''; const man = deps.ART && deps.ART.man, f = man && man.ui && man.ui.port_rocky, vi = lg === 'vi';
+  return `<div class="hb-slot hb-rk" title="${vi ? 'Ra lệnh cho Rocky (phím /)' : 'Command Rocky (key /)'}">${f ? `<img src="assets/px/${f}" alt="">` : '<span class="hb-emo">🪨</span>'}<i class="hb-v">/</i></div>`;
+}
+function eatHTML(lg) {   /* ô Ăn: món pickFood() sẽ ăn, phím R; không có đồ ăn thì ô mờ */
+  const id = pickFood(), n = id ? sv().inv[id] || 0 : 0, vi = lg === 'vi';
+  const tt = id ? `${vi ? 'Ăn' : 'Eat'} ${itemName(id, lg)} (R)` : (vi ? 'Không có đồ ăn (R)' : 'No food (R)');
+  return `<div class="hb-slot hb-eat${!id ? ' dim' : ''}" title="${tt}">${id ? iconHTML(id) : ''}${n > 1 ? `<b class="hb-n">${n}</b>` : ''}<i class="hb-v">R ${vi ? 'Ăn' : 'Eat'}</i></div>`;
 }
 export function tick(dt) { if (tipT > 0) { tipT -= dt; if (tipT <= 0) render(true); } render(false); }
 
 export function initHotbar(d) {
   deps = d;
   el = document.createElement('div'); el.id = 'hotbar'; el.hidden = true; document.body.appendChild(el);
-  el.addEventListener('pointerdown', e => { if (e.target.closest('.hb-bag')) { e.preventDefault(); e.stopPropagation(); if (deps.openBag) deps.openBag(); return; } const s = e.target.closest('.hb-slot'); if (!s) return; e.preventDefault(); e.stopPropagation(); select(+s.dataset.i); });
+  el.addEventListener('pointerdown', e => { if (e.target.closest('.hb-bag')) { e.preventDefault(); e.stopPropagation(); if (deps.openBag) deps.openBag(); return; } if (e.target.closest('.hb-rk')) { e.preventDefault(); e.stopPropagation(); if (deps.CTX.rocky && deps.CTX.rocky.openChat) deps.CTX.rocky.openChat(); return; } if (e.target.closest('.hb-eat')) { e.preventDefault(); e.stopPropagation(); eatBest(); return; } const s = e.target.closest('.hb-slot'); if (!s) return; e.preventDefault(); e.stopPropagation(); select(+s.dataset.i); });
   const cv = d.canvas;
   cv.addEventListener('wheel', e => { if (hidden()) return; e.preventDefault(); cycle(e.deltaY > 0 ? 1 : -1); }, { passive: false });
   cv.addEventListener('contextmenu', e => { if (hidden()) return; e.preventDefault(); eatHeld(); });

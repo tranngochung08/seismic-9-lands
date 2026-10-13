@@ -229,6 +229,19 @@ function buy(ctx, id) {
 }
 
 // ---------- the system ----------
+function fell(ctx, o, face) {   /* cây đổ: gốc + rơi gỗ — dùng chung cho chặt rìu và luồng Rocky-ha (blast.js qua ctx.treeFell) */
+  const map = ctx.S.map, t = L(ctx); if (!map.objects.includes(o)) return false;
+    // felled
+    const gain = WOOD[o.type] || 1;
+    ST.grid.delete(key(o.x, o.y));
+    const i = ST.pips.indexOf(o); if (i >= 0) ST.pips.splice(i, 1);
+    ST.stumps.push({ x: o.x, y: o.y });
+    ST.falls.push({ type: o.type, x: o.x, y: o.y, face, t: FALL });   // cây đổ về phía rìu vung tới (xoay dần 0→80°)
+    for (let i = ST.shakes.length - 1; i >= 0; i--) if (ST.shakes[i].o === o) ST.shakes.splice(i, 1);
+    ctx.removeObject(map, o);
+    if (ctx.give) ctx.give('wood', gain, o.x * TS + 8, o.y * TS + 14); else { const s = ctx.S.save; s.inv ||= {}; s.inv.wood = (s.inv.wood || 0) + gain; ctx.toast(t.got(gain)); }   /* plan-24: gỗ rơi ra gốc cây, nhặt rồi mới vào túi (anh báo chặt cây không rơi gỗ) */
+    ctx.persist(); return true;
+}
 export const trees = {
   id: 'trees',
 
@@ -238,6 +251,9 @@ export const trees = {
     const map = ctx.S.map; if (!map) return;
     for (const o of map.objects) { if (WOOD[o.type] !== undefined) { o.chop = 0; ST.grid.set(key(o.x, o.y), o); } }
     ST.dealer = placeDealer(ctx); ST.objCount = map.objects.length;
+    ctx.treeFell = (o, face = 1) => fell(ctx, o, face);   /* 2026-10-12 tối: Rocky-ha bắn đổ cây (rơi gỗ như chặt) */
+    ctx.treeShake = o => { ST.shakes.push({ o, t: SHAKE }); };
+    ctx.treeStumps = () => ST.stumps;   /* 2026-10-12 tối: blast.js rubble — bứng gốc bằng xẻng (bỏ khỏi danh sách = ô sạch) */
   },
 
   update(dt, ctx) {
@@ -310,16 +326,7 @@ export const trees = {
       const okW = ctx.vfxAt && ctx.vfxAt(p, 'wood_chips', cx, base);
       if (okW) { if (!dead && ctx.vfx) ctx.vfx('leaf_fall', cx, o.y * TS - 2, o.chop >= HITS ? 1.6 : 0.9); } else spawnChips(ctx, o, o.chop >= HITS ? 14 : 7); }
     if (o.chop < HITS) return;
-    // felled
-    const gain = WOOD[o.type] || 1;
-    ST.grid.delete(key(o.x, o.y));
-    const i = ST.pips.indexOf(o); if (i >= 0) ST.pips.splice(i, 1);
-    ST.stumps.push({ x: o.x, y: o.y });
-    ST.falls.push({ type: o.type, x: o.x, y: o.y, face: ST.swingFace, t: FALL });   // cây đổ về phía rìu vung tới (xoay dần 0→80°)
-    for (let i = ST.shakes.length - 1; i >= 0; i--) if (ST.shakes[i].o === o) ST.shakes.splice(i, 1);
-    ctx.removeObject(map, o);
-    if (ctx.give) ctx.give('wood', gain, o.x * TS + 8, o.y * TS + 14); else { const s = ctx.S.save; s.inv ||= {}; s.inv.wood = (s.inv.wood || 0) + gain; ctx.toast(t.got(gain)); }   /* plan-24: gỗ rơi ra gốc cây, nhặt rồi mới vào túi (anh báo chặt cây không rơi gỗ) */
-    ctx.persist();
+    fell(ctx, o, ST.swingFace);
   },
 
   drawables(ctx, cx, cy) {

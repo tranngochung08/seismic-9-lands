@@ -1,0 +1,86 @@
+{
+ "cw": 90,
+ "ch": 86,
+ "clips": {
+  "idle": {
+   "file": "boss/dongho/m_idle.png",
+   "n": 6,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "walk": {
+   "file": "boss/dongho/m_walk.png",
+   "n": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "slash": {
+   "file": "boss/dongho/m_slash.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "sweep": {
+   "file": "boss/dongho/m_sweep.png",
+   "n": 9,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "rewind": {
+   "file": "boss/dongho/m_rewind.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "stun": {
+   "file": "boss/dongho/m_stun.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "break": {
+   "file": "boss/dongho/m_break.png",
+   "n": 9,
+   "rows": [
+    "south",
+    "east"
+   ]
+  }
+ },
+ "mirror": {
+  "west": "east",
+  "south-west": "south-east",
+  "north-west": "north-east"
+ },
+ "note": "ảnh 2× — vẽ ô cỡ cw/2 × ch/2 logic, chân ở đáy ô − 1 px logic; hướng tây = lật hướng đông tương ứng"
+}

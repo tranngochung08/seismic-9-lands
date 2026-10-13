@@ -1,0 +1,86 @@
+[
+ {
+  "what": "create v3 72",
+  "b0": null,
+  "b1": 1271.5,
+  "t": "09:00:39"
+ },
+ {
+  "what": "create v3 72",
+  "b0": null,
+  "b1": 1261.5,
+  "t": "09:00:49"
+ },
+ {
+  "what": "idle ['south', 'east', 'north']",
+  "b0": 1230.5,
+  "b1": 1181.5,
+  "t": "09:04:38"
+ },
+ {
+  "what": "cast ['south', 'east', 'north']",
+  "b0": 1230.5,
+  "b1": 1181.5,
+  "t": "09:04:40"
+ },
+ {
+  "what": "control ['south', 'east', 'north']",
+  "b0": 1230.5,
+  "b1": 1181.5,
+  "t": "09:04:44"
+ },
+ {
+  "what": "walk ['south', 'east', 'north']",
+  "b0": 1230.5,
+  "b1": 1168.5,
+  "t": "09:05:16"
+ },
+ {
+  "what": "vanish ['south']",
+  "b0": 1181.5,
+  "b1": 1160.5,
+  "t": "09:06:31"
+ },
+ {
+  "what": "shatter ['south']",
+  "b0": 1181.5,
+  "b1": 1160.5,
+  "t": "09:06:34"
+ },
+ {
+  "what": "stun ['south', 'east', 'north']",
+  "b0": 1181.5,
+  "b1": 1160.5,
+  "t": "09:06:43"
+ },
+ {
+  "what": "control ['south-east', 'north-east']",
+  "b0": 1125.5,
+  "b1": 1108.5,
+  "t": "11:43:39"
+ },
+ {
+  "what": "cast ['south-east', 'north-east']",
+  "b0": 1115.5,
+  "b1": 1107.5,
+  "t": "11:43:53"
+ },
+ {
+  "what": "idle ['south-east', 'north-east']",
+  "b0": 1125.5,
+  "b1": 1107.5,
+  "t": "11:43:59"
+ },
+ {
+  "what": "walk ['south-east', 'north-east']",
+  "b0": 1125.5,
+  "b1": 1104.5,
+  "t": "11:44:19"
+ },
+ {
+  "what": "stun ['south-east', 'north-east']",
+  "b0": 1108.5,
+  "b1": 1065.5,
+  "t": "11:47:22"
+ }
+]

@@ -3,9 +3,11 @@
 // plan-27 (2026-10-11): cấp 1–50 + kinh nghiệm, máu/công/thủ, đánh quái (Đấm · Rocky-ha · Siêu Cấp, 7 bậc), 4 lệnh qua ô chat
 // (Bảo vệ mặc định · Tấn công · Đi theo · Về nhà), ổ của Rocky (đất của bạn / bến cảng cạnh Heathcliff), gục → về ổ nghỉ 60 s.
 // Số liệu thuần ở petlv.js. Rocky CHỈ nhắm quái (ctx.monsters.list(), bỏ tượng đá) + bạn tập ĐANG đấu (ctx.sparFoe, anh 2026-10-12) — không bao giờ dân, Leader, thú, NPC.
+import { blastBeam, smashObj, solidObjAt, jumpBlocked } from './blast.js';   /* 2026-10-12 tối: Rocky-ha phá vật chắn · Rocky nhảy qua (phe Noxx) / đấm vỡ (phe Xealist) vật cản khi đuổi quái */
 import { mkCanvas, FLAG_COLORS, TS, HOOK } from '../gfx.js';
 import { WATER, waterDraw } from '../anim.js';   /* lội nước: che phần dưới như NPC */
 import * as LV from './petlv.js';
+import { beamKey, chargeKey, sheet as bSheet, drawAt as bDraw, frameAt as bFrame, durOf as bDur } from './beamfx.js';   /* 2026-10-13 anh: Rocky-ha đẹp hơn — sheet vfx_workbench PixelLab */
 
 // ---------------------------------------------------------------- strings
 const STR = {
@@ -133,6 +135,8 @@ function frames(scarf) {
 const PRE = ['rockypet', 'rockybig', 'rockysup'];
 function cre(ctx, name) { const vp = ctx.ART && ctx.ART.packs && ctx.ART.packs.village, c = vp && vp.creatures && vp.creatures[name]; return c && c.length ? c : null; }
 function setPre(ctx, pt) { const k = pt.superT > 0 ? 2 : LV.sizeStage(lvOf(pt)); for (let i = k; i >= 0; i--) if (i === 0 || cre(ctx, PRE[i])) return i; return 0; }
+const SZ_FB = [[14, 13], [18, 16], [29, 26]];   /* cỡ logic đo 2026-10-12: Rocky gốc · cấp 5+ · Siêu Cấp */
+function rkSize(ctx, pt) { const k = setPre(ctx, pt), c = cre(ctx, PRE[k]), im = c && c[0] && c[0][0]; return im && im.width ? { w: im.width, h: im.height, k } : { w: SZ_FB[k][0], h: SZ_FB[k][1], k }; }
 
 // the crystal egg map object: pink faceted egg in a small crystal nest, with a soft glow baked in
 function eggArt(g) {
@@ -162,14 +166,14 @@ const ST = {
   panelEl: null, closerSet: false, naming: false, digT: 0,
   /* plan-27 */
   nest: null,           // { x, y } px của ổ trong vùng này (null = ổ ở vùng khác)
-  tgt: null, punchCd: 0, combo: 0, hitQ: [], haCd: 0, beam: null, bubble: null, regenT: 0, lastHurtT: -99, cine: null, chatEl: null, chatBtn: null, chatOpen: false,
+  tgt: null, punchCd: 0, combo: 0, hitQ: [], haCd: 0, beam: null, booms: [], bubble: null, regenT: 0, lastHurtT: -99, cine: null, chatEl: null, chatBtn: null, chatOpen: false,
   pops: [],             // số bay (lên cấp)
   stats: { punches: 0, kills: 0, beams: 0, supers: 0, hurt: 0, log: [] },
 };
 const tileOf = v => Math.floor(v / TS);
 function passable(ctx, x, y) {   // 8×4 feet box, same tile rule as the player's default
   const map = ctx.S.map;
-  for (const [ox, oy] of [[-4, -4], [3, -4], [-4, -1], [3, -1]]) if (ctx.isSolid(map, tileOf(x + ox), tileOf(y + oy))) return false;
+  for (const [ox, oy] of [[-4, -4], [3, -4], [-4, -1], [3, -1]]) { const tx = tileOf(x + ox), ty = tileOf(y + oy); if (ctx.isSolid(map, tx, ty) && !(map.rkRuinTiles && map.rkRuinTiles.has(ty * map.w + tx))) return false; }   /* đống đổ nát do Rocky phá (blast.js): Rocky đi qua được */
   return true;
 }
 function freeNear(ctx, x, y) {   // nearest walkable px spot around (x,y)
@@ -177,16 +181,97 @@ function freeNear(ctx, x, y) {   // nearest walkable px spot around (x,y)
   for (let r = 8; r <= 48; r += 8) for (let a = 0; a < TAU; a += TAU / 8) { const nx = x + Math.cos(a) * r, ny = y + Math.sin(a) * r; if (passable(ctx, nx, ny)) return { x: nx, y: ny }; }
   return { x, y };
 }
+/* ---- 2026-10-13 anh: Rocky trúng đòn MẠNH (đấm hất / lướt / nổ Hắc-ha / sét…) → bay vòng cung như người chơi (knock.js): có bóng dưới đất,
+   đáp đất (bụi knock_land), nằm choáng ngắn; bay chạm ô cứng / vật → dừng ngay ở đó (knock_wall), đáp mà kẹt → về ô đi được gần nhất (bài học 2026-10-12). */
+const KG = 560;
+function rkKnock(ctx, pt, e, kx, ky, kb, kind) {
+  const l = Math.hypot(kx, ky) || 1, ux = kx / l, uy = ky / l, sup = pt.superT > 0, k = sup ? 0.6 : 1;
+  const sp = Math.min(200, 60 + kb * 1.4) * k, vz = (kind === 'launch' ? 230 : 120 + Math.min(80, kb * 0.6)) * (sup ? 0.8 : 1);
+  e.kfly = { vx: ux * sp, vy: uy * sp * 0.85, z: 0, vz, wall: false, t: 0, x0: e.x, y0: e.y }; e.kdown = 0;
+  ST.beam = null; e.punchT = 0; e.jump = null; e.sit = false; e.moving = false; e.lift = 0;
+  if (Math.abs(ux) >= Math.abs(uy)) { e.face = 'side'; e.dir = ux < 0 ? 1 : -1; } else e.face = uy > 0 ? 'dn' : 'ds';   /* mặt quay về phía kẻ đánh, thân văng ngược lại (clip knockfly 'bị hất ngửa ra sau') */
+  vfx1(ctx, 'knock_heavy', e.x - ux * 4, e.y + 2, null, true); ctx.sfx('knock_whoosh'); ST.knockN = (ST.knockN || 0) + 1;
+}
+function rkKnockTick(ctx, e, dt) {
+  const k = e.kfly;
+  if (k) {
+    k.t += dt; k.vz -= KG * dt; k.z = Math.max(0, k.z + k.vz * dt); e.lift = k.z; e.moving = false; k.maxZ = Math.max(k.maxZ || 0, k.z);
+    const n = Math.max(1, Math.ceil(Math.hypot(k.vx, k.vy) * dt / 2));
+    for (let i = 0; i < n; i++) {
+      const nx = e.x + k.vx * dt / n, ny = e.y + k.vy * dt / n;
+      if (!passable(ctx, nx, ny)) { if (!k.wall) { k.wall = true; vfx1(ctx, 'knock_wall', e.x + Math.sign(k.vx) * 6, e.y - Math.round(k.z) + 4, null, true); ctx.sfx('knock_wall'); if (ctx.arenaImpact) ctx.arenaImpact(nx, ny, 1, 'wall'); } k.vx *= -0.15; k.vy *= -0.15; break; }
+      e.x = nx; e.y = ny;
+    }
+    if (k.z <= 0 && k.vz < 0) {
+      e.kfly = null; e.lift = 0; e.kdown = e.kdown0 = cre(ctx, `${PRE[setPre(ctx, petOf(ctx))]}_knockdown_s`) ? 1.0 : 0.6;   /* có clip ngã-nằm-chống-dậy PixelLab → chơi trọn clip */ vfx1(ctx, 'knock_land', e.x, e.y + 2, 'dirt_puff'); ctx.sfx('knock_land');
+      if (!passable(ctx, e.x, e.y)) { const f = freeNear(ctx, e.x, e.y); e.x = f.x; e.y = f.y; }
+      ST.knockLast = { dx: Math.round(e.x - k.x0), dy: Math.round(e.y - k.y0), maxZ: Math.round(k.maxZ || 0), wall: k.wall, ok: passable(ctx, e.x, e.y) };
+    }
+    return;
+  }
+  e.kdown -= dt; e.moving = false; e.sit = e.kdown > 0.12 && !cre(ctx, `${PRE[setPre(ctx, petOf(ctx))]}_knockdown_s`); if (e.kdown <= 0) { e.kdown = 0; e.sit = false; }   /* nằm choáng ngắn rồi đứng dậy */
+}
 function behindPoint(ctx, d = 24) {
   const p = ctx.S.player, [vx, vy] = DIRV[p.dir & 3];
   return { x: p.x - vx * d, y: p.y - vy * d };
 }
+/* ---- 2026-10-12 tối anh (ảnh Rocky Siêu Cấp đứng chồng lên nhân vật): Rocky KHÔNG đứng đè người chơi.
+   Vùng cấm quanh chân người = elip: ngang rx = ½ bề ngang hình Rocky + 8 (½ người 6 + khe 2); phía SAU (trên, Rocky vẽ sau lưng) ryA = 12 + 0,4 × cao Rocky;
+   phía TRƯỚC (dưới, Rocky vẽ đè lên người) ryB = 21 (người cao ~20). Cỡ lấy theo bộ hình đang dùng (bé 14×13 · lớn 18×16 · Siêu Cấp 29×26).
+   Đi theo: đứng LỆCH sang bên (người quay lên/xuống) hoặc sau lưng theo phương ngang (người quay trái/phải); chỗ hẹp không có chỗ bên → đứng thẳng sau lưng.
+   Người đi vào Rocky → Rocky tránh ra (sepTick). Không bao giờ đẩy người chơi. */
+function sepOf(ctx, pt) { const sz = rkSize(ctx, pt); return { rx: sz.w / 2 + 8, ryA: 12 + sz.h * 0.4, ryB: 21, sz }; }
+function insideP(p, x, y, S) { const dx = x - p.x, dy = y - p.y, ry = dy < 0 ? S.ryA : S.ryB; return (dx / S.rx) ** 2 + (dy / ry) ** 2 < 1; }
+function followSpots(ctx, pt, e) {
+  const p = ctx.S.player, S = sepOf(ctx, pt), d = p.dir & 3, [vx, vy] = DIRV[d], out = [];
+  if (!e.side) e.side = e.x >= p.x ? 1 : -1;
+  const sd = e.side, lat = S.rx + 3;
+  if (vx) out.push([p.x - vx * (S.rx + 6), p.y + 1], [p.x - vx * (S.rx + 4), p.y - 8], [p.x - vx * (S.rx + 4), p.y + 8]);
+  else { const by = vy > 0 ? -5 : 5; out.push([p.x + sd * lat, p.y + by], [p.x - sd * lat, p.y + by], [p.x + sd * lat, p.y - by], [p.x - sd * lat, p.y - by]); }
+  const back = vy > 0 ? S.ryA : S.ryB;   /* chỗ hẹp: thẳng sau lưng */
+  out.push([p.x - vx * (S.rx + 6), p.y - vy * (back + 4)], [p.x - vx * (S.rx + 18), p.y - vy * (back + 16)]);
+  return out.map(([x, y]) => ({ x, y }));
+}
+function pickSpot(ctx, pt, e) { for (const s of followSpots(ctx, pt, e)) if (passable(ctx, s.x, s.y)) return s; return null; }
+function standPoint(ctx, pt, e, tg) {   /* chỗ đứng đấm quái: sát quái nhưng NGOÀI vùng cấm quanh người chơi (ưu tiên phía bên kia quái so với người) */
+  const p = ctx.S.player, S = sepOf(ctx, pt), r = 7 + (tg.c.boss ? 10 : 0) + S.sz.w * 0.15;
+  const aE = Math.atan2(e.y - tg.y, e.x - tg.x), aP = Math.atan2(tg.y - p.y, tg.x - p.x);
+  for (const a of [aE, aP, aP + 0.8, aP - 0.8, aP + 1.6, aP - 1.6, aE + Math.PI]) {
+    const x = tg.x + Math.cos(a) * r, y = tg.y + Math.sin(a) * r * 0.7;
+    if (!insideP(p, x, y, S) && passable(ctx, x, y)) return { x, y, ok: true };
+  }
+  return { x: tg.x - Math.sign(tg.x - e.x) * 6, y: tg.y, ok: false };
+}
+function viaPoint(ctx, pt, e, s) {   /* đường thẳng tới chỗ đứng cắt qua người chơi → đi vòng qua mép bên (không xuyên qua người) */
+  const p = ctx.S.player, S = sepOf(ctx, pt);
+  let cut = false; for (const k of [0.25, 0.5, 0.75]) if (insideP(p, e.x + (s.x - e.x) * k, e.y + (s.y - e.y) * k, S)) cut = true;
+  if (!cut) return s;
+  /* đi VÒNG quanh elip cấm: mỗi lần tiến tối đa ~50° về phía chỗ đứng (đường ngắn trước, kẹt thì vòng đường kia); không vòng được → đi thẳng (e.passT: tạm bỏ né) */
+  const ang = (x, y) => { const dy = y - p.y; return Math.atan2(dy / (dy < 0 ? S.ryA : S.ryB), (x - p.x) / S.rx); };
+  const te = ang(e.x, e.y), ts = ang(s.x, s.y), diff = Math.atan2(Math.sin(ts - te), Math.cos(ts - te)), sg = diff >= 0 ? 1 : -1;
+  for (const [dir, k] of [[sg, 1], [-sg, 1], [sg, 0.6], [-sg, 0.6]]) {
+    const tw = te + dir * Math.min(Math.abs(dir === sg ? diff : TAU - Math.abs(diff)), 0.9) * k, sy = Math.sin(tw);
+    const w = { x: p.x + Math.cos(tw) * S.rx * 1.3, y: p.y + sy * (sy < 0 ? S.ryA : S.ryB) * 1.3 };
+    if (passable(ctx, w.x, w.y)) return w;
+  }
+  e.passT = 0.3; return s;
+}
+function sepTick(ctx, pt, e, spd, dt) {   /* đang đứng trong vùng cấm → tránh ra (né ngang trước, ra sau sau), không đi xuyên vật */
+  const p = ctx.S.player, S = sepOf(ctx, pt); if (!insideP(p, e.x, e.y, S)) return false;
+  let dx = e.x - p.x, dy = e.y - p.y; if (Math.hypot(dx, dy) < 1) { dx = e.side || 1; dy = 0; }
+  const a0 = Math.atan2(dy / (dy < 0 ? S.ryA : S.ryB), dx / S.rx), step = Math.max(0.5, spd * 1.5 * dt);
+  for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4, Math.PI]) {
+    const a = a0 + da, nx = e.x + Math.cos(a) * step, ny = e.y + Math.sin(a) * step;
+    if (passable(ctx, nx, ny)) { if (Math.abs(nx - e.x) > 0.2) e.dir = nx > e.x ? 1 : -1; e.x = nx; e.y = ny; e.moving = true; e.sit = false; return true; }
+  }
+  return false;   /* kẹt cứng (hiếm): đứng yên, không đẩy người */
+}
 function spawnEnt(ctx) {
-  const p = ctx.S.player, bp = behindPoint(ctx, 16), b = freeNear(ctx, bp.x, bp.y);
+  const p = ctx.S.player, pt0 = petOf(ctx), sp0 = pt0 ? pickSpot(ctx, pt0, { x: p.x + 1, y: p.y }) : null, bp = sp0 || behindPoint(ctx, 16), b = freeNear(ctx, bp.x, bp.y);
   ST.ent = { x: b.x, y: b.y, dir: p.dir === 1 ? -1 : 1, fr: 0, ft: 0, state: 'follow', hop: 0, ghost: 0, blocked: 0, sit: false, blink: 0, blinkT: 2, bounceT: 6, moving: false };
   return ST.ent;
 }
-function teleport(ctx) { const bp = behindPoint(ctx, 16), b = freeNear(ctx, bp.x, bp.y); ST.ent.x = b.x; ST.ent.y = b.y; ST.ent.blocked = 0; ST.ent.ghost = 0; }
+function teleport(ctx) { const pt0 = petOf(ctx), sp0 = pt0 && ST.ent ? pickSpot(ctx, pt0, ST.ent) : null, bp = sp0 || behindPoint(ctx, 16), b = freeNear(ctx, bp.x, bp.y); ST.ent.x = b.x; ST.ent.y = b.y; ST.ent.blocked = 0; ST.ent.ghost = 0; }
 
 // ---------------------------------------------------------------- particles
 function hearts(x, y, n = 6) {
@@ -328,8 +413,12 @@ function giveLoot(ctx) {
 }
 
 // ---------------------------------------------------------------- level / XP (plan-27)
-function gainXp(ctx, n, quiet) {
+/* 2026-10-12 tối anh: KINH NGHIỆM MỘT CHIỀU Rocky → người chơi. Rocky nhận N XP (đánh quái, ăn, được vuốt…) thì người chơi cũng nhận đúng N
+   (ctx.hero.gainXp) + chữ '+N XP' nổi ở chỗ Rocky (cùng kiểu S.pops của monsters.js). share = false: người chơi ĐÃ nhận phần đó rồi
+   (Rocky kết liễu quái → killMonster đã cho người chơi c.xp và đã hiện '+N XP') — không cộng đôi. quiet (tinh thể Lõi nâng cấp 5): không chia. */
+function gainXp(ctx, n, quiet, share = true) {
   const pt = petOf(ctx); if (!pt || n <= 0) return;
+  if (share && !quiet) { n = Math.round(n); if (ctx.hero && ctx.hero.gainXp) ctx.hero.gainXp(n); const e0 = ST.ent || ctx.S.player; (ctx.S.pops ||= []).push({ x: e0.x, y: e0.y - 26, text: `+${n} XP`, color: '#9dff7a', t: 0 }); ST.stats.shared = (ST.stats.shared || 0) + n; }
   const before = lvOf(pt); pt.xp = Math.round((pt.xp || 0) + n); const after = lvOf(pt);
   if (after > before) {
     const t = L(ctx); pt.hp = LV.maxHpOf(after);
@@ -426,21 +515,23 @@ function chatSend(ctx, raw) {
   setCmd(ctx, k); ctx.sfx('rocky_chirp'); return k;
 }
 
-/* ô chat: Enter (máy tính) hoặc nút 💬 (điện thoại) → gõ → Enter gửi; Esc đóng. Ô nằm GIỮA màn (không che nút cảm ứng nào). */
+/* ô chat: nút Rocky trên thanh công cụ / phím / (máy tính) hoặc nút 💬 (điện thoại) → gõ → Enter gửi; Esc đóng. Ô nằm GIỮA màn (không che nút cảm ứng nào). */
 function chatUI(ctx) {
   if (ST.chatEl || typeof document === 'undefined') return;
   if (!document.getElementById('rk-style')) {
     const st = document.createElement('style'); st.id = 'rk-style';
-    st.textContent = `#rk-chat{position:fixed;left:calc(var(--vvl,0px) + var(--vvw,100vw) / 2);top:calc(var(--vvt,0px) + var(--vvh,100vh) * .7);transform:translate(-50%,-50%);z-index:40;display:flex;gap:6px;align-items:center;
+    st.textContent = `#rk-chat{position:fixed;left:calc(var(--vvl,0px) + var(--vvw,100vw) / 2);top:calc(var(--vvt,0px) + var(--vvh,100vh) * .7);transform:translate(-50%,-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:stretch;
       width:min(400px,calc(var(--vvw,100vw) - 32px));box-sizing:border-box;padding:6px 8px;background:#f4e3c4;border:3px solid #6b3416;border-radius:6px;box-shadow:0 3px 0 #3a1c0c;font:18px VT323,monospace;color:#3a1c0c}
+      #rk-chat .rk-row{display:flex;gap:6px;align-items:center} #rk-chat .rk-cmds{display:grid;grid-template-columns:repeat(4,1fr);gap:4px} #rk-chat .rk-cmds button{padding:4px 2px;white-space:nowrap} #rk-chat .rk-cmds button.on{background:#6b3416}
       #rk-chat[hidden]{display:none} #rk-chat .rk-ic{font-size:18px} #rk-chat input{flex:1;min-width:0;font:20px VT323,monospace;background:#fff8e8;border:2px solid #a0703a;border-radius:4px;padding:3px 6px;color:#3a1c0c;outline:none}
       #rk-chat button{font:18px VT323,monospace;background:#ff9426;color:#fff6c8;border:2px solid #6b3416;border-radius:4px;padding:3px 10px;text-shadow:1px 1px 0 #6b3416;cursor:pointer}
-      @media (pointer:coarse){#rk-chat{top:calc(var(--vvt,0px) + var(--vvh,100vh) * .44)}}   
+      @media (pointer:coarse){#rk-chat{top:calc(var(--vvt,0px) + var(--vvh,100vh) * .44);width:min(300px,calc(var(--vvw,100vw) - 32px));padding:4px 6px;gap:4px} #rk-chat .rk-cmds button{font-size:15px;padding:1px 2px} #rk-chat input{font-size:17px;padding:1px 4px} #rk-chat .rk-row button{padding:1px 8px}}   
       #btn-chat{position:fixed;width:40px!important;height:40px!important;font-size:18px!important;z-index:6}`;
     document.head.appendChild(st);
   }
   const el = document.createElement('div'); el.id = 'rk-chat'; el.hidden = true;
-  el.innerHTML = `<span class="rk-ic">🪨</span><input id="rk-chat-in" maxlength="40" autocomplete="off" spellcheck="false" enterkeyhint="send"><button id="rk-chat-send" type="button"></button>`;
+  el.innerHTML = `<div class="rk-cmds"></div><div class="rk-row"><span class="rk-ic">🪨</span><input id="rk-chat-in" maxlength="40" autocomplete="off" spellcheck="false" enterkeyhint="send"><button id="rk-chat-send" type="button"></button></div>`;   /* 2026-10-12 anh: 4 nút lệnh bấm thẳng, khỏi gõ */
+  el.querySelector('.rk-cmds').addEventListener('pointerdown', e => { const b = e.target.closest('[data-cmd]'); if (!b) return; e.preventDefault(); e.stopPropagation(); closeChat(ctx); setCmd(ctx, b.dataset.cmd); ctx.sfx('rocky_chirp'); });
   document.body.appendChild(el); ST.chatEl = el;
   const inp = el.querySelector('input');
   const send = () => { const v = inp.value; inp.value = ''; closeChat(ctx); chatSend(ctx, v); };
@@ -454,6 +545,7 @@ function chatUI(ctx) {
 function openChat(ctx) {
   const pt = petOf(ctx); if (!pt || ctx.S.mode !== 'play') return false; chatUI(ctx); const t = L(ctx);
   const el = ST.chatEl, inp = el.querySelector('input'); inp.placeholder = t.chatPh; el.querySelector('#rk-chat-send').textContent = t.send;
+  el.querySelector('.rk-cmds').innerHTML = ['protect', 'attack', 'follow', 'home'].map(k => `<button type="button" data-cmd="${k}" class="${pt.cmd === k ? 'on' : ''}">${t.cmd[k]}</button>`).join('');
   el.hidden = false; ST.chatOpen = true; ctx.setMode('chat'); placeChat(); setTimeout(() => { try { inp.focus(); } catch (e) { } }, 30); return true;
 }
 function closeChat(ctx) { if (ST.chatEl) { ST.chatEl.hidden = true; const i = ST.chatEl.querySelector('input'); try { i.blur(); } catch (e) { } } ST.chatOpen = false; if (ctx.S.mode === 'chat') ctx.setMode('play'); }
@@ -521,7 +613,8 @@ function wrapHero(ctx) {
 function shellK(mo) { return mo.c.shell && !mo.open ? 0.25 : 1; }
 function dealDmg(ctx, mo, dmg, kb, fx) {
   if (!ctx.monsters || !ctx.monsters.damage) return; mo.__rkR = now(ctx); mo.__rkHit = now(ctx);
-  ctx.monsters.damage(mo, Math.max(1, Math.round(dmg * shellK(mo))), ST.ent || ctx.S.player, 1, mo.c.boss ? 0 : kb, true);
+  const dd = Math.max(1, Math.round(dmg * shellK(mo))); mo.__rkDmg = (mo.__rkDmg || 0) + Math.min(dd, Math.max(0, mo.hp));   /* máu Rocky đã gây (chia XP khi người chơi kết liễu) */
+  ST.rkStrike = mo; try { ctx.monsters.damage(mo, dd, ST.ent || ctx.S.player, 1, mo.c.boss ? 0 : kb, true); } finally { ST.rkStrike = null; }   /* rkStrike: đòn này của Rocky → nếu quái ngã thì Rocky là người kết liễu */
   if (fx) vfx1(ctx, fx, mo.x, mo.y + 3, 'wood_chips');
 }
 function punchHit(ctx, pt, h) {
@@ -536,33 +629,68 @@ function punchHit(ctx, pt, h) {
     for (const o of monsters(ctx)) if (o !== mo && dst(o, mo) < 26) dealDmg(ctx, o, st.atk * P.mul * 0.5, 90);
   }
 }
-function lineHits(ctx, e, dir, range, w, pool) {   /* quái nằm trên đường thẳng từ Rocky theo hướng dir (0 xuống, 1 trái, 2 phải, 3 lên) */
-  const [vx, vy] = DIRV[dir], out = [];
-  for (const mo of pool) { const dx = mo.x - e.x, dy = (mo.y - 4) - (e.y - 6), al = dx * vx + dy * vy, pe = Math.abs(dx * vy - dy * vx); if (al > 4 && al < range + (mo.c.boss ? 12 : 4) && pe < w / 2 + 7 + (mo.c.boss ? 10 : 0)) out.push(mo); }
+/* 2026-10-12 tối anh: Rocky-ha bắn theo GÓC THẬT (atan2) thay vì 4 hướng. ang (rad, 0 = phải, π/2 = xuống). */
+const DIR_ANG = [Math.PI / 2, Math.PI, 0, -Math.PI / 2];   /* dir 0 xuống · 1 trái · 2 phải · 3 lên → góc */
+function faceOfAng(ang) { const c = Math.cos(ang), s = Math.sin(ang); return Math.abs(c) >= Math.abs(s) * 0.9 ? 'side' : s > 0 ? 'ds' : 'dn'; }   /* clip gần nhất S/E/N (W = E lật); chéo 45° → nghiêng về clip ngang */
+function beamOrigin(ctx, pt, e, ang) {   /* gốc luồng: miệng / hai tay chụm của Rocky theo hướng bắn (theo cỡ hình đang dùng) */
+  const sz = rkSize(ctx, pt), c = Math.cos(ang), s = Math.sin(ang), f = faceOfAng(ang);
+  const hx = f === 'side' ? sz.w * 0.42 : sz.w * 0.12, hy = sz.h * (f === 'dn' ? 0.62 : 0.45);   /* quay lên: tay giơ trên đầu cao hơn */
+  return { x: e.x + c * hx, y: e.y - hy + s * (f === 'side' ? 0 : sz.h * 0.2) };
+}
+function lineHits(ctx, o, ang, range, w, pool) {   /* quái nằm trên đường thẳng từ gốc o theo góc ang (rad) */
+  const vx = Math.cos(ang), vy = Math.sin(ang), out = [];
+  for (const mo of pool) { const dx = mo.x - o.x, dy = (mo.y - 4) - o.y, al = dx * vx + dy * vy, pe = Math.abs(dx * vy - dy * vx); if (al > -2 && al < range + (mo.c.boss ? 12 : 4) && pe < w / 2 + 7 + (mo.c.boss ? 10 : 0)) out.push(mo); }
   return out;
+}
+/* góc tốt nhất: thử góc thẳng vào từng quái trong tầm (và lệch ±6°) — chọn góc xuyên nhiều quái nhất, hòa thì góc gần mục tiêu chính nhất */
+function bestAngle(ctx, pt, e, tg, pool, H) {
+  const o0 = beamOrigin(ctx, pt, e, Math.atan2((tg.y - 4) - (e.y - 8), tg.x - e.x)), a0 = Math.atan2((tg.y - 4) - o0.y, tg.x - o0.x);
+  let best = null;
+  const cands = [a0]; for (const mo of pool) if (mo !== tg && dst(mo, e) < H.range + 20) { const a = Math.atan2((mo.y - 4) - o0.y, mo.x - o0.x), mid = a0 + Math.atan2(Math.sin(a - a0), Math.cos(a - a0)) / 2; cands.push(a, mid, a + 0.1, a - 0.1); }
+  for (const a of cands) {
+    const o = beamOrigin(ctx, pt, e, a), hs = lineHits(ctx, o, a, H.range, H.w, pool); if (!hs.includes(tg)) continue;
+    /* hòa số quái → góc mà các quái trúng nằm SÁT TÂM luồng nhất (tổng khoảng cách vuông góc nhỏ nhất) — luồng đi xuyên đúng giữa hàng quái */
+    const vx = Math.cos(a), vy = Math.sin(a), off = hs.reduce((s, mo) => s + Math.abs((mo.x - o.x) * vy - ((mo.y - 4) - o.y) * vx), 0);
+    if (!best || hs.length > best.n || (hs.length === best.n && off < best.off)) best = { ang: a, n: hs.length, off };
+  }
+  return best;
 }
 /* 2026-10-11 anh chốt (thay điều kiện hẹp của plan-27): có mục tiêu hợp lệ trong tầm → luôn dùng chiêu bậc cao nhất đã mở + hết hồi chiêu:
    Siêu Cấp (nếu chưa biến hình) > Rocky-ha > Đấm. Rocky-ha nhắm thẳng mục tiêu (hướng trục chính), vẫn xuyên mọi quái trên đường. */
 function tryHa(ctx, pt, pool, tg) {
   const tier = LV.tierOf(pt, 'ha'); if (!tier || ST.haCd > 0 || ST.beam || !tg) return false;
-  const H = LV.haOf(tier), e = ST.ent, dx = tg.x - e.x, dy = (tg.y - 4) - (e.y - 6);
-  const d = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 2 : 1) : (dy > 0 ? 0 : 3);
-  if (!lineHits(ctx, e, d, H.range, H.w, [tg]).length) return false;   /* chưa thẳng hàng / ngoài tầm → cứ áp sát (sát bên là thẳng hàng) */
-  ST.beam = { dir: d, t: 0, fired: false, tier, range: H.range, w: H.w, show: 0 }; e.moving = false; e.sit = false;
-  e.face = d === 0 ? 'ds' : d === 3 ? 'dn' : 'side'; if (d === 1) e.dir = -1; if (d === 2) e.dir = 1;
-  vfx1(ctx, `rk_charge_t${LV.vfxTier(tier)}`, e.x, e.y + 2, null); ctx.sfx('rocky_happy');
+  if (ctx.rkHaHold && ctx.rkHaHold()) return false;   /* trận trùm: giữ Rocky-ha để đấu chưởng (hacrocky.js) */
+  const H = LV.haOf(tier), e = ST.ent;
+  const b = bestAngle(ctx, pt, e, tg, pool, H); if (!b) return false;   /* ngoài tầm → cứ áp sát. Mọi góc đều bắn được (atan2), chọn góc xuyên nhiều quái nhất */
+  aimBeam(ctx, pt, e, b.ang, tier, H);
+  ctx.sfx('rocky_happy');   /* tụ năng: quả cầu xoáy ở tay (rk_hacharge) vẽ trong draw() theo ST.beam.t */
   return true;
+}
+function aimBeam(ctx, pt, e, ang, tier, H) {
+  const f = faceOfAng(ang), c = Math.cos(ang);
+  ST.beam = { ang, dir: f === 'ds' ? 0 : f === 'dn' ? 3 : c < 0 ? 1 : 2, t: 0, fired: false, tier, range: H.range, w: H.w, show: 0 }; e.moving = false; e.sit = false;
+  e.face = f; if (Math.abs(c) > 0.05) e.dir = c < 0 ? -1 : 1;
 }
 function beamTick(ctx, pt, dt) {
   const b = ST.beam, e = ST.ent; if (!b || !e) { ST.beam = null; return; }
   b.t += dt;
-  if (!b.fired && b.t >= LV.haOf(b.tier).charge) {
-    b.fired = true; b.show = 0.42; ST.stats.beams++; ST.stats.log.push('ha');
-    const st = statsOf(pt), H = LV.haOf(b.tier), [vx, vy] = DIRV[b.dir];
-    for (const mo of lineHits(ctx, e, b.dir, b.range, b.w, monsters(ctx))) { dealDmg(ctx, mo, st.atk * H.mul, 0); if (!mo.c.boss) mo.kb = { vx: vx * 120, vy: vy * 120, t: 0.15 }; b.hits = (b.hits || 0) + 1; }
+  if (!b.fired && b.t >= (b.charge ?? LV.haOf(b.tier).charge)) {   /* b.charge: thời gian tụ riêng (bắn trả khớp nhịp đối phương — hacrocky.js) */
+    b.fired = true; b.ft = 0; b.show = bDur(bSheet(beamKey(b.tier))) || 0.67; ST.stats.beams++; ST.stats.log.push('ha');
+    const st = statsOf(pt), H = LV.haOf(b.tier), ang = b.ang ?? DIR_ANG[b.dir], vx = Math.cos(ang), vy = Math.sin(ang), o = beamOrigin(ctx, pt, e, ang);
+    b.ox = o.x - e.x; b.oy = o.y - e.y;   /* gốc luồng (để vẽ) — tương đối với Rocky */
+    /* 2026-10-12 tối anh: luồng PHÁ vật chắn trên đường (blast.js) — vật không phá được / chưa sập / hết lượt xuyên → luồng dừng ở đó (b.len), quái sau vật không trúng.
+       Luồng đi theo GÓC THẬT: blast.js dò từng bước 4 px dọc đường chéo; quái trúng = nằm trong bề rộng luồng quanh đường đó. */
+    const bl = blastBeam(ctx, o.x, o.y, ang, b.range, H.pierce, H.pow); b.len = bl.len; b.objHits = bl.hits;
+    if (ctx.haFilter) { try { const fl = ctx.haFilter(o.x, o.y, ang, b.len, b.w, b.tier); if (fl != null && fl < b.len) b.len = Math.max(6, fl); } catch (e) { console.error('haFilter', e); } }   /* plan-30 trùm 3 (guong.js): gương chặn + phản xạ luồng — trả độ dài tới mặt gương (null = không chặn) */
+    const mh = lineHits(ctx, o, ang, b.len, b.w, monsters(ctx));
+    for (const mo of mh) { dealDmg(ctx, mo, st.atk * H.mul, 0); if (!mo.c.boss) mo.kb = { vx: vx * H.kb, vy: vy * H.kb, t: 0.15 }; b.hits = (b.hits || 0) + 1; }
+    /* đầu luồng nổ khi chạm vật / quái (rk_haboom: vòng sóng + tia lửa + bụi) */
+    if (bl.len < b.range - 3) ST.booms.push({ x: o.x + vx * bl.len, y: o.y + vy * bl.len + 4, t: -0.08 });
+    for (const mo of mh.slice(0, 3)) ST.booms.push({ x: mo.x, y: mo.y - 2, t: -0.05 });
+    ST.lastBlast = { sheet: beamKey(b.tier), charge: chargeKey(b.tier, pt.superT > 0), booms: ST.booms.length, tier: b.tier, dir: b.dir, ang: Math.round(ang * 180 / Math.PI), range: b.range, len: bl.len, hits: bl.hits, mons: mh.map(m => m.id), ox: Math.round(o.x), oy: Math.round(o.y) };
     ST.haCd = H.cd; if (ctx.quake) ctx.quake(0.15); ctx.sfx('hit');
   }
-  if (b.fired) { b.show -= dt; if (b.show <= 0) ST.beam = null; }
+  if (b.fired) { b.ft = (b.ft || 0) + dt; b.show -= dt; if (b.show <= 0) ST.beam = null; }
 }
 function startSuper(ctx, pt) {
   const tier = LV.tierOf(pt, 'super'); if (!tier || (pt.superCd || 0) > 0 || pt.superT > 0 || ST.cine || ctx.S.camFocus) return false;
@@ -610,7 +738,9 @@ function combatTick(ctx, pt, dt, e, spd) {   /* true = Rocky đang bận đánh 
     if (mo.__rkCd > 0) mo.__rkCd -= dt;
     if (now(ctx) - (mo.__rkHit ?? -99) < 5 && dst(mo, e) < 18 + (mo.c.boss ? 16 : 0) && !(mo.__rkCd > 0)) { mo.__rkCd = MON_HIT_CD; rockyHurt(ctx, pt, (mo.c.dmg || 8) * (mo.c.boss ? 1 : 0.8), mo); if (!ST.ent) return true; }
   }
+  if (e.jump) { jumpTick(ctx, e, dt); return true; }   /* đang nhảy qua vật cản (phe Noxx) */
   if (ST.beam) { beamTick(ctx, pt, dt); e.moving = false; return true; }
+  if (ctx.rkMute && ctx.rkMute()) { ST.tgt = null; return false; }   /* plan-30 trùm 2: Trống Đồng 'Câm Lặng' — Rocky không dùng chiêu (không đấm / ha / Siêu Cấp), chỉ đi theo */
   const pool = eligible(ctx, pt), p = ctx.S.player;
   if (ST.tgt && (!pool.includes(ST.tgt))) ST.tgt = null;
   if (!ST.tgt && pool.length) { let bd = 1e9; for (const mo of pool) { const d = dst(mo, e) + (mo.c.boss ? 30 : 0); if (d < bd) { bd = d; ST.tgt = mo; } } }
@@ -620,8 +750,9 @@ function combatTick(ctx, pt, dt, e, spd) {   /* true = Rocky đang bận đánh 
   const tg = ST.tgt; if (!tg) return false;
   if (dst(e, p) > LEASH) { ST.tgt = null; return false; }
   e.sit = false; cancelFetch();
-  const reach = REACH + (tg.c.boss ? 12 : 0), d = dst(tg, e);
-  if (d > reach) { stepToward(ctx, e, tg.x - Math.sign(tg.x - e.x) * 6, tg.y, spd * 1.2, dt); e.moving = true; return true; }
+  const reach = REACH + (tg.c.boss ? 12 : 0), d = dst(tg, e), sp = standPoint(ctx, pt, e, tg), onP = insideP(p, e.x, e.y, sepOf(ctx, pt));
+  if (d > reach) { const w = viaPoint(ctx, pt, e, sp), moved = stepToward(ctx, e, w.x, w.y, spd * 1.2, dt, true), d2 = dst(tg, e); e.moving = true; if (!moved || d2 > d - spd * dt * 0.3) obstacle(ctx, pt, e, tg, dt); else e.stuckT = 0; return true; }   /* không lại gần được (vướng / trượt dọc rào) → xử lý vật cản theo phe */
+  if (onP && sp.ok && Math.hypot(sp.x - e.x, sp.y - e.y) > 2) { stepToward(ctx, e, sp.x, sp.y, spd * 1.2, dt); e.moving = true; return true; }   /* 2026-10-12 tối anh: đang đè người → dời sang chỗ đứng đấm phía bên kia quái */
   e.moving = false; if (Math.abs(tg.x - e.x) > 2) e.dir = tg.x > e.x ? 1 : -1;
   const dy = tg.y - e.y; e.face = Math.abs(dy) > Math.abs(tg.x - e.x) * 1.2 ? (dy > 0 ? 'ds' : 'dn') : 'side';
   if (ST.punchCd <= 0) {
@@ -633,15 +764,54 @@ function combatTick(ctx, pt, dt, e, spd) {   /* true = Rocky đang bận đánh 
   return true;
 }
 
+/* 2026-10-12 tối anh: Rocky đuổi quái mà vướng vật cản (cây, rào, bảng, đèn…):
+   · phe NOXX → NHẢY QUA (vòng cung, bóng nằm dưới đất, đáp ô đi được phía bên kia; không nhảy qua vật khóa tiến trình / vành mép bản đồ);
+   · phe XEALIST → ĐẤM VỠ vật trước mặt (hư → đổ nát ảnh PixelLab riêng, như Rocky-ha: blast.js smashObj; Rocky đi qua đống đổ nát);
+   · chưa chọn phe → như cũ (đi vòng / xuyên ngắn rồi tự ra khỏi vật). */
+const sidePath = ctx => { const pa = ((ctx.story && ctx.story()) || {}).path; return pa === 'noxx' || pa === 'xealist' ? pa : null; };
+const JUMP_DUR = 0.5;
+function frontObj(ctx, e, tg) {   /* vật cứng ngay trước mặt Rocky theo hướng tới quái */
+  const dx = tg.x - e.x, dy = tg.y - e.y, l = Math.hypot(dx, dy) || 1;
+  for (const k of [6, 10, 14]) { const o = solidObjAt(ctx, tileOf(e.x + dx / l * k), tileOf(e.y - 2 + dy / l * k)); if (o) return o; }
+  return null;
+}
+function obstacle(ctx, pt, e, tg, dt) {
+  const side = sidePath(ctx); if (!side) return;
+  e.stuckT = (e.stuckT || 0) + dt; if (e.stuckT < 0.25) return;
+  const o = frontObj(ctx, e, tg);
+  if (side === 'noxx') {
+    const dx = tg.x - e.x, dy = tg.y - e.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l;
+    for (let a = 18; a <= 60; a += 4) {
+      const x = e.x + ux * a, y = e.y + uy * a; if (!passable(ctx, x, y)) continue;
+      let bad = false; for (let b = 4; b < a && !bad; b += 4) { const q = solidObjAt(ctx, tileOf(e.x + ux * b), tileOf(e.y - 2 + uy * b)); if (q && jumpBlocked(ctx, q)) bad = true; }
+      if (bad) break;
+      e.jump = { x0: e.x, y0: e.y, x1: x, y1: y, t: 0, dur: JUMP_DUR + a / 400, h: 10 + a * 0.18 }; e.stuckT = 0; e.blocked = 0; e.sit = false; ST.stats.jumps = (ST.stats.jumps || 0) + 1; ST.stats.log.push('jump');
+      dust(e.x, e.y, 5); ctx.sfx('rocky_happy'); return;
+    }
+    return;   /* không có chỗ đáp → đứng chờ (không xuyên) */
+  }
+  if (!o || ST.smashCd > now(ctx)) return;
+  const P = LV.punchOf(LV.tierOf(pt, 'punch')), r = smashObj(ctx, o, pt.superT > 0 ? 2 : 1, e.dir);
+  ST.smashCd = now(ctx) + 0.55; e.punchT = 0.26; e.punchN = (e.punchN || 0) + 1; ST.stats.smash = (ST.stats.smash || 0) + 1; ST.stats.log.push(r ? (r.gone ? 'smash!' : 'smash') : 'smash-x');
+  if (!r) { e.stuckT = 0; }   /* vật không phá được (cổng / mép bản đồ): đứng chờ */
+  void P;
+}
+function jumpTick(ctx, e, dt) {
+  const j = e.jump; j.t += dt; const k = Math.min(1, j.t / j.dur);
+  e.x = j.x0 + (j.x1 - j.x0) * k; e.y = j.y0 + (j.y1 - j.y0) * k; e.lift = Math.sin(k * Math.PI) * j.h; e.moving = true; e.sit = false;
+  if (Math.abs(j.x1 - j.x0) > 1) e.dir = j.x1 > j.x0 ? 1 : -1; e.face = Math.abs(j.y1 - j.y0) > Math.abs(j.x1 - j.x0) * 1.2 ? (j.y1 > j.y0 ? 'ds' : 'dn') : 'side';
+  if (k >= 1) { e.jump = null; e.lift = 0; e.hop = 0.25; dust(e.x, e.y, 6); if (!passable(ctx, e.x, e.y)) { const f = freeNear(ctx, e.x, e.y); e.x = f.x; e.y = f.y; } }
+}
+
 // ---------------------------------------------------------------- movement
-function stepToward(ctx, e, tx, ty, sp, dt) {
+function stepToward(ctx, e, tx, ty, sp, dt, chase = false) {   /* chase: đang đuổi quái — phe Noxx/Xealist tự xử lý vật cản (obstacle), không xuyên tường */
   const dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy); if (d < 0.5) return true;
   const mx = dx / d * sp * dt, my = dy / d * sp * dt; let moved = false;
   const ok = (x, y) => e.ghost > 0 || passable(ctx, x, y);
   if (mx && ok(e.x + mx, e.y)) { e.x += mx; moved = true; }
   if (my && ok(e.x, e.y + my)) { e.y += my; moved = true; }
   if (Math.abs(dx) > 1) e.dir = dx > 0 ? 1 : -1;
-  if (!moved) { e.blocked += dt; if (e.blocked > 1) { e.blocked = 0; e.ghost = 0.5; e.hop = 0.5; dust(e.x, e.y, 4); } }
+  if (!moved) { e.blocked += dt; if (e.blocked > 1 && !(chase && sidePath(ctx))) { e.blocked = 0; e.ghost = 0.5; e.hop = 0.5; dust(e.x, e.y, 4); } }
   else e.blocked = 0;
   return moved;
 }
@@ -665,9 +835,10 @@ function updatePet(dt, ctx) {
   if (e.state === 'home') { e.state = 'follow'; e.sit = false; }
   const hungry = pt.hunger < HUNGRY_AT;
   const riding = !!(ctx.S.sea && ctx.S.sea.riding && !ctx.S.sea.diving);   /* anh báo 2026-10-10: chỉ ngồi khi đang trên bè/ván, không phải cả vùng Biển */
-  if (e.ghost > 0) e.ghost -= dt;
+  if (e.ghost > 0) { e.ghost -= dt; if (e.ghost <= 0 && !passable(ctx, e.x, e.y)) { const f = freeNear(ctx, e.x, e.y); e.x = f.x; e.y = f.y; } }   /* 2026-10-12 tối anh (ảnh Rocky lẫn trong cây): hết xuyên mà còn đứng trong thân cây / vật → dời ra ô trống gần nhất */
   if (e.hop > 0) e.hop -= dt;
   if (e.hurt > 0) e.hurt -= dt;
+  if (e.kfly || e.kdown > 0) { rkKnockTick(ctx, e, dt); return; }   /* đang bay / nằm sau cú hất: không AI */
   if (e.tilt > 0) e.tilt -= dt;
   if (ST.petCd > 0) ST.petCd -= dt;
   ST.hungerAcc += dt;
@@ -678,7 +849,7 @@ function updatePet(dt, ctx) {
     if (ST.sparkle) cancelFetch(); ST.tgt = null;
     const ly = ctx.S.npcs.find(n => n.m && n.m.friend && Math.hypot(n.x - p.x, n.y - p.y) < 40);
     const side = ly ? (ly.x < p.x ? 1 : -1) : p.dir === 2 ? -1 : 1, behind = p.dir === 3 ? 1 : p.dir === 0 ? -1 : 0;
-    const small = ctx.S.sea.riding === 'plank', tx = p.x + side * (small ? 9 : 14), ty = p.y + (small ? 6 : 4) + behind * 3;
+    const small = ctx.S.sea.riding === 'plank', S = sepOf(ctx, pt), lat = Math.max(small ? 9 : 14, S.rx), tx = p.x + side * lat, ty = p.y + (small ? 6 : 4) + behind * 3 - (lat > 14 ? 3 : 0);   /* 2026-10-12 tối: hình lớn / Siêu Cấp ngồi lệch xa hơn, hơi lùi sau (vẽ sau lưng người), không chồng lên người */
     e.state = 'ride'; e.x += (tx - e.x) * Math.min(1, dt * 10); e.y += (ty - e.y) * Math.min(1, dt * 10); e.moving = false;
     e.rideT = (e.rideT || 0) + dt;
     if (p.moving) { e.sit = false; e.face = p.dir === 0 ? 'ds' : p.dir === 3 ? 'dn' : 'side'; e.dir = p.dir === 1 ? -1 : 1; e.ft += dt * 6; e.fr = 1 + ((e.ft | 0) % 2); }
@@ -693,6 +864,7 @@ function updatePet(dt, ctx) {
     e.moving = false;
     let fighting = false;
     if (!wait && !ST.cine && e.state !== 'dig') fighting = combatTick(ctx, pt, dt, e, spd);
+    else if (ST.beam && !ST.cine) { beamTick(ctx, pt, dt); e.moving = false; fighting = true; }   /* đang đứng chờ (petWait) mà có lệnh bắn Rocky-ha (bắn trả Hắc-ha) → vẫn tụ + bắn */
     if (!ST.ent) return;   /* vừa gục → đã về ổ */
     if (ST.cine) { e.moving = false; }
     else if (fighting) { e.state = 'follow'; }
@@ -715,12 +887,18 @@ function updatePet(dt, ctx) {
       else { e.sit = true; if (Math.abs(p.x - e.x) > 2) e.dir = p.x > e.x ? 1 : -1; }
     } else {
       e.state = 'follow';
-      const tgt = behindPoint(ctx, FOLLOW_MAX - 4);
-      const dt2 = Math.hypot(tgt.x - e.x, tgt.y - e.y);
-      if (dp > FOLLOW_MAX || (dp > FOLLOW_MIN && dt2 > 6 && p.moving)) { stepToward(ctx, e, tgt.x, tgt.y, spd, dt); e.moving = true; e.sit = false; }
-      else if (dp < FOLLOW_MIN - 6 && p.moving) { stepToward(ctx, e, e.x - (p.x - e.x), e.y - (p.y - e.y), spd * 0.6, dt); e.moving = true; }
+      /* 2026-10-12 tối anh: chỗ đứng LỆCH bên / sau lưng theo cỡ hình, không trùng chỗ người (followSpots); đường tới chỗ đứng không xuyên qua người (viaPoint) */
+      const S = sepOf(ctx, pt), spot = pickSpot(ctx, pt, e), inside = insideP(p, e.x, e.y, S);
+      if (spot) {
+        const ds = Math.hypot(spot.x - e.x, spot.y - e.y);
+        if (dp > S.rx + FOLLOW_MAX || inside || (p.moving && ds > 5) || ds > 16) {
+          const w = viaPoint(ctx, pt, e, spot); stepToward(ctx, e, w.x, w.y, spd * (dp > S.rx + FOLLOW_MAX + 20 ? 1.15 : 1), dt); e.moving = true; e.sit = false;
+          if (Math.abs(spot.x - p.x) > 4) e.side = spot.x > p.x ? 1 : -1;
+        } else if (Math.abs(p.x - e.x) > 2) e.dir = p.x > e.x ? 1 : -1;
+      } else if (dp > S.rx + FOLLOW_MAX) { stepToward(ctx, e, p.x, p.y, spd, dt); e.moving = true; e.sit = false; }
       else if (Math.abs(p.x - e.x) > 2) e.dir = p.x > e.x ? 1 : -1;
     }
+    if (e.passT > 0) e.passT -= dt; else if (!e.jump && !ST.cine && !ST.beam && e.state !== 'dig' && !(e.ghost > 0)) sepTick(ctx, pt, e, spd, dt);   /* người đi vào Rocky → Rocky tránh ra (mọi lúc: đi theo, đánh, chờ ở Sàn Đấu) */
     if (!e.moving && ST.idleT >= 3 && e.state === 'follow' && playing && !fighting && !ST.cine) {
       if (!e.sit) { e.sit = true; e.bounceT = 4 + Math.random() * 5; }
     } else if (e.moving || ST.idleT < 3 || fighting) e.sit = false;
@@ -754,6 +932,8 @@ function pickImg(ctx, pt, e, scarfSet) {   /* chọn khung ảnh theo bộ cỡ 
   const side = k === 0 ? scarfSet : (cre(ctx, pre) || scarfSet), fr = e.sit ? 3 : e.fr;
   const clip = name => { const c = cre(ctx, `${pre}_${name}_${fx}`) || (fx !== 'e' ? null : null); return c; };
   if (ST.cine && ST.cine.swapped) { const c = cre(ctx, `${pre}_transform_s`); if (c) { const i = Math.min(c.length - 1, Math.floor(Math.max(0, ST.cine.t - 0.5) / 0.8 * c.length)); return { img: c[i][0], px: true }; } }   /* cảnh biến hình: dáng gồng hai tay (PixelLab) */
+  if (e.kfly) { const c = cre(ctx, `${pre}_knockfly_${fx}`) || cre(ctx, `${pre}_knockfly_s`); if (c) { const i = Math.floor(e.kfly.t * 12) % c.length; return { img: c[i][fx === 'e' ? flip : 0], px: true }; } const hs = cre(ctx, `${pre}_hop`); if (hs) return { img: hs[Math.min(hs.length - 1, 2)][0], px: true }; }   /* bị hất bay: clip knockfly PixelLab (bay ngửa, tay chân quơ) */
+  if (e.kdown > 0) { const c = cre(ctx, `${pre}_knockdown_${fx}`); if (c) { const u = 1 - e.kdown / (e.kdown0 || 1), i = Math.min(c.length - 1, Math.floor(u * c.length)); return { img: c[i][fx === 'e' ? flip : 0], px: true }; } }   /* ngã nằm rồi chống dậy */   /* đang bị hất bay: dáng nhảy/ngửa (bóng vẫn dưới đất) */
   if (e.punchT > 0) { const c = clip('punch'); if (c) { const i = Math.min(c.length - 1, Math.floor((1 - e.punchT / 0.26) * c.length)); return { img: c[i][fx === 'e' ? flip : 0], px: true }; } }
   if (ST.beam) { const c = clip('ha'); if (c) { const prog = ST.beam.fired ? 1 : Math.min(1, ST.beam.t / 0.8); const i = Math.min(c.length - 1, Math.floor(prog * (c.length - 1))); return { img: c[i][fx === 'e' ? flip : 0], px: true }; } }
   const hopSet = e.hop > 0 && (e.sit || face === 'ds') ? cre(ctx, `${pre}_hop`) : null;
@@ -769,7 +949,7 @@ export const pet = {
 
   onZoneEnter(ctx) {
     const s = sv(ctx);
-    ST.fx.length = 0; ST.sparkle = null; ST.lastP = null; ST.idleT = 0; ST.eggObj = null; ST.tgt = null; ST.beam = null; ST.hitQ.length = 0; ST.pops.length = 0; ST.bubble = null;
+    ST.fx.length = 0; ST.booms = []; ST.sparkle = null; ST.lastP = null; ST.idleT = 0; ST.eggObj = null; ST.tgt = null; ST.beam = null; ST.hitQ.length = 0; ST.pops.length = 0; ST.bubble = null;
     if (ST.cine) endCine(ctx);
     if (ctx.S.mode === 'petname') closeName(ctx);
     if (ctx.S.mode === 'chat') closeChat(ctx);
@@ -782,16 +962,33 @@ export const pet = {
     } else ST.ent = null;
     ctx.onMonsterDown = (mo, xp) => {   /* plan-27: cùng hạ quái → Rocky nhận kinh nghiệm (phần lớn kinh nghiệm của Rocky) */
       const pt = petOf(ctx), e = ST.ent; if (!pt || !e || e.state === 'home' || isHome(pt)) return;
-      const helped = now(ctx) - (mo.__rkHit ?? -99) < 8, near = dst(mo, e) < 160 || dst(mo, ctx.S.player) < 140;
-      if (!helped && !near) return; ST.stats.kills += helped ? 1 : 0; if (ST.tgt === mo) ST.tgt = null;
-      gainXp(ctx, Math.max(1, Math.round((xp || 5) * (helped ? 1 : 0.6))));
+      /* 2026-10-12 tối anh: Rocky CHỈ có XP từ việc của chính Rocky (bỏ phần 'đứng gần' 0,6):
+         · Rocky ra đòn kết liễu (ST.rkStrike === mo) → Rocky nhận đủ XP quái; người chơi đã nhận đúng số đó trong killMonster (xpMul 1) → không chia thêm;
+         · người chơi kết liễu con quái Rocky đã đánh → Rocky nhận phần XP theo tỉ lệ máu Rocky đã gây (công bằng theo công sức), và người chơi nhận thêm đúng phần đó (luật một chiều);
+         · Rocky không đụng tới con quái đó → Rocky 0 XP. */
+      if (ST.tgt === mo) ST.tgt = null;
+      const base = xp || 5;
+      if (ST.rkStrike === mo) { ST.stats.kills++; gainXp(ctx, Math.max(1, Math.round(base)), false, false); return; }
+      const part = Math.min(1, (mo.__rkDmg || 0) / Math.max(1, mo.max || mo.c.hp || 1)); if (part <= 0) return;
+      gainXp(ctx, Math.max(1, Math.round(base * part)));
     };
     ctx.rocky = {   /* API cho menu.js (thẻ Rocky) / underwater.js (sách Heathcliff) */
       pet: () => petOf(ctx), stats: () => { const pt = petOf(ctx); return pt ? statsOf(pt) : null; }, cmdName: k => L(ctx).cmd[k] || k,
-      readBook: (id, n) => readBook(ctx, id, n), say: txt => say(ctx, txt), openChat: () => openChat(ctx),
+      readBook: (id, n, boss) => readBook(ctx, id, n, boss), say: txt => say(ctx, txt), openChat: () => openChat(ctx),
       /* anh 2026-10-12: đòn bạn tập cơ bắp trúng cả Rocky — spar.js gọi pos() để xét vùng đánh, hitBy() để trừ máu + hất lùi (không xuyên vật cứng) */
+      ent: () => ST.ent,   /* 2026-10-12 tối anh: road.js dời Rocky ra khi kẹt trong khối viền đèo */
       pos: () => { const e = ST.ent, pt = petOf(ctx); return e && pt && e.state !== 'home' && !(pt.koT > 0) && !(e.ghost > 0) ? { x: e.x, y: e.y } : null; },
-      hitBy: (raw, src, kx, ky, kb) => { const e = ST.ent, pt = petOf(ctx); if (!e || !pt || pt.koT > 0) return false; rockyHurt(ctx, pt, raw, src && src.c ? src : null);
+      /* 2026-10-13 anh (Hắc Rocky có Hắc-ha; giằng co chỉ khi 2 luồng bắn cùng lúc): đọc / ra lệnh Rocky-ha cho hacrocky.js */
+      beamInfo: () => { const b = ST.beam, e = ST.ent, pt = petOf(ctx); if (!b || !e || !pt) return null; const ang = b.ang ?? DIR_ANG[b.dir], o = b.fired ? { x: e.x + (b.ox ?? 0), y: e.y + (b.oy ?? -7) } : beamOrigin(ctx, pt, e, ang); return { ref: b, fired: !!b.fired, t: b.t, charge: b.charge ?? LV.haOf(b.tier).charge, ft: b.ft || 0, ang, x: o.x, y: o.y, len: b.len ?? b.range, tier: b.tier }; },
+      haWhy: () => { const pt = petOf(ctx), e = ST.ent; if (!pt || !e) return 'no'; return [LV.tierOf(pt, 'ha') > 0 ? '' : 'tier', pt.koT > 0 ? 'ko' : '', ST.haCd > 0 ? 'cd' + ST.haCd.toFixed(1) : '', ST.beam ? 'beam' : '', ST.cine ? 'cine' : '', e.kfly ? 'fly' : '', e.kdown > 0 ? 'down' : '', e.state === 'home' ? 'home' : '', pt.cmd === 'home' ? 'cmdhome' : '', ctx.rkMute && ctx.rkMute() ? 'mute' : ''].filter(Boolean).join(',') || 'ok'; },
+      haReady: () => { const pt = petOf(ctx), e = ST.ent; return !!(pt && e && LV.tierOf(pt, 'ha') > 0 && !(pt.koT > 0) && !(ST.haCd > 0) && !ST.beam && !ST.cine && !e.kfly && !(e.kdown > 0) && e.state !== 'home' && pt.cmd !== 'home' && !(ctx.rkMute && ctx.rkMute())); },
+      haFire: (ang, force, charge) => { const pt = petOf(ctx), e = ST.ent, tier = pt && LV.tierOf(pt, 'ha'); if (!tier || !e || (!force && (ST.haCd > 0 || ST.beam)) || e.kfly) return false; ST.beam = null; aimBeam(ctx, pt, e, ang, tier, LV.haOf(tier)); if (charge != null) ST.beam.charge = Math.max(0.3, charge); ST.haCd = 0; ctx.sfx('rocky_happy'); return true; },
+      beamStop: () => { ST.beam = null; },
+      beamAim: ang => { const b = ST.beam, e = ST.ent; if (!b || b.fired || !e) return false; b.ang = ang; const f = faceOfAng(ang), c = Math.cos(ang); b.dir = f === 'ds' ? 0 : f === 'dn' ? 3 : c < 0 ? 1 : 2; e.face = f; if (Math.abs(c) > 0.05) e.dir = c < 0 ? -1 : 1; return true; },   /* xoay luồng đang tụ về phía đối phương (giằng co thẳng hàng) */
+      beamCharge: ch => { const b = ST.beam; if (b && !b.fired) b.charge = Math.max(b.t + 0.05, ch); },
+      hitBy: (raw, src, kx, ky, kb, kind) => { const e = ST.ent, pt = petOf(ctx); if (!e || !pt || pt.koT > 0) return false; rockyHurt(ctx, pt, raw, src && src.c ? src : null);
+        if (!ST.ent || pt.koT > 0) return true;
+        if (kind === 'fly' || kind === 'launch' || (kb || 0) >= 50) { if (!e.kfly) rkKnock(ctx, pt, e, kx, ky, kb || 60, kind); return true; }   /* lực hất ≥ 50 (đấm hất, lướt, sét Dùi Sấm, Lạc Hầu vung dùi…) = đòn mạnh */   /* 2026-10-13 anh: đòn mạnh → Rocky bay như người chơi */
         const l = Math.hypot(kx, ky) || 1, n = 6, push = (kb || 40) * (pt.superT > 0 ? 0.5 : 1); for (let i = 0; i < n; i++) { const nx = e.x + kx / l * push / n, ny = e.y + ky / l * push / n; if (ctx.isSolid(ctx.S.map, Math.floor(nx / 16), Math.floor(ny / 16))) break; e.x = nx; e.y = ny; }
         e.hop = 0.5; if (ctx.vfx) ctx.vfx('dirt_puff', e.x, e.y + 2); return true; },
     };
@@ -806,11 +1003,15 @@ export const pet = {
       rk: () => { const pt = petOf(ctx), e = ST.ent; if (!pt) return null; const st = statsOf(pt), lv = LV.levelFromXp(pt.xp || 0);
         return { lv: st.lv, xp: pt.xp, into: lv.into, need: lv.need, hp: Math.round(pt.hp), max: st.max, atk: st.atk, def: st.def, cmd: pt.cmd, ko: +(pt.koT || 0).toFixed(1), superT: +(pt.superT || 0).toFixed(1), superCd: +(pt.superCd || 0).toFixed(1), skills: { punch: LV.tierOf(pt, 'punch'), ha: LV.tierOf(pt, 'ha'), super: LV.tierOf(pt, 'super') },
           ent: e ? { x: Math.round(e.x), y: Math.round(e.y), state: e.state, face: e.face || 'side', set: PRE[setPre(ctx, pt)], w: Math.round(pickImg(ctx, pt, e, frames(scarfFor(ctx))).img.width), h: Math.round(pickImg(ctx, pt, e, frames(scarfFor(ctx))).img.height) } : null,
-          tgt: ST.tgt ? ST.tgt.id : null, beam: ST.beam ? { dir: ST.beam.dir, fired: ST.beam.fired, hits: ST.beam.hits || 0 } : null, haCd: +ST.haCd.toFixed(1), cine: !!ST.cine, bubble: ST.bubble && ST.bubble.text, nest: ST.nest && { tx: ST.nest.tx, ty: ST.nest.ty }, home: homeOf(ctx), stats: { ...ST.stats, log: ST.stats.log.slice(-12) }, chat: ST.chatOpen }; },
+          knock: { fly: !!(e && e.kfly), z: e && e.kfly ? Math.round(e.kfly.z) : 0, down: e ? +(e.kdown || 0).toFixed(2) : 0, n: ST.knockN || 0, last: ST.knockLast || null },
+          tgt: ST.tgt ? ST.tgt.id : null, beam: ST.beam ? { dir: ST.beam.dir, fired: ST.beam.fired, hits: ST.beam.hits || 0, len: ST.beam.len } : null, lastBlast: ST.lastBlast || null, jump: e && e.jump ? { ...e.jump } : null, side: sidePath(ctx), haCd: +ST.haCd.toFixed(1), cine: !!ST.cine, bubble: ST.bubble && ST.bubble.text, nest: ST.nest && { tx: ST.nest.tx, ty: ST.nest.ty }, home: homeOf(ctx), stats: { ...ST.stats, log: ST.stats.log.slice(-12) }, chat: ST.chatOpen }; },
       chat: txt => chatSend(ctx, txt), parse: txt => LV.parseCmd(txt), cmd: k => setCmd(ctx, k), openChat: () => openChat(ctx), closeChat: () => closeChat(ctx),
       setLv: lv => { const pt = petOf(ctx); if (!pt) return null; pt.xp = LV.xpForLevel(lv); pt.hp = LV.maxHpOf(lv); ctx.persist(); return lvOf(pt); },
       xp: n => gainXp(ctx, n), hurt: d => { const pt = petOf(ctx); if (pt) rockyHurt(ctx, pt, d, null); },
+      haAt: dir => { const pt = petOf(ctx), tier = pt && LV.tierOf(pt, 'ha'); if (!tier || !ST.ent) return false; const H = LV.haOf(tier); aimBeam(ctx, pt, ST.ent, DIR_ANG[dir], tier, H); ST.haCd = 0; return true; },   /* móc test: bắn Rocky-ha ngay theo hướng 0–3 */
+      haAng: deg => { const pt = petOf(ctx), tier = pt && LV.tierOf(pt, 'ha'); if (!tier || !ST.ent) return false; const H = LV.haOf(tier); aimBeam(ctx, pt, ST.ent, deg * Math.PI / 180, tier, H); ST.haCd = 0; return true; },   /* móc test: bắn theo góc (độ, 0 = phải, 90 = xuống) */
       setSkill: (id, t) => { const pt = petOf(ctx); if (pt) { pt.skills[id] = t; ctx.persist(); } return pt && LV.tierOf(pt, id); },
+      knockTest: (kx, ky, kb, kind) => { const e = ST.ent, pt = petOf(ctx); if (!e || !pt) return false; pt.koT = 0; rkKnock(ctx, pt, e, kx, ky, kb || 70, kind); return true; },   /* QA: hất Rocky không trừ máu */
       superNow: () => { const pt = petOf(ctx); return pt ? startSuper(ctx, pt) : false; }, superLeft: v => { const pt = petOf(ctx); if (pt && pt.superT > 0) pt.superT = v; },
       resetCd: () => { const pt = petOf(ctx); ST.haCd = 0; ST.punchCd = 0; if (pt) { pt.superCd = 0; pt.koT = 0; } }, koLeft: v => { const pt = petOf(ctx); if (pt) pt.koT = v; },
       place: (x, y, face) => { if (!ST.ent) return null; ST.ent.x = x; ST.ent.y = y; ST.ent.px = x; ST.ent.py = y; ST.idleT = 0; ST.ent.sit = false; if (face) ST.ent.face = face; return true; },
@@ -829,6 +1030,7 @@ export const pet = {
   update(dt, ctx) {
     const s = sv(ctx), p = ctx.S.player; if (!p || !ctx.S.map) return;
     wrapHero(ctx);
+    if (ST.booms.length) { for (const q of ST.booms) q.t += dt; ST.booms = ST.booms.filter(q => q.t < 0.6); }
     if (ST.lastP) {
       const d = Math.hypot(p.x - ST.lastP.x, p.y - ST.lastP.y);
       if (d > 0 && d < 40 && s.egg && !s.pet) {
@@ -885,7 +1087,7 @@ export const pet = {
   },
 
   key(code, ctx) {
-    if ((code === 'Enter' || code === 'NumpadEnter') && ctx.S.mode === 'play' && petOf(ctx)) return openChat(ctx);   /* plan-27: Enter mở ô chat ra lệnh cho Rocky */
+    if (code === 'Slash' && ctx.S.mode === 'play' && petOf(ctx)) return openChat(ctx);   /* 2026-10-12 anh: bỏ Enter (trùng phím tương tác) — phím / hoặc nút Rocky trên thanh công cụ mở ô lệnh */
     if (code !== 'KeyN' || ctx.S.mode !== 'play') return false;
     const s = sv(ctx); if (!s.pet || !ST.ent) return false;
     const p = ctx.S.player; if (Math.hypot(ST.ent.x - p.x, ST.ent.y - p.y) > 40) return false;
@@ -908,7 +1110,7 @@ export const pet = {
     const hop = e.hop > 0 ? Math.round(Math.abs(Math.sin(e.hop * Math.PI * 4)) * 3) : (e.moving ? Math.round(Math.abs(Math.sin(e.ft * 1.6)) * 1) : 0);
     const iw = setPx ? img.width : 12, ih = setPx ? img.height : 14;   /* logicalCanvas: width/height đã là cỡ logic */
     const lunge = e.punchT > 0 ? Math.round(Math.sin((1 - e.punchT / 0.26) * Math.PI) * 3) : 0, ldx = (e.face === 'side' ? e.dir : 0) * lunge, ldy = e.face === 'ds' ? lunge : e.face === 'dn' ? -lunge : 0;
-    const x0 = Math.round(e.x - iw / 2) + ldx, y0 = Math.round(e.y - ih) + (setPx ? 1 : 0) - hop + ldy, ghost = e.ghost > 0;
+    const x0 = Math.round(e.x - iw / 2) + ldx, y0 = Math.round(e.y - ih) + (setPx ? 1 : 0) - hop + ldy - Math.round(e.lift || 0), ghost = e.ghost > 0;   /* lift: đang nhảy qua vật (bóng vẫn nằm dưới đất) */
     out.push({
       y: e.y + (e.state === 'ride' ? 0.6 : 0), f: () => {
         const wet = e.state !== 'ride' && WATER.depth && WATER.depth(e.x, e.y);
@@ -918,7 +1120,7 @@ export const pet = {
           if (a) { g.globalAlpha = 0.6; g.drawImage(a.img, a.loopF * a.w * a.hi, 0, a.w * a.hi, a.h * a.hi, Math.round(e.x - a.w / 2) - cx, Math.round(e.y + 3 - a.h) - cy, a.w, a.h); g.globalAlpha = 1; }
         }
         waterDraw(g, e.x, e.y, Math.round(e.x) - cx, Math.round(e.y) - cy, () => {
-          const dark = ctx.isDarkPath && ctx.isDarkPath(), au = dark && ctx.ART && ctx.ART.vfx && ctx.ART.vfx.dark_aura;   /* plan-25: Rocky Bóng Tối — hào quang tím PixelLab sau lưng */
+          const darkP = !!(ctx.isDarkPath && ctx.isDarkPath()), dark = darkP || (ctx.rkEvil && ctx.rkEvil()), au = darkP && ctx.ART && ctx.ART.vfx && ctx.ART.vfx.dark_aura;   /* plan-25: Rocky Bóng Tối — hào quang tím PixelLab sau lưng; plan-30 (2026-10-13): Rocky bị trùm kéo đổi phe (rkEvil) CHỈ đổi màu, không hào quang lặp */
           if (au && au.img) { const n = au.n || 8, f = Math.floor(ctx.S.time * (au.fps || 12)) % n, hi = au.img.__hi ? 1 : 2, w = au.w * 0.5, h = au.h * 0.5; g.globalAlpha = 0.45; g.drawImage(au.img, f * au.w * hi, 0, au.w * hi, au.h * hi, Math.round(e.x - w / 2) - cx, Math.round(e.y - h + 2) - cy, w, h); g.globalAlpha = 1; }
           if (dark) g.filter = 'hue-rotate(230deg) saturate(1.3) brightness(0.75)';
           else if (e.hurt > 0) g.filter = 'brightness(1.6) saturate(0.6)';
@@ -968,14 +1170,23 @@ export const pet = {
       g.fillStyle = '#ffe9a0'; g.fillRect(x + 4 + Math.round(Math.sin(ph * 3) * 2), y - 5, 1, 1); g.fillRect(x - 5, y + 3 + Math.round(Math.cos(ph * 4) * 2), 1, 1);
     }
     const b = ST.beam, e = ST.ent;
-    if (b && b.fired && e) {   /* luồng Rocky-ha: sheet PixelLab ngang rk_ha_t1/t4/t7 (dài đúng tầm), xoay 90° cho hướng dọc (giữ nét pixel) */
-      const sh = sheetFrame(ctx, `rk_ha_t${LV.vfxTier(b.tier)}`, 0.42 - b.show);
-      const ox = e.x - cx, oy = e.y - 7 - cy;
-      g.save(); g.translate(Math.round(ox), Math.round(oy)); g.rotate([Math.PI / 2, Math.PI, 0, -Math.PI / 2][b.dir]);
-      if (sh) { const lw = Math.min(sh.w, b.range + 4); g.drawImage(sh.img, sh.f * sh.w * sh.hi, 0, lw * sh.hi, sh.h * sh.hi, 2, -Math.round(sh.h / 2), lw, sh.h); }   /* cắt (không co giãn) theo tầm — giữ nét pixel 1:1 */
-      else { g.fillStyle = 'rgba(255,240,170,.85)'; g.fillRect(4, -Math.round(b.w / 2), b.range, b.w); g.fillStyle = '#fff'; g.fillRect(4, -1, b.range, 2); }
-      g.restore();
+    if (b && !b.fired && e) {   /* tụ năng ở tay: quả cầu xoáy lớn dần + hạt hút vào (rk_hacharge, vfx_workbench) */
+      const pt0 = sv(ctx).pet, cs = bSheet(chargeKey(b.tier, !!(pt0 && pt0.superT > 0))) || bSheet('rk_hacharge'), ang = b.ang ?? DIR_ANG[b.dir], o = pt0 ? beamOrigin(ctx, pt0, e, ang) : { x: e.x, y: e.y - 8 };
+      if (cs) bDraw(g, cs, Math.min(cs.n - 1, Math.floor(b.t / Math.max(0.1, b.charge ?? LV.haOf(b.tier).charge) * cs.n)), o.x - cx, o.y - cy);
     }
+    const bs = b && b.fired ? bSheet(beamKey(b.tier)) : null;
+    if (b && b.fired && e && bs) {   /* 2026-10-13: luồng mới — lõi trắng + quầng xanh nhiều lớp, mép gợn sóng, tắt dần thu hẹp; cắt theo độ dài thật, xoay theo góc */
+      const ang = b.ang ?? DIR_ANG[b.dir]; bDraw(g, bs, bFrame(bs, b.ft || 0), e.x + (b.ox ?? 0) - cx, e.y + (b.oy ?? -7) - cy, ang, b.len ?? b.range);
+    } else if (b && b.fired && e) {   /* dự phòng: sheet cũ rk_ha_t1/t4/t7 */
+      const sh = sheetFrame(ctx, `rk_ha_t${LV.haSheet(b.tier)}`, 0.42 - b.show), bl = b.len ?? b.range;   /* sheet đủ dài cho tầm bậc này; cắt tới chỗ luồng dừng (vật chắn) */
+      const ox = e.x + (b.ox ?? 0) - cx, oy = e.y + (b.oy ?? -7) - cy, ang = b.ang ?? DIR_ANG[b.dir];
+      g.save(); const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false;
+      g.translate(Math.round(ox), Math.round(oy)); g.rotate(ang);
+      if (sh) { const lw = Math.min(sh.w, Math.max(4, Math.round(bl + 2))); g.drawImage(sh.img, sh.f * sh.w * sh.hi, 0, lw * sh.hi, sh.h * sh.hi, -2, -Math.round(sh.h / 2), lw, sh.h); }   /* cắt (không co giãn) theo độ dài thực — 1:1 */
+      else { g.fillStyle = 'rgba(255,240,170,.85)'; g.fillRect(0, -Math.round(b.w / 2), bl, b.w); g.fillStyle = '#fff'; g.fillRect(0, -1, bl, 2); }
+      g.imageSmoothingEnabled = sm; g.restore();
+    }
+    { const bm = bSheet('rk_haboom'); for (const q of ST.booms) if (bm && q.t >= 0) bDraw(g, bm, bFrame(bm, q.t), q.x - cx, q.y - cy); }
     for (const p of ST.fx) {
       const k = Math.max(0, p.t / p.life), x = Math.round(p.x) - cx, y = Math.round(p.y) - cy;
       g.globalAlpha = Math.min(1, k * 1.5);
@@ -1035,12 +1246,12 @@ export const pet = {
 function tgtShown(pt) { return !!(ST.tgt || ST.beam || pt.superT > 0); }
 
 /* ---------------------------------------------------------------- sách luyện (plan-27 mục 6 — quầy Heathcliff gọi ctx.rocky.readBook) */
-function readBook(ctx, id, n) {
+function readBook(ctx, id, n, boss = false) {   /* boss: sách bậc 8 thưởng trùm Hắc Rocky (plan-30) */
   const pt = petOf(ctx); if (!pt) return { ok: false, why: 'nopet' };
-  const c = LV.canBook(pt, id, n); if (!c.ok) return c;
+  const c = LV.canBook(pt, id, n, boss); if (!c.ok) return c;
   pt.skills[id] = n; ctx.persist();
   const t = L(ctx), S2 = LV.SKILLS[id], e = ST.ent;
-  if (e) { e.hop = 0.45; hearts(e.x, e.y, 5); vfx1(ctx, `rk_book_t${LV.vfxTier(n)}`, e.x, e.y + 2, 'level_up', true); ST.pops.push({ x: e.x, y: e.y - 22, t: 1.6, txt: `${isVi(ctx) ? S2.vi : S2.en} ${n}/7`, c: '#8fd3ff' }); }
+  if (e) { e.hop = 0.45; hearts(e.x, e.y, 5); vfx1(ctx, `rk_book_t${LV.vfxTier(n)}`, e.x, e.y + 2, 'level_up', true); ST.pops.push({ x: e.x, y: e.y - 22, t: 1.6, txt: `${isVi(ctx) ? S2.vi : S2.en} ${n}/${LV.TIER_MAX}`, c: '#8fd3ff' }); }
   ctx.sfx('rocky_happy'); ctx.toast(t.read(pt.name, isVi(ctx) ? S2.vi : S2.en, n), true);
   return { ok: true };
 }

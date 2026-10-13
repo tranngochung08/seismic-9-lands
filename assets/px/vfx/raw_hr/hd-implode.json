@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "hd-implode 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 1.png",
+   "frame": {
+    "x": 79,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 2.png",
+   "frame": {
+    "x": 158,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 3.png",
+   "frame": {
+    "x": 237,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 4.png",
+   "frame": {
+    "x": 0,
+    "y": 80,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 5.png",
+   "frame": {
+    "x": 79,
+    "y": 80,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 6.png",
+   "frame": {
+    "x": 158,
+    "y": 80,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 7.png",
+   "frame": {
+    "x": 237,
+    "y": 80,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 8.png",
+   "frame": {
+    "x": 0,
+    "y": 160,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 9.png",
+   "frame": {
+    "x": 79,
+    "y": 160,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 10.png",
+   "frame": {
+    "x": 158,
+    "y": 160,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hd-implode 11.png",
+   "frame": {
+    "x": 237,
+    "y": 160,
+    "w": 79,
+    "h": 80
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 79,
+    "h": 80
+   },
+   "sourceSize": {
+    "w": 79,
+    "h": 80
+   },
+   "pivot": {
+    "x": 0.4936708860759494,
+    "y": 0.5
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "hd-implode.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 316,
+   "h": 240
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 39,
+   "y": 40
+  },
+  "frameTags": [
+   {
+    "name": "hd-implode",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

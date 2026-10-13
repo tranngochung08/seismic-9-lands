@@ -23,9 +23,9 @@ defObj('arena_door', 24, 24, 2, 1, half(g => { px(g, 2, 8, '#3a3440', 44, 40); p
 defObj('arena_sign', 16, 16, 1, 1, half(g => { px(g, 7, 14, '#4a3324', 3, 18); px(g, 1, 4, '#2a1a10', 22, 12); px(g, 2, 5, '#a07040', 20, 10); px(g, 8, 7, '#c03030', 7, 6); }));
 
 const TS = 16;
-const BREAK = { arena_pillar: 2, arena_bag: 2, arena_weights: 2, arena_dummy: 2, arena_bench: 1, arena_crowd: 2, crate: 1 };   /* số cú mạnh để đổ nát (cú ≥ 1.2 tính 2) */
+const BREAK = { arena_pillar: 2, arena_bag: 2, arena_weights: 2, arena_dummy: 2, arena_bench: 1, arena_crowd: 2, crate: 1, crystal_p: 2, crystal_b: 2, hexpillar: 3, td_pillar: 3, td_stele: 2, gm_pillar: 3, gm_shelf: 2 };   /* plan-30 trùm 3: cột gương / kệ sách sân Gương (rift3) — ảnh hư + đổ nát PixelLab (tools/px-guong-env.py ruin) */   /* plan-30 trùm 2: cột đồng / bệ thu lôi sân Trống Đồng (rift2) — ảnh hư + đổ nát PixelLab riêng (tools/px-td-ruin.py) */   /* plan-30: cột pha lê / cột lục giác trong Khe Nứt (rift1) — ảnh hư + đổ nát PixelLab sẵn của gói m9 */   /* số cú mạnh để đổ nát (cú ≥ 1.2 tính 2) */
 const ST = { decals: [], embers: [], smokes: [], imgs: {}, t: 0, emberT: 2, walls: new Map(), wallFx: 0 };
-const isA = ctx => !!(ctx.S.zone && ctx.S.zone.id === 'arena');
+const isA = ctx => !!(ctx.S.zone && (ctx.S.zone.id === 'arena' || ctx.S.zone.rift));   /* plan-30: Khe Nứt Hắc Rocky dùng chung vách nứt / vật vỡ của Sàn Đấu Ngầm */
 const inRing = ctx => { const m = ctx.S.map, r = m && m.sparRing, p = ctx.S.player; return !!(r && p && Math.hypot(p.x - r.x, p.y - r.y) < r.r + 8); };
 const VFX = n => ART.vfx && ART.vfx[n];
 function img(src) { if (!ST.imgs[src]) { const i = new Image(); i.src = 'assets/px/' + src; ST.imgs[src] = i; } const i = ST.imgs[src]; return i.complete && i.naturalWidth ? i : null; }

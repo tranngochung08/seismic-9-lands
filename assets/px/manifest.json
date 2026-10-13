@@ -439,7 +439,12 @@
   "road6": "zones/road6.json",
   "road7": "zones/road7.json",
   "road8": "zones/road8.json",
-  "road9": "zones/road9.json"
+  "road9": "zones/road9.json",
+  "rift1": "zones/rift1.json",
+  "rift2": "zones/rift2.json",
+  "rift3": "zones/rift3.json",
+  "rift4": "zones/rift4.json",
+  "rift5": "zones/rift5.json"
  },
  "ui": {
   "items": {
@@ -579,7 +584,33 @@
    "dball5": "ui/items/dball5.png",
    "dball6": "ui/items/dball6.png",
    "dball7": "ui/items/dball7.png",
-   "pill_hp": "ui/items/pill_hp.png"
+   "pill_hp": "ui/items/pill_hp.png",
+   "claw": "ui/items/claw.png",
+   "fang": "ui/items/fang.png",
+   "core": "ui/items/core.png",
+   "stinger": "ui/items/stinger.png",
+   "ember": "ui/items/ember.png",
+   "shard": "ui/items/shard.png",
+   "scarf": "ui/items/scarf.png",
+   "rkbook_punch_2": "ui/items/rkbook_punch.png",
+   "rkbook_punch_3": "ui/items/rkbook_punch.png",
+   "rkbook_punch_4": "ui/items/rkbook_punch.png",
+   "rkbook_punch_5": "ui/items/rkbook_punch.png",
+   "rkbook_punch_6": "ui/items/rkbook_punch.png",
+   "rkbook_punch_7": "ui/items/rkbook_punch.png",
+   "rkbook_ha_2": "ui/items/rkbook_ha.png",
+   "rkbook_ha_3": "ui/items/rkbook_ha.png",
+   "rkbook_ha_4": "ui/items/rkbook_ha.png",
+   "rkbook_ha_5": "ui/items/rkbook_ha.png",
+   "rkbook_ha_6": "ui/items/rkbook_ha.png",
+   "rkbook_ha_7": "ui/items/rkbook_ha.png",
+   "rkbook_super_2": "ui/items/rkbook_super.png",
+   "rkbook_super_3": "ui/items/rkbook_super.png",
+   "rkbook_super_4": "ui/items/rkbook_super.png",
+   "rkbook_super_5": "ui/items/rkbook_super.png",
+   "rkbook_super_6": "ui/items/rkbook_super.png",
+   "rkbook_super_7": "ui/items/rkbook_super.png",
+   "rkbook8": "ui/items/rkbook8.png"
   },
   "tabs": {
    "bag": "ui/tab_bag.png",
@@ -594,7 +625,8 @@
    "play": "ui/st_play.png",
    "up": "ui/st_up.png",
    "down": "ui/st_down.png",
-   "lock": "ui/st_lock.png"
+   "lock": "ui/st_lock.png",
+   "home": "ui/items/home.png"
   },
   "frame": "ui/frame.png",
   "dialog": {
@@ -1628,6 +1660,557 @@
    "trigger": "plan-29 dragon",
    "ax": 44.0,
    "ay": 62.0
+  },
+  "wf_chad_beam": {
+   "file": "vfx/wf_chad_beam_11f_33x58.png",
+   "n": 11,
+   "w": 33,
+   "h": 58,
+   "fps": 14,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 16.0,
+   "ay": 51.5,
+   "start": 0
+  },
+  "wf_chad_poof": {
+   "file": "vfx/wf_chad_poof_11f_37x43.png",
+   "n": 11,
+   "w": 37,
+   "h": 43,
+   "fps": 12,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 19.5,
+   "ay": 31.0,
+   "start": 0
+  },
+  "wf_power_charge_b": {
+   "file": "vfx/wf_power_charge_b_7f_23x35.png",
+   "n": 7,
+   "w": 23,
+   "h": 35,
+   "fps": 12,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 11.0,
+   "ay": 30.0,
+   "start": 5
+  },
+  "wf_power_charge_f": {
+   "file": "vfx/wf_power_charge_f_12f_67x67.png",
+   "n": 12,
+   "w": 67,
+   "h": 67,
+   "fps": 12,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 33.0,
+   "ay": 41.5,
+   "start": 0
+  },
+  "wf_power_burst_b": {
+   "file": "vfx/wf_power_burst_b_8f_72x72.png",
+   "n": 8,
+   "w": 72,
+   "h": 72,
+   "fps": 14,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 35.5,
+   "ay": 58.0,
+   "start": 0
+  },
+  "wf_power_burst_f": {
+   "file": "vfx/wf_power_burst_f_12f_54x53.png",
+   "n": 12,
+   "w": 54,
+   "h": 53,
+   "fps": 14,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 25.5,
+   "ay": 44.0,
+   "start": 0
+  },
+  "wf_rocky_burst_b": {
+   "file": "vfx/wf_rocky_burst_b_10f_43x65.png",
+   "n": 10,
+   "w": 43,
+   "h": 65,
+   "fps": 14,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 21.0,
+   "ay": 56.5,
+   "start": 0
+  },
+  "wf_rocky_burst_f": {
+   "file": "vfx/wf_rocky_burst_f_12f_29x39.png",
+   "n": 12,
+   "w": 29,
+   "h": 39,
+   "fps": 14,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 14.5,
+   "ay": 23.0,
+   "start": 1
+  },
+  "wf_rocky_orb": {
+   "file": "vfx/wf_rocky_orb_8f_25x12.png",
+   "n": 8,
+   "w": 25,
+   "h": 12,
+   "fps": 12,
+   "pivot": "head",
+   "loop": true,
+   "trigger": "plan-29 dragon",
+   "ax": 18.5,
+   "ay": 5.5
+  },
+  "wf_coin_burst": {
+   "file": "vfx/wf_coin_burst_14f_55x54.png",
+   "n": 14,
+   "w": 55,
+   "h": 54,
+   "fps": 15,
+   "pivot": "center",
+   "loop": false,
+   "trigger": "plan-29 dragon",
+   "ax": 23.0,
+   "ay": 22.0
+  },
+  "wf_collect": {
+   "file": "vfx/wf_collect_9f_25x29.png",
+   "n": 9,
+   "w": 25,
+   "h": 29,
+   "fps": 15,
+   "pivot": "center",
+   "loop": false,
+   "trigger": "plan-29 dragon",
+   "ax": 12.0,
+   "ay": 18.5
+  },
+  "wf_skill_absorb_b": {
+   "file": "vfx/wf_skill_absorb_b_10f_39x55.png",
+   "n": 10,
+   "w": 39,
+   "h": 55,
+   "fps": 12,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 19.0,
+   "ay": 47.5,
+   "start": 0
+  },
+  "wf_skill_absorb_f": {
+   "file": "vfx/wf_skill_absorb_f_6f_35x34.png",
+   "n": 6,
+   "w": 35,
+   "h": 34,
+   "fps": 12,
+   "pivot": "feet",
+   "loop": false,
+   "trigger": "wish fx (dragon.js)",
+   "ax": 17.0,
+   "ay": 27.5,
+   "start": 1
+  },
+  "hr_orb": {
+   "file": "vfx/hr_orb_8f_23x11.png",
+   "n": 8,
+   "w": 23,
+   "h": 11,
+   "fps": 12,
+   "pivot": "anchor",
+   "loop": true,
+   "ax": 17.5,
+   "ay": 5.0,
+   "trigger": "Hắc Rocky (hacrocky.js)"
+  },
+  "hr_shards": {
+   "file": "vfx/hr_shards_10f_38x48.png",
+   "n": 10,
+   "w": 38,
+   "h": 48,
+   "fps": 14,
+   "pivot": "anchor",
+   "ax": 18.5,
+   "ay": 17.0,
+   "loop": false,
+   "trigger": "Hắc Rocky (hacrocky.js)"
+  },
+  "hr_clash": {
+   "file": "vfx/hr_clash_12f_34x48.png",
+   "n": 12,
+   "w": 34,
+   "h": 48,
+   "fps": 12,
+   "pivot": "anchor",
+   "ax": 16.5,
+   "ay": 23.5,
+   "loop": true,
+   "trigger": "Hắc Rocky (hacrocky.js)"
+  },
+  "hr_boom": {
+   "file": "vfx/hr_boom_11f_37x37.png",
+   "n": 11,
+   "w": 37,
+   "h": 37,
+   "fps": 16,
+   "pivot": "anchor",
+   "ax": 18.5,
+   "ay": 18.5,
+   "loop": false,
+   "trigger": "Hắc Rocky (hacrocky.js)"
+  },
+  "hr_morph": {
+   "file": "vfx/hr_morph_16f_40x60.png",
+   "n": 16,
+   "w": 40,
+   "h": 60,
+   "fps": 12,
+   "pivot": "anchor",
+   "ax": 19.5,
+   "ay": 40.0,
+   "loop": true,
+   "trigger": "Hắc Rocky (hacrocky.js)"
+  },
+  "td_bolt": {
+   "file": "vfx/td_bolt_8f_44x69.png",
+   "n": 8,
+   "w": 44,
+   "h": 69,
+   "fps": 14,
+   "pivot": "anchor",
+   "ax": 22.0,
+   "ay": 56.5,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js)"
+  },
+  "td_wave": {
+   "file": "vfx/td_wave_7f_20x15.png",
+   "n": 7,
+   "w": 20,
+   "h": 15,
+   "fps": 12,
+   "pivot": "anchor",
+   "ax": 10.0,
+   "ay": 9.0,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js)"
+  },
+  "td_spark": {
+   "file": "vfx/td_spark_7f_34x24.png",
+   "n": 7,
+   "w": 34,
+   "h": 24,
+   "fps": 16,
+   "pivot": "anchor",
+   "ax": 16.5,
+   "ay": 11.0,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js)"
+  },
+  "td_cracks": {
+   "file": "vfx/td_cracks_8f_46x19.png",
+   "n": 8,
+   "w": 46,
+   "h": 19,
+   "fps": 12,
+   "pivot": "anchor",
+   "ax": 22.5,
+   "ay": 9.0,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js)"
+  },
+  "td_sky0": {
+   "file": "vfx/td_sky0_12f_88x500.png",
+   "n": 12,
+   "w": 88,
+   "h": 500,
+   "fps": 20,
+   "pivot": "anchor",
+   "ax": 44.0,
+   "ay": 475.0,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js) — sét từ trời (dày/chói, 2026-10-13)"
+  },
+  "td_sky1": {
+   "file": "vfx/td_sky1_12f_88x500.png",
+   "n": 12,
+   "w": 88,
+   "h": 500,
+   "fps": 20,
+   "pivot": "anchor",
+   "ax": 44.0,
+   "ay": 475.0,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js) — sét từ trời (dày/chói, 2026-10-13)"
+  },
+  "td_sky2": {
+   "file": "vfx/td_sky2_12f_88x500.png",
+   "n": 12,
+   "w": 88,
+   "h": 500,
+   "fps": 20,
+   "pivot": "anchor",
+   "ax": 44.0,
+   "ay": 475.0,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js) — sét từ trời (dày/chói, 2026-10-13)"
+  },
+  "td_sky3": {
+   "file": "vfx/td_sky3_12f_88x500.png",
+   "n": 12,
+   "w": 88,
+   "h": 500,
+   "fps": 20,
+   "pivot": "anchor",
+   "ax": 44.0,
+   "ay": 475.0,
+   "loop": false,
+   "trigger": "Trống Đồng (trongdong.js) — sét từ trời (dày/chói, 2026-10-13)"
+  },
+  "td_scorch": {
+   "file": "vfx/td_scorch_1f_32x18.png",
+   "n": 1,
+   "w": 32,
+   "h": 18,
+   "fps": 1,
+   "pivot": "anchor",
+   "ax": 16.0,
+   "ay": 9.0,
+   "loop": false,
+   "trigger": "Trống Đồng — vết sém sét (drawGround)"
+  },
+  "td_poof": {
+   "file": "vfx/td_poof_11f_27x30.png",
+   "n": 11,
+   "w": 27,
+   "h": 30,
+   "fps": 12,
+   "pivot": "anchor",
+   "ax": 13.5,
+   "ay": 15.0,
+   "loop": false,
+   "trigger": "Trống Đồng — Lạc Hầu tan thành chim Lạc"
+  },
+  "rk_ha2_l": {
+   "file": "vfx/rk_ha2_l_12f_177x28.png",
+   "n": 12,
+   "w": 177,
+   "h": 28,
+   "fps": 18,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 8,
+   "ay": 14
+  },
+  "rk_ha2_m": {
+   "file": "vfx/rk_ha2_m_12f_177x22.png",
+   "n": 12,
+   "w": 177,
+   "h": 22,
+   "fps": 18,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 8,
+   "ay": 11
+  },
+  "rk_ha2_s": {
+   "file": "vfx/rk_ha2_s_12f_177x16.png",
+   "n": 12,
+   "w": 177,
+   "h": 16,
+   "fps": 18,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 8,
+   "ay": 8
+  },
+  "rk_hacharge": {
+   "file": "vfx/rk_hacharge_12f_36x36.png",
+   "n": 12,
+   "w": 36,
+   "h": 36,
+   "fps": 15,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 18,
+   "ay": 18
+  },
+  "rk_haboom": {
+   "file": "vfx/rk_haboom_9f_36x32.png",
+   "n": 9,
+   "w": 36,
+   "h": 32,
+   "fps": 16,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 18,
+   "ay": 16
+  },
+  "hr_clashorb_l": {
+   "file": "vfx/hr_clashorb_l_8f_40x40.png",
+   "n": 8,
+   "w": 40,
+   "h": 40,
+   "fps": 16,
+   "pivot": "left-middle",
+   "loop": true,
+   "ax": 20,
+   "ay": 20
+  },
+  "hr_clashorb_s": {
+   "file": "vfx/hr_clashorb_s_8f_40x40.png",
+   "n": 8,
+   "w": 40,
+   "h": 40,
+   "fps": 16,
+   "pivot": "left-middle",
+   "loop": true,
+   "ax": 20,
+   "ay": 20
+  },
+  "hr_clashcrack": {
+   "file": "vfx/hr_clashcrack_8f_38x22.png",
+   "n": 8,
+   "w": 38,
+   "h": 22,
+   "fps": 12,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 18,
+   "ay": 8
+  },
+  "gm_shatter": {
+   "file": "vfx/gm_shatter_10f_33x39.png",
+   "n": 10,
+   "w": 33,
+   "h": 39,
+   "fps": 14,
+   "pivot": "anchor",
+   "loop": false,
+   "ax": 15.5,
+   "ay": 14.5,
+   "trigger": "Gương Địa Chấn (guong.js)"
+  },
+  "gm_arrive": {
+   "file": "vfx/gm_arrive_10f_30x45.png",
+   "n": 10,
+   "w": 30,
+   "h": 45,
+   "fps": 12,
+   "pivot": "anchor",
+   "loop": false,
+   "ax": 14.5,
+   "ay": 38.0,
+   "trigger": "Gương Địa Chấn (guong.js)"
+  },
+  "gm_prism": {
+   "file": "vfx/gm_prism_7f_22x21.png",
+   "n": 7,
+   "w": 22,
+   "h": 21,
+   "fps": 11,
+   "pivot": "anchor",
+   "loop": false,
+   "ax": 4.5,
+   "ay": 10.5,
+   "trigger": "Gương Địa Chấn (guong.js)"
+  },
+  "gm_glint": {
+   "file": "vfx/gm_glint_5f_19x18.png",
+   "n": 5,
+   "w": 19,
+   "h": 18,
+   "fps": 16,
+   "pivot": "anchor",
+   "loop": false,
+   "ax": 9.0,
+   "ay": 9.0,
+   "trigger": "Gương Địa Chấn (guong.js)"
+  },
+  "rk_hacharge_s": {
+   "file": "vfx/rk_hacharge_s_12f_36x36.png",
+   "n": 12,
+   "w": 36,
+   "h": 36,
+   "fps": 15,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 18,
+   "ay": 18
+  },
+  "rk_hacharge_m": {
+   "file": "vfx/rk_hacharge_m_12f_36x36.png",
+   "n": 12,
+   "w": 36,
+   "h": 36,
+   "fps": 15,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 18,
+   "ay": 18
+  },
+  "rk_hacharge_x": {
+   "file": "vfx/rk_hacharge_x_12f_50x50.png",
+   "n": 12,
+   "w": 50,
+   "h": 50,
+   "fps": 15,
+   "pivot": "left-middle",
+   "loop": false,
+   "ax": 25,
+   "ay": 25
+  },
+  "gm_ripple": {
+   "file": "vfx/gm_ripple_12f_46x20.png",
+   "n": 12,
+   "w": 46,
+   "h": 20,
+   "fps": 12,
+   "pivot": "anchor",
+   "loop": false,
+   "ax": 23,
+   "ay": 10,
+   "trigger": "Gương Địa Chấn (guong.js) — gợn mặt gương khi tan vào / bước ra"
+  },
+  "hd_implode": {
+   "file": "vfx/hd_implode_11f_40x40.png",
+   "n": 11,
+   "w": 40,
+   "h": 40,
+   "fps": 16,
+   "pivot": "anchor",
+   "ax": 19.5,
+   "ay": 20.0,
+   "loop": false,
+   "trigger": "Hố Đen (hoden.js)"
+  },
+  "hd_nova": {
+   "file": "vfx/hd_nova_9f_41x41.png",
+   "n": 9,
+   "w": 41,
+   "h": 41,
+   "fps": 16,
+   "pivot": "anchor",
+   "ax": 20.5,
+   "ay": 20.5,
+   "loop": false,
+   "trigger": "Hố Đen (hoden.js)"
   }
  },
  "cursors": {
@@ -2390,7 +2973,7 @@
   },
   "zones/village/obj/berrybush_picked_t8.png": {
    "dmg": "obj/ruin/road_bush_v_dmg.png",
-   "ruin": "obj/ruin/road_bush_v_ruin.png"
+   "ruin": "obj/ruin/road_bushflat_v_ruin.png"
   },
   "zones/m1/obj/palm_L7.png": {
    "dmg": "obj/ruin/road_palm_m1_dmg.png",
@@ -2406,7 +2989,7 @@
   },
   "zones/m2/obj/berrybush_picked_t8.png": {
    "dmg": "obj/ruin/road_bush_m2_dmg.png",
-   "ruin": "obj/ruin/road_bush_m2_ruin.png"
+   "ruin": "obj/ruin/road_bushflat_m2_ruin.png"
   },
   "zones/m3/obj/tree_L7.png": {
    "dmg": "obj/ruin/road_tree_m3_dmg.png",
@@ -2414,7 +2997,7 @@
   },
   "zones/m3/obj/berrybush_picked_t8.png": {
    "dmg": "obj/ruin/road_bush_m3_dmg.png",
-   "ruin": "obj/ruin/road_bush_m3_ruin.png"
+   "ruin": "obj/ruin/road_bushflat_m3_ruin.png"
   },
   "zones/m3/obj/deadtree_L7.png": {
    "dmg": "obj/ruin/road_deadtree_m3_dmg.png",
@@ -2450,7 +3033,7 @@
   },
   "zones/m6/obj/berrybush_picked_t8.png": {
    "dmg": "obj/ruin/road_bush_m6_dmg.png",
-   "ruin": "obj/ruin/road_bush_m6_ruin.png"
+   "ruin": "obj/ruin/road_bushflat_m6_ruin.png"
   },
   "zones/road/obj/cliff_basalt_t8.png": {
    "dmg": "obj/ruin/road_cliff_basalt_dmg.png",
@@ -2475,6 +3058,138 @@
   "zones/m8/obj/rock_s7.png": {
    "dmg": "obj/ruin/road_rock_m8_dmg.png",
    "ruin": "obj/ruin/road_rock_m8_ruin.png"
+  },
+  "zones/village/obj/well_t8.png": {
+   "dmg": "obj/ruin/road_rk_well_v_dmg.png",
+   "ruin": "obj/ruin/road_rk_well_v_ruin.png"
+  },
+  "zones/village/obj/craft_bench_t8.png": {
+   "dmg": "obj/ruin/road_rk_bench_v_dmg.png",
+   "ruin": "obj/ruin/road_rk_bench_v_ruin.png"
+  },
+  "zones/village/obj/eco_coop_t8.png": {
+   "dmg": "obj/ruin/road_rk_coop_v_dmg.png",
+   "ruin": "obj/ruin/road_rk_coop_v_ruin.png"
+  },
+  "gen_td/crate_s23.png": {
+   "dmg": "obj/ruin/road_rk_crate_g_dmg.png",
+   "ruin": "obj/ruin/road_rk_crate_g_ruin.png"
+  },
+  "zones/sea/obj/lantern_t8.png": {
+   "dmg": "obj/ruin/road_rk_lantern_sea_dmg.png",
+   "ruin": "obj/ruin/road_rk_lantern_sea_ruin.png"
+  },
+  "gen_td/sign_s23.png": {
+   "dmg": "obj/ruin/road_rk_sign_g_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_g_ruin.png"
+  },
+  "zones/m1/obj/boat_t8.png": {
+   "dmg": "obj/ruin/road_rk_boat_m1_dmg.png",
+   "ruin": "obj/ruin/road_rk_boat_m1_ruin.png"
+  },
+  "zones/m2/obj/crate_s7.png": {
+   "dmg": "obj/ruin/road_rk_crate_m2_dmg.png",
+   "ruin": "obj/ruin/road_rk_crate_m2_ruin.png"
+  },
+  "zones/m2/obj/well_t8.png": {
+   "dmg": "obj/ruin/road_rk_well_m2_dmg.png",
+   "ruin": "obj/ruin/road_rk_well_m2_ruin.png"
+  },
+  "zones/m2/obj/sign_s23.png": {
+   "dmg": "obj/ruin/road_rk_sign_m2_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m2_ruin.png"
+  },
+  "zones/village/obj/craft_loom_s7.png": {
+   "dmg": "obj/ruin/road_rk_loom_v_dmg.png",
+   "ruin": "obj/ruin/road_rk_loom_v_ruin.png"
+  },
+  "zones/m3/obj/sign_s7.png": {
+   "dmg": "obj/ruin/road_rk_sign_m3_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m3_ruin.png"
+  },
+  "zones/m4/obj/cart_t8.png": {
+   "dmg": "obj/ruin/road_rk_cart_m4_dmg.png",
+   "ruin": "obj/ruin/road_rk_cart_m4_ruin.png"
+  },
+  "zones/village/obj/craft_furnace_s7.png": {
+   "dmg": "obj/ruin/road_rk_furnace_v_dmg.png",
+   "ruin": "obj/ruin/road_rk_furnace_v_ruin.png"
+  },
+  "zones/village/obj/craft_forge_s7.png": {
+   "dmg": "obj/ruin/road_rk_forge_v_dmg.png",
+   "ruin": "obj/ruin/road_rk_forge_v_ruin.png"
+  },
+  "zones/village/obj/craft_altar_s23.png": {
+   "dmg": "obj/ruin/road_rk_altar_v_dmg.png",
+   "ruin": "obj/ruin/road_rk_altar_v_ruin.png"
+  },
+  "zones/m6/obj/tower_f23.png": {
+   "dmg": "obj/ruin/road_rk_tower_m6_dmg.png",
+   "ruin": "obj/ruin/road_rk_tower_m6_ruin.png"
+  },
+  "zones/m4/obj/sign_s23.png": {
+   "dmg": "obj/ruin/road_rk_sign_m4_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m4_ruin.png"
+  },
+  "zones/m5/obj/sign_s23.png": {
+   "dmg": "obj/ruin/road_rk_sign_m5_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m5_ruin.png"
+  },
+  "zones/m6/obj/sign_s23.png": {
+   "dmg": "obj/ruin/road_rk_sign_m6_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m6_ruin.png"
+  },
+  "zones/m7/obj/sign_s23.png": {
+   "dmg": "obj/ruin/road_rk_sign_m7_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m7_ruin.png"
+  },
+  "zones/m8/obj/sign_s23.png": {
+   "dmg": "obj/ruin/road_rk_sign_m8_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m8_ruin.png"
+  },
+  "zones/m9/obj/sign_s31.png": {
+   "dmg": "obj/ruin/road_rk_sign_m9_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_m9_ruin.png"
+  },
+  "zones/sea/obj/sign_t8.png": {
+   "dmg": "obj/ruin/road_rk_sign_sea_dmg.png",
+   "ruin": "obj/ruin/road_rk_sign_sea_ruin.png"
+  },
+  "zones/rift2/obj/td_pillar_t8.png": {
+   "dmg": "obj/ruin/rift2_td_pillar_dmg.png",
+   "ruin": "obj/ruin/rift2_td_pillar_ruin.png"
+  },
+  "zones/rift2/obj/td_stele_t8.png": {
+   "dmg": "obj/ruin/rift2_td_stele_dmg.png",
+   "ruin": "obj/ruin/rift2_td_stele_ruin.png"
+  },
+  "zones/rift3/obj/gm_pillar_t8.png": {
+   "dmg": "obj/ruin/rift3_gm_pillar_dmg.png",
+   "ruin": "obj/ruin/rift3_gm_pillar_ruin.png"
+  },
+  "zones/rift3/obj/gm_shelf_t8.png": {
+   "dmg": "obj/ruin/rift3_gm_shelf_dmg.png",
+   "ruin": "obj/ruin/rift3_gm_shelf_ruin.png"
+  },
+  "zones/rift3/obj/gm_bigmirror_t8.png": {
+   "dmg": "obj/ruin/rift3_gm_bigmirror_dmg.png",
+   "ruin": "obj/ruin/rift3_gm_bigmirror_ruin.png"
+  },
+  "zones/rift4/obj/hd_block_t8.png": {
+   "dmg": "obj/ruin/rift4_hd_block_dmg.png",
+   "ruin": "obj/ruin/rift4_hd_block_ruin.png"
+  },
+  "zones/rift5/obj/dh_pillar_t8.png": {
+   "dmg": "obj/ruin/rift5_dh_pillar_dmg.png",
+   "ruin": "obj/ruin/rift5_dh_pillar_ruin.png"
+  },
+  "zones/rift5/obj/dh_pipe_t8.png": {
+   "dmg": "obj/ruin/rift5_dh_pipe_dmg.png",
+   "ruin": "obj/ruin/rift5_dh_pipe_ruin.png"
+  },
+  "zones/rift5/obj/dh_forge_t8.png": {
+   "dmg": "obj/ruin/rift5_dh_forge_dmg.png",
+   "ruin": "obj/ruin/rift5_dh_forge_ruin.png"
   }
  },
  "dragon": {
@@ -2482,7 +3197,8 @@
    "dragon_spirit": "dragon/dragon_spirit.png",
    "skill_icon": "dragon/skill_icon.png",
    "dragon_idle": "dragon/dragon_idle.png",
-   "dragon_roar8": "dragon/dragon_roar8.png"
+   "dragon_roar8": "dragon/dragon_roar8.png",
+   "wish_chest": "dragon/wish_chest.png"
   },
   "frames": {
    "dragon_idle": {

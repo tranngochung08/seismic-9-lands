@@ -1,0 +1,30 @@
+{
+ "80": {
+  "file": "boss/hoden/hole2/h80_anim.png",
+  "n": 5,
+  "w": 80,
+  "h": 80,
+  "pingpong": true
+ },
+ "112": {
+  "file": "boss/hoden/hole2/h112_anim.png",
+  "n": 5,
+  "w": 112,
+  "h": 112,
+  "pingpong": true
+ },
+ "136": {
+  "file": "boss/hoden/hole2/h136_anim.png",
+  "n": 9,
+  "w": 136,
+  "h": 136,
+  "pingpong": false
+ },
+ "160": {
+  "file": "boss/hoden/hole2/h160_anim.png",
+  "n": 5,
+  "w": 160,
+  "h": 160,
+  "pingpong": true
+ }
+}

@@ -58,7 +58,7 @@ const STR = {
 };
 const L = ctx => STR[ctx.lang() === 'vi' ? 'vi' : 'en'];
 const sv = ctx => { const s = ctx.S.save; s.sys ||= {}; const d = (s.sys.dragon ||= {}); d.got ||= {}; d.chad ||= {}; d.treasure ||= 0; d.summons ||= 0; return d; };
-const ST = { sc: null, dive: null, fx: [], rip: null, base: null, proxies: new Map(), el: null, btn: null, btnSig: '', ctx: null, sel: 0 };
+const ST = { wfDrawn: [], pulseAt: 0, sc: null, dive: null, fx: [], rip: null, base: null, proxies: new Map(), el: null, btn: null, btnSig: '', ctx: null, sel: 0 };
 const HI = () => ART.hi || 2;
 
 /* ---------------- ảnh ---------------- */
@@ -70,6 +70,7 @@ function loadImg(key, file) {
 function loadAll() {
   const d = ART.man && ART.man.dragon && ART.man.dragon.images; if (d) for (const [k, f] of Object.entries(d)) loadImg(k, f);
   for (let n = 1; n <= 7; n++) loadImg('ball' + n, `ui/items/dball${n}.png`);
+  for (const k of WF_ITEMS) loadImg('it_' + k, `ui/items/${k}.png`);   /* icon đồ (PixelLab) bay vào túi ở điều ước Kho báu */
 }
 const vfxS = name => ART.vfx && ART.vfx[name];
 /* vẽ 1 khung VFX (manifest.vfx, ảnh 2× logic) — (x, y) = điểm neo của sheet (ax, ay; mặc định đáy-giữa) theo toạ độ màn hình logic */
@@ -103,7 +104,7 @@ function wishState(ctx, id) {   /* → { off: bool, note: string } */
   const d = sv(ctx), t = L(ctx);
   if (id === 'chad') return d.got.chad ? { off: true, note: t.got } : { off: false };
   if (id === 'power') { const h = ctx.S.save.hero || {}; return d.got.power || ((h.lv || 1) >= MAX_LV && ctx.tool.tier('sword') >= 6) ? { off: true, note: t.got } : { off: false }; }
-  if (id === 'rocky') { const pt = rockyPet(ctx); if (!pt) return { off: true, note: t.noRocky }; const lv = LV.levelFromXp(pt.xp || 0).lv; return d.got.rocky || (lv >= LV.LV_CAP && LV.SKILL_IDS.every(k => LV.tierOf(pt, k) >= LV.TIER_MAX)) ? { off: true, note: t.got } : { off: false }; }
+  if (id === 'rocky') { const pt = rockyPet(ctx); if (!pt) return { off: true, note: t.noRocky }; const lv = LV.levelFromXp(pt.xp || 0).lv; return d.got.rocky || (lv >= LV.LV_CAP && LV.SKILL_IDS.every(k => LV.tierOf(pt, k) >= LV.TIER_SHOP)) ? { off: true, note: t.got } : { off: false }; }
   if (id === 'skill') return d.got.skill ? { off: true, note: t.got } : { off: false };
   return { off: false, note: t.again };
 }
@@ -115,7 +116,7 @@ function grant(ctx, id) {
     ctx.tool.set('sword', Math.max(6, ctx.tool.tier('sword'))); if (ctx.hotbarSync) ctx.hotbarSync();
     if (ctx.vfx) ctx.vfx('level_up', p.x, p.y + 2, 0, true);
   } else if (id === 'rocky') {
-    const pt = rockyPet(ctx); if (pt) { pt.xp = LV.xpForLevel(LV.LV_CAP); pt.hp = LV.maxHpOf(LV.LV_CAP); pt.skills = { ...(pt.skills || {}), punch: LV.TIER_MAX, ha: LV.TIER_MAX, super: LV.TIER_MAX }; pt.koT = 0; }
+    const pt = rockyPet(ctx); if (pt) { pt.xp = LV.xpForLevel(LV.LV_CAP); pt.hp = LV.maxHpOf(LV.LV_CAP); pt.skills = { ...(pt.skills || {}), punch: Math.max(LV.TIER_SHOP, pt.skills.punch || 0), ha: Math.max(LV.TIER_SHOP, pt.skills.ha || 0), super: Math.max(LV.TIER_SHOP, pt.skills.super || 0) }; pt.koT = 0; }
     d.got.rocky = true;
   } else if (id === 'treasure') {
     ctx.bag.add('stone', 9999); ctx.bag.add('pill_hp', 20); ctx.bag.add('pill_l', 10);
@@ -143,7 +144,7 @@ function commit(ctx, id) {   /* ban điều ước (đã xác nhận) hoặc id 
   const sc = ST.sc; if (!sc || sc.ph !== 'ask') return false;
   if (id !== null && (!WISHES.includes(id) || wishState(ctx, id).off)) return false;
   hideConfirm(); sc.confirm = null; hidePanel(); sc.choice = id; setPh(sc, id === null ? 'leave' : 'roar');
-  if (id !== null) { if (ctx.sfx) ctx.sfx('roar_big'); ctx.quake(0.6); ctx.S.flash = 0.45; }
+  if (id !== null) { if (ctx.sfx) ctx.sfx('roar_big'); ctx.quake(0.6); ctx.S.flash = 0.45; wishBegin(ctx, sc, id); }
   return true;
 }
 /* anh 2026-10-12: chọn thẻ → hỏi XÁC NHẬN ("Chắc chắn" / "Chọn lại") rồi mới ban; "Chọn lại" quay về bảng thẻ, không mất gì */
@@ -157,7 +158,7 @@ function confirmYes(ctx) { const sc = ST.sc; if (!sc || !sc.confirm) return fals
 function confirmBack(ctx) { const sc = ST.sc; if (!sc || !sc.confirm) return false; sc.confirm = null; hideConfirm(); return true; }
 function selectCard(ctx, i) { if (i < 0 || wishState(ctx, WISHES[i]).off) return false; ST.sel = i; moveSel(ctx, 0); return true; }
 function scatterBalls(ctx) {   /* 7 viên rời túi; thứ tự rơi trở lại từ 7 sao */
-  for (const id of BALL_IDS) { const n = ctx.bag.count(id); if (n > 0) ctx.bag.remove(id, n); }
+  for (const id of BALL_IDS) if (ctx.bag.count(id) > 0) ctx.bag.remove(id, 1);   /* 2026-10-13 anh: có nhiều bộ → mỗi lần gọi chỉ tiêu 1 bộ (7 viên), không xoá hết */
   const r = ((ctx.S.save.sys ||= {}).road ||= {}); r.balls = [];
   if (ctx.hotbarSync) ctx.hotbarSync(); ctx.persist();
 }
@@ -165,14 +166,15 @@ function endScene(ctx) {
   restorePlayer(ctx); const sc = ST.sc; ST.sc = null; ctx.S.camDY = 0; ctx.S.hideLabels = false; ctx.S.camFree = false; if (typeof document !== 'undefined') document.body.classList.remove('dr-scene'); hidePanel();
   if (ctx.S.mode === 'dragon') ctx.setMode('play');
   if (sc && sc.choice) ctx.toast(L(ctx).granted[sc.choice], true);
+  if (sc && sc.choice === 'skill') ST.pulseAt = Date.now();   /* nút chiêu vừa học: nảy sáng 1 lần (~1,5 s), không lặp */
   ctx.persist();
 }
 const portrait = ctx => ctx.VH > ctx.VW * 1.1;   /* điện thoại dọc: thẻ ở TRÊN (dưới lời rồng), rồng + người chơi ngay dưới */
 function targetPsy(ctx) {
   if (portrait(ctx) && ST.el && !ST.el.hidden && typeof document !== 'undefined') {
-    const cv = document.getElementById('c'), r = cv && cv.getBoundingClientRect(), b = ST.el.querySelector('.dr-desc') || ST.el;
-    if (r && r.height) { const toL = y => (y - r.top) * ctx.VH / r.height, yb = toL(b.getBoundingClientRect().bottom), lt = ST.el.querySelector('.dr-later'), ye = lt ? toL(lt.getBoundingClientRect().top) : ctx.VH;
-      const mid = (yb + ye) / 2; return Math.round(Math.max(yb + 6 + 72, Math.min(mid - 45 + 72, ye - 34)));   /* khối rồng + người chơi nằm giữa khoảng trống giữa dải mô tả và nút 'Để lần sau' (cân màn dọc) */ }
+    const cv = document.getElementById('c'), r = cv && cv.getBoundingClientRect(), b = ST.say && !ST.say.hidden ? ST.say : null;
+    if (r && r.height) { const toL = y => (y - r.top) * ctx.VH / r.height, yb = b ? toL(b.getBoundingClientRect().bottom) : 30;
+      return Math.round(Math.min(yb + 8 + 72, ctx.VH * 0.45)); }   /* 2026-10-13 anh: điện thoại dọc — lời rồng trên cùng → RỒNG ngay dưới → hàng lựa chọn bên dưới rồng */
   }
   return Math.round(ctx.VH * (portrait(ctx) ? 0.5 : 0.6));
 }
@@ -188,8 +190,10 @@ function updScene(dt, ctx) {
   else if (sc.ph === 'rise') { if (sc.pt >= 1.9) { setPh(sc, 'coil'); if (ctx.sfx) ctx.sfx('roar_big'); ctx.quake(0.5); } }
   else if (sc.ph === 'coil') { if (sc.pt >= 0.9) { setPh(sc, 'ask'); ST.sel = WISHES.findIndex(id => !wishState(ctx, id).off); showPanel(ctx); } }
   else if (sc.ph === 'roar') {
-    if (!sc.granted && sc.pt >= 0.5) { sc.granted = true; grant(ctx, sc.choice); sc.fx.push({ name: 'dr_grant', t: 0, onP: true }); if (ctx.sfx) ctx.sfx('level_up'); }
-    if (sc.pt >= 1.7) { setPh(sc, 'vanish'); scatterBalls(ctx); sc.balls.forEach((b, i) => { b.fly = { a: b.a + 0.3, v: 30 + i * 4 }; }); if (ctx.sfx) ctx.sfx('whoosh_big'); ctx.toast(L(ctx).bye); }
+    const W = WFX[sc.choice] || { dur: 1.7, grant: 0.5 };   /* mỗi điều ước có cảnh riêng (wishUpd / wishDraw), dài W.dur giây */
+    if (!sc.granted && sc.pt >= W.grant) { sc.granted = true; grant(ctx, sc.choice); if (!WFX[sc.choice]) sc.fx.push({ name: 'dr_grant', t: 0, onP: true }); if (ctx.sfx) ctx.sfx('level_up'); }
+    wishUpd(dt, ctx, sc);
+    if (sc.pt >= W.dur) { setPh(sc, 'vanish'); scatterBalls(ctx); sc.balls.forEach((b, i) => { b.fly = { a: b.a + 0.3, v: 30 + i * 4 }; }); if (ctx.sfx) ctx.sfx('whoosh_big'); ctx.toast(L(ctx).bye); }
   } else if (sc.ph === 'leave') { if (sc.pt >= 1.4) setPh(sc, 'clear'); }
   else if (sc.ph === 'vanish') { for (const b of sc.balls) if (b.fly) { b.fly.v += dt * 420; b.fly.d = (b.fly.d || 0) + b.fly.v * dt; } if (sc.pt >= 1.6) setPh(sc, 'clear'); }
   else if (sc.ph === 'clear') { sc.dark = lerp(0.68, 0, sc.pt / 1.3); sc.rain = lerp(1, 0, sc.pt / 0.8); sc.cam = lerp(1, 0, sc.pt / 1.3); if (sc.pt >= 1.4) { endScene(ctx); return; } }
@@ -199,7 +203,7 @@ function updScene(dt, ctx) {
   S.hideLabels = true; S.camDY = 0; S.camFree = false;
   /* 'Sân khấu' (anh chốt bố cục 2026-10-12): người chơi bay lên vị trí cố định trên MÀN (dưới mặt rồng, trên/dưới hàng thẻ) bất kể đang đứng sát mép bản đồ;
      vị trí thật không đổi — hết cảnh thì hạ xuống đúng chỗ cũ. Không cuộn máy quay qua mép bản đồ → không còn khoảng trống tối. */
-  { const want = targetPsy(ctx); sc.stY = sc.stY == null ? want : sc.stY + (want - sc.stY) * Math.min(1, dt * 5); }
+  if (sc.ph !== 'roar' && sc.ph !== 'vanish') { const want = targetPsy(ctx); sc.stY = sc.stY == null ? want : sc.stY + (want - sc.stY) * Math.min(1, dt * 5); }   /* đang ban ước: giữ yên sân khấu (bảng thẻ vừa ẩn không kéo người chơi trôi) */
 }
 /* vị trí rồng (màn hình) */
 function dragonPose(ctx, sc, psx, psy) {   /* rồng 128×84 logic (PixelLab, vẽ 1:1); mặt (~64, 30) ngay trên đầu người chơi — bố cục anh chốt 2026-10-12 */
@@ -214,7 +218,7 @@ function dragonPose(ctx, sc, psx, psy) {   /* rồng 128×84 logic (PixelLab, v�
 }
 const DFR = name => (ART.man && ART.man.dragon && ART.man.dragon.frames && ART.man.dragon.frames[name]) || { n: 9, w: 128, h: 84, fps: 8 };
 function drawDragon(g, ctx, sc, pose, horizon) {
-  const useRoar = pose.roar >= 0 && IMG.dragon_roar8, img = useRoar ? IMG.dragon_roar8 : IMG.dragon_idle; if (!img) return;
+  const useRoar = pose.roar >= 0 && pose.roar < 1.1 && IMG.dragon_roar8, img = useRoar ? IMG.dragon_roar8 : IMG.dragon_idle; if (!img) return;
   const fr = DFR(useRoar ? 'dragon_roar8' : 'dragon_idle'), f = useRoar ? Math.min(fr.n - 1, Math.floor(pose.roar * fr.fps)) : Math.floor(sc.t * fr.fps) % fr.n;   /* chờ điều ước: clip thở/uốn/râu bay PixelLab lặp; gầm: clip gầm 1 lần */
   g.save(); g.globalAlpha = Math.max(0, Math.min(1, pose.a));
   if (pose.clip) { g.beginPath(); g.rect(0, 0, ctx.VW, horizon); g.clip(); }
@@ -238,6 +242,7 @@ function drawScene(g, ctx, cx, cy) {
   const vp = { x: psx + cx, y: psy + cy };   /* người chơi 'ảo' ở sân khấu (toạ độ thế giới) cho vòng ngọc */
   ST.pfrac = psy / VH;   /* vị trí người chơi trên màn (bản đồ chạm mép → máy quay không cuộn được) */
   if (ST.el && !ST.el.hidden) ST.el.classList.toggle('top', portrait(ctx));
+  if (ST.el && !ST.el.hidden && portrait(ctx)) { const cvE = document.getElementById('c'), rr = cvE && cvE.getBoundingClientRect(); if (rr && rr.height) ST.el.style.top = Math.round(rr.top + (psy + 22) * rr.height / VH) + 'px'; } else if (ST.el) ST.el.style.top = '';   /* bảng lựa chọn bám ngay dưới chân rồng + vòng ngọc */
   { const mb = ctx.S.map.h * 16 - cy, mt = -cy;   /* ngoài mép bản đồ: sương bão tối mờ dần (không để khoảng đen trống) */
     if (mb < VH) { const gr = g.createLinearGradient(0, mb - 28, 0, mb + 40); gr.addColorStop(0, 'rgba(10,14,34,0)'); gr.addColorStop(1, 'rgba(10,14,34,.96)'); g.fillStyle = gr; g.fillRect(0, mb - 28, VW, VH - mb + 28); }
     if (mt > 0) { const gr = g.createLinearGradient(0, mt + 28, 0, mt - 40); gr.addColorStop(0, 'rgba(10,14,34,0)'); gr.addColorStop(1, 'rgba(10,14,34,.96)'); g.fillStyle = gr; g.fillRect(0, 0, VW, mt + 28); } }
@@ -246,10 +251,11 @@ function drawScene(g, ctx, cx, cy) {
     const fx = psx, fy = psy - 34, R = Math.max(VW, VH) * 0.62, gr = g.createRadialGradient(fx, fy, R * 0.32, fx, fy, R);
     gr.addColorStop(0, 'rgba(4,6,18,0)'); gr.addColorStop(1, `rgba(4,6,18,${Math.min(0.72, (sc.dark - 0.3) * 2).toFixed(2)})`); g.fillStyle = gr; g.fillRect(0, 0, VW, VH);
   }
-  const pose = dragonPose(ctx, sc, psx, psy), calm = pose && (sc.ph === 'ask' || sc.ph === 'coil' || sc.ph === 'roar');
+  const pose = dragonPose(ctx, sc, psx, psy); ST.pose = pose; const calm = pose && (sc.ph === 'ask' || sc.ph === 'coil' || sc.ph === 'roar');
   if (pose && calm) drawVfx(g, 'dr_aura', vfxFrame('dr_aura', sc.t), pose.x + 64, pose.y + 30, 0.35 + 0.15 * Math.sin(sc.t * 2.4));   /* hào quang vàng mờ sau đầu rồng — CHỈ trong cảnh này */
   if (pose) drawDragon(g, ctx, sc, pose, psy - 6);
   if (pose && calm) drawVfx(g, 'dr_motes', vfxFrame('dr_motes', sc.t), pose.x + 64, pose.y + 42, 0.9);   /* đốm sáng lơ lửng quanh rồng */
+  ST.wfDrawn = []; if (sc.ph === 'roar') wishDraw(g, ctx, sc, 'back', psx, psy, cx, cy);   /* hiệu ứng riêng điều ước: lớp sau lưng người chơi */
   const drawBall = b => {
     const q = ballPos(sc, b, vp), x = Math.round(q.x - cx), y = Math.round(q.y - cy), img = IMG['ball' + b.n];
     if (b.fly) { const s = vfxS('dr_trail'); if (s) { g.save(); g.translate(x, y); g.rotate(b.fly.a); drawVfx(g, 'dr_trail', vfxFrame('dr_trail', sc.t), 0, 0); g.restore(); } }
@@ -261,7 +267,154 @@ function drawScene(g, ctx, cx, cy) {
   for (const b of sc.balls) if (behind(b)) drawBall(b);
   { const own = p.custom; p.custom = ST.savedCustom || null; g.save(); g.translate(psx - p.x, psy - p.y); try { p.draw(g); } finally { p.custom = own; } g.restore(); }   /* người chơi (ở sân khấu) luôn đứng trước rồng */
   for (const b of sc.balls) if (!behind(b)) drawBall(b);
+  if (sc.ph === 'roar') wishDraw(g, ctx, sc, 'front', psx, psy, cx, cy);   /* lớp trước người chơi */
   for (const f of sc.fx) if (f.onP) drawVfx(g, 'dr_grant', vfxFrame('dr_grant', f.t), psx, psy + 2);
+}
+
+/* ---------------- hiệu ứng riêng từng điều ước (2026-10-12 tối) ----------------
+   Chạy trong pha 'roar' (sau khi xác nhận), dài WFX[id].dur giây, CHỈ lúc ban ước rồi tắt — không để lại gì lặp.
+   Ảnh: VFX vfx_workbench (manifest.vfx wf_*, sheet 2× logic, vẽ 1:1, có 'start' = khung bắt đầu của lớp), rương Kho báu PixelLab (dragon/wish_chest.png),
+   icon đồ (ui/items), bộ hình Rocky (gói village creatures), bóng rồng + icon chiêu sẵn có. Chữ (cấp, +đá…) vẽ ở drawUI (canvas phân giải đầy đủ).
+   · chad: cột sáng vàng giáng xuống → khói tím phủ kín người (đổi ngoại hình dưới khói) → sao vàng bung ra, hiện thân mới.
+   · power: đốm lửa đỏ-vàng hút vào ngực + lửa bốc quanh chân, chữ cấp nhảy dần → nổ cột sáng, vòng xung kích, "Cấp 50 · TỐI ĐA".
+   · rocky: tia sáng hồng từ miệng rồng bay xuống Rocky → cột sáng + nứt đất → Rocky biến hình (clip gồng Siêu Cấp) thành dạng lớn nhất, "Rocky Cấp 50".
+   · treasure: rương rơi từ trời xuống cạnh người → vàng bung, đồ (đá, viên hồi máu, viên thở, dụng cụ) bay lả tả rồi hút vào người (túi).
+   · skill: bóng rồng lượn 1 vòng quanh người → lao vào người, cột sáng ngọc → icon chiêu bay ra góc nút chiêu. */
+const WFX = { chad: { dur: 3.0, grant: 0.95 }, power: { dur: 2.8, grant: 1.15 }, rocky: { dur: 3.1, grant: 0.8 }, treasure: { dur: 3.0, grant: 0.5 }, skill: { dur: 3.0, grant: 1.6 } };
+const WF_ITEMS = ['stone', 'pill_hp', 'pill_l', 'axe', 'pickaxe', 'knife'];
+const WF_SFX = { chad: [[0.15, 'whoosh_big'], [0.7, 'pop'], [1.05, 'win']], power: [[0.1, 'rumble'], [1.15, 'slam']], rocky: [[0.15, 'whoosh_big'], [0.7, 'slam'], [0.85, 'rocky_happy']],
+  treasure: [[0.33, 'slam'], [0.42, 'coin'], [1.6, 'stone_gain']], skill: [[0.05, 'whoosh_big'], [0.75, 'roar'], [1.55, 'slam'], [2.6, 'pickup']] };
+const easeO = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
+const clamp01 = k => Math.max(0, Math.min(1, k));
+function wishBegin(ctx, sc, id) {
+  const h = ctx.S.save.hero || {}, pt = rockyPet(ctx);
+  sc.wf = { id, lv0: h.lv || 1, rk0: pt ? LV.levelFromXp(pt.xp || 0).lv : 0, said: {} };
+  if (id === 'treasure') {   /* đồ bay ra: đá nhiều nhất, viên hồi máu, viên thở + dụng cụ sẽ được nâng bậc */
+    const tools = Object.keys(TOOL_MAX).filter(k => WF_ITEMS.includes(k) && ctx.tool && ctx.tool.tier(k) > 0 && ctx.tool.tier(k) < TOOL_MAX[k]);
+    const kinds = ['stone', 'pill_hp', 'stone', 'pill_l', 'stone', 'pill_hp', ...tools, 'stone', 'pill_l', 'stone', 'pill_hp', 'stone'].slice(0, 14);
+    sc.wf.items = kinds.map((k, i) => { const r1 = (Math.sin(i * 12.9898) * 43758.5453) % 1, r2 = (Math.sin(i * 78.233) * 12543.21) % 1;
+      return { k, t0: 0.45 + i * 0.07, vx: (Math.abs(r1) - 0.5) * 110, vy: -95 - Math.abs(r2) * 45, fly: 0.55 + Math.abs(r2) * 0.2 }; });
+    sc.wf.tools = tools;
+  }
+}
+function wishUpd(dt, ctx, sc) {
+  const w = sc.wf; if (!w) return; const t = sc.pt;
+  for (const [at, name] of WF_SFX[w.id] || []) if (t >= at && !w.said[name + at]) { w.said[name + at] = true; if (ctx.sfx) ctx.sfx(name); }
+  const once = (k, at, f) => { if (t >= at && !w.said[k]) { w.said[k] = true; f(); } };
+  if (w.id === 'power') once('q', 1.15, () => { ctx.quake(0.5); ctx.S.flash = 0.35; });
+  if (w.id === 'rocky') once('q', 0.7, () => { ctx.quake(0.35); ctx.S.flash = 0.25; });
+  if (w.id === 'treasure') { once('q', 0.33, () => ctx.quake(0.25)); if (w.items) for (const it of w.items) { const ta = it.t0 + it.fly + 0.32; if (t >= ta && !it.got) { it.got = true; if (ctx.sfx && !(w.lastPop > t - 0.12)) { w.lastPop = t; ctx.sfx('pickup'); } } } }
+  if (w.id === 'skill') once('q', 1.55, () => { ctx.quake(0.4); ctx.S.flash = 0.3; });
+  if (w.id === 'chad') once('q', 0.95, () => { ctx.S.flash = 0.2; });
+}
+/* 1 khung VFX theo thời gian t (giây, tính từ lúc lớp bắt đầu), tôn trọng 'start' (khung đầu của lớp trong cả hiệu ứng); hết khung → không vẽ */
+function wfx(g, name, t, x, y, alpha = 1) {
+  const s = vfxS(name); if (!s || t < 0) return false;
+  const f = Math.floor(t * (s.fps || 12)) - (s.start || 0); if (f < 0 || f >= s.n) return false;
+  drawVfx(g, name, f, x, y, alpha); ST.wfDrawn.push(name); return true;
+}
+const creSet = name => { const vp = ART.packs && ART.packs.village, c = vp && vp.creatures && vp.creatures[name]; return c && c.length ? c : null; };
+function rockyStage(ctx, psx, psy, cx, cy) {   /* Rocky đứng cạnh người chơi ở sân khấu; Rocky thật được đặt đúng chỗ đó (khỏi lộ 2 con) nếu ô đó đi được */
+  const side = psx + 30 < ctx.VW - 20 ? 30 : -30, R = { x: psx + side, y: psy + 2 }, wx = R.x + cx, wy = R.y + cy;
+  const pet = typeof window !== 'undefined' && window.__pet, live = ctx.rocky && ctx.rocky.pos && ctx.rocky.pos();
+  if (pet && pet.place && live && !(ctx.isSolid && ctx.isSolid(ctx.S.map, Math.floor(wx / 16), Math.floor(wy / 16)))) pet.place(wx, wy, 'ds');
+  return R;
+}
+function btnTarget(ctx) {   /* toạ độ logic của nút chiêu (góc phải dưới) — nút chưa hiện trong cảnh nên tính theo CSS #btn-dragon */
+  if (typeof document === 'undefined') return { x: ctx.VW - 30, y: ctx.VH - 40 };
+  const cv = document.getElementById('c'), r = cv && cv.getBoundingClientRect(); if (!r || !r.width) return { x: ctx.VW - 30, y: ctx.VH - 40 };
+  const coarse = typeof matchMedia !== 'undefined' && matchMedia('(pointer:coarse)').matches, sz = coarse ? 54 : 46, rt = coarse ? 104 : 70, bt = coarse ? 132 : 130;
+  const sx = innerWidth - rt - sz / 2, sy = innerHeight - bt - sz / 2;
+  return { x: Math.round((sx - r.left) * ctx.VW / r.width), y: Math.round((sy - r.top) * ctx.VH / r.height) };
+}
+function wishDraw(g, ctx, sc, layer, psx, psy, cx, cy) {
+  const w = sc.wf; if (!w) return; const t = sc.pt, W = WFX[w.id] || { dur: 2 }, back = layer === 'back';
+  const fadeEnd = clamp01((W.dur - t) / 0.35);
+  if (w.id === 'chad') {
+    if (back) wfx(g, 'wf_chad_beam', t - 0.15, psx, psy);
+    else wfx(g, 'wf_chad_poof', t - 0.7, psx, psy);
+  } else if (w.id === 'power') {
+    if (back) { wfx(g, 'wf_power_charge_b', t - 0.1, psx, psy); wfx(g, 'wf_power_burst_b', t - 1.15, psx, psy); }
+    else { wfx(g, 'wf_power_charge_f', t - 0.1, psx, psy); wfx(g, 'wf_power_burst_f', t - 1.15, psx, psy); }
+  } else if (w.id === 'rocky') {
+    const R = w.R && layer === 'front' ? w.R : rockyStage(ctx, psx, psy, cx, cy); w.R = R;
+    if (back) { wfx(g, 'wf_rocky_burst_b', t - 0.7, R.x, R.y); return; }
+    const pre = w.rk0 >= 5 ? 'rockybig' : 'rockypet';
+    let set = null, i = 0;
+    if (t < 0.8) { set = creSet(pre + '_ds') || creSet(pre); i = Math.floor(sc.t * 5); }
+    else if (t < 1.8) { set = creSet('rockysup_transform_s'); i = set ? Math.min(set.length - 1, Math.floor((t - 0.8) / 1.0 * set.length)) : 0; }
+    else { set = creSet('rockysup_ds') || creSet('rockysup'); i = Math.floor(sc.t * 5); }
+    if (set) { const img = set[((i % set.length) + set.length) % set.length][0]; g.save(); g.globalAlpha = fadeEnd;
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(R.x, R.y, Math.max(5, img.width * 0.32), 2, 0, 0, 7); g.fill();
+      g.drawImage(img, Math.round(R.x - img.width / 2), Math.round(R.y - img.height + 1)); g.restore(); ST.wfDrawn.push('rocky:' + (t < 0.8 ? pre : t < 1.8 ? 'transform' : 'sup')); }   /* bộ hình Rocky PixelLab (logical canvas) vẽ 1:1 */
+    if (t >= 0.15 && t < 0.72 && ST.pose) {   /* tia sáng hồng từ miệng rồng bay xuống Rocky */
+      const k = easeO((t - 0.15) / 0.55), mx = ST.pose.x + 64, my = ST.pose.y + 40, tx = R.x, ty = R.y - 8;
+      const x = mx + (tx - mx) * k, y = my + (ty - my) * k - Math.sin(k * Math.PI) * 14, k2 = easeO((t - 0.13) / 0.55), px0 = mx + (tx - mx) * k2, py0 = my + (ty - my) * k2 - Math.sin(k2 * Math.PI) * 14;
+      const s = vfxS('wf_rocky_orb'); if (s) { g.save(); g.translate(Math.round(x), Math.round(y)); g.rotate(Math.atan2(y - py0, x - px0)); drawVfx(g, 'wf_rocky_orb', vfxFrame('wf_rocky_orb', sc.t), 0, 0); g.restore(); ST.wfDrawn.push('wf_rocky_orb'); }
+    }
+    wfx(g, 'wf_rocky_burst_f', t - 0.7, R.x, R.y);
+  } else if (w.id === 'treasure') {
+    if (back) return;
+    const side = psx + 30 < ctx.VW - 16 ? 28 : -28, Cx = psx + side, Cy = psy + 3; w.C = { x: Cx, y: Cy };
+    const ch = IMG.wish_chest;
+    if (ch) { const k = clamp01(t / 0.33), drop = t < 0.33 ? -80 * (1 - k * k) : (t < 0.5 ? -Math.round(Math.sin((t - 0.33) / 0.17 * Math.PI) * 3) : 0);
+      g.save(); g.globalAlpha = fadeEnd; g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Cx, Cy, 9 * Math.max(0.4, k), 2, 0, 0, 7); g.fill();
+      g.drawImage(ch, 0, 0, 24, 24, Math.round(Cx - 12), Math.round(Cy - 22 + drop), 24, 24); g.restore(); ST.wfDrawn.push('wish_chest'); }   /* rương PixelLab 48 px = 24 logic, vẽ 1:1 */
+    wfx(g, 'wf_coin_burst', t - 0.4, Cx, Cy - 12);
+    for (const it of w.items || []) {
+      const lt = t - it.t0; if (lt < 0) continue; const img = IMG['it_' + it.k]; if (!img) continue;
+      let x, y; const x0 = Cx, y0 = Cy - 16;
+      if (lt < it.fly) { x = x0 + it.vx * lt; y = y0 + it.vy * lt + 0.5 * 300 * lt * lt; }
+      else { const fx = x0 + it.vx * it.fly, fy = y0 + it.vy * it.fly + 0.5 * 300 * it.fly * it.fly, k = easeO((lt - it.fly) / 0.32); if (k >= 1) { wfx(g, 'wf_collect', lt - it.fly - 0.32, psx, psy - 12); continue; } x = fx + (psx - fx) * k; y = fy + (psy - 12 - fy) * k; }
+      g.drawImage(img, 0, 0, 16, 16, Math.round(x - 8), Math.round(y - 8), 16, 16);   /* icon PixelLab 32 px = 16 logic, vẽ 1:1 */
+      ST.wfDrawn.push('item');
+    }
+  } else if (w.id === 'skill') {
+    const sp = IMG.dragon_spirit, ox = psx, oy = psy - 16, RX = 64, RY = 24, T1 = 1.4;
+    const head = tt => { if (tt <= T1) { const a = Math.PI * 0.85 + (tt / T1) * Math.PI * 2.2; return { x: ox + Math.cos(a) * RX, y: oy + Math.sin(a) * RY, back: Math.sin(a) < 0, dx: -Math.sin(a) }; }
+      const a = Math.PI * 0.85 + Math.PI * 2.2, sx = ox + Math.cos(a) * RX, sy = oy + Math.sin(a) * RY, k = easeO((tt - T1) / 0.22); return { x: sx + (psx - sx) * k, y: sy + (psy - 10 - sy) * k, back: false, dx: psx - sx, dive: k }; };
+    if (sp && t < T1 + 0.25) {
+      for (const [dq, al] of [[-0.12, 0.22], [-0.06, 0.45], [0, 1]]) {
+        const tt = t + dq; if (tt < 0) continue; const h = head(tt); if (h.back !== back) continue;
+        const W2 = sp.width / HI(), H2 = sp.height / HI(), flip = h.dx < 0, a = al * (h.dive != null ? 1 - h.dive * 0.9 : Math.min(1, t / 0.25));
+        g.save(); g.globalAlpha = Math.max(0, a); g.filter = 'brightness(1.35) saturate(1.25)'; g.translate(Math.round(h.x), Math.round(h.y)); if (flip) g.scale(-1, 1);   /* sáng hơn rồng lớn phía sau cho dễ nhận */
+        g.drawImage(sp, 0, 0, W2, H2, -64, -40, W2, H2); g.restore(); ST.wfDrawn.push('spirit');   /* bóng rồng PixelLab 80×48 logic, vẽ 1:1 (chỉ lật ngang khi bay sang trái) */
+      }
+    }
+    if (back) { wfx(g, 'wf_skill_absorb_b', t - 1.5, psx, psy); return; }
+    wfx(g, 'wf_skill_absorb_f', t - 1.5, psx, psy);
+    const T = btnTarget(ctx); w.T = T;
+    if (t >= 1.9 && IMG.skill_icon) { const k = easeO((t - 1.9) / 0.7), sx = psx, sy = psy - 22, mx = (sx + T.x) / 2, my = Math.min(sy, T.y) - 40;
+      if (k < 1) { const x = (1 - k) * (1 - k) * sx + 2 * (1 - k) * k * mx + k * k * T.x, y = (1 - k) * (1 - k) * sy + 2 * (1 - k) * k * my + k * k * T.y;
+        g.drawImage(IMG.skill_icon, 0, 0, 16, 16, Math.round(x - 8), Math.round(y - 8), 16, 16); ST.wfDrawn.push('skill_icon'); }   /* icon chiêu PixelLab 32 px = 16 logic */
+      else wfx(g, 'wf_collect', t - 2.6, T.x, T.y + 6);
+    }
+  }
+}
+/* chữ trong cảnh ban ước (canvas phân giải đầy đủ, nét pixel VT323) */
+function wishUI(ug, ctx, scale) {
+  const sc = ST.sc, w = sc && sc.wf; if (!w || sc.ph !== 'roar' || !ST.stage) return; const t = sc.pt, W = WFX[w.id] || { dur: 2 }, vi = ctx.lang() === 'vi', st = ST.stage;
+  const fade = clamp01((W.dur - t) / 0.35), fs = Math.max(16, Math.round(scale * 5.5)), L1 = 11, L2 = 9;
+  const say = (txt, x, y, col, size, a) => { if (a <= 0) return; ug.save(); ug.globalAlpha = a * fade; ug.font = `bold ${size}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+    ug.lineWidth = Math.max(2, Math.round(size / 6)); ug.strokeStyle = '#1a0e08'; ug.strokeText(txt, Math.round(x * scale), Math.round(y * scale)); ug.fillStyle = col; ug.fillText(txt, Math.round(x * scale), Math.round(y * scale)); ug.restore(); };
+  const headY = st.y + 22;   /* chữ dưới chân (trên đầu là mặt rồng) */
+  if (w.id === 'power' && t >= 0.1) {
+    const k = clamp01((t - 0.1) / 1.05), lv = t < 1.15 ? Math.round(w.lv0 + (MAX_LV - w.lv0) * k * k) : MAX_LV, pop = t >= 1.15 ? Math.max(0, 1 - (t - 1.15) / 0.25) : 0;
+    say((vi ? 'Cấp ' : 'Lv ') + lv, st.x, headY, t >= 1.15 ? '#ffe27a' : '#ffb36a', Math.round(fs * (1.1 + pop * 0.5)), 1);
+    if (t >= 1.3) say(vi ? 'TỐI ĐA!' : 'MAX!', st.x, headY + L1, '#ffb347', Math.round(fs * 1.1), clamp01((t - 1.3) / 0.2));
+  } else if (w.id === 'rocky' && w.R && t >= 0.95) {
+    say((vi ? 'Rocky cấp ' : 'Rocky Lv ') + LV.LV_CAP, w.R.x, w.R.y + 20, '#ffb0d8', fs, clamp01((t - 0.95) / 0.2));
+    if (t >= 1.4) say(vi ? 'Chiêu bậc 7' : 'Skills tier 7', w.R.x, w.R.y + 20 + L2, '#fff0fa', Math.round(fs * 0.85), clamp01((t - 1.4) / 0.2));
+  } else if (w.id === 'treasure' && t >= 1.0) {
+    const lines = [[vi ? '+9.999 đá Seismic' : '+9,999 Seismic stones', '#ffe27a'], [vi ? '+20 viên hồi máu · +10 viên thở' : '+20 healing · +10 breath pills', '#ffd0d0']];
+    if (w.tools && w.tools.length) lines.push([vi ? 'Dụng cụ lên bậc cao nhất' : 'Tools at best tier', '#bff5d0']);
+    lines.forEach(([s, c], i) => say(s, st.x, headY + i * L2, c, Math.round(fs * 0.9), clamp01((t - 1.0 - i * 0.3) / 0.2)));
+  } else if (w.id === 'skill' && t >= 1.7) {
+    say(vi ? 'Chiêu mới: Rồng Thần Giáng' : 'New skill: Divine Dragon Dive', st.x, headY, '#bfffe0', fs, clamp01((t - 1.7) / 0.2));
+    if (t >= 2.0) say(vi ? '(phím G / nút rồng)' : '(key G / dragon button)', st.x, headY + L2, '#fff6d8', Math.round(fs * 0.8), clamp01((t - 2.0) / 0.2));
+  } else if (w.id === 'chad' && t >= 1.15) {
+    say(vi ? 'Đẹp trai nhất vũ trụ!' : 'Most handsome in the universe!', st.x, headY, '#ffe27a', fs, clamp01((t - 1.15) / 0.2));
+  }
 }
 
 /* ---------------- bảng điều ước (DOM, hợp điện thoại) ---------------- */
@@ -283,7 +436,7 @@ function css() {
     #dr-wish{position:fixed;left:50%;bottom:calc(var(--k) * 3px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;width:max-content;max-width:calc(100vw - 8px);
       display:flex;flex-direction:column;align-items:center;gap:calc(var(--k) * 2px);color:#fff6d8;font-family:VT323,monospace}
     #dr-wish.top{bottom:auto;top:calc(var(--k) * 34px + 18px + env(safe-area-inset-top,0px));left:0;right:0;margin:0 auto;transform:none}
-    #dr-wish.top .dr-later{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px))} #dr-wish.top .dr-later span{width:94px;height:28px;font-size:17px}
+    #dr-wish.top .dr-later{position:static;margin:4px auto 0} #dr-wish.top .dr-later span{width:94px;height:28px;font-size:17px}
     #dr-wish .dr-cards{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--k) * 5px)}
     #dr-wish .dr-w{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--k) * 1px);background:none;border:0;padding:calc(var(--k) * 5px) 0 0;cursor:pointer;color:#fff6d8;font-family:VT323,monospace;min-width:44px}
     #dr-wish .dr-w .fr{position:relative;width:calc(var(--k) * 64px);height:calc(var(--k) * 46px);background:url(${UIP}card.png) 0 0/100% 100% no-repeat;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;transition:transform .12s}
@@ -314,6 +467,8 @@ function css() {
     #dr-confirm .cf-b span{display:flex;align-items:center;justify-content:center;width:max(94px, calc(var(--k) * 47px));height:max(28px, calc(var(--k) * 14px));background:url(${UIP}button.png) 0 0/100% 100% no-repeat;image-rendering:pixelated;color:#e8dcb0;font:calc(9px + var(--k) * 4px) VT323,monospace;text-shadow:1px 1px 0 #10241a}
     #dr-confirm .cf-b.yes span{color:#ffe27a;animation:drGlow 1.1s ease-in-out infinite} #dr-confirm .cf-b:hover span{filter:brightness(1.2)}
     #btn-dragon{position:fixed;right:70px;bottom:130px;z-index:7;width:46px;height:46px;padding:0;border:2px solid #c9a23a;border-radius:50%;background:rgba(20,26,22,.8);cursor:pointer;display:flex;align-items:center;justify-content:center}
+    @keyframes drPulse{0%,100%{transform:scale(1);box-shadow:none}40%{transform:scale(1.22);box-shadow:0 0 14px 4px #ffd45e}}
+    #btn-dragon.pulse{animation:drPulse .55s ease-out 3}
     #btn-dragon[hidden]{display:none} #btn-dragon img{width:32px;height:32px;image-rendering:pixelated} #btn-dragon.cd img{filter:grayscale(1) brightness(.6)}
     #btn-dragon b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff6c8;font:bold 16px VT323,monospace;text-shadow:1px 1px 0 #000}
     #btn-dragon i{position:absolute;right:-4px;bottom:-6px;font:12px VT323,monospace;font-style:normal;color:#ffd45e;text-shadow:1px 1px 0 #000}
@@ -459,7 +614,8 @@ function syncBtn(ctx) {
     b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ST.ctx) useSkill(ST.ctx); });
   }
   const left = skillLeft(ctx), sig = show + '|' + left; if (sig === ST.btnSig) return; ST.btnSig = sig;
-  ST.btn.hidden = !show; ST.btn.classList.toggle('cd', left > 0); ST.btn.querySelector('b').textContent = left > 0 ? String(left) : '';
+  ST.btn.hidden = !show; ST.btn.classList.toggle('cd', left > 0);
+  if (show && ST.pulseAt && Date.now() - ST.pulseAt < 300) { ST.btn.classList.remove('pulse'); void ST.btn.offsetWidth; ST.btn.classList.add('pulse'); ST.pulseAt = 0; setTimeout(() => ST.btn && ST.btn.classList.remove('pulse'), 1700); }   /* vừa học chiêu: nảy sáng 3 nhịp rồi thôi */ ST.btn.querySelector('b').textContent = left > 0 ? String(left) : '';
 }
 
 /* ---------------- lệnh chat ---------------- */
@@ -479,7 +635,7 @@ export const dragon = {
       state: () => { const d = sv(ctx), sc = ST.sc, p = ctx.S.player; return { ph: sc ? sc.ph : null, t: sc ? +sc.t.toFixed(2) : 0, mode: ctx.S.mode, balls: ballCount(ctx), roadBalls: (((ctx.S.save.sys || {}).road || {}).balls || []).slice(), got: { ...d.got }, treasure: d.treasure, summons: d.summons,
         chad: { ...d.chad }, sheet: p && p.sheet ? p.sheet.__drProxy || 'normal' : null, act: p && p.action ? p.action.name : null, rip: ST.rip ? { t: +ST.rip.t.toFixed(2), timed: ST.rip.timed } : null,
         skillLeft: skillLeft(ctx), dive: ST.dive ? { t: +ST.dive.t.toFixed(2), n: ST.dive.hits.length } : null, panel: !!(ST.el && !ST.el.hidden), stage: ST.stage || null, confirm: (sc && sc.confirm) || null, confirmShown: !!(ST.cf && !ST.cf.hidden), sel: ST.sel, btn: !!(ST.btn && !ST.btn.hidden), camDY: ctx.S.camDY || 0,
-        wishes: WISHES.map(id => ({ id, ...wishState(ctx, id) })), imgs: Object.keys(IMG).filter(k => IMG[k]) }; },
+        wishes: WISHES.map(id => ({ id, ...wishState(ctx, id) })), wf: sc && sc.wf && sc.ph === 'roar' ? { id: sc.wf.id, t: +sc.pt.toFixed(2), drawn: [...new Set(ST.wfDrawn)], R: sc.wf.R || null, C: sc.wf.C || null, T: sc.wf.T || null, stage: ST.stage, VW: ctx.VW, VH: ctx.VH } : null, pulse: !!(ST.btn && ST.btn.classList.contains('pulse')), imgs: Object.keys(IMG).filter(k => IMG[k]) }; },
       give7: () => { for (const id of BALL_IDS) if (!ctx.bag.count(id)) ctx.bag.add(id, 1); const r = ((ctx.S.save.sys ||= {}).road ||= {}); r.balls = [7, 6, 5, 4, 3, 2, 1]; ctx.persist(); return ballCount(ctx); },
       summon: () => summon(ctx), why: () => blockReason(ctx), choose: id => choose(ctx, id), confirm: () => confirmYes(ctx), back: () => confirmBack(ctx), select: i => selectCard(ctx, i), ff: sec => { if (ST.sc) { ST.sc.t += sec; ST.sc.pt += sec; } },
       wear: on => wear(ctx, on, true), polo: sec => { sv(ctx).chad.poloT = sec; }, skill: () => useSkill(ctx), resetCd: () => { sv(ctx).skillAt = 0; },
@@ -521,4 +677,5 @@ export const dragon = {
     for (const f of ST.fx) drawVfx(g, f.name, vfxFrame(f.name, f.t), Math.round(f.x - cx), Math.round(f.y - cy));
     if (ST.dive) drawDive(g, ctx);
   },
+  drawUI(ug, ctx, cx, cy, scale) { if (ST.sc) wishUI(ug, ctx, scale); },
 };

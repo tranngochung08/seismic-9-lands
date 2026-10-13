@@ -1,0 +1,53 @@
+{
+ "frames": [
+  {
+   "filename": "td-scorch 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 36
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 36
+   },
+   "sourceSize": {
+    "w": 64,
+    "h": 36
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "td-scorch.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 64,
+   "h": 36
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 32,
+   "y": 18
+  },
+  "frameTags": [
+   {
+    "name": "td-scorch",
+    "from": 0,
+    "to": 0,
+    "direction": "forward"
+   }
+  ]
+ }
+}

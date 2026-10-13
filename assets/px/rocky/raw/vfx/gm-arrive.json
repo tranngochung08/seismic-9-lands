@@ -1,0 +1,287 @@
+{
+ "frames": [
+  {
+   "filename": "gm-arrive 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 1.png",
+   "frame": {
+    "x": 59,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 2.png",
+   "frame": {
+    "x": 118,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 3.png",
+   "frame": {
+    "x": 177,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 4.png",
+   "frame": {
+    "x": 0,
+    "y": 90,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 5.png",
+   "frame": {
+    "x": 59,
+    "y": 90,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 6.png",
+   "frame": {
+    "x": 118,
+    "y": 90,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 7.png",
+   "frame": {
+    "x": 177,
+    "y": 90,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 8.png",
+   "frame": {
+    "x": 0,
+    "y": 180,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  },
+  {
+   "filename": "gm-arrive 9.png",
+   "frame": {
+    "x": 59,
+    "y": 180,
+    "w": 59,
+    "h": 90
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 59,
+    "h": 90
+   },
+   "sourceSize": {
+    "w": 59,
+    "h": 90
+   },
+   "pivot": {
+    "x": 0.4915254237288136,
+    "y": 0.8444444444444444
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "gm-arrive.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 236,
+   "h": 270
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 29,
+   "y": 76
+  },
+  "frameTags": [
+   {
+    "name": "gm-arrive",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   }
+  ]
+ }
+}

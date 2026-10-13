@@ -112,7 +112,7 @@ function infos(ctx) {
     const a = o.plot === undefined ? null : arr[o.plot]; if (!a) continue;
     a.total++;
     if (o.piece === 'board') a.board = o;
-    if (o.ruined) { a.ruined.push(o); const c = costOf(o.piece, plots[o.plot].tier || 0); a.need.wood += c.wood; a.need.stone += c.stone; }
+    if (o.ruined && !o.rkRuin) { a.ruined.push(o); const c = costOf(o.piece, plots[o.plot].tier || 0); a.need.wood += c.wood; a.need.stone += c.stone; }
   }
   INFO = arr; infoT = ctx.S.time;
   return arr;

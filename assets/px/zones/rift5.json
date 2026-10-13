@@ -1,0 +1,64 @@
+{
+ "inherit": "arena",
+ "classes": {
+  "__base": "ironfloor",
+  "ROCK": "ironfloor",
+  "GRAVEL": "brassgear",
+  "DARK": "cavewall",
+  "STONE": "brassgear",
+  "COBBLE": "stone",
+  "DIRT": "gravel",
+  "GRASS": "rock",
+  "GRASS2": "rock",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled",
+  "SAND": "sand",
+  "SAND2": "sand",
+  "CHASM": "dark"
+ },
+ "wang": [
+  {
+   "dir": "zones/rift5/wang/a",
+   "upper": "brassgear"
+  },
+  {
+   "dir": "zones/arena/wang/w3",
+   "upper": "cavewall"
+  },
+  {
+   "dir": "zones/m4/wang/b",
+   "upper": "dark"
+  }
+ ],
+ "decor": {
+  "ROCK": [
+   {
+    "file": "zones/rift5/decor/dh_cog_s5.png",
+    "p": 0.03,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "dh_pillar": {
+   "file": "zones/rift5/obj/dh_pillar_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dh_pipe": {
+   "file": "zones/rift5/obj/dh_pipe_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dh_forge": {
+   "file": "zones/rift5/obj/dh_forge_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rift_crack": {
+   "file": "zones/arena/obj/rift_crack_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ }
+}

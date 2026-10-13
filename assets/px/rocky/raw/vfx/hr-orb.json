@@ -1,0 +1,235 @@
+{
+ "frames": [
+  {
+   "filename": "hr-orb 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-orb 1.png",
+   "frame": {
+    "x": 46,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-orb 2.png",
+   "frame": {
+    "x": 92,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-orb 3.png",
+   "frame": {
+    "x": 0,
+    "y": 21,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-orb 4.png",
+   "frame": {
+    "x": 46,
+    "y": 21,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-orb 5.png",
+   "frame": {
+    "x": 92,
+    "y": 21,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-orb 6.png",
+   "frame": {
+    "x": 0,
+    "y": 42,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-orb 7.png",
+   "frame": {
+    "x": 46,
+    "y": 42,
+    "w": 46,
+    "h": 21
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 46,
+    "h": 21
+   },
+   "sourceSize": {
+    "w": 46,
+    "h": 21
+   },
+   "pivot": {
+    "x": 0.7608695652173914,
+    "y": 0.47619047619047616
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "hr-orb.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 138,
+   "h": 63
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 35,
+   "y": 10
+  },
+  "frameTags": [
+   {
+    "name": "hr-orb",
+    "from": 0,
+    "to": 7,
+    "direction": "forward"
+   }
+  ]
+ }
+}

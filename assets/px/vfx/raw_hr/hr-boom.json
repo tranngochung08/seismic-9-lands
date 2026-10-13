@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "hr-boom 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 1.png",
+   "frame": {
+    "x": 74,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 2.png",
+   "frame": {
+    "x": 148,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 3.png",
+   "frame": {
+    "x": 222,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 4.png",
+   "frame": {
+    "x": 0,
+    "y": 74,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 5.png",
+   "frame": {
+    "x": 74,
+    "y": 74,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 6.png",
+   "frame": {
+    "x": 148,
+    "y": 74,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 7.png",
+   "frame": {
+    "x": 222,
+    "y": 74,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 8.png",
+   "frame": {
+    "x": 0,
+    "y": 148,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 9.png",
+   "frame": {
+    "x": 74,
+    "y": 148,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 10.png",
+   "frame": {
+    "x": 148,
+    "y": 148,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "hr-boom 11.png",
+   "frame": {
+    "x": 222,
+    "y": 148,
+    "w": 74,
+    "h": 74
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 74
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 74
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "hr-boom.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 296,
+   "h": 222
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 37,
+   "y": 37
+  },
+  "frameTags": [
+   {
+    "name": "hr-boom",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

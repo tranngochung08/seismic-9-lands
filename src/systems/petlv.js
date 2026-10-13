@@ -19,25 +19,36 @@ export const SKILLS = {
   super: { unlock: 40, icon: '⚡', vi: 'Siêu Cấp Rocky', en: 'Super Rocky' },
 };
 export const SKILL_IDS = ['punch', 'ha', 'super'];
-export const TIER_MAX = 7;
+export const TIER_MAX = 8;   /* plan-30: bậc 8 chỉ mở bằng sách thưởng trùm (Hắc Rocky) */
+export const TIER_SHOP = 7;   /* quầy Heathcliff / điều ước Rồng Thần tối đa bậc 7 */
 export const vfxTier = t => (t >= 7 ? 7 : t >= 4 ? 4 : 1);   /* VFX 3 kiểu: bậc 1–3 · 4–6 · 7 */
 
 export const punchOf = t => ({ mul: 1 + 0.15 * (t - 1), cd: +(0.95 - 0.07 * (t - 1)).toFixed(2), combo: t >= 4 ? 3 : 2, launch: t >= 4, shock: t >= 7 });
-/* tầm luồng sáng theo nhóm VFX: bậc 1–3 = 96 px · 4–6 = 128 px · 7 = 160 px (khớp chiều dài ảnh VFX PixelLab, vẽ 1:1) */
-export const haRange = t => (t >= 7 ? 160 : t >= 4 ? 128 : 96);
-export const haOf = t => ({ mul: 2.2 + 0.45 * (t - 1), range: haRange(t), w: 6 + (t - 1), cd: +(10 - 0.9 * (t - 1)).toFixed(1), charge: 0.8 });
+/* 2026-10-12 tối anh: Rocky-ha tăng theo TỪNG bậc 1→7 (trước chỉ 3 nhóm 96/128/160 px) + PHÁ VẬT CHẮN trên đường luồng (blast.js).
+   bậc                      1     2     3     4     5     6     7
+   HA_RANGE  tầm (px)       64    80    96   112   128   144   160   ← cắt 1:1 từ sheet VFX PixelLab haSheet: t1 dài 100 (bậc 1–3) · t4 132 (bậc 4–5) · t7 165 (bậc 6–7)
+   HA_PIERCE số vật chắn     1     1     2     2     3     4     6   ← luồng tác động tối đa bấy nhiêu vật; vật chưa sập thì luồng DỪNG ở đó
+   HA_POW    sức phá / vật   1     1     2     2     3     4     5   ← máu vật (blast.js hpOf): bụi / biển / thùng 2 · đá 2 · cây 3 · vật 2×2 8 · nhà 3×2 12
+   HA_KB     hất quái px/s  80   100   125   150   175   205   240
+   mul (sát thương = sức đánh Rocky × mul) 2,2 → 4,9 · w bề rộng 6 → 12 px · hồi chiêu 10 → 4,6 s (giữ như cũ).
+   → bậc 1: tầm ngắn, chỉ làm HƯ 1 vật rồi dừng; bậc 7: tầm dài, phá sập liền 5–6 vật nhỏ, nhà to cần 3 phát. */
+export const HA_RANGE = [64, 80, 96, 112, 128, 144, 160, 165], HA_PIERCE = [1, 1, 2, 2, 3, 4, 6, 7], HA_POW = [1, 1, 2, 2, 3, 4, 5, 6], HA_KB = [80, 100, 125, 150, 175, 205, 240, 270];   /* bậc 8 (plan-30): tầm 165 = trọn sheet t7 */
+const ti = t => Math.max(0, Math.min(TIER_MAX, t || 1) - 1);
+export const haSheet = t => (t >= 6 ? 7 : t >= 4 ? 4 : 1);   /* sheet luồng nào đủ dài cho tầm bậc t */
+export const haRange = t => HA_RANGE[ti(t)];
+export const haOf = t => ({ mul: 2.2 + 0.45 * (t - 1), range: haRange(t), w: 6 + (t - 1), cd: +(10 - 0.9 * (t - 1)).toFixed(1), charge: 0.8, pierce: HA_PIERCE[ti(t)], pow: HA_POW[ti(t)], kb: HA_KB[ti(t)] });
 export const superOf = t => ({ dur: Math.round(20 + (25 * (t - 1)) / 6), cd: 150 - 15 * (t - 1), atk: 1.6 + 0.1 * (t - 1), def: 1.5 + 0.1 * (t - 1), spd: 1.3 });
 
 /* sách luyện ở Heathcliff: bậc N cần chiêu đang ở N−1 + Rocky đủ cấp; giá đá tăng dần */
 export const BOOK_LV = {
-  punch: [0, 1, 3, 8, 14, 22, 32, 45],
-  ha: [0, 20, 22, 26, 30, 35, 40, 45],
-  super: [0, 40, 41, 42, 43, 44, 45, 45],
+  punch: [0, 1, 3, 8, 14, 22, 32, 45, 45],
+  ha: [0, 20, 22, 26, 30, 35, 40, 45, 45],
+  super: [0, 40, 41, 42, 43, 44, 45, 45, 45],
 };
 export const BOOK_PRICE = {
-  punch: [0, 0, 40, 90, 160, 260, 400, 600],
-  ha: [0, 0, 150, 250, 380, 520, 700, 950],
-  super: [0, 0, 400, 550, 700, 880, 1080, 1300],
+  punch: [0, 0, 40, 90, 160, 260, 400, 600, 0],
+  ha: [0, 0, 150, 250, 380, 520, 700, 950, 0],
+  super: [0, 0, 400, 550, 700, 880, 1080, 1300, 0],
 };
 export const bookNeedLv = (id, n) => BOOK_LV[id][n];
 export const bookPrice = (id, n) => BOOK_PRICE[id][n];
@@ -50,15 +61,16 @@ export function levelFromXp(xp) {
 }
 export const xpForLevel = lv => { let s = 0; for (let l = 1; l < lv; l++) s += needXp(l); return s; };
 
-/* bậc chiêu đang có (0 = chưa mở). Bậc 1 tự có khi đủ cấp mở; sách nâng 2→7 */
+/* bậc chiêu đang có (0 = chưa mở). Bậc 1 tự có khi đủ cấp mở; sách nâng 2→7 (quầy) · 8 (sách trùm) */
 export function tierOf(p, id) {
   const lv = levelFromXp(p.xp || 0).lv, sk = (p.skills || {})[id] || 0;
   return lv >= SKILLS[id].unlock ? Math.max(1, sk) : 0;
 }
 /* có mua được sách bậc n của chiêu id không → { ok, why } */
-export function canBook(p, id, n) {
+export function canBook(p, id, n, boss = false) {   /* boss: sách bậc 8 thưởng trùm (hacrocky.js) — quầy không bán bậc 8 */
   const lv = levelFromXp(p.xp || 0).lv, cur = tierOf(p, id);
   if (n > TIER_MAX) return { ok: false, why: 'max' };
+  if (n > TIER_SHOP && !boss) return { ok: false, why: cur >= n ? 'have' : 'boss' };
   if (cur !== n - 1) return { ok: false, why: cur >= n ? 'have' : 'prev' };
   if (lv < bookNeedLv(id, n)) return { ok: false, why: 'lv', lv: bookNeedLv(id, n) };
   return { ok: true };

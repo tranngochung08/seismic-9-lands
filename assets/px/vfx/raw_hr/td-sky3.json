@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "td-sky3 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 1.png",
+   "frame": {
+    "x": 176,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 2.png",
+   "frame": {
+    "x": 352,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 3.png",
+   "frame": {
+    "x": 528,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 4.png",
+   "frame": {
+    "x": 0,
+    "y": 1000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 5.png",
+   "frame": {
+    "x": 176,
+    "y": 1000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 6.png",
+   "frame": {
+    "x": 352,
+    "y": 1000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 7.png",
+   "frame": {
+    "x": 528,
+    "y": 1000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 8.png",
+   "frame": {
+    "x": 0,
+    "y": 2000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 9.png",
+   "frame": {
+    "x": 176,
+    "y": 2000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 10.png",
+   "frame": {
+    "x": 352,
+    "y": 2000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  },
+  {
+   "filename": "td-sky3 11.png",
+   "frame": {
+    "x": 528,
+    "y": 2000,
+    "w": 176,
+    "h": 1000
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 176,
+    "h": 1000
+   },
+   "sourceSize": {
+    "w": 176,
+    "h": 1000
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.95
+   },
+   "duration": 50
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "td-sky3.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 704,
+   "h": 3000
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 88,
+   "y": 950
+  },
+  "frameTags": [
+   {
+    "name": "td-sky3",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

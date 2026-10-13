@@ -14,7 +14,9 @@ function persist(ctx) {
 }
 function icon(ctx, id) {
   if (ST.img[id] !== undefined) return ST.img[id];
-  const it = ctx.ART && ctx.ART.man && ctx.ART.man.ui && ctx.ART.man.ui.items, f = it && (it[id] || it[id.replace(/^a_/, '')]);
+  const it = ctx.ART && ctx.ART.man && ctx.ART.man.ui && ctx.ART.man.ui.items;
+  let f = it && (it[id] || it[id.replace(/^a_/, '')]);
+  if (!f && it) { const e = (ctx.ITEMS[id] || {}).icon; const k = e && Object.keys(ctx.ITEMS).find(k => ctx.ITEMS[k].icon === e && it[k]); if (k) f = it[k]; }   /* 2026-10-13 anh báo ô vàng: món chưa có icon riêng → mượn icon món cùng emoji (như túi đồ), không vẽ ô vàng */
   if (!f) return (ST.img[id] = null);
   const im = new Image(); im.src = 'assets/px/' + f; return (ST.img[id] = im);
 }

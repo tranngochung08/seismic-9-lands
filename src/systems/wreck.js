@@ -41,7 +41,7 @@ export const maxOf = (ctx, o) => (o.plot !== undefined ? ctx.hpMax(o) : ownMax(o
 const kindOf = o => (o.plot !== undefined ? o.piece : o.type === 'scarecrow' ? 'scarecrow' : 'pen');
 const center = o => ({ x: o.x * 16 + 8, y: o.y * 16 + 14 });
 function targets(ctx) {
-  return ctx.S.map.objects.filter(o => !o.ruined && !o.ghost && ((o.plot !== undefined && PIECES.includes(o.piece)) || isOwn(o)));
+  return ctx.S.map.objects.filter(o => !o.ruined && !o.rkMax && !o.ghost && ((o.plot !== undefined && PIECES.includes(o.piece)) || isOwn(o)));
 }
 function ruinOwn(ctx, o) {
   o.ruined = true; o.hp = 0; o.orig = o.orig || o.type;
@@ -96,7 +96,7 @@ function apply(ctx) {
   ctx.persist();
 }
 // ---------------------------------------------------------------- dân tự sửa (ban ngày)
-function ruinedList(ctx) { return ctx.S.map.objects.filter(o => o.ruined && ((o.plot !== undefined && PIECES.includes(o.piece)) || isOwn(o))); }
+function ruinedList(ctx) { return ctx.S.map.objects.filter(o => o.ruined && !o.rkRuin && ((o.plot !== undefined && PIECES.includes(o.piece)) || isOwn(o))); }
 function walkTo(ctx, n, x, y) {
   const p = ctx.pathTo(Math.floor(n.x / 16), Math.floor(n.y / 16), Math.floor(x / 16), Math.floor(y / 16), 10);
   n.busy = false; n.goal = null; n.speedMul = 1.7; n.path = p ? p.reverse() : [{ x, y }];   /* đang làm việc → đi nhanh hơn */

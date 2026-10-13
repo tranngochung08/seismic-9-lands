@@ -102,6 +102,11 @@ export function setEnabled(on) {   /* nút "♪ Nhạc: bật/tắt" — chỉ t
   if (!musicOn) { M.stopMusic(0.4); playing = null; } else { want = null; refreshMusic(1.2); }
 }
 export function isEnabled() { return musicOn; }
+/* plan-30 trùm 2: đồng hồ nhịp của bài đang phát (null nếu nhạc tắt / chưa phát) — trống trùm gõ đúng nhịp nhạc */
+export function musicClock() { if (!M || !musicOn || !M.clock || !ac || ac.state !== 'running') return null; const c = M.clock(); return c && c.id === M.current() ? c : null; }
+/* trúng đòn quan trọng → nhạc 'lỡ nhịp': nhạc nghẹt + chùng xuống 0,8 s */
+let hiccupUntil = 0;
+export function musicHiccup() { hiccupUntil = performance.now() + 800; if (M) try { M.muffle(true); } catch (e) { } }
 export function playTrack(id) { want = id; mlog(id); if (M && musicOn) { M.playTrack(id, { fade: 0.8 }); playing = id; } }   /* trang nghe thử / test */
 export function stinger(id) {
   const st = STINGERS[id]; if (!st) return false;
@@ -218,7 +223,7 @@ function tickInner(S, dt, CTX) {
     if ((mode === 'end' || mode === 'xending') && !W.endMode) { W.endMode = true; stinger(mode === 'xending' ? 'xea' : 'ending'); } else if (mode !== 'end' && mode !== 'xending') W.endMode = false;
     const cr = mode === 'credits'; if (cr !== credits) { credits = cr; refreshMusic(1.5); }
   }
-  if (M) { M.duckDialog(mode === 'dialog'); M.muffle(PANEL.has(mode)); }
+  if (M) { M.duckDialog(mode === 'dialog'); M.muffle(PANEL.has(mode) || performance.now() < hiccupUntil); }
   if (mode === 'menu') { try { const t = document.querySelector('#menu .mtab.on'); const id = t && t.dataset.tab; if (id && W.tab && id !== W.tab) play('tab', {}, 'ui'); W.tab = id; } catch (e) { } } else W.tab = null;
   if (sv.hotSel !== W.hot) { if (!fresh && W.hot != null) play('slot_select', {}, 'ui'); W.hot = sv.hotSel; }
 

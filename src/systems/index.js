@@ -20,6 +20,7 @@ import { raidersSea } from './raiders_sea.js';
 import { photo } from './photo.js';
 import { sumo } from './sumo.js';
 import { pet } from './pet.js';
+import { rubble } from './blast.js';   /* 2026-10-12 tối: đào dọn đổ nát / bứng gốc cây do Rocky phá */
 import { storySea } from './story_sea.js';
 import { storyLand } from './story_land.js';
 import { trench } from './trench.js';
@@ -43,5 +44,10 @@ import { xealist } from './xealist.js';   /* plan-25 B3: phe Xealist (nhiệm v�
 import { fortress } from './fortress.js';   /* plan-26 B2: Pháo Đài Xealist (màn thắng trùm cuối / NPC Xealist phe Xealist) — sau underwater: bọc ctx.onBossDown */
 import { underwater } from './underwater.js';   /* plan-26 B0: Heathcliff + viên thở + hơi thở + điểm lặn + tầng nước u1 (trước monsters: đặt ctx.uwGateOpen / onBossDown / stunPlayer) */
 
+import { hacrocky } from './hacrocky.js';
+import { trongdong } from './trongdong.js';   /* plan-30 trùm 2: Trống Đồng Thiên Lôi (khe nứt M2 → vùng rift2) — sau hacrocky (dùng ctx.hrBook) */   /* plan-30 trùm 1: Hắc Rocky (khe nứt Sàn Đấu Ngầm → vùng rift1) — sau arena (bọc ctx.petWait) và monsters/pet (bọc monsters.damage) */
+import { guong } from './guong.js';
+import { hoden } from './hoden.js';   /* plan-30 trùm 4: Hố Đen Địa Tâm (khe nứt M4 → vùng rift4) — sau guong */   /* plan-30 trùm 3: Gương Địa Chấn (khe nứt M6 → vùng rift3) — sau trongdong */
+import { dongho } from './dongho.js';   /* plan-30 trùm 5: Đồng Hồ Đứt Dây (khe nứt M7 → vùng rift5) — sau hoden */
 import { dragon } from './dragon.js';   /* plan-29: 7 Ngọc Rồng → Rồng Thần, 5 điều ước, ngoại hình Chad, chiêu Rồng Thần Giáng (cuối danh sách: vẽ trên cùng, bắt clip động tác sau mọi hệ) */
-export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, sumo, pet, storySea, storyLand, trench, hero, underwater, fortress, villagers, petgun, monsters, spar, road, arena, knock, wreck, drops, land, ponds, xealist, vfx, dragon].filter(Boolean);
+export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, pet, rubble, storySea, storyLand, trench, hero, underwater, fortress, villagers, petgun, monsters, spar, road, arena, hacrocky, trongdong, guong, hoden, dongho, knock, wreck, drops, land, ponds, xealist, vfx, dragon].filter(Boolean);

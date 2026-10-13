@@ -1,0 +1,76 @@
+{
+ "cw": 96,
+ "ch": 90,
+ "clips": {
+  "walk": {
+   "file": "boss/guong/q_walk.png",
+   "n": 8,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "idle": {
+   "file": "boss/guong/q_idle.png",
+   "n": 6,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "control": {
+   "file": "boss/guong/q_control.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "cast": {
+   "file": "boss/guong/q_cast.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "vanish": {
+   "file": "boss/guong/q_vanish.png",
+   "n": 9,
+   "rows": [
+    "south"
+   ]
+  },
+  "stun": {
+   "file": "boss/guong/q_stun.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "shatter": {
+   "file": "boss/guong/q_shatter.png",
+   "n": 9,
+   "rows": [
+    "south"
+   ]
+  }
+ },
+ "note": "ảnh 2× — vẽ ô cỡ cw/2 × ch/2 logic, chân ở đáy ô − 1 px logic"
+}

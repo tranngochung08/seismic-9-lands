@@ -88,8 +88,12 @@ function roadImpact(ctx, x, y, power = 1, kind = 'wall') {
     const cx = Math.max(o.x * 16, Math.min((o.x + d0.fw) * 16, x)), cy = Math.max(o.y * 16, Math.min((o.y + d0.fh) * 16, y)), d = Math.hypot(x - cx, y - cy);
     if (d < bd) { bd = d; best = o; }
   }
-  if (!best) return 0; const o = best, wood = BREAK_WOOD.test(o.type), fx = o.x * 16 + 8, fy = (o.y + 1) * 16 - 4;
-  o.hpMax = 2; o.hp = (o.hp ?? 2) - (power >= 1.2 ? 2 : 1); ST.breaks = (ST.breaks || 0) + 1;
+  if (!best) return 0; return hitObj(ctx, best, power >= 1.2 ? 2 : 1);
+}
+/* 1 cú vào đúng vật o (dmg máu, vật viền có 2 máu). Dùng chung cho cú văng (roadImpact) và luồng Rocky-ha (blast.js qua ctx.roadHitObj, dmg = HA_POW). */
+function hitObj(ctx, o, dmg) {
+  const m = ctx.S.map, wood = BREAK_WOOD.test(o.type), fx = o.x * 16 + 8, fy = (o.y + 1) * 16 - 4;
+  o.hpMax = 2; o.hp = (o.hp ?? 2) - dmg; ST.breaks = (ST.breaks || 0) + 1;
   if (o.hp <= 0) {
     o.orig = o.type; o.ruined = true; o.hp = 0;
     const keep = o.y === ST.info.gate.y && !roadOpen(ctx);   /* hàng cổng khi còn chặn: đổ nát vẫn cứng */
@@ -115,6 +119,12 @@ function unstick(ctx) {
   if (!(ctx.knocked && ctx.knocked()) && p && (stuck(ctx, p.x, p.y - 3) || p.blocked(p.x, p.y, ctx.S.map, []))) {
     const s = safeTile(ctx, p.x, p.y - 3); if (s && (Math.abs(s.x - p.x) > 1 || Math.abs(s.y - p.y) > 2)) { p.x = s.x; p.y = s.y + 2; p.autoPath = null; ST.snaps = (ST.snaps || 0) + 1; ST.lastSnap = { who: 'player', x: s.x, y: s.y }; }
   }
+  /* 2026-10-12 tối anh: Rocky cũng không bao giờ kẹt — bị hất / đi xuyên (ghost khi vướng) vào khối viền → dời về ô đi được nối với đường gần nhất.
+     Bỏ qua lúc đang xuyên tường (ghost: tự ra trong 0,5 s), ở ổ, cưỡi bè. */
+  const rk = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent();
+  if (rk && rk.state !== 'home' && rk.state !== 'ride' && !(rk.ghost > 0) && stuck(ctx, rk.x, rk.y - 2)) {
+    const s = safeTile(ctx, rk.x, rk.y - 2); if (s) { rk.x = s.x; rk.y = s.y + 2; rk.px = rk.x; rk.py = rk.y; rk.blocked = 0; ST.snaps = (ST.snaps || 0) + 1; ST.rkSnaps = (ST.rkSnaps || 0) + 1; ST.lastSnap = { who: 'rocky', x: s.x, y: s.y }; if (ctx.vfx) ctx.vfx('dirt_puff', rk.x, rk.y + 2); }
+  }
   for (const mo of (ctx.monsters ? ctx.monsters.list() : [])) {
     if (mo.kb || mo.c.fly || !stuck(ctx, mo.x, mo.y)) continue; const s = safeTile(ctx, mo.x, mo.y); if (s) { mo.x = s.x; mo.y = s.y; ST.snaps = (ST.snaps || 0) + 1; ST.lastSnap = { who: mo.c.key, x: s.x, y: s.y }; }
   }
@@ -123,13 +133,14 @@ export const road = {
   id: 'road',
   onZoneEnter(ctx) {
     ST.ctx = ctx; const s = sv(ctx), z = ctx.S.zone, lv = zoneLv(z.id); if (lv > s.maxZ) s.maxZ = lv;
-    ST.info = ctx.S.map.roadInfo || null; ST.fight = null; ST.breaks = 0; ST.reach = null; ST.snaps = 0; ST.lastSnap = null;
+    ST.info = ctx.S.map.roadInfo || null; ST.fight = null; ST.breaks = 0; ST.reach = null; ST.snaps = 0; ST.rkSnaps = 0; ST.lastSnap = null;
+    ctx.roadHitObj = ST.info ? (o, pow) => { if (!breakable(ctx.S.map, o)) return null; const r = hitObj(ctx, o, pow); return { gone: !!(r && r.o && r.o.ruined) }; } : null;   /* 2026-10-12 tối: luồng Rocky-ha phá vật viền đèo (blast.js) */
     ctx.arenaImpact = (x, y, pw = 1, kind = 'land') => roadImpact(ctx, x, y, pw, kind);   /* (Sàn Đấu Ngầm không chạy hệ này: arena.js tự gán lại khi vào đó) */ ST.armed = true; ST.next = 0; ST.t = 0;
     if (ST.info) { if (ctx.sparRoad) ctx.sparRoad.load(); setGate(ctx, roadOpen(ctx)); const b = !roadOpen(ctx) && blocker(ctx); if (b) setTimeout(() => { if (ctx.S.map && ctx.S.map.roadInfo === ST.info && !roadOpen(ctx)) ctx.toast(L(ctx).block(ctx.sparRoad.name(b))); }, 1200); }
     if (typeof window !== 'undefined') window.__road = {
       info: () => ST.info && { ...ST.info }, open: () => roadOpen(ctx), save: () => JSON.parse(JSON.stringify(sv(ctx))), standing: () => standing(ctx), blocker: () => (ST.info ? blocker(ctx) : null),
       gate: () => ctx.S.map.passGate && { type: ctx.S.map.passGate.type, solid: ctx.isSolid(ctx.S.map, ctx.S.map.passGate.x + 1, ctx.S.map.passGate.y) }, fight: () => ST.fight,
-      noAuto: v => { ST.noAuto = !!v; }, impact: (x, y, pw, k) => roadImpact(ctx, x, y, pw, k || 'wall'), breaks: () => ST.breaks || 0, snaps: () => ST.snaps || 0, lastSnap: () => ST.lastSnap, reachOk: (x, y) => !stuck(ctx, x, y), edgeReach: () => { const m = ctx.S.map, R = ctx.computeReach(m, m.entries.default); let n = 0; for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (R[y * m.w + x] && (x < 2 || x > m.w - 3) ) n++; return n; },
+      noAuto: v => { ST.noAuto = !!v; }, impact: (x, y, pw, k) => roadImpact(ctx, x, y, pw, k || 'wall'), breaks: () => ST.breaks || 0, snaps: () => ST.snaps || 0, rkSnaps: () => ST.rkSnaps || 0, lastSnap: () => ST.lastSnap, reachOk: (x, y) => !stuck(ctx, x, y), edgeReach: () => { const m = ctx.S.map, R = ctx.computeReach(m, m.entries.default); let n = 0; for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (R[y * m.w + x] && (x < 2 || x > m.w - 3) ) n++; return n; },
       border: () => ctx.S.map.objects.filter(o => o.hpMax || o.ruined).map(o => ({ type: o.orig || o.type, x: o.x, y: o.y, hp: o.hp, ruined: !!o.ruined, solid: ctx.isSolid(ctx.S.map, o.x, o.y) })),   /* test chụp ảnh: tạm không tự vào trận */
       cdLeft: id => Math.max(0, (sv(ctx).cd[id] || 0) - nowMs()), setCd: (id, ms) => { sv(ctx).cd[id] = nowMs() + ms; }, start: id => { const st = standing(ctx).find(q => q.id === id); return start(ctx, id, st ? { x: st.x, y: st.y } : postOf(ST.info, 0)); },
     };

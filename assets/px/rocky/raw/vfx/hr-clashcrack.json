@@ -1,0 +1,287 @@
+{
+ "frames": [
+  {
+   "filename": "hr-clashcrack 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 1.png",
+   "frame": {
+    "x": 75,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 2.png",
+   "frame": {
+    "x": 150,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 3.png",
+   "frame": {
+    "x": 225,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 4.png",
+   "frame": {
+    "x": 0,
+    "y": 44,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 5.png",
+   "frame": {
+    "x": 75,
+    "y": 44,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 6.png",
+   "frame": {
+    "x": 150,
+    "y": 44,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 7.png",
+   "frame": {
+    "x": 225,
+    "y": 44,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 8.png",
+   "frame": {
+    "x": 0,
+    "y": 88,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  },
+  {
+   "filename": "hr-clashcrack 9.png",
+   "frame": {
+    "x": 75,
+    "y": 88,
+    "w": 75,
+    "h": 44
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 75,
+    "h": 44
+   },
+   "sourceSize": {
+    "w": 75,
+    "h": 44
+   },
+   "pivot": {
+    "x": 0.49333333333333335,
+    "y": 0.3409090909090909
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "hr-clashcrack.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 300,
+   "h": 132
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 37,
+   "y": 15
+  },
+  "frameTags": [
+   {
+    "name": "hr-clashcrack",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   }
+  ]
+ }
+}

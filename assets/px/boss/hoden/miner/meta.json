@@ -1,0 +1,11 @@
+{
+ "id": "3b1968fb-1f98-4ce5-a745-225113ff95f3",
+ "desc": "Original old void miner. HEAD: dented iron miner helmet with a small cracked headlamp, bushy white beard and thick white eyebrows, small glowing violet eyes. POSE: sturdy old man standing perfectly upright, straight back, head up, nothing on the back. BODY: wearing cracked dark iron mining armor plates with thin glowing purple cracks, brown leather apron, heavy boots; LEFT hand holds an old iron mining lantern with a swirling dark purple glowing core inside; RIGHT hand holds a long pickaxe. Clear dark outline, cozy RPG pixel art, cool dark palette with purple accents",
+ "mode": "v3",
+ "cand": "48n",
+ "mirror": {
+  "west": "east",
+  "south-west": "south-east",
+  "north-west": "north-east"
+ }
+}

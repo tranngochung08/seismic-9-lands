@@ -1,0 +1,209 @@
+{
+ "frames": [
+  {
+   "filename": "gm-prism 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 42
+   },
+   "pivot": {
+    "x": 0.20930232558139536,
+    "y": 0.5
+   },
+   "duration": 91
+  },
+  {
+   "filename": "gm-prism 1.png",
+   "frame": {
+    "x": 43,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 42
+   },
+   "pivot": {
+    "x": 0.20930232558139536,
+    "y": 0.5
+   },
+   "duration": 91
+  },
+  {
+   "filename": "gm-prism 2.png",
+   "frame": {
+    "x": 86,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 42
+   },
+   "pivot": {
+    "x": 0.20930232558139536,
+    "y": 0.5
+   },
+   "duration": 91
+  },
+  {
+   "filename": "gm-prism 3.png",
+   "frame": {
+    "x": 0,
+    "y": 42,
+    "w": 43,
+    "h": 42
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 42
+   },
+   "pivot": {
+    "x": 0.20930232558139536,
+    "y": 0.5
+   },
+   "duration": 91
+  },
+  {
+   "filename": "gm-prism 4.png",
+   "frame": {
+    "x": 43,
+    "y": 42,
+    "w": 43,
+    "h": 42
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 42
+   },
+   "pivot": {
+    "x": 0.20930232558139536,
+    "y": 0.5
+   },
+   "duration": 91
+  },
+  {
+   "filename": "gm-prism 5.png",
+   "frame": {
+    "x": 86,
+    "y": 42,
+    "w": 43,
+    "h": 42
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 42
+   },
+   "pivot": {
+    "x": 0.20930232558139536,
+    "y": 0.5
+   },
+   "duration": 91
+  },
+  {
+   "filename": "gm-prism 6.png",
+   "frame": {
+    "x": 0,
+    "y": 84,
+    "w": 43,
+    "h": 42
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 43,
+    "h": 42
+   },
+   "sourceSize": {
+    "w": 43,
+    "h": 42
+   },
+   "pivot": {
+    "x": 0.20930232558139536,
+    "y": 0.5
+   },
+   "duration": 91
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "gm-prism.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 129,
+   "h": 126
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 9,
+   "y": 21
+  },
+  "frameTags": [
+   {
+    "name": "gm-prism",
+    "from": 0,
+    "to": 6,
+    "direction": "forward"
+   }
+  ]
+ }
+}

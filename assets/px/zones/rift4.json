@@ -1,0 +1,69 @@
+{
+ "inherit": "arena",
+ "classes": {
+  "__base": "minefloor",
+  "ROCK": "minefloor",
+  "GRAVEL": "voidcrack",
+  "DARK": "cavewall",
+  "STONE": "voidcrack",
+  "COBBLE": "stone",
+  "DIRT": "gravel",
+  "GRASS": "rock",
+  "GRASS2": "rock",
+  "TILLED": "tilled",
+  "TILLED_WET": "tilled",
+  "SAND": "sand",
+  "SAND2": "sand",
+  "CHASM": "dark"
+ },
+ "wang": [
+  {
+   "dir": "zones/rift4/wang/a",
+   "upper": "voidcrack"
+  },
+  {
+   "dir": "zones/arena/wang/w3",
+   "upper": "cavewall"
+  },
+  {
+   "dir": "zones/m4/wang/b",
+   "upper": "dark"
+  }
+ ],
+ "decor": {
+  "ROCK": [
+   {
+    "file": "zones/rift4/decor/hd_rail_s3.png",
+    "p": 0.035,
+    "n": 1
+   }
+  ]
+ },
+ "objects": {
+  "hd_block": {
+   "file": "zones/rift4/obj/hd_block_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "beam": {
+   "file": "zones/m4/obj/beam_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "cart": {
+   "file": "zones/m4/obj/cart_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "torch": {
+   "file": "zones/m4/obj/torch_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rift_crack": {
+   "file": "zones/arena/obj/rift_crack_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ }
+}

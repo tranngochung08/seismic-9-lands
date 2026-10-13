@@ -1,0 +1,68 @@
+{
+ "cw": 64,
+ "ch": 66,
+ "clips": {
+  "walk": {
+   "file": "boss/trongdong/lh_walk.png",
+   "n": 8,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "idle": {
+   "file": "boss/trongdong/lh_idle.png",
+   "n": 6,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "strike": {
+   "file": "boss/trongdong/lh_strike.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "call": {
+   "file": "boss/trongdong/lh_call.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "raise": {
+   "file": "boss/trongdong/lh_raise.png",
+   "n": 7,
+   "rows": [
+    "south"
+   ]
+  },
+  "stun": {
+   "file": "boss/trongdong/lh_stun.png",
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "fall": {
+   "file": "boss/trongdong/lh_fall.png",
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  }
+ },
+ "note": "ảnh 2× — vẽ ô cỡ cw/2 × ch/2 logic, chân ở đáy ô − 1 px logic"
+}

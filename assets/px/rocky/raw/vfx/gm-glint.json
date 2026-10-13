@@ -1,0 +1,183 @@
+{
+ "frames": [
+  {
+   "filename": "gm-glint 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "sourceSize": {
+    "w": 38,
+    "h": 36
+   },
+   "pivot": {
+    "x": 0.47368421052631576,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "gm-glint 1.png",
+   "frame": {
+    "x": 38,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "sourceSize": {
+    "w": 38,
+    "h": 36
+   },
+   "pivot": {
+    "x": 0.47368421052631576,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "gm-glint 2.png",
+   "frame": {
+    "x": 76,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "sourceSize": {
+    "w": 38,
+    "h": 36
+   },
+   "pivot": {
+    "x": 0.47368421052631576,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "gm-glint 3.png",
+   "frame": {
+    "x": 0,
+    "y": 36,
+    "w": 38,
+    "h": 36
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "sourceSize": {
+    "w": 38,
+    "h": 36
+   },
+   "pivot": {
+    "x": 0.47368421052631576,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "gm-glint 4.png",
+   "frame": {
+    "x": 38,
+    "y": 36,
+    "w": 38,
+    "h": 36
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "sourceSize": {
+    "w": 38,
+    "h": 36
+   },
+   "pivot": {
+    "x": 0.47368421052631576,
+    "y": 0.5
+   },
+   "duration": 63
+  },
+  {
+   "filename": "gm-glint 5.png",
+   "frame": {
+    "x": 76,
+    "y": 36,
+    "w": 38,
+    "h": 36
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 38,
+    "h": 36
+   },
+   "sourceSize": {
+    "w": 38,
+    "h": 36
+   },
+   "pivot": {
+    "x": 0.47368421052631576,
+    "y": 0.5
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "gm-glint.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 114,
+   "h": 72
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 18,
+   "y": 18
+  },
+  "frameTags": [
+   {
+    "name": "gm-glint",
+    "from": 0,
+    "to": 5,
+    "direction": "forward"
+   }
+  ]
+ }
+}

@@ -135,6 +135,7 @@ function districtZone(rng, ctx, t) {
   m.npcArea = { x: 3, y: 4, w: W - 6, h: H - 9 };
   m.specials = t.guide ? [{ kind: 'guide', x: CX + 3, y: H - 8 }] : [];
   if (t.arenaExit) arenaExit(m);
+  if (t.riftCrack) riftCrackM2(m, t.riftCrack === true ? 'rift2' : t.riftCrack);   /* plan-30 trùm 2 (M2 → rift2) · trùm 3 (M6 → rift3) · trùm 4 (M4 → rift4) · trùm 5 (M7 → rift5) */
   return m;
 }
 /* 2026-10-11 anh: Sàn Đấu Ngầm tách khỏi lối vào Làng → cửa hầm ở mép ĐÔNG, cuối đường hàng 48–49 (đi vào cửa = xuống 'arena').
@@ -180,8 +181,135 @@ function buildArena(rng) {
   m.petSpot = { x: C - 2, y: RY + RR + 2 };   /* Rocky ngồi chờ ở mép sàn khi đang đấu */
   m.reserved.push(m.entries.default, m.promoter, m.petSpot);
   place(m, 'sign', C + 2, H - 4, { tag: S('← Harbor Village', '← Làng Xuất Phát'), text: S("Underground Ring.\nTalk to Xealist to call a sparring partner. Step off the sand to end a bout.\nSouth cave → Harbor Village", 'Sàn Đấu Ngầm.\nNói chuyện với Xealist để gọi bạn tập. Bước ra khỏi sàn cát là hết trận.\nHang phía Nam → Làng Xuất Phát') });
+  /* plan-30: Khe Nứt Magnitude (trùm 1 Hắc Rocky) ở vách Bắc — ảnh PixelLab rift_crack (td8 hướng nam); hacrocky.js đổi sang rift_crack_off khi chưa đủ điều kiện */
+  place(m, 'rift_crack', C + 4, 2, { rift: true, tag: S('Magnitude Rift', 'Khe Nứt Magnitude') });
+  m.entries.rift = { x: C + 5, y: 4 }; m.reserved.push(m.entries.rift);
   m.npcArea = { x: 3, y: 3, w: W - 6, h: H - 6 };
   return m;
+}
+// ---------------- plan-30 trùm 1: Khe Nứt · Hắc Rocky (rift1) — hang tối tím dưới Sàn Đấu Ngầm. Vách = ô DARK (ảnh 'cavewall', nứt khi bị đập như Sàn Đấu Ngầm),
+// 4 cột pha lê + 2 cột lục giác (gói m9, ảnh hư / đổ nát PixelLab sẵn) — PHÁ ĐƯỢC (arena.js BREAK) nên trùm / người không bao giờ bị nhốt.
+// Lối ra hang Nam LUÔN mở (cổng về 'arena' lối 'rift'). Khe nứt trên vách Bắc = chỗ Hắc Rocky trồi lên (m.hrBoss).
+function buildRift1(rng) {
+  const W = 30, H = 22, C = 15;
+  const m = makeMap(W, H, T.ROCK);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const e = Math.min(x, y, W - 1 - x, H - 1 - y); if (e < 2 && !(y >= H - 3 && Math.abs(x - C) <= 1)) setG(m, x, y, T.DARK, true); }
+  for (let x = C - 1; x <= C + 1; x++) setG(m, x, H - 1, T.CHASM, true);
+  scatterG(m, rng, T.GRAVEL, 0.07, (x, y) => getG(m, x, y) === T.ROCK && x >= 3 && y >= 3 && x < W - 3 && y < H - 4);   /* 2026-10-13: mảng pha lê vụn (Wang PixelLab zones/rift1/wang/a, lớp 'riftvein') — nền không còn một màu tím trơn */
+  m.gates.push({ x: C - 1, y: H - 2, w: 3, h: 1, to: 'arena', entry: 'rift', requires: null });
+  place(m, 'rift_crack', C - 1, 2, { riftTop: true });
+  m.hrBoss = { x: C, y: 6 };
+  for (const [o, x, y] of [['crystal_p', 7, 6], ['crystal_p', 22, 6], ['crystal_p', 6, 14], ['crystal_p', 23, 14], ['hexpillar', 10, 10], ['hexpillar', 20, 10]]) place(m, o, x, y, { glow: true });
+  m.entries = { default: { x: C, y: H - 5 } };
+  m.reserved.push(m.entries.default);
+  place(m, 'sign', C + 2, H - 4, { tag: S('← Underground Ring', '← Sàn Đấu Ngầm'), text: S("The Rift · Shadow Rocky.\nRocky's attacks barely hurt Shadow Rocky — except while it is EXPOSED (win the beam struggle, cut the chain, hit the real copy).\nWith bond 20+ the Chain of Friendship cannot turn Rocky against you.\nSouth cave → Underground Ring", 'Khe Nứt · Hắc Rocky.\nĐòn của Rocky vào Hắc Rocky gần như vô dụng — trừ lúc nó LỘ (thắng giằng co, chém đứt xích, đánh trúng bản thật).\nĐộ thân Rocky từ 20 thì Xích Tình Bạn không kéo được Rocky sang phe địch.\nHang Nam → Sàn Đấu Ngầm') });
+  m.npcArea = { x: 3, y: 3, w: W - 6, h: H - 6 };
+  return m;
+}
+
+// ---------------- plan-30 trùm 2: Khe Nứt · Trống Đồng Thiên Lôi (rift2) — sân đá phiến khảm đồng dưới Làng Rung Chuyển (M2).
+// Sàn: Wang PixelLab zones/rift2/wang/a (đá phiến + mảng đồng chạm khắc: vòng tròn đồng quanh tâm như mặt trống). Vách = ô DARK (cavewall, nứt khi bị đập — arena.js).
+// Vật cản PHÁ ĐƯỢC (arena.js BREAK, ảnh hư / đổ nát PixelLab riêng): 4 cột đồng (td_pillar) + 2 bệ thu lôi (td_stele). Lối ra hang Nam LUÔN mở → M2 lối 'rift'.
+function buildRift2(rng) {
+  const W = 30, H = 24, C = 15, CY = 10;
+  const m = makeMap(W, H, T.ROCK);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const e = Math.min(x, y, W - 1 - x, H - 1 - y); if (e < 2 && !(y >= H - 3 && Math.abs(x - C) <= 1)) setG(m, x, y, T.DARK, true); }
+  for (let x = C - 1; x <= C + 1; x++) setG(m, x, H - 1, T.CHASM, true);
+  for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) { const d = Math.hypot(x - C, (y - CY) * 1.15); if ((d > 6.4 && d < 7.6) || d < 1.6) setG(m, x, y, T.GRAVEL, false); }   /* vòng đồng + tâm đồng (lớp 'bronze') */
+  scatterG(m, rng, T.STONE, 0.035, (x, y) => getG(m, x, y) === T.ROCK && x >= 3 && y >= 3 && x < W - 3 && y < H - 4);
+  m.gates.push({ x: C - 1, y: H - 2, w: 3, h: 1, to: 'm2', entry: 'rift', requires: null });
+  place(m, 'rift_crack', C - 1, 2, { riftTop: true });
+  m.tdBoss = { x: C, y: CY }; m.tdCenter = { x: C * 16 + 8, y: CY * 16 + 8 };
+  for (const [o, x, y] of [['td_pillar', 6, 5], ['td_pillar', 23, 5], ['td_pillar', 6, 16], ['td_pillar', 23, 16], ['td_stele', 4, 10], ['td_stele', 25, 10]]) place(m, o, x, y, { glow: true });
+  m.entries = { default: { x: C, y: H - 5 } };
+  m.reserved.push(m.entries.default);
+  place(m, 'sign', C + 2, H - 4, { tag: S('← Trembling Village', '← Làng Rung Khẽ'), text: S("The Rift · Thunder Bronze Drum.\nThe drum beats the rhythm of every attack: move between the shockwaves.\nRocky's attacks barely dent the bronze — strike the drum's rim ON the beat 3 times in a row to make it miss a beat (exposed 5 s).\nWhen it silences Rocky, one on-beat strike breaks the silence.\nSouth cave → Trembling Village", 'Khe Nứt · Trống Đồng Thiên Lôi.\nTrống gõ nhịp cho mọi đòn: đi vào khe giữa các vòng sóng.\nĐòn Rocky gần như không làm móp đồng — đánh vào mép trống ĐÚNG NHỊP 3 lần liền để trống lỡ nhịp (lộ 5 giây).\nKhi trống làm Rocky câm, 1 nhát đúng nhịp là phá câm.\nHang Nam → Làng Rung Khẽ') });
+  m.npcArea = { x: 3, y: 3, w: W - 6, h: H - 6 };
+  return m;
+}
+// ---------------- plan-30 trùm 3: Khe Nứt · Gương Địa Chấn (rift3) — thư viện cổ dưới Thành Nghiêng (M6).
+// Sàn: Wang PixelLab zones/rift3/wang/a (gạch đá thư viện xanh xám + mảng sàn gương pha lê: vòng gương + ngôi sao 6 cánh quanh tâm). Vách: zones/rift3/wang/w (đá tím có pha lê).
+// Vật cản PHÁ ĐƯỢC (arena.js BREAK, ảnh hư / đổ nát PixelLab riêng — tools/px-guong-env.py ruin): 4 cột gương (gm_pillar, mặt gương hướng Nam — Rocky-ha phản xạ được) + 2 kệ sách (gm_shelf).
+// Gương lớn (gm_bigmirror) ở vách Bắc: màn mở đầu (bóng người chơi bước ra) + pha 2 (Bóng Gương bước ra từ gương lớn). Lối ra hang Nam LUÔN mở → M6 lối 'rift'.
+function buildRift3(rng) {
+  const W = 30, H = 24, C = 15, CY = 10;
+  const m = makeMap(W, H, T.ROCK);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const e = Math.min(x, y, W - 1 - x, H - 1 - y); if (e < 2 && !(y >= H - 3 && Math.abs(x - C) <= 1)) setG(m, x, y, T.DARK, true); }
+  for (let x = C - 1; x <= C + 1; x++) setG(m, x, H - 1, T.CHASM, true);
+  for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
+    const dx = x - C, dy = (y - CY) * 1.15, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx), star = 2.2 + 1.4 * Math.max(0, Math.cos(3 * a)) ** 4;   /* vòng gương + ngôi sao 6 cánh ở tâm (lớp 'mirror') */
+    if ((d > 6.4 && d < 7.5) || d < star) setG(m, x, y, T.GRAVEL, false);
+  }
+  scatterG(m, rng, T.STONE, 0.025, (x, y) => getG(m, x, y) === T.ROCK && x >= 3 && y >= 3 && x < W - 3 && y < H - 4);
+  m.gates.push({ x: C - 1, y: H - 2, w: 3, h: 1, to: 'm6', entry: 'rift', requires: null });
+  place(m, 'gm_bigmirror', C - 1, 3, { bigMirror: true });
+  m.gmBoss = { x: C, y: 6 }; m.gmCenter = { x: C * 16 + 8, y: CY * 16 + 8 }; m.gmMirror = { x: C * 16, y: 4 * 16 };
+  for (const [o, x, y] of [['gm_pillar', 6, 5], ['gm_pillar', 23, 5], ['gm_pillar', 6, 16], ['gm_pillar', 23, 16], ['gm_shelf', 4, 10], ['gm_shelf', 25, 10]]) place(m, o, x, y, { glow: true });
+  m.entries = { default: { x: C, y: H - 5 } };
+  m.reserved.push(m.entries.default);
+  place(m, 'sign', C + 2, H - 4, { tag: S('← Leaning City', '← Thành Nghiêng'), text: S("The Rift · Myriad Mirror Queen.\nRocky-ha bounces off her mirrors at the true reflection angle — mind where it flies.\nSmash her 6 flying mirror shards in RAINBOW order (red → orange → yellow → green → blue → violet) to expose the real mirror on her face: then Rocky-ha pierces it.\nDuring Myriad Mirror Lance, strike the standing mirrors to turn the light onto her.\nSouth cave → Leaning City", 'Khe Nứt · Gương Địa Chấn.\nRocky-ha bắn vào gương bị phản lại đúng góc phản xạ — coi chừng tia nảy về phía mình.\nĐập 6 mảnh gương bay theo thứ tự CẦU VỒNG (đỏ → cam → vàng → lục → lam → tím) để lộ gương thật trên mặt: lúc đó Rocky-ha mới xuyên được.\nKhi có Vạn Kính Lao, đánh vào gương đứng để xoay tia sáng sang trùm.\nHang Nam → Thành Nghiêng') });
+  m.npcArea = { x: 3, y: 3, w: W - 6, h: H - 6 };
+  return m;
+}
+// ---------------- plan-30 trùm 4: Khe Nứt · Hố Đen Địa Tâm (rift4) — hang mỏ sâu nhất dưới Mỏ Đá Lở (M4).
+// Sàn: Wang PixelLab zones/rift4/wang/a (sỏi đá mỏ tối + mảng đá đen nứt tia tím hư không: vòng nứt quanh tâm). Vách = ô DARK (cavewall arena, nứt khi bị đập).
+// 6 KHỐI ĐÁ LỚN (hd_block, td8 PixelLab, ảnh hư + đổ nát riêng) = chỗ NÚP Sự Kiện Chân Trời — hoden.js phá / dựng lại (luôn còn ≥ 3).
+// Vật viền: cột chống gỗ (beam), xe goòng (cart), đuốc (torch) — ảnh PixelLab gói m4 (có ảnh hư + đổ nát) — Trọng Lực kéo đổ bay vào hố. Lối ra hang Nam LUÔN mở → M4 lối 'rift'.
+function buildRift4(rng) {
+  const W = 30, H = 24, C = 15, CY = 11;
+  const m = makeMap(W, H, T.ROCK);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const e = Math.min(x, y, W - 1 - x, H - 1 - y); if (e < 2 && !(y >= H - 3 && Math.abs(x - C) <= 1)) setG(m, x, y, T.DARK, true); }
+  for (let x = C - 1; x <= C + 1; x++) setG(m, x, H - 1, T.CHASM, true);
+  for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
+    const dx = x - C, dy = (y - CY) * 1.2, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx), arm = Math.abs(Math.sin(2 * a + d * 0.55));   /* vòng nứt hư không + 4 nhánh xoáy quanh tâm (lớp 'voidcrack') */
+    if (d < 2.4 || (d > 5.2 && d < 6.1) || (d < 9 && arm < 0.12)) setG(m, x, y, T.GRAVEL, false);
+  }
+  scatterG(m, rng, T.STONE, 0.02, (x, y) => getG(m, x, y) === T.ROCK && x >= 3 && y >= 3 && x < W - 3 && y < H - 4);
+  m.gates.push({ x: C - 1, y: H - 2, w: 3, h: 1, to: 'm4', entry: 'rift', requires: null });
+  m.hdBoss = { x: C, y: 7 }; m.hdCenter = { x: C * 16 + 8, y: CY * 16 + 8 };
+  for (const [x, y] of [[6, 6], [22, 6], [4, 12], [24, 12], [9, 17], [19, 17]]) place(m, 'hd_block', x, y, { hdBlock: true });
+  for (const [o, x, y] of [['beam', 3, 3], ['beam', 26, 3], ['beam', 2, 9], ['beam', 27, 9], ['beam', 3, 19], ['beam', 26, 19], ['cart', 9, 2], ['cart', 19, 2], ['torch', 13, 2], ['torch', 17, 2], ['torch', 2, 15], ['torch', 27, 15]]) if (!hasObjectAt(m, x, y)) place(m, o, x, y, { hdEdge: true });
+  m.entries = { default: { x: C, y: H - 5 } };
+  m.reserved.push(m.entries.default);
+  place(m, 'sign', C + 2, H - 4, { tag: S('← Rockfall Mine', '← Mỏ Đá Lở'), text: S("The Rift · Magnitude Devourer.\nThe old Void Miner holds a black hole over his head with his lantern. It SWALLOWS Rocky-ha and grows stronger — do not fire blindly.\nFeed it HARD ROCK: push rock chunks into the hole (E / walk into them), or let its Gravity drag them in. When it is full the hole shrinks and the core is exposed for 8 s.\nEVENT HORIZON: hide behind a big rock block — only solid rock stops the supernova.\nSouth cave → Rockfall Mine", 'Khe Nứt · Kẻ Nuốt Magnitude.\nLão Thợ Mỏ Hư Không giơ đèn nâng hố đen trên đầu. Hố NUỐT Rocky-ha và mạnh lên — đừng bắn bừa.\nCho hố ăn ĐÁ CỨNG: đẩy cục đá vào hố (E / đi đẩy), hoặc để Trọng Lực tự kéo vào. No rồi hố co lại, lõi lộ 8 giây.\nSỰ KIỆN CHÂN TRỜI: núp sau khối đá lớn — chỉ đá cứng chặn được siêu tân tinh.\nHang Nam → Mỏ Đá Lở') });
+  m.npcArea = { x: 3, y: 3, w: W - 6, h: H - 6 };
+  return m;
+}
+// ---------------- plan-30 trùm 5: Khe Nứt · Đồng Hồ Đứt Dây (rift5) — lò rèn đồng thau ngầm dưới Núi Lửa Ngủ (M7).
+// Sàn: Wang PixelLab zones/rift5/wang/a (sàn sắt tán đinh + mặt BÁNH RĂNG đồng thau khổng lồ: 1 bánh lớn quanh tâm có răng + 2 bánh nhỏ ở góc). Vách = ô DARK (cavewall arena).
+// 6 CỘT BÁNH RĂNG (dh_pillar, td8 PixelLab, ảnh hư + đổ nát riêng) PHÁ ĐƯỢC; ống đồng (dh_pipe) / lò rèn (dh_forge) ở viền, cũng phá được. Lối ra hang Nam LUÔN mở → M7 lối 'rift'.
+function buildRift5(rng) {
+  const W = 30, H = 24, C = 15, CY = 11;
+  const m = makeMap(W, H, T.ROCK);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const e = Math.min(x, y, W - 1 - x, H - 1 - y); if (e < 2 && !(y >= H - 3 && Math.abs(x - C) <= 1)) setG(m, x, y, T.DARK, true); }
+  for (let x = C - 1; x <= C + 1; x++) setG(m, x, H - 1, T.CHASM, true);
+  const gear = (gx, gy, r, teeth) => { for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) { const dx = x - gx, dy = (y - gy) * 1.15, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx), tooth = Math.cos(a * teeth) > 0.2;
+    if (d < 1.6 || (d > r - 1.6 && d < r) || (d >= r && d < r + 1.1 && tooth) || (d < r - 1.6 && d > 2.4 && Math.abs(Math.sin(a * 3)) < 0.14)) setG(m, x, y, T.GRAVEL, false); } };   /* bánh răng: trục + vành + răng + 6 nan */
+  void gear;   /* v2 (anh Hùng): bỏ mảng Wang vàng — sàn bánh răng = ảnh bánh răng tròn PixelLab đặt phẳng (dongho.js drawGround, m.dhFloor) */
+  m.dhFloor = [{ x: C * 16 + 8, y: CY * 16 + 8, big: true }, { x: 5 * 16, y: 5 * 16 + 8 }, { x: 25 * 16, y: 5 * 16 + 8 }, { x: 4 * 16 + 8, y: 18 * 16 }, { x: 25 * 16 + 8, y: 18 * 16 }, { x: 9 * 16, y: 11 * 16 + 8 }, { x: 22 * 16, y: 11 * 16 + 8 }, { x: 15 * 16 + 8, y: 19 * 16 }];
+  m.gates.push({ x: C - 1, y: H - 2, w: 3, h: 1, to: 'm7', entry: 'rift', requires: null });
+  m.dhBoss = { x: C, y: 7 }; m.dhCenter = { x: C * 16 + 8, y: CY * 16 + 8 };
+  for (const [x, y] of [[7, 7], [22, 7], [5, 13], [24, 13], [10, 17], [19, 17]]) place(m, 'dh_pillar', x, y, { dhPillar: true });
+  for (const [o, x, y] of [['dh_pipe', 3, 2], ['dh_forge', 8, 2], ['dh_forge', 20, 2], ['dh_pipe', 25, 2], ['dh_pipe', 2, 9], ['dh_pipe', 26, 9], ['dh_forge', 2, 17], ['dh_forge', 26, 17]]) if (!hasObjectAt(m, x, y) && !hasObjectAt(m, x + 1, y)) place(m, o, x, y, { dhEdge: true });
+  m.entries = { default: { x: C, y: H - 5 } };
+  m.reserved.push(m.entries.default);
+  place(m, 'sign', C + 2, H - 4, { tag: S('← Sleeping Volcano', '← Núi Lửa Ngủ'), text: S("The Rift · Broken-Spring Clock.\nEvery 20 s the Gear God REWINDS the last 3 seconds: everyone runs backwards and he heals back — unless the big COGWHEEL on his back is broken.\nThe cogwheel can only be hit from BEHIND him: let Rocky hold his attention and circle around.\nAMBER FRAME: smash the amber to free Rocky. SECOND HANDS: stay away from where the two hands cross.\nTWELVE O'CLOCK: stand in a slice that is not red.\nSouth cave → Sleeping Volcano", 'Khe Nứt · Đồng Hồ Đứt Dây.\nMỗi 20 giây Thần Bánh Răng TUA LẠI 3 giây cuối: mọi người chạy ngược và hắn hồi máu — trừ khi BÁNH RĂNG lớn trên lưng đã vỡ.\nBánh răng chỉ đánh được từ SAU LƯNG: để Rocky giữ chân hắn rồi vòng ra sau.\nKHUNG HỔ PHÁCH: đập khung để cứu Rocky. KIM GIÂY: tránh chỗ hai kim giao nhau.\nMƯỜI HAI GIỜ: đứng ở múi không đỏ.\nHang Nam → Núi Lửa Ngủ') });
+  m.npcArea = { x: 3, y: 3, w: W - 6, h: H - 6 };
+  return m;
+}
+/* plan-30 trùm 2: khe nứt Trống Đồng ở M2 — tìm chỗ trống 2×1 gần quảng trường (phía Đông), có 2 ô đi được ngay dưới để đứng / làm lối vào 'rift' */
+function riftCrackM2(m, rid = 'rift2') {
+  const reach = computeReach(m, m.entries.default);
+  for (let r = 0; r < 14; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+    const x = CX + 11 + dx, y = 6 + dy; if (x < 3 || y < 3 || x + 2 >= W - 3 || y + 3 >= H - 3) continue;
+    const okT = (a, b) => !isSolid(m, a, b) && !hasObjectAt(m, a, b) && !isRoad(m, a, b) && !inPlot(m, a, b) && !reservedNear(m, a, b);
+    if (!(okT(x, y) && okT(x + 1, y) && okT(x, y + 1) && okT(x + 1, y + 1) && okT(x + 1, y + 2) && reach[idx(m, x + 1, y + 2)])) continue;
+    place(m, 'rift_crack', x, y, { rift: rid, tag: S('Magnitude Rift', 'Khe Nứt Magnitude') });
+    m.entries.rift = { x: x + 1, y: y + 2 }; m.reserved.push(m.entries.rift, { x, y: y + 1 }, { x: x + 1, y: y + 1 });
+    return true;
+  }
+  return false;
 }
 
 // A nation's district. Its architecture grows with the land's tier (0 camp … 5 sanctum); the top-ranked nations get a fountain / statue.
@@ -214,9 +342,7 @@ function buildPlot(m, p, n, t, idx = m.plots.length) {
   if (tier.lights && t.light) put(t.light, x + 1, y + 6, { piece: 'light' });
   if (tier.house) put(tier.house, x + 6, y + 5, { piece: 'house' });
   if (n.rank === 1) put('fountain', x + 1, y + 4, { piece: 'fountain' });
-  // every nation raises its own Rocky statue, in its colours, centred under the entrance (tallest ones one row lower)
-  const rk = rockyObj(n.key, tn), rd = O[rk];
-  put(rk, x + 5 - Math.floor(rd.fw / 2), y + (rd.h > 60 ? 3 : 2), { nation: n.key, rocky: true, piece: 'rocky' });
+  /* 2026-10-12 anh: bỏ tượng Rocky quốc gia khỏi game (giữ cờ) — kéo theo điều khiển Rocky + sumo Rocky không còn. Bản cũ _bak/nostatue/world.js */
   const plot = { x, y, w: PW, h: PH, nation: n.key, tier: tn, rank: n.rank, spawn: { x: x + 1, y: y + 2, w: PW - 2, h: PH - 3 } };
   if (idx === m.plots.length) m.plots.push(plot); else m.plots[idx] = plot;
 }
@@ -237,23 +363,23 @@ const themes = {
   m1: { tier: 1, base: T.SAND, scatter: [[T.SAND2, .15]], plot: T.DIRT, path: T.DIRT, border: (x, y) => y < 2 || y > H - 3 ? 'palm' : 'rock', water: 8, decor: [['palm', .04], ['rock', .015], ['shell', .03], ['rock_s', .02]], light: 'torch', prev: 'road1', next: 'road2', lv: 1,
     fixed: [{ obj: 'boat', x: 5, y: 59 }],
     sign: S('Magnitude 1.0 — where every artist starts.\nMeet 5 artists here to earn the M1 badge.', 'Magnitude 1.0 — nơi mọi nghệ sĩ bắt đầu.\nGặp 5 người ở đây để nhận huy hiệu M1.') },
-  m2: { tier: 1, base: T.GRASS, scatter: [[T.GRASS2, .12], [T.FLOWER, .04], [T.CRACKG, .04]], plot: T.GRASS2, path: T.DIRT, border: 'tree', decor: [['bush', .03], ['tree', .03], ['crate', .01]], light: 'lantern', houses: true, prev: 'road2', next: 'road3', lv: 2,
+  m2: { tier: 1, base: T.GRASS, scatter: [[T.GRASS2, .12], [T.FLOWER, .04], [T.CRACKG, .04]], plot: T.GRASS2, path: T.DIRT, border: 'tree', decor: [['bush', .03], ['tree', .03], ['crate', .01]], light: 'lantern', houses: true, prev: 'road2', next: 'road3', lv: 2, riftCrack: true,
     fixed: [{ obj: 'stall', x: CX - 10, y: 7, extra: { shop: true } }, { obj: 'stall', x: CX + 8, y: 7, extra: { shop: true } }, { obj: 'stall', x: CX - 10, y: 9, extra: { shop: true } }, { obj: 'well', x: CX + 8, y: 9 }],
     sign: S('Magnitude 2.0 — the lanterns sway.\nThe market by the plaza trades tremor shards for outfits. Meet 5 artists.', 'Magnitude 2.0 — đèn lồng đung đưa.\nChợ cạnh quảng trường đổi mảnh dư chấn lấy trang phục. Gặp 5 nghệ sĩ.') },
   m3: { tier: 2, base: T.GRASS, scatter: [[T.MOSS, .25], [T.GRASS2, .15], [T.CRACKG, .07]], plot: T.DIRT, path: T.DIRT, border: 'tree', decor: [['tree', .16], ['deadtree', .04], ['bush', .05], ['rock_s', .03]], light: 'campfire', prev: 'road3', next: 'road4', lv: 3,
     fixed: [{ obj: 'campfire_off', x: 8, y: 19, extra: { fire: true } }, { obj: 'campfire_off', x: 72, y: 29, extra: { fire: true } }, { obj: 'campfire_off', x: 30, y: 49, extra: { fire: true } }],
     sign: S('Magnitude 3.0 — the forest is cracking.\nLight the 3 cold campfires along the roads so nobody gets lost. Meet 6 artists.', 'Magnitude 3.0 — rừng đang nứt.\nĐốt 3 đống lửa tắt dọc đường để không ai lạc. Gặp 6 nghệ sĩ.') },
-  m4: { tier: 2, base: T.ROCK, scatter: [[T.GRAVEL, .2], [T.DARK, .08]], plot: T.GRAVEL, path: T.GRAVEL, border: 'rock', decor: [['ore', .05, { ore: true }], ['rock', .04], ['boulder', .006], ['crate', .01], ['torch', .015], ['beam', .01]], light: 'torch', prev: 'road4', next: 'road5', lv: 4,
+  m4: { tier: 2, base: T.ROCK, scatter: [[T.GRAVEL, .2], [T.DARK, .08]], plot: T.GRAVEL, path: T.GRAVEL, border: 'rock', decor: [['ore', .05, { ore: true }], ['rock', .04], ['boulder', .006], ['crate', .01], ['torch', .015], ['beam', .01]], light: 'torch', prev: 'road4', next: 'road5', lv: 4, riftCrack: 'rift4',   /* plan-30 trùm 4: khe nứt Hố Đen Địa Tâm (mỏ sâu, phía Đông quảng trường) */
     fixed: [{ obj: 'cart', x: CX - 9, y: 7 }, { obj: 'cart', x: CX + 7, y: 7 }],
     sign: S('Magnitude 4.0 — Rockfall Mine.\nWatch the shadows — stones fall. Mine 3 ore. Meet 6 artists.', 'Magnitude 4.0 — Mỏ Đá Lở.\nCoi chừng bóng đen — đá rơi. Đào 3 quặng. Gặp 6 nghệ sĩ.') },
   m5: { tier: 3, base: T.DIRT, scatter: [[T.CRACKD, .1], [T.GRAVEL, .12], [T.ROCK, .05]], plot: T.GRAVEL, path: T.GRAVEL, border: 'rock', decor: [['boulder', .008], ['rock', .04], ['deadtree', .03], ['rock_s', .03]], light: 'torch', prev: 'road5', next: 'road6', lv: 5,
     bands: [{ rows: [28, 29], tile: T.CHASM, gaps: [[CX - 1, CX + 1]], bridge: true }],
     fixed: [{ obj: 'lever_off', x: CX - 2, y: 33, extra: { lever: true } }, { obj: 'lever_off', x: CX + 2, y: 33, extra: { lever: true } }],
     sign: S('Magnitude 5.0 — Fault Canyon.\nThe fault splits the land in two. Pull both levers south of it to raise the bridge. Meet 6 artists.', 'Magnitude 5.0 — Hẻm Đứt Gãy.\nĐứt gãy chia đôi vùng đất. Gạt cả hai cần ở bờ Nam để nâng cầu. Gặp 6 nghệ sĩ.') },
-  m6: { tier: 3, base: T.COBBLE, scatter: [[T.MOSS, .1], [T.STONE, .06]], plot: T.STONE, path: T.STONE, plaza: T.STONE, border: 'pillar_broken', decor: [['pillar_broken', .04], ['pillar', .012], ['statue', .008], ['bush', .02], ['rock_s', .02]], light: 'lantern', prev: 'road6', next: 'road7', lv: 6,
+  m6: { tier: 3, base: T.COBBLE, scatter: [[T.MOSS, .1], [T.STONE, .06]], plot: T.STONE, path: T.STONE, plaza: T.STONE, border: 'pillar_broken', decor: [['pillar_broken', .04], ['pillar', .012], ['statue', .008], ['bush', .02], ['rock_s', .02]], light: 'lantern', prev: 'road6', next: 'road7', lv: 6, riftCrack: 'rift3',   /* plan-30 trùm 3: khe nứt Gương Địa Chấn (phía Đông quảng trường thư viện) */
     fixed: [{ obj: 'library', x: CX - 9, y: 7, extra: { quiz: 'library' } }, { obj: 'library', x: CX + 7, y: 7, extra: { quiz: 'library' } }, { obj: 'tower', x: 5, y: 7 }, { obj: 'tower', x: 72, y: 7 }],
     sign: S('Magnitude 6.0 — the Leaning City.\nThe libraries by the plaza test what you know about Seismic. Meet 7 artists.', 'Magnitude 6.0 — Thành Nghiêng.\nThư viện cạnh quảng trường kiểm tra bạn hiểu Seismic tới đâu. Gặp 7 nghệ sĩ.') },
-  m7: { tier: 4, base: T.ASH, scatter: [[T.ROCK, .15], [T.DARK, .05]], plot: T.ROCK, path: T.ROCK, border: 'rock', decor: [['rock', .05], ['deadtree', .035], ['rock_s', .04], ['torch', .01], ['obsidian', .003, { item: 'obsidian' }]], light: 'torch', prev: 'road7', next: 'road8', lv: 7,
+  m7: { tier: 4, base: T.ASH, scatter: [[T.ROCK, .15], [T.DARK, .05]], plot: T.ROCK, path: T.ROCK, border: 'rock', decor: [['rock', .05], ['deadtree', .035], ['rock_s', .04], ['torch', .01], ['obsidian', .003, { item: 'obsidian' }]], light: 'torch', prev: 'road7', next: 'road8', lv: 7, riftCrack: 'rift5',   /* plan-30 trùm 5: khe nứt Đồng Hồ Đứt Dây (lò rèn ngầm, phía Đông quảng trường) */
     bands: [{ rows: [18, 19], tile: T.LAVA, gaps: [[13, 14], [CX - 1, CX + 1], [65, 66]] }, { rows: [38, 39], tile: T.LAVA, gaps: [[25, 26], [CX - 1, CX + 1], [53, 54]] }],
     fixed: [{ obj: 'obsidian', x: 6, y: 29, extra: { item: 'obsidian' } }, { obj: 'obsidian', x: 74, y: 29, extra: { item: 'obsidian' } }, { obj: 'obsidian', x: 6, y: 49, extra: { item: 'obsidian' } }, { obj: 'obsidian', x: 74, y: 49, extra: { item: 'obsidian' } }],
     sign: S("Magnitude 7.0 — the Sleeping Volcano.\nTwo lava rivers cross the land. Collect 3 obsidian shards, dodge the spurts. Meet 7 artists.", 'Magnitude 7.0 — Núi Lửa Ngủ.\nHai sông dung nham cắt ngang. Nhặt 3 mảnh obsidian, né dung nham phun. Gặp 7 nghệ sĩ.') },
@@ -628,6 +754,10 @@ defObj('pass_gate_open', 48, 40, 3, 1, g => { px1(g, 2, 8, '#3a2618', 8, 32); px
 defObj('cliff_mine', 16, 32, 1, 1, g => { px1(g, 1, 4, '#3a2c22', 14, 28); px1(g, 2, 5, '#8a7a68', 12, 26); px1(g, 2, 12, '#6a5a4a', 12, 2); px1(g, 2, 21, '#6a5a4a', 12, 2); });
 defObj('cliff_basalt', 16, 32, 1, 1, g => { px1(g, 1, 4, '#1a1418', 14, 28); px1(g, 2, 5, '#3a3236', 12, 26); px1(g, 6, 10, '#e8541e', 1, 8); });
 const ROAD_WALL = { m4: 'cliff_mine', m5: 'cliff_mine', m7: 'cliff_basalt' };
+/* 2026-10-12 tối anh: viền đèo M1 (road2) toàn đá xếp ô trông rối → pha rừng cọ + bụi (ảnh PixelLab sẵn có: m1 palm/rock, làng bush — đều có ảnh hư/đổ nát riêng).
+   ROAD_MIX: [vật, tỉ lệ] cho khối viền (trừ 2 cột mép); ROAD_LOW: vật thấp xen kẽ ngay dưới chỗ đi được (không che người). */
+const ROAD_MIX = { m1: [['palm', 0.5], ['bush', 0.3], ['rock', 0.2]] };
+const ROAD_LOW = { m1: ['bush', 'bush', 'rock'] };
 function buildRoad(R, idx) {
   return rng => {
     const t = themes[R.lower], W = ROAD.W, C = W >> 1, len = ROAD.len, H = len + 6, hw = ROAD.half, ch = ROAD.clearHalf;
@@ -639,9 +769,14 @@ function buildRoad(R, idx) {
     for (let y = C0; y <= C1; y++) for (let x = C - ch; x <= C + ch; x++) { const k = Math.min(y - C0, C1 - y); if (Math.abs(x - C) <= ch - (k === 0 ? 2 : 0)) walk[at(x, y)] = 1; }   /* sân bo góc */
     for (let x = C - hw; x <= C + hw; x++) if (Math.abs(x - C) > 1) walk[at(x, G)] = 0;   /* hàng cổng: chỉ chừa 3 ô cho cổng đèo */
     for (let y = 0; y < 2; y++) for (let x = C - hw; x <= C + hw; x++) if (Math.abs(x - C) > 1) walk[at(x, y)] = 0;   /* 2 đầu: đường 3 ô ra mép */
+    /* 2026-10-12 tối anh: TÚI TRỐNG hai bên đường — chỗ bầy quái NHỎ tụ để farm kinh nghiệm (monsters.js SMALL[roadN]).
+       4 túi 5×4 ô bo góc nối thẳng vào mép đường, xa sân đấu bạn tập + cổng đèo (2 túi dưới sân, 2 túi trên cổng); vẫn cách mép bản đồ ≥ 7 ô (viền kín). */
+    const PW = 5, PH = 4, pockets = [{ x0: C - hw - PW, y0: C1 + 3 }, { x0: C + hw + 1, y0: H - 9 }, { x0: C - hw - PW, y0: 4 }, { x0: C + hw + 1, y0: G - 8 }].filter(q => q.y0 >= 3 && q.y0 + PH <= H - 4 && (q.y0 + PH < G - 1 || q.y0 > C1 + 1));
+    for (const q of pockets) for (let y = q.y0; y < q.y0 + PH; y++) for (let x = q.x0; x < q.x0 + PW; x++) { const cx0 = x === q.x0 || x === q.x0 + PW - 1, cy0 = y === q.y0 || y === q.y0 + PH - 1; if (!(cx0 && cy0)) walk[at(x, y)] = 1; }
     for (let y = H - 2; y < H; y++) for (let x = C - hw; x <= C + hw; x++) if (Math.abs(x - C) > 1) walk[at(x, y)] = 0;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!walk[at(x, y)]) setSolid(m, x, y, 1);
     for (let y = C0 + 1; y < C1; y++) for (let x = C - ch + 1; x <= C + ch - 1; x++) if (walk[at(x, y)] && rng() < 0.5) setG(m, x, y, t.plot || t.path, false);   /* sân nện đất loang lổ */
+    for (const q of pockets) for (let y = q.y0; y < q.y0 + PH; y++) for (let x = q.x0; x < q.x0 + PW; x++) if (walk[at(x, y)] && rng() < 0.35) setG(m, x, y, t.plot || t.path, false);   /* túi farm: đất giẫm loang lổ */
     for (let y = 0; y < H; y++) for (let x = C - 1; x <= C + 1; x++) if (walk[at(x, y)]) { setG(m, x, y, t.path, false); m.roads[at(x, y)] = 1; }   /* lối mòn 3 ô giữa đường */
     m.gates.push({ x: C - 1, y: 0, w: 3, h: 2, to: R.upper, entry: 'default', requires: null, path: true });
     m.gates.push({ x: C - 1, y: H - 1, w: 3, h: 1, to: R.lower, entry: 'back', requires: null, path: true });
@@ -662,8 +797,9 @@ function buildRoad(R, idx) {
       /* 2026-10-12 anh: cả khối rừng / đá đều phản ứng khi bị văng vào → MỌI ô không đi được đều có vật (không còn ô cứng trống vô hình) */
       let type = bt(x, y < 2 ? 0 : y > H - 3 ? H - 1 : 10, rng); if (!gateRow && d > 1 && deco.length && rng() < 0.3) type = deco[(rng() * deco.length) | 0];
       if (!one(type)) type = one('rock') ? 'rock' : 'tree';
+      if (ROAD_MIX[R.lower] && !edge) { const mx = ROAD_MIX[R.lower]; let r0 = rng(); type = mx[mx.length - 1][0]; for (const [o, p] of mx) { if (r0 < p) { type = o; break; } r0 -= p; } }   /* 2026-10-12 tối anh: viền M1 toàn đá rối mắt → pha cọ + bụi */
       if (ROAD_WALL[R.lower] && (d <= 2 || edge || gateRow) && rng() < 0.85) type = ROAD_WALL[R.lower];   /* đèo vùng đá: vách đá cao sát đường */
-      if (y > 0 && (walk[at(x, y - 1)] || (y > 1 && walk[at(x, y - 2)])) && (O[type].h || 16) > 20) type = low;   /* ngay DƯỚI chỗ đi được: vật thấp (bụi / đá) — tán cây cao vẽ sau sẽ che mất người đứng sát mép dưới (QA 2026-10-12) */
+      if (y > 0 && (walk[at(x, y - 1)] || (y > 1 && walk[at(x, y - 2)])) && (O[type].h || 16) > 20) type = ROAD_LOW[R.lower] ? ROAD_LOW[R.lower][(x + y) % ROAD_LOW[R.lower].length] : low;   /* ngay DƯỚI chỗ đi được: vật thấp (bụi / đá) — tán cây cao vẽ sau sẽ che mất người đứng sát mép dưới (QA 2026-10-12) */
       place(m, type, x, y);
     }
     if (t.light && one(t.light)) for (const x of [C - ch + 1, C + ch - 1]) if (!hasObjectAt(m, x, C0)) place(m, t.light, x, C0);   /* đèn 2 góc trên sân */
@@ -675,7 +811,9 @@ function buildRoad(R, idx) {
     const n = 4 + (idx >= 4 ? 1 : 0) + (idx >= 7 ? 1 : 0), lowN = Math.ceil(n / 2), upN = n - lowN, spots = [];   /* quái đường: 4–6 chỗ cố định ngoài sân */
     for (let i = 0; i < lowN; i++) spots.push({ x: C + (i % 2 ? 3 : -3), y: Math.round(C1 + 4 + (H - 8 - (C1 + 4)) * (i + 0.5) / lowN) });
     for (let i = 0; i < upN; i++) spots.push({ x: C + (i % 2 ? -3 : 3), y: Math.round(5 + (G - 3 - 5) * (i + 0.5) / upN) });
-    m.monSpots = spots;
+    /* 2026-10-12 tối anh: quái NHỎ để farm — 3 con mỗi túi trống (rải 3 góc túi), small: true → monsters.js SMALL[roadN], hồi sinh nhanh; nằm SAU quái thường trong mảng (test dùng spots()[0] = quái thường) */
+    for (const q of pockets) for (const [dx, dy] of [[1, 1], [3, 1], [2, 2]]) spots.push({ x: q.x0 + dx, y: q.y0 + dy, small: true });
+    m.monSpots = spots; m.farmPockets = pockets.map(q => ({ x: q.x0, y: q.y0, w: PW, h: PH }));
     m.npcArea = { x: C - 3, y: 3, w: 7, h: H - 6 }; m.specials = [];
     return m;
   };
@@ -705,6 +843,21 @@ export const ZONES = {
   arena: { id: 'arena', lv: -2, order: 0.5, hidden: true, name: S('Underground Ring', 'Sàn Đấu Ngầm'), tremor: 0, build: buildArena, arena: true,
     systems: ['hero', 'monsters', 'knock', 'spar', 'xealist', 'arena', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(30,12,4,.28)', vignette: true,
     flavor: S(['Sand on the floor, sweat in the air. Somebody is always training down here.'], ['Cát dưới chân, mồ hôi trong không khí. Dưới này lúc nào cũng có người đang tập.']) },
+  rift1: { id: 'rift1', lv: -2, order: 0.55, hidden: true, rift: true, name: S('Magnitude Rift · Shadow Rocky', 'Khe Nứt · Hắc Rocky'), tremor: 0, build: buildRift1,
+    systems: ['hero', 'monsters', 'knock', 'arena', 'hacrocky', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(60,0,90,.38)', vignette: true,
+    flavor: S(['Your own shadow looks back at you. It has your Rocky’s eyes — only white.'], ['Bóng của chính bạn nhìn lại. Nó có đôi mắt của Rocky — chỉ là trắng dã.']) },
+  rift2: { id: 'rift2', lv: -2, order: 2.55, hidden: true, rift: true, name: S('Magnitude Rift · Thunder Bronze Drum', 'Khe Nứt · Trống Đồng Thiên Lôi'), tremor: 0, build: buildRift2,
+    systems: ['hero', 'monsters', 'knock', 'arena', 'trongdong', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(40,24,6,.30)', vignette: true,
+    flavor: S(['Every beat of the drum shakes dust from the ceiling.'], ['Mỗi nhịp trống làm bụi trên trần rơi lả tả.']) },
+  rift3: { id: 'rift3', lv: -2, order: 6.55, hidden: true, rift: true, name: S('Magnitude Rift · Mirror Queen', 'Khe Nứt · Gương Địa Chấn'), tremor: 0, build: buildRift3,
+    systems: ['hero', 'monsters', 'knock', 'arena', 'guong', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(30,20,70,.24)', vignette: true,
+    flavor: S(['Every mirror here shows you a second too late.'], ['Mọi tấm gương ở đây đều phản chiếu bạn chậm mất một giây.']) },
+  rift4: { id: 'rift4', lv: -2, order: 4.55, hidden: true, rift: true, name: S('Magnitude Rift · Void Devourer', 'Khe Nứt · Hố Đen Địa Tâm'), tremor: 0, build: buildRift4,
+    systems: ['hero', 'monsters', 'knock', 'arena', 'hoden', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(20,6,40,.36)', vignette: true,
+    flavor: S(['Pebbles roll uphill here — toward the dark.'], ['Sỏi ở đây lăn ngược dốc — về phía bóng tối.']) },
+  rift5: { id: 'rift5', lv: -2, order: 7.55, hidden: true, rift: true, name: S('Magnitude Rift · Broken-Spring Clock', 'Khe Nứt · Đồng Hồ Đứt Dây'), tremor: 0, build: buildRift5,
+    systems: ['hero', 'monsters', 'knock', 'arena', 'dongho', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(40,24,4,.26)', vignette: true,
+    flavor: S(['Every gear in this forge turns the wrong way.'], ['Mọi bánh răng trong lò rèn này đều quay ngược chiều.']) },
   trench: { id: 'trench', lv: -2, order: 99, hidden: true, name: S('Kraken Trench', 'Vực Kraken'), tremor: 0, build: buildTrench, trench: true, systems: ['trench', 'storyLand', 'photo', 'pet'], tint: 'rgba(0,10,40,.35)', vignette: true,
     flavor: S(['Nothing lives down here but what the Kraken keeps.'], ['Dưới này không có gì sống ngoài thứ Kraken giữ.']) },
   sea: { id: 'sea', lv: -2, order: -1, name: S('Sea of Origins', 'Biển Khởi Nguồn'), tremor: 0, build: buildSea, sea: true,

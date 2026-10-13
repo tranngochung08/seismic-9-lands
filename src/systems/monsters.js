@@ -62,6 +62,11 @@ SP.xfort = { ...UW.shade, mix: [UW.shade], boss: UW.xealistb, day: 0, night: 0, 
    đứng ở chỗ cố định (map.monSpots), chết thì hồi sinh tại chỗ sau 10 s (người chơi đứng gần thì chờ thêm). */
 ROADS.forEach((R, i) => { const b = SP[R.lower], k = 1.2 + 0.3 * i / 8; SP[R.id] = { ...b, hp: Math.round(b.hp * k), dmg: Math.round(b.dmg * k), xp: Math.round(b.xp * k), day: 0, night: 0, road: true, steal: null }; });
 export const ROAD_RESPAWN = 10, ROAD_NEAR = 80;
+/* 2026-10-12 tối anh: quái NHỎ trên đèo để FARM kinh nghiệm — cùng loài + cùng sheet PixelLab của vùng dưới (không vẽ code), yếu hơn:
+   máu ×0,5 · sức đánh ×0,6 · giáp −1 · kinh nghiệm ×0,25 của quái vùng gốc (đo 2026-10-12: ×0,4 → ~400 XP/phút ở đèo M3, quá nhanh); hồi sinh tại chỗ 8 s, người đứng trong 4 ô thì chờ
+   (đứng lì 1 túi không 'đẻ' quái liên tục — phải đi vòng các túi) → farm nhanh hơn vùng chính (20 s/con) ~1,5–2× mà không nhảy cấp (qa rf_farm đo). Rơi đồ ít hơn (đỡ ngập đá / hồn). Đứng ở túi trống hai bên đèo (world.js). */
+export const SMALL = {}, SMALL_RESPAWN = 8, SMALL_NEAR = 64;
+ROADS.forEach(R => { const b = SP[R.lower]; SMALL[R.id] = { ...b, vi: b.vi + ' Con', en: 'Little ' + b.en, hp: Math.round(b.hp * 0.5), dmg: Math.max(1, Math.round(b.dmg * 0.6)), armor: Math.max(0, (b.armor || 0) - 1), xp: Math.max(2, Math.round(b.xp * 0.25)), day: 0, night: 0, road: true, small: true, steal: null }; });
 const NEED_LV = { village: 1, m1: 2, sea: 2, u1: 3, m2: 3, m3: 5, m4: 7, u2: 8, m5: 9, m6: 11, u3: 12, m7: 13, m8: 15, u4: 16, m9: 17, kraken: 18, xfort: 19, road1: 2, road2: 3, road3: 4, road4: 6, road5: 8, road6: 10, road7: 12, road8: 14, road9: 16 };   /* cấp nhân vật dự kiến của vùng */
 /* đi vùng khó khi cấp còn thấp → quái đánh đau hơn, tối đa gấp đôi (nhắc quay lại luyện cấp) */
 const hurtMul = ctx => { const need = NEED_LV[ctx.S.zone && ctx.S.zone.id] || 1, lv = ctx.hero ? ctx.hero.lv : need; return lv >= need ? 1 : Math.min(2, 1 + (need - lv) * 0.25); };
@@ -96,7 +101,7 @@ const ST = { ctx: null, list: [], cfg: null, spawnT: 0, warnT: 0, needT: 0, shel
 const vi = ctx => ctx.lang() === 'vi';
 const nm = (ctx, c = ST.cfg) => (vi(ctx) ? c.vi : c.en);
 const T = ctx => (vi(ctx) ? {
-  hit: (n, h, m) => `⚔ Đánh ${n} (${h}/${m})`, armor: k => `Giáp cứng! Cần ⚔ kiếm cấp ${k} trở lên`, crop: n => `${n} đang tới gặm cây trồng của bạn!`, carry: n => `${n} đang đuổi theo đồ bạn đang bế!`,
+  hit: (n, h, m, x) => `⚔ Đánh ${n} (${h}/${m})${x ? ` · ${x} XP` : ''}`, armor: k => `Giáp cứng! Cần ⚔ kiếm cấp ${k} trở lên`, crop: n => `${n} đang tới gặm cây trồng của bạn!`, carry: n => `${n} đang đuổi theo đồ bạn đang bế!`,
   node: n => `${n} chiếm chỗ tài nguyên — đánh đuổi nó!`, stole: n => `${n} cướp mất đồ rồi! Đuổi theo đánh để lấy lại`, kill: (n, x) => `💥 Hạ ${n}! +${x} kinh nghiệm`, back: 'Lấy lại được đồ!', night: n => `🌙 Đêm xuống — ${n} kéo đến săn dân làng!`,
   shell: 'Vỏ cứng! Đánh lúc nó GIƠ CÀNG mới đau', raise: n => `${n} giơ càng — đánh ngay hoặc lùi ra!`, boss: n => `👑 ${n} canh cổng xoáy!`,
   stuck: n => `${n} cắm mỏ vào đá — đánh ngay!`, ring: n => `${n} tích điện — bơi ra xa hoặc chui vào KHE HỞ của vòng điện!`, drained: n => `${n} hết điện — đánh mạnh lúc này!`, summon: n => `${n} gọi Lươn Điện con tới!`,
@@ -104,7 +109,7 @@ const T = ctx => (vi(ctx) ? {
   scales: 'Vảy cứng như đá! Đánh vào ĐẦU rắn mới đau', rear: n => `${n} ngóc đầu — sắp lao tới!`, headDown: n => `${n} đập đầu xuống — đánh vào đầu ngay!`,
   lured: 'Ánh sáng lạ đang dụ bạn lại gần… bơi ra xa!', hitBody: (n, h, m) => `⚔ Đánh thân ${n} (vảy cứng) (${h}/${m})`,
 } : {
-  hit: (n, h, m) => `⚔ Attack ${n} (${h}/${m})`, armor: k => `Tough hide! Needs a ⚔ tier ${k}+ sword`, crop: n => `${n} is heading for your crops!`, carry: n => `${n} is chasing what you carry!`,
+  hit: (n, h, m, x) => `⚔ Attack ${n} (${h}/${m})${x ? ` · ${x} XP` : ''}`, armor: k => `Tough hide! Needs a ⚔ tier ${k}+ sword`, crop: n => `${n} is heading for your crops!`, carry: n => `${n} is chasing what you carry!`,
   node: n => `${n} took over a resource spot — drive it off!`, stole: n => `${n} stole it! Chase it down to get it back`, kill: (n, x) => `💥 Defeated ${n}! +${x} XP`, back: 'Got it back!', night: n => `🌙 Night falls — ${n} come hunting the villagers!`,
   shell: 'Hard shell! Hit it while its CLAWS ARE RAISED', raise: n => `${n} raises its claws — strike now or back off!`, boss: n => `👑 The ${n} guards the whirl gate!`,
   stuck: n => `The ${n} is stuck in the rock — hit it now!`, ring: n => `The ${n} is charging — swim away or into the GAP in the ring!`, drained: n => `The ${n} is drained — hit it hard now!`, summon: n => `The ${n} calls its young eels!`,
@@ -137,7 +142,8 @@ function spawnOne(ctx, kind) {
 }
 function spawnAt(ctx, i) {   /* plan-28: quái đường đèo ở chỗ cố định i */
   const sp = ctx.S.map.monSpots && ctx.S.map.monSpots[i]; if (!sp || !ST.cfg) return null;
-  const mo = newMo(ST.cfg, sp.x * 16 + 8, sp.y * 16 + 12); mo.spot = i; mo.home = { x: mo.x, y: mo.y }; ST.list.push(mo); return mo;
+  const c = sp.small ? SMALL[ctx.S.zone.id] || ST.cfg : ST.cfg;
+  const mo = newMo(c, sp.x * 16 + 8, sp.y * 16 + 12); mo.spot = i; mo.home = { x: mo.x, y: mo.y }; ST.list.push(mo); return mo;
 }
 function spawnBoss(ctx) {   /* trùm canh cổng: 1 con, đứng ở m.boss, không hồi sinh khi cổng đã mở */
   const z = ST.cfg, m = ctx.S.map; if (!z || !z.boss || !m.boss || ST.list.some(o => o.c.boss)) return null;
@@ -190,12 +196,13 @@ function killMonster(ctx, mo, xpMul = 1) {
   if (c.onDown) { ST.list = ST.list.filter(o => o !== mo); c.onDown(mo); return; }   /* spar.js: bạn tập thua → không rơi đồ, hệ spar tự thưởng */
   const got = []; const add = (id, n) => { ctx.give(id, n, mo.x, mo.y); };   /* plan-24: đồ rơi ra chỗ quái ngã, nhặt rồi mới vào túi */
   if (c.boss) { add(c.drop, 2); add('stone', 10 + ((Math.random() * 6) | 0)); add('pearl', 1); add('soul', 1); }   /* plan-26: trùm canh cổng rơi nhiều */
+  else if (c.small) { if (Math.random() < 0.25) add(c.drop, 1); if (Math.random() < 0.05) add('soul', 1); if (Math.random() < 0.15) add('stone', 1); }   /* quái nhỏ farm: rơi ít */
   else { if (Math.random() < 0.7) add(c.drop, 1); if (Math.random() < 0.3) add('soul', 1); if (Math.random() < 0.35) add('stone', 1 + ((Math.random() * 2) | 0)); }
   if (mo.loot) dropLoot(ctx, mo);   /* plan-24: đồ cướp rơi xuống đất */
   if (ctx.pop && got.length) ctx.pop(mo.x, mo.y - 16, got.join(' '));
   if (ctx.vfx && !ctx.vfx('monster_poof', mo.x, mo.y + 4, 0, true)) ctx.vfx('dirt_puff', mo.x, mo.y + 2);
-  if (mo.spot != null) (ST.rq ||= []).push({ spot: mo.spot, t: ROAD_RESPAWN });   /* plan-28: hồi sinh tại chỗ sau 10 s */
-  const xp = Math.max(1, Math.round(c.xp * xpMul)); ST.killed++; if (!c.boss) ST.respawnT = 20; if (ctx.hero) ctx.hero.gainXp(xp); ctx.toast(t.kill(nm(ctx, c), xp)); ctx.sfx('coin');
+  if (mo.spot != null) (ST.rq ||= []).push({ spot: mo.spot, t: c.small ? SMALL_RESPAWN : ROAD_RESPAWN });   /* plan-28: hồi sinh tại chỗ sau 10 s */
+  const xp = Math.max(1, Math.round(c.xp * xpMul)); ST.killed++; if (!c.boss) ST.respawnT = 20; if (ctx.hero) ctx.hero.gainXp(xp); (ctx.S.pops ||= []).push({ x: mo.x, y: mo.y - 26, text: `+${xp} XP`, color: '#9dff7a', t: 0 });   /* 2026-10-12 anh: thấy ngay hạ quái được bao nhiêu XP */ ctx.toast(t.kill(nm(ctx, c), xp)); ctx.sfx('coin');
   if (ctx.villagers) ctx.villagers.rescued(mo);
   if (ctx.onMonsterDown) { try { ctx.onMonsterDown(mo, c.xp); } catch (e) { console.error('onMonsterDown', e); } }   /* plan-27: Rocky nhận kinh nghiệm khi cùng hạ quái (pet.js) */
   if (c.ai === 'kraken') krOnDeath(mo);   /* đầu Kraken chìm hẳn xuống khe vực */
@@ -593,8 +600,9 @@ export const monsters = {
       spawnNear: (n = 1) => { const p = ctx.S.player; for (let i = 0; i < n; i++) { if (!spawnOne(ctx)) break; const m = ST.list[ST.list.length - 1]; m.x = p.x + 30 + i * 10; m.y = p.y; } return ST.list.length; },
       spawnKind: (key, dx = 26, dy = 0) => { const c = UW[key] || Object.values(SP).find(s => s.key === key); if (!c) return null; const p = ctx.S.player, mo = newMo(c, p.x + dx, p.y + dy); if (c.boss) mo.home = { x: mo.x, y: mo.y }; ST.list.push(mo); return mo.id; },
       boss: () => { const b = ST.list.find(m => m.c.boss); return b ? { x: Math.round(b.x), y: Math.round(b.y), hp: b.hp, max: b.max, st2: b.st2 || null, open: !!b.open, key: b.c.key, ph: b.ph || null, slams: (b.slams || []).map(s => ({ x: Math.round(s.x), y: Math.round(s.y), st: s.st })), beams: (b.beams || []).map(s => ({ st: s.st, a: +s.a.toFixed(2) })), summoned: !!b.summoned, kr: b.kr ? { surf: +b.kr.surf.toFixed(2), sink: +b.kr.sink.toFixed(1), sweeps: b.kr.sweeps.map(w => w.st), rocks: b.kr.rocks.length, grab: b.kr.grab && { st: b.kr.grab.st, n: b.kr.grab.n }, anim: b.kr.anim && b.kr.anim.k } : null } : null; },
-      lastHit: () => ST.lastHit, killed: () => ST.killed, rq: () => (ST.rq || []).map(q => ({ ...q })), spots: () => ST.list.filter(m => m.spot != null).map(m => ({ spot: m.spot, x: Math.round(m.x), y: Math.round(m.y), hp: m.hp, max: m.max, key: m.c.key })),
-      killSpot: i => { const mo = ST.list.find(m => m.spot === i); if (mo) killMonster(ctx, mo); return !!mo; }, clear: () => { ST.list.forEach(release); ST.list = []; },
+      lastHit: () => ST.lastHit, killed: () => ST.killed, rq: () => (ST.rq || []).map(q => ({ ...q })), spots: () => ST.list.filter(m => m.spot != null).map(m => ({ spot: m.spot, x: Math.round(m.x), y: Math.round(m.y), hp: m.hp, max: m.max, key: m.c.key, small: !!m.c.small, xp: m.c.xp, dmg: m.c.dmg, armor: m.c.armor })),
+      killSpot: (i, t) => { const mo = ST.list.find(m => m.spot === i); if (mo) { killMonster(ctx, mo); const q = (ST.rq || []).find(q => q.spot === i); if (q && (t != null || mo.c.small)) q.t = t ?? 90; } return !!mo; },   /* móc test: dọn quái nhỏ thì để vắng 90 s (test khác cần sân yên); t = vắng bao lâu */
+      smallCfg: () => SMALL, mainCfg: z => SP[z] && { hp: SP[z].hp, xp: SP[z].xp, dmg: SP[z].dmg }, active: () => ST.list.length, clear: () => { ST.list.forEach(release); ST.list = []; },
     };
   },
   onZoneLeave() { ST.list.forEach(release); ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = null; },
@@ -610,7 +618,7 @@ export const monsters = {
     const p = ctx.S.player, t = T(ctx), uw = uwOn(ctx); if (ST.cd > 0) ST.cd -= dt;
     const nt = night(ctx); if (nt && !ST.wasNight && !z.mix && !z.road) ctx.toast(t.night(nm(ctx)), true); ST.wasNight = nt;
     if (ST.rq && ST.rq.length) for (const q of ST.rq.slice()) { q.t -= dt; if (q.t > 0) continue; const sp = ctx.S.map.monSpots && ctx.S.map.monSpots[q.spot];
-      if (sp && Math.hypot(sp.x * 16 + 8 - p.x, sp.y * 16 + 12 - p.y) < ROAD_NEAR) { q.t = 1; q.waited = (q.waited || 0) + 1; continue; }   /* người chơi đứng gần chỗ đó → chờ thêm */
+      if (sp && Math.hypot(sp.x * 16 + 8 - p.x, sp.y * 16 + 12 - p.y) < (sp.small ? SMALL_NEAR : ROAD_NEAR)) { q.t = 1; q.waited = (q.waited || 0) + 1; continue; }   /* người chơi đứng gần chỗ đó → chờ thêm */
       ST.rq.splice(ST.rq.indexOf(q), 1); const mo = spawnAt(ctx, q.spot); if (mo && ctx.vfx) ctx.vfx('dirt_puff', mo.x, mo.y + 2); }
     if (ST.respawnT > 0) ST.respawnT -= dt;   /* vừa hạ 1 con → 20 s sau mới có con mới (không diệt xong lại đầy ngay) */
     ST.spawnT -= dt; if (ST.spawnT <= 0 && !(ST.respawnT > 0)) { ST.spawnT = 4; if (ST.list.length < Math.min(MAX_ON, want(ctx))) spawnOne(ctx); }
@@ -641,7 +649,7 @@ export const monsters = {
           if (c.steal === 'carry' && getCarry(ctx).length && !mo.loot) { const it = removeCarry(ctx, getCarry(ctx).length - 1); grab(mo, { carry: it }, p.x, p.y - 22); mo.state = 'flee'; mo.t = 5; mo.angry = false; ctx.toast(t.stole(nm(ctx, c))); } }
         if (dp > 200) mo.angry = false; continue;
       }
-      mo.t -= dt; if (!mo.goal || mo.t <= 0) { mo.t = 2 + Math.random() * 2; const g = pickTarget(ctx, mo); if (g) { mo.goal = g; if (!mo.warned && g.kind !== 'npc') { mo.warned = true; warn(ctx, g.kind === 'crop' ? t.crop(nm(ctx, c)) : g.kind === 'carry' ? t.carry(nm(ctx, c)) : t.node(nm(ctx, c))); } } else mo.goal = { kind: 'wander', x: mo.x + (Math.random() - 0.5) * 120, y: mo.y + (Math.random() - 0.5) * 120 }; }
+      mo.t -= dt; if (!mo.goal || mo.t <= 0) { mo.t = 2 + Math.random() * 2; const g = pickTarget(ctx, mo); if (g) { mo.goal = g; if (!mo.warned && g.kind !== 'npc') { mo.warned = true; warn(ctx, g.kind === 'crop' ? t.crop(nm(ctx, c)) : g.kind === 'carry' ? t.carry(nm(ctx, c)) : t.node(nm(ctx, c))); } } else { const hb = mo.home && c.road ? mo.home : mo, rr = mo.home && c.small ? 56 : 120; mo.goal = { kind: 'wander', x: hb.x + (Math.random() - 0.5) * rr, y: hb.y + (Math.random() - 0.5) * rr }; } }   /* quái đèo đi lảng vảng quanh chỗ của mình (quái nhỏ: trong túi trống), không trôi vào sân đấu */
       const g = mo.goal;
       if (g.kind === 'npc') {
         if (!ctx.S.npcs.includes(g.n) || g.n.hurtSit) { mo.goal = null; continue; }
@@ -674,7 +682,7 @@ export const monsters = {
     const lk = ctx.target && ctx.target.mon();   /* 2026-10-11 khóa mục tiêu (target.js): quái / xúc tu đã khóa → E đánh ĐÚNG nó (xa thì tự đuổi tới) */
     if (lk && ST.list.includes(lk.mo || lk.ref) && dist(lk.kind === 'tent' ? lk.ref : (lk.mo || lk.ref), p) <= REACH * 1.6 + ((lk.mo || lk.ref).c.boss ? 10 : 0)) {   /* trong tầm mới nhận; xa → main báo 'xa quá' (không tự đuổi) */
       const mo = lk.mo || lk.ref, c = mo.c, tent = lk.kind === 'tent' ? lk.ref : null, tg = tent || mo, hp = Math.max(0, Math.ceil(mo.hp));
-      const label = tent ? krStrikeLabel(ctx).tent(hp, mo.max) : t.hit(nm(ctx, c), hp, mo.max);
+      const label = tent ? krStrikeLabel(ctx).tent(hp, mo.max) : t.hit(nm(ctx, c), hp, mo.max, c.spar || c.boss ? 0 : c.xp);
       if (heldWeapon(ctx)) return { label: `🎯 ${label}`, x: tg.x, y: tg.y - 4, limit: 999, priority: 3.9, cursor: 'tool', mouse: false, isLock: true, data: { mo, seg: -1, tent, lock: true } };
       return { label: `${ctx.needHold(bestWeapon(ctx))} → ${ctx.target.nameOf(lk)}`, x: tg.x, y: tg.y - 4, limit: 999, priority: 3.9, need: true, urgent: true, needId: bestWeapon(ctx), cursor: 'tool', mouse: false, isLock: true, data: { need: true } };
     }
@@ -685,7 +693,7 @@ export const monsters = {
       if (under) { seg = -1; tx = mo.x; ty = mo.y; }
       let tent = null, tdd = 0; if (c.ai === 'kraken') { const k = krNearTent(mo, p, mt); if (k && (k.under || k.d < d)) { tent = k.s; tdd = k.under ? -1 : k.d; } }   /* xúc tu đang kẹt gần hơn đầu → nhắm xúc tu */
       const dd = tent ? tdd : under && d < REACH * 1.6 ? -1 : d; if (dd >= bd) continue; bd = dd;
-      const label = seg >= 0 ? t.hitBody(nm(ctx, c), Math.max(0, Math.ceil(mo.hp)), mo.max) : t.hit(nm(ctx, c), Math.max(0, Math.ceil(mo.hp)), mo.max);
+      const label = seg >= 0 ? t.hitBody(nm(ctx, c), Math.max(0, Math.ceil(mo.hp)), mo.max) : t.hit(nm(ctx, c), Math.max(0, Math.ceil(mo.hp)), mo.max, c.spar || c.boss ? 0 : c.xp);
       best = heldWeapon(ctx) ? { label, x: under ? mt.wx : tx, y: under ? mt.wy : ty - 4, limit: REACH * 1.6 + (c.boss ? 10 : 0), priority: 0.8, cursor: 'tool', data: { mo, seg } }
         : { label: ctx.needHold(bestWeapon(ctx)), x: under ? mt.wx : mo.x, y: under ? mt.wy : mo.y - 4, limit: REACH * 1.6, priority: 0.8, need: true, needId: bestWeapon(ctx), urgent: !!(mo.angry && dist(mo, p) < 24), cursor: 'tool', data: { need: true } };   /* urgent: quái đang đánh sát → gợi ý cầm kiếm được thắng việc khác */
       if (tent) { best.x = tent.x; best.y = tent.y - 10; if (best.data.mo) { best.data.tent = tent; best.label = krStrikeLabel(ctx).tent(Math.max(0, Math.ceil(mo.hp)), mo.max); } }

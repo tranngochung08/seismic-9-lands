@@ -1,0 +1,14 @@
+[
+ {
+  "what": "attack ['south-east', 'north-east']",
+  "b0": 1021.5,
+  "b1": 1018.5,
+  "t": "12:15:26"
+ },
+ {
+  "what": "walk ['south-east', 'north-east']",
+  "b0": 1021.5,
+  "b1": 1017.5,
+  "t": "12:16:01"
+ }
+]

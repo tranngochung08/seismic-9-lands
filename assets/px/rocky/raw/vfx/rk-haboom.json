@@ -1,0 +1,287 @@
+{
+ "frames": [
+  {
+   "filename": "rk-haboom 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 1.png",
+   "frame": {
+    "x": 72,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 2.png",
+   "frame": {
+    "x": 144,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 3.png",
+   "frame": {
+    "x": 216,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 4.png",
+   "frame": {
+    "x": 0,
+    "y": 63,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 5.png",
+   "frame": {
+    "x": 72,
+    "y": 63,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 6.png",
+   "frame": {
+    "x": 144,
+    "y": 63,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 7.png",
+   "frame": {
+    "x": 216,
+    "y": 63,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 8.png",
+   "frame": {
+    "x": 0,
+    "y": 126,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  },
+  {
+   "filename": "rk-haboom 9.png",
+   "frame": {
+    "x": 72,
+    "y": 126,
+    "w": 72,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 72,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 72,
+    "h": 63
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5079365079365079
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "rk-haboom.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 288,
+   "h": 189
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 36,
+   "y": 32
+  },
+  "frameTags": [
+   {
+    "name": "rk-haboom",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   }
+  ]
+ }
+}

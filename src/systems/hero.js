@@ -31,13 +31,53 @@ function respawnSpot(ctx) {   /* giường gần nhất → khu nhà mình → �
   const my = ctx.myPlot && ctx.myPlot(); if (my) { const sp = my.spawn || my; return { x: (sp.x + 1) * 16 + 8, y: (sp.y + 1) * 16 + 12 }; }
   const e = S.map.entries.default; return { x: e.x * 16 + 8, y: e.y * 16 + 14 };
 }
+/* 2026-10-13 anh: ngất → người chơi nằm (clip knockdown giữ khung nằm), màn hơi ngả xám (KHÔNG tối, không bảng to).
+   Trên đầu xác: số giây đếm ngược (10 → 0 thì tự về nhà). Dưới xác: 2 ô vuông nhỏ — [Đá Seismic] hồi sinh tại chỗ (−1 đá) · [nhà] về nhà ngay.
+   Thế giới vẫn chạy; người chơi miễn sát thương (faintT); mode 'faint' (không đi được). E/A = hồi sinh (hết đá → về nhà), Esc = về nhà. */
+const WAIT = 10, REVIVE_HP = 0.6;
+const FL = ctx => (ctx.lang() === 'vi'
+  ? { rev: 'Hồi sinh tại chỗ (−1 Đá Seismic)', none: 'Hết Đá Seismic', home: 'Về nhà ngay', revived: 'Hồi sinh tại chỗ! −1 Đá Seismic' }
+  : { rev: 'Revive here (−1 Seismic stone)', none: 'No Seismic stones', home: 'Go home now', revived: 'Revived on the spot! −1 Seismic stone' });
+function goHome(ctx) {
+  const h = sv(ctx), p = ctx.S.player;
+  if (ctx.faintTravel && ctx.faintTravel()) { h.hp = maxHp(h.lv); ctx.persist(); return; }   /* plan-26: ngất dưới nước → hệ underwater đưa lên bến Làng (không mất đồ) */
+  const s = respawnSpot(ctx); p.x = s.x; p.y = s.y; h.hp = maxHp(h.lv); ctx.persist();
+}
 function faint(ctx) {
-  const h = sv(ctx); ST.faintT = 1.2; ctx.toast(L(ctx).faint, true); ctx.sfx('fail');
-  const p = ctx.S.player; p.autoPath = null; p.action = null;
-  setTimeout(() => {
-    if (ctx.faintTravel && ctx.faintTravel()) { h.hp = maxHp(h.lv); ctx.persist(); return; }   /* plan-26: ngất dưới nước → hệ underwater đưa lên bến Làng (không mất đồ) */
-    const s = respawnSpot(ctx); p.x = s.x; p.y = s.y; h.hp = maxHp(h.lv); ctx.persist();
-  }, 700);
+  const S = ctx.S, p = S.player, t = FL(ctx); ST.faintT = 999; ctx.sfx('fail');
+  p.autoPath = null; p.action = null; if (p.hasAct && p.hasAct('knockdown')) p.action = { name: 'knockdown', t: 0, dur: 0.55, hold: true, walk: false, loop: false };   /* ngã ngửa rồi giữ khung nằm tới khi chọn */
+  document.body.classList.add('fainted');
+  const ui = ctx.ART && ctx.ART.man && ctx.ART.man.ui, stoneImg = ui && ui.items && ui.items.stone, homeImg = ui && ui.status && ui.status.home;
+  const el = document.createElement('div'); el.id = 'faint-ui';
+  const n = ctx.bag.count('stone'), ok = n >= 1;
+  el.innerHTML = `<b class="fa-cd">${WAIT}</b><div class="fa-row"><button data-fa="rev" ${ok ? '' : 'disabled'} title="${ok ? t.rev : t.none}">${stoneImg ? `<img src="assets/px/${stoneImg}" alt="">` : '🪨'}<i>${n}</i></button>`
+    + `<button data-fa="home" title="${t.home}">${homeImg ? `<img src="assets/px/${homeImg}" alt="">` : '🏠'}</button></div>`;
+  document.body.appendChild(el);
+  const prevMode = S.mode === 'faint' ? 'play' : (S.mode || 'play');
+  const F = ST.fa = { el, left: WAIT, done: false, prevMode, shown: Math.ceil(WAIT) };
+  F.finish = how => {
+    if (F.done) return; F.done = true; el.remove(); ST.fa = null; document.body.classList.remove('fainted');
+    if (p.endAct) p.endAct(); p.action = null; ctx.setMode(F.prevMode === 'faint' ? 'play' : F.prevMode);
+    const h = sv(ctx);
+    if (how === 'rev' && ctx.bag.remove('stone', 1) === 1) {
+      h.hp = Math.round(maxHp(h.lv) * REVIVE_HP); ST.faintT = 0; ST.inv = 2.5; ctx.persist();
+      if (ctx.vfx) ctx.vfx('level_up', p.x, p.y + 2, 0, true); ctx.sfx('coin'); ctx.toast(t.revived, true);
+    } else { ST.faintT = 1.0; goHome(ctx); }
+  };
+  el.addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-fa]'); if (!b || b.disabled) return; ev.preventDefault(); ev.stopPropagation(); F.finish(b.dataset.fa); });
+  ctx.setMode('faint');
+  ctx.registerCloser('faint', () => F.finish('home'));
+  ctx.onAction('faint', () => F.finish(ctx.bag.count('stone') >= 1 ? 'rev' : 'home'));
+  placeFaint(ctx);
+  if (typeof window !== 'undefined') window.__faint = { pick: k => F.finish(k), left: () => Math.ceil(F.left), open: () => !F.done };
+}
+function placeFaint(ctx) {   /* bám theo xác trên màn hình: số đếm trên đầu, 2 ô dưới chân (mỗi ô ~1 ô lưới) */
+  const F = ST.fa, cv = document.getElementById('c'); if (!F || !cv || !ctx.cam || !ctx.VW) return;
+  const r = cv.getBoundingClientRect(), k = r.width / ctx.VW, p = ctx.S.player;
+  const sx = r.left + (p.x - ctx.cam.cx) * k, top = r.top + (p.y - 30 - ctx.cam.cy) * k, bot = r.top + (p.y + 4 - ctx.cam.cy) * k;
+  const cell = Math.max(34, Math.round(16 * k));
+  F.el.style.setProperty('--cell', cell + 'px'); F.el.style.left = Math.round(sx) + 'px';
+  F.el.querySelector('.fa-cd').style.top = Math.round(top - r.top) + 'px'; F.el.querySelector('.fa-row').style.top = Math.round(bot - r.top) + 'px'; F.el.style.top = Math.round(r.top) + 'px';
 }
 
 export const hero = {
@@ -72,11 +112,12 @@ export const hero = {
   },
   update(dt, ctx) {
     const h = sv(ctx); if (ST.inv > 0) ST.inv -= dt; if (ST.faintT > 0) ST.faintT -= dt;
+    if (ST.fa) { const F = ST.fa; F.left -= dt; if (ctx.S.player.tickAct) ctx.S.player.tickAct(dt); const c = Math.max(0, Math.ceil(F.left)); if (c !== F.shown) { F.shown = c; F.el.querySelector('.fa-cd').textContent = c; } if (F.left <= 0) F.finish('home'); else placeFaint(ctx); }   /* 2026-10-13: đếm ngược ngất theo thời gian game */
     if (ctx.S.time - ST.lastHit > 6 && h.hp < maxHp(h.lv)) h.hp = Math.min(maxHp(h.lv), h.hp + maxHp(h.lv) * 0.02 * dt);
     const day = ctx.clock && ctx.clock.dayIndex; if (ST.day != null && day !== ST.day) h.hp = maxHp(h.lv); ST.day = day;   /* ngủ / sang ngày mới → đầy máu */
     hud(ctx);
   },
   drawUI(ug, ctx) {   /* ngất: màn tối dần */
-    if (ST.faintT <= 0) return; ug.save(); ug.globalAlpha = Math.min(0.85, (1.2 - Math.abs(ST.faintT - 0.6)) * 0.9); ug.fillStyle = '#0d0b14'; ug.fillRect(0, 0, ug.canvas.width, ug.canvas.height); ug.restore();
+    if (ST.faintT <= 0 || ST.fa || ST.faintT > 1.2) return;   /* 2026-10-13: màn tối chỉ lúc chuyển về nhà (1,2 s), KHÔNG lúc nằm chờ (faintT 999 làm alpha âm → canvas vẽ đen đặc) */ ug.save(); ug.globalAlpha = Math.min(0.85, (1.2 - Math.abs(ST.faintT - 0.6)) * 0.9); ug.fillStyle = '#0d0b14'; ug.fillRect(0, 0, ug.canvas.width, ug.canvas.height); ug.restore();
   },
 };

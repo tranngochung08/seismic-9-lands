@@ -1,0 +1,11 @@
+{
+ "id": "9956e5ed-c20b-4330-a530-ac4fc2f5ed8b",
+ "desc": "Original tall brass clockwork automaton guardian. HEAD: small round polished brass dome head with two glowing amber eyes and a tiny bell on top. POSE: tall heavy robot standing perfectly upright, straight back, head up. BODY: the whole chest and belly IS one big round clock face (white enamel dial with black Roman numerals and a brass rim), riveted polished brass and copper armor plates, thick brass legs; the RIGHT arm ends in a long thin black clock minute-hand blade, the LEFT arm ends in a short thick black clock hour-hand blade; one big brass cogwheel mounted flat on the back, its teeth peeking out behind both shoulders. Clear dark outline, cozy RPG pixel art, warm brass and gold palette with teal accents",
+ "mode": "v3",
+ "cand": "72a",
+ "mirror": {
+  "west": "east",
+  "south-west": "south-east",
+  "north-west": "north-east"
+ }
+}

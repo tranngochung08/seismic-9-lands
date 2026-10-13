@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "td-poof 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 1.png",
+   "frame": {
+    "x": 54,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 2.png",
+   "frame": {
+    "x": 108,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 3.png",
+   "frame": {
+    "x": 162,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 4.png",
+   "frame": {
+    "x": 0,
+    "y": 60,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 5.png",
+   "frame": {
+    "x": 54,
+    "y": 60,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 6.png",
+   "frame": {
+    "x": 108,
+    "y": 60,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 7.png",
+   "frame": {
+    "x": 162,
+    "y": 60,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 8.png",
+   "frame": {
+    "x": 0,
+    "y": 120,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 9.png",
+   "frame": {
+    "x": 54,
+    "y": 120,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 10.png",
+   "frame": {
+    "x": 108,
+    "y": 120,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  },
+  {
+   "filename": "td-poof 11.png",
+   "frame": {
+    "x": 162,
+    "y": 120,
+    "w": 54,
+    "h": 60
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 54,
+    "h": 60
+   },
+   "sourceSize": {
+    "w": 54,
+    "h": 60
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "td-poof.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 216,
+   "h": 180
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 27,
+   "y": 30
+  },
+  "frameTags": [
+   {
+    "name": "td-poof",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

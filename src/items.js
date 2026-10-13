@@ -1,4 +1,5 @@
 // items.js — the item registry shared by every system. Bag = save.inv (id → count); UNLIMITED (anh chốt 2026-10-10: túi vô hạn, field w giữ lại nhưng không dùng).
+import { SKILLS as RK_SK, SKILL_IDS as RK_IDS, BOOK_LV as RK_LV, TIER_SHOP as RK_SHOP, TIER_MAX as RK_MAX } from './systems/petlv.js';   /* 2026-10-13 anh: sách luyện Rocky là vật phẩm trong túi */
 const I = (icon, en, vi, w, tags = '') => ({ icon, name: { en, vi }, w, tags: tags.split(' ').filter(Boolean) });
 export const ITEMS = {
   /* plan-21: đồ rơi của quái + hồi sinh dân */
@@ -48,6 +49,13 @@ export const ITEMS = {
 /* plan-28: NGỌC RỒNG — 7 viên (7 sao → 1 sao), rơi khi thắng bạn tập cơ bắp (systems/roadloot.js). Công dụng khi gom đủ 7: chờ anh chốt. */
 for (let n = 1; n <= 7; n++) ITEMS['dball' + n] = { ...I('🟠', `${n}-Star Dragon Ball`, `Ngọc Rồng ${n} sao`, 0, 'trophy dragonball'),
   desc: { vi: `Viên ngọc cam trong suốt, ${n} ngôi sao đỏ bên trong. Gom đủ 7 viên… chuyện gì sẽ xảy ra? (sắp có)`, en: `A clear orange orb with ${n} red star${n > 1 ? 's' : ''} inside. Gather all 7… and then? (coming soon)` } };
+/* 2026-10-13 anh: SÁCH LUYỆN ROCKY là vật phẩm — mua ở Heathcliff chỉ cần đủ đá, vào túi; dùng trong túi đồ (nút Đọc) mới kiểm cấp Rocky / bậc trước.
+   rkbook_<chiêu>_<bậc 2..7> (rk: { id, n }) · rkbook8 = sách bậc 8 thưởng trùm Vết Nứt (chọn chiêu đang bậc 7 khi đọc) */
+for (const id of RK_IDS) for (let n = 2; n <= RK_SHOP; n++) { const S = RK_SK[id], lv = RK_LV[id][n];
+  ITEMS[`rkbook_${id}_${n}`] = { ...I('📘', `Book: ${S.en} tier ${n}`, `Sách ${S.vi} bậc ${n}`, 0, 'book rkbook'), rk: { id, n },
+    desc: { vi: `Đọc cho Rocky để nâng chiêu ${S.vi} lên bậc ${n}/${RK_MAX}. Cần Rocky cấp ${lv} và chiêu đang bậc ${n - 1}.`, en: `Read to Rocky to raise ${S.en} to tier ${n}/${RK_MAX}. Needs Rocky Lv ${lv} and the skill at tier ${n - 1}.` } }; }
+ITEMS.rkbook8 = { ...I('📕', 'Rift tome (tier 8)', 'Sách bậc 8 (trùm Vết Nứt)', 0, 'book rkbook'), rk: { id: null, n: RK_MAX },
+  desc: { vi: 'Sách thưởng trùm Vết Nứt: chọn 1 chiêu Rocky đang bậc 7 để lên bậc 8 (tối đa).', en: 'Rift boss reward: pick one Rocky skill at tier 7 to raise it to tier 8 (max).' } };
 // Tools have tiers: 0 = not owned, 1..3 = wood/iron/obsidian quality. `save.toolTier`.
 export const TOOLS = {
   axe: I('🪓', 'Axe', 'Rìu', 0), pickaxe: I('⛏', 'Pickaxe', 'Cuốc', 0), rod: I('🎣', 'Fishing rod', 'Cần câu', 0), shovel: I('🥄', 'Shovel', 'Xẻng', 0), scythe: I('🌾', 'Scythe', 'Liềm', 0),
