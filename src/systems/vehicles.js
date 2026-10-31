@@ -247,7 +247,12 @@ function savePos(ctx, kind, t) {
 const savedPos = (ctx, key) => (slot(ctx)[key] || {})[ctx.S.zone.id];
 
 // ---------------- map queries ----------------
+let OCC = null;   /* plan-42 A4: lưới ô có vật — chỉ bật trong lúc quét cả bản đồ (vòng quét không đặt / bớt vật) thay cho quét m.objects ở từng ô */
+function withOcc(map, O, f) { const g = new Uint8Array(map.w * map.h); for (const o of map.objects) { const d = O[o.type]; if (!d) continue; for (let j = 0; j < d.fh; j++) for (let i = 0; i < d.fw; i++) { const x = o.x + i, y = o.y + j; if (x >= 0 && y >= 0 && x < map.w && y < map.h) g[y * map.w + x] = 1; } }
+  const prev = OCC; OCC = { map, g, n: map.objects.length }; try { return f(); } finally { OCC = prev; } }
+const occHit = (map, x, y) => OCC && OCC.map === map && OCC.n === map.objects.length && x >= 0 && y >= 0 && x < map.w && y < map.h ? OCC.g[y * map.w + x] : -1;
 function occupied(ctx, x, y) {
+  { const h = occHit(ctx.S.map, x, y); if (h >= 0) return h === 1; }
   for (const o of ctx.S.map.objects) { const d = ctx.O[o.type]; if (!d) continue; if (x >= o.x && x < o.x + d.fw && y >= o.y && y < o.y + d.fh) return true; }
   return false;
 }
@@ -269,7 +274,8 @@ function landSpot(ctx, x, y, needReach = true) {
 function objNear(ctx, x, y) { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && occupied(ctx, x + dx, y + dy)) return true; return false; }
 
 // land tile touching the sea — the boat's first berth (prefer the middle of the shore, y 20..40, and elbow room)
-function findBoatBerth(ctx, away) {
+function findBoatBerth(ctx, away) { return withOcc(ctx.S.map, ctx.O, () => findBoatBerth0(ctx, away)); }
+function findBoatBerth0(ctx, away) {
   const m = ctx.S.map; let best = null, bs = 1e9;
   for (let y = 3; y < m.h - 3; y++) for (let x = 2; x < m.w - 1; x++) {
     if (isWater(ctx, x, y) || !landSpot(ctx, x, y)) continue;
@@ -373,17 +379,32 @@ function drawSkier(g, ent) {
   ln(g, x - 8, y - 12, x - 11, y - 1 + sw, C.out, 2); ln(g, x - 8, y - 12, x - 11, y - 1 + sw, C.pole, 1);
   ln(g, x + 8, y - 12, x + 11, y - 1 - sw, C.out, 2); ln(g, x + 8, y - 12, x + 11, y - 1 - sw, C.pole, 1);
 }
+/* plan-45 ED1: ảnh jeep PixelLab mới đúng cỡ (ngang 36×27, trước 23×30, sau 22×28 logic — vẽ 1:1, không phóng) — vị trí ghế / mép thành xe
+   đo trên ảnh: người lái ngồi TRONG xe = vẽ sau thân xe nhưng chỉ phần đầu + thân trên tới mép thành (dưới đó bị thành xe che) */
+const JEEP_SEAT = [   /* theo hướng 0 nam · 1 tây · 2 đông · 3 bắc: dx tâm ghế so tâm xe, cut = mép thành xe tính từ đỉnh ảnh (logic) */
+  { dx: 4, cut: 14.5 }, { dx: 1.5, cut: 16.5 }, { dx: -1.5, cut: 16.5 }, { dx: -4, cut: 13.5 }
+];
+const SEAT_ROWS = 11;   /* hàng thân người (ô 16×20) lộ trên mép thành: đầu + vai + ngực */
+function jeepGeom(sheets, d, f) {
+  const im = sheets[d][f], w = im.width, h = im.height, big = w > 24 || h > 16, s = JEEP_SEAT[d];   /* ảnh vẽ code dự phòng 24×16: giữ cách vẽ cũ */
+  return { im, w, h, big, dx: big ? s.dx : 0, cut: big ? s.cut : 10, pixellab: !!im.__hi };
+}
 function drawJeep(g, ent) {
   const x = Math.round(ent.x), y = Math.round(ent.y), d = ent.dir & 3;
   const f = ent.moving ? (Math.floor(st.t * 14) & 1) : 0;
   const jolt = ent.moving ? (Math.floor(st.t * 18) & 1) : 0;
-  const sheets = (st.ctx && flags(st.ctx).tires) ? JEEP_T : JEEP;
-  g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x, y, 12, 4, 0, 0, 7); g.fill();
-  const oy = y - 14 - jolt;
-  // sides/back: head + shoulders behind the body; front view: the head shows over the windshield
-  if (d !== 0) drawBody(g, ent, 0, d * 20, 10, x - 8, oy - 4);
-  g.drawImage(sheets[d][f], x - 12, oy);
-  if (d === 0) drawBody(g, ent, 0, 0, 10, x - 8, oy - 4);
+  const sheets = (st.ctx && flags(st.ctx).tires) ? JEEP_T : JEEP, J = jeepGeom(sheets, d, f);
+  g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x, y, J.big ? (d === 1 || d === 2 ? 18 : 12) : 12, J.big ? 5 : 4, 0, 0, 7); g.fill();
+  if (!J.big) {   /* dự phòng (chưa có ảnh PixelLab): như cũ */
+    const oy = y - 14 - jolt;
+    if (d !== 0) drawBody(g, ent, 0, d * 20, 10, x - 8, oy - 4);
+    g.drawImage(J.im, x - 12, oy);
+    if (d === 0) drawBody(g, ent, 0, 0, 10, x - 8, oy - 4);
+    return;
+  }
+  const top = y + 2 - J.h - jolt;   /* đáy bánh xe chạm bóng dưới chân */
+  g.drawImage(J.im, Math.round(x - J.w / 2), top);
+  drawBody(g, ent, 0, d * 20, SEAT_ROWS, Math.round(x + J.dx - 8), Math.round(top + J.cut - SEAT_ROWS));
 }
 function drawCart(g, ent) {
   const x = Math.round(ent.x), y = Math.round(ent.y), d = ent.dir & 3;
@@ -400,8 +421,8 @@ function drawBalloonFly(g, ent) {
   g.fillStyle = `rgba(0,0,0,${(0.3 * k).toFixed(3)})`; g.beginPath(); g.ellipse(x, y, 9 * k + 3, 4 * k + 1, 0, 0, 7); g.fill();
   const sway = Math.round(Math.sin(st.t * 1.5) * (alt > 6 ? 1 : 0));
   const top = y - alt - 48;
-  drawBody(g, ent, (ent.frame || 0) * 16, (ent.dir & 3) * 20, 11, x - 8 + sway, top + 24);
   g.drawImage(BALLOON, x - 16 + sway, top);
+  drawBody(g, ent, (ent.frame || 0) * 16, (ent.dir & 3) * 20, 9, x - 8 + sway, top + 31);   /* plan-45: người lái đứng trong giỏ — vẽ SAU khinh khí cầu, thân cắt ở mép giỏ (≈ 40 logic từ đỉnh ảnh); trước đây vẽ trước nên bị bao khí che mất */
   if ((Math.floor(st.t * 10) & 1) === 0) { px(g, x - 2 + sway, top + 29, '#ffd45e', 4, 3); px(g, x - 1 + sway, top + 28, '#ff8c1a', 2, 2); }
 }
 
@@ -725,7 +746,7 @@ export const vehicles = {
         out.push({ y: wy, f: () => { if (afloat) { g.fillStyle = 'rgba(20,60,110,.28)'; g.beginPath(); g.ellipse(wx - cx, wy - 2 - cy, 15, 5, 0, 0, 7); g.fill(); } g.drawImage(BOAT_PARK, wx - 16 - cx, wy - 19 + bob - cy); if (sail) g.drawImage(SAIL[2][0], wx - 15 - cx, wy - 47 + bob - cy); } });
       }
       else if (kind === 'ski') out.push({ y: wy, f: () => g.drawImage(RACK, wx - 10 - cx, wy - 26 - cy) });
-      else out.push({ y: wy, f: () => { g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(wx - cx, wy - 2 - cy, 12, 4, 0, 0, 7); g.fill(); g.drawImage((flags(ctx).tires ? JEEP_T : JEEP)[0][0], wx - 12 - cx, wy - 16 - cy); } });
+      else out.push({ y: wy, f: () => { g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(wx - cx, wy - 2 - cy, 12, 4, 0, 0, 7); g.fill(); const im = (flags(ctx).tires ? JEEP_T : JEEP)[0][0]; g.drawImage(im, Math.round(wx - im.width / 2) - cx, wy - im.height - cy); } });   /* plan-45 ED1: theo cỡ ảnh thật */
     }
     return out;
   },
@@ -801,6 +822,10 @@ if (typeof window !== 'undefined') {
       const sv = slot(st.ctx); Object.assign(sv, o || {}); st.ctx.persist();
       if (sv.raft) spawnRaft(st.ctx);
       return { raft: !!sv.raft, sail: !!sv.sail, wax: !!sv.wax, tires: !!sv.tires };
+    },
+    jeepInfo() {   /* plan-45 ED1: cỡ ảnh xe đang vẽ (logic) + chỗ ngồi */
+      if (!st.ctx) return null; const p = st.ctx.S.player, d = p.dir & 3, J = jeepGeom(flags(st.ctx).tires ? JEEP_T : JEEP, d, 0);
+      return { dir: d, w: J.w, h: J.h, pixellab: J.pixellab, big: J.big, seatH: J.cut, bodyH: SEAT_ROWS, mounted: st.mounted };
     },
     info() {
       const p = st.ctx ? st.ctx.S.player : null;

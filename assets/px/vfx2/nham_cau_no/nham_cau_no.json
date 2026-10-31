@@ -1,0 +1,1 @@
+{"n": 8, "fw": 44.0, "fh": 44.0, "ax": 22.0, "ay": 28.0, "fps": 16, "note": "fireball explosion + molten scorch pool at the ground point (pool should be drawn in drawGround); draw BEFORE the creature so the target stays visible", "layers": "draw BEFORE the struck creature"}

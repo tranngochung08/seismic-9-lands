@@ -159,15 +159,26 @@ export function createMixer(ac, opt = {}) {
   const cache = new Map();
   const toBuf = data => { const b = ac.createBuffer(1, data.length, sr); b.getChannelData(0).set(data); return b; };
   M.has = name => !!SFX_LIB[SFX_ALIAS[name] || name];
+  /* plan-37: tổng hợp tiếng ở LUỒNG RIÊNG (audio/dspworker.js). Trước: dspRender chạy ngay trong khung vẽ (trung bình ~15 ms, có tiếng ~170 ms trên máy bàn;
+     điện thoại chậm 4×) → giật khi một tiếng / biến thể phát lần đầu, và cả chục giây giật lúc khởi động (làm nóng thư viện).
+     Chưa có biến thể cần → phát tạm biến thể đã có + xin luồng riêng dựng; chưa có gì (hiếm) → dựng ngay như cũ. Không có Worker → như cũ. */
+  let WK = null; const pend = new Set();
+  try {
+    WK = new Worker(new URL('./dspworker.js', import.meta.url), { type: 'module' });
+    WK.onmessage = ev => { const d = ev.data; pend.delete(d.name + '|' + d.i); if (d.err || !d.data) return; let c = cache.get(d.name); if (!c) { c = { rec: d.rec, list: [] }; cache.set(d.name, c); } if (!c.list[d.i]) c.list[d.i] = toBuf(d.data); };
+    WK.onerror = () => { WK = null; pend.clear(); };
+  } catch (e) { WK = null; }
+  const ask = (name, i, pri) => { if (!WK) return false; const k = name + '|' + i; if (pend.has(k)) return true; pend.add(k); try { WK.postMessage({ name, i, sr, pri: !!pri }); } catch (e) { pend.delete(k); return false; } return true; };
   M.buffer = (name, k) => {
     name = SFX_ALIAS[name] || name; const e = SFX_LIB[name]; if (!e) return null;
     let c = cache.get(name);
-    if (!c) { const r = dspRender(e[2], sr, 1); c = { rec: r.rec, list: [toBuf(r.data)] }; cache.set(name, c); }
+    if (!c || !c.list.some(Boolean)) { const r = dspRender(e[2], sr, 1), b = toBuf(r.data); if (c) c.list[0] = b; else { c = { rec: r.rec, list: [b] }; cache.set(name, c); } pend.delete(name + '|0'); }
     const n = Math.max(1, c.rec.seeds || 1), i = (k == null ? Math.floor(Math.random() * n) : k) % n;
-    if (!c.list[i]) c.list[i] = toBuf(dspRender(e[2], sr, i + 1).data);
+    if (!c.list[i]) { if (ask(name, i, true)) { const j = c.list.findIndex(Boolean); return { buf: c.list[j], rec: c.rec }; } c.list[i] = toBuf(dspRender(e[2], sr, i + 1).data); }
     return { buf: c.list[i], rec: c.rec };
   };
-  M.warm = names => { for (const n of names) M.buffer(n, 0); };
+  M.warm = names => { for (const n0 of names) { const n = SFX_ALIAS[n0] || n0; if (cache.has(n)) continue; if (!ask(n, 0)) M.buffer(n, 0); } };
+  M.asyncWarm = () => !!WK;
   M.sfx = (name, o = {}) => {
     const b = M.buffer(name, o.seed); if (!b) return false;
     const src = ac.createBufferSource(); src.buffer = b.buf;
@@ -369,6 +380,7 @@ export function createMixer(ac, opt = {}) {
     amb = a;
   };
   M.ambId = () => (amb ? amb.id : null);
+  M.ambLevel = (k) => { if (!amb) return; const now = ac.currentTime; amb.g.gain.setTargetAtTime(amb.def.g * Math.max(0, k), now, 0.4); };   /* 2026-10-14: gió trên cao mạnh dần theo độ cao / tốc độ bay */
   function ambTick(now) {
     if (!amb) return;
     for (const l of amb.layers) if (now >= l.next) { const per = rnd(l.L.per); l.next = now + per; l.f.frequency.setTargetAtTime(rnd(l.L.fr), now, per / 3); if (Array.isArray(l.L.q)) l.f.Q.setTargetAtTime(rnd(l.L.q), now, per / 3); l.lg.gain.setTargetAtTime(rnd(l.L.amp), now, per / 3); }

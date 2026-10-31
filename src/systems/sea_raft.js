@@ -13,7 +13,8 @@ const STR = {
     sank: 'The raft sank!', ashore: 'Your raft washed ashore (1 ♥)', caught: 'A whirlpool! Mash E to escape', escaped: 'You escaped the whirlpool',
     lostAnimal: 'The whirlpool swallowed one of your animals', lostStones: 'The whirlpool took 2 seismic stones', lostNothing: 'Spat out by the whirlpool',
     plank: '+1 plank', crate: 'Crate: ', noRoom: 'No shore next to the raft', moored: 'moored',
-    tut: ['You wake on a raft… adrift on the Sea of Origins', 'Follow the currents (arrows) to the lighthouse', 'Pick up planks to patch the raft']
+    tut: ['You wake on a raft… adrift on the Sea of Origins', 'Follow the currents (arrows) to the lighthouse', 'Pick up planks to patch the raft'],
+    cmp: { dock: 'pier', whirl: 'whirlpool', plank: 'plank', reef: 'shells (reef)', hermit: 'hermit', current: 'current', treasure: 'treasure' }, you: 'you'
   },
   vi: {
     stepOff: 'Bước lên bờ', board: 'Lên bè', patch: 'Vá bè (2 ván)', sail: 'Giương buồm', wreck: 'Lục xác tàu', escape: 'Thoát! (bấm E liên tục)',
@@ -21,7 +22,8 @@ const STR = {
     sank: 'Bè chìm rồi!', ashore: 'Bè của bạn dạt vào bờ (1 ♥)', caught: 'Xoáy nước! Bấm E liên tục để thoát', escaped: 'Đã thoát khỏi xoáy nước',
     lostAnimal: 'Xoáy nước nuốt mất một con vật của bạn', lostStones: 'Xoáy nước cuốn mất 2 đá Seismic', lostNothing: 'Xoáy nước nhả bạn ra',
     plank: '+1 ván gỗ', crate: 'Thùng: ', noRoom: 'Không có bờ cạnh bè', moored: 'đã neo',
-    tut: ['Bạn tỉnh dậy trên một chiếc bè… trôi giữa Biển Khởi Nguồn', 'Đi theo dòng chảy (mũi tên) tới hải đăng', 'Nhặt ván gỗ để vá bè']
+    tut: ['Bạn tỉnh dậy trên một chiếc bè… trôi giữa Biển Khởi Nguồn', 'Đi theo dòng chảy (mũi tên) tới hải đăng', 'Nhặt ván gỗ để vá bè'],
+    cmp: { dock: 'bến', whirl: 'xoáy nước', plank: 'ván', reef: 'sò (rạn sáng)', hermit: 'ẩn sĩ', current: 'hải lưu', treasure: 'kho báu' }, you: 'bạn'
   }
 };
 const L = ctx => STR[ctx.lang && ctx.lang() === 'vi' ? 'vi' : 'en'];
@@ -277,6 +279,7 @@ function drawRaft(g, ent) {
 /* bọt nước quanh bè (ảnh PixelLab village images foam_ring / foam_wake). Đứng yên: vòng bọt thở chậm (đổi 2 cỡ mỗi 0,7 s); chèo: thêm vệt bọt phía sau, quay theo hướng đi. */
 function foamImg(k) { const ctx = st.ctx, vp = ctx && ctx.ART && ctx.ART.packs && ctx.ART.packs.village; return vp && vp.images && vp.images[k] || null; }
 function drawFoam(g, x, y, moving, d) {
+  if (st.ctx && st.ctx.ART && st.ctx.ART.waterNew) return;   /* plan-68: water.js vẽ vòng gợn + vệt rẽ nước */
   const ring = foamImg('foam_ring'); if (!ring) return;
   const ph = Math.floor(st.t / 0.7) & 1, rw = 38 + (ph ? 2 : 0), rh = 22 + (ph ? 1 : 0);   /* ảnh 64×40 thu về sát thân bè (bè rộng 32) */
   g.globalAlpha = 0.95; g.drawImage(ring, 0, 0, ring.width, ring.height, Math.round(x - rw / 2), Math.round(y - rh / 2), rw, rh);
@@ -434,9 +437,9 @@ export const seaRaft = {
   drawUI(ug, ctx, cx, cy, scale) {
     if (!st.on || !ctx.S.sea) return;
     const p = ctx.S.player, m = ctx.S.map, W = ug.canvas.width;
-    // compass to the dock, top-right below the HUD buttons
-    const r = Math.round(scale * 9), ox = W - 12 - r, oy = 64 + r;
-    const dx = m.dock.x * 16 + 8 - p.x, dy = m.dock.y * 16 + 8 - p.y, dist = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
+    /* plan-44 D1: la bàn đặt ở chỗ TRỐNG cạnh khung đồng hồ (trước nằm đúng dưới khung đồng hồ DOM → bị che hẳn); kim chỉ MỤC TIÊU hiện tại của chuỗi biển (xoáy nước gần nhất → ván / sò / ẩn sĩ / hải lưu → bến) */
+    const r = Math.round(Math.max(22, Math.min(scale * 9, 40))), pos = compassPos(ug.canvas, r), ox = pos.x, oy = pos.y;
+    const goal = compassGoal(ctx), dx = goal.x - p.x, dy = goal.y - p.y, dist = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
     ug.save();
     ug.fillStyle = 'rgba(13,11,20,.6)'; ug.beginPath(); ug.arc(ox, oy, r, 0, TAU); ug.fill();
     ug.strokeStyle = '#a79a86'; ug.lineWidth = 1.5; ug.beginPath(); ug.arc(ox, oy, r, 0, TAU); ug.stroke();
@@ -454,8 +457,10 @@ export const seaRaft = {
       ug.closePath(); ug.fill();
       ug.fillStyle = '#f2ebe0'; ug.beginPath(); ug.arc(ox, oy, 2.5, 0, TAU); ug.fill();
     } else { ug.font = `bold ${Math.max(12, Math.round(scale * 4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e'; ug.fillText('⌂', ox, oy + 1); }
-    ug.font = `bold ${Math.max(10, Math.round(scale * 2.8))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'top'; ug.fillStyle = '#f2ebe0';
-    ug.fillText(`⌂ ${Math.round(dist / 16)}`, ox, oy + r + 3);
+    { const fz = Math.max(13, Math.min(20, Math.round(scale * 2.8))), t = L(ctx), lines = [`${t.cmp[goal.k] || t.cmp.dock} · ${Math.round(dist / 16)}`];   /* chữ dưới la bàn: mục tiêu · số ô; D7: đang giữ thư kho báu → toạ độ ô của bạn */
+      if (ctx.S.sea.treasure) lines.push(`${t.you} (${Math.floor(p.x / 16)}, ${Math.floor(p.y / 16)})`);
+      ug.font = `bold ${fz}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'top';
+      lines.forEach((s, i) => { const tw = ug.measureText(s).width + 8, y = oy + r + 3 + i * (fz + 2); ug.fillStyle = 'rgba(13,11,20,.6)'; ug.fillRect(Math.round(ox - tw / 2), y - 1, Math.round(tw), fz + 2); ug.fillStyle = i ? '#9fe3ff' : '#f2ebe0'; ug.fillText(s, ox, y); }); }
     // whirlpool escape bar above the player
     const c = st.caught;
     if (c) {
@@ -480,6 +485,45 @@ export const seaRaft = {
   }
 };
 
+/* ---- plan-44 D1: chỗ đặt la bàn — thử lần lượt: trái khung đồng hồ, rồi dò xuống dọc mép phải (trái cụm máu); chọn chỗ đầu tiên không đè phần tử HUD nào. Đo DOM 2 lần / giây. ---- */
+let CPOS = null;
+function compassPos(cv, r) {
+  const now = typeof performance !== 'undefined' ? performance.now() : 0;
+  if (CPOS && CPOS.r === r && CPOS.w === cv.width && CPOS.h === cv.height && now - CPOS.t < 500) return CPOS;
+  const W = cv.width, H = cv.height, cr = cv.getBoundingClientRect(), kx = W / (cr.width || W), ky = H / (cr.height || H);
+  const box = [], q = sel => { for (const e of document.querySelectorAll(sel)) { if (!e.offsetWidth || e.closest('[hidden]')) continue; const b = e.getBoundingClientRect(); if (b.height < 1 || b.width < 1) continue; if (b.width > W * 0.8 / kx && b.height > H * 0.8 / ky) continue; box.push({ l: (b.left - cr.left) * kx, t: (b.top - cr.top) * ky, r: (b.right - cr.left) * kx, b: (b.bottom - cr.top) * ky }); } };
+  q('#hud .hud-tl > *, #px-clock, #px-money, #px-status, #herobar, #hud button, #touch button, #hotbar');
+  const lh = 44, hit = (x, y) => { const L0 = x - r - 3, T0 = y - r - 3, R0 = x + r + 3, B0 = y + r + lh; if (L0 < 2 || T0 < 2 || R0 > W - 2 || B0 > H - 2) return true; return box.some(b => L0 < b.r && R0 > b.l && T0 < b.b && B0 > b.t); };
+  const ck = document.querySelector('#px-clock'), hb = document.querySelector('#herobar');
+  const c = ck && ck.offsetWidth ? ck.getBoundingClientRect() : null, h = hb && hb.offsetWidth ? hb.getBoundingClientRect() : null;
+  const cand = [];
+  if (c) cand.push([(c.left - cr.left) * kx - 10 - r, (c.top - cr.top) * ky + r + 4]);
+  const xs = [W - 14 - r]; if (h) xs.unshift((h.left - cr.left) * kx - 10 - r);
+  const y0 = c ? (c.bottom - cr.top) * ky + r + 6 : 64 + r;
+  for (let y = y0; y < H * 0.6; y += 10) for (const x of xs) cand.push([x, y]);
+  let best = cand.find(([x, y]) => !hit(x, y)) || [W - 14 - r, 64 + r];
+  CPOS = { x: Math.round(best[0]), y: Math.round(best[1]), r, w: W, h: H, t: now };
+  return CPOS;
+}
+/* ---- plan-44 D1: mục tiêu của kim — story_sea.js ghi S.sea.goal (+ goalAt) mỗi khung lúc đang chèo cùng Lyron; hết chuỗi / ngoài cốt truyện → bến (hoặc kho báu khi đang giữ thư trong chai) ---- */
+let GOAL = null;
+function compassGoal(ctx) {
+  const S = ctx.S, s = S.sea, m = S.map, p = S.player, dock = { x: m.dock.x * 16 + 8, y: m.dock.y * 16 + 8, k: 'dock' };
+  if (GOAL && S.time - GOAL.t < 0.25 && GOAL.g === s.goal) return GOAL.v;
+  const g = s.goal && S.time - (s.goalAt || -9) < 0.6 ? s.goal : null, d2 = (x, y) => (x - p.x) * (x - p.x) + (y - p.y) * (y - p.y);
+  const near = (list, f) => { let b = null, bd = Infinity; for (const it of list) { const q = f(it); if (!q) continue; const d = d2(q.x, q.y); if (d < bd) { bd = d; b = q; } } return b; };
+  let v = null;
+  if (g === 'whirl') v = near(st.whirls, w => ({ x: w.x * 16 + 8, y: w.y * 16 + 8, k: 'whirl' }));
+  else if (g === 'reef' && s.raft.hp < 3) v = near(st.planks, f => f.dead ? null : { x: f.x * 16 + 8, y: f.y * 16 + 8, k: 'plank' });
+  else if (g === 'hermit') {
+    if (ctx.bag.count('shell') >= 2) { const h = S.npcs.find(n => n.hermit); if (h) v = { x: h.x, y: h.y, k: 'hermit' }; }
+    else { const T = ctx.T, out = []; for (let y = 0; y < m.h; y += 2) for (let x = 0; x < m.w; x += 2) if (m.ground[y * m.w + x] === T.REEF) out.push({ x: x * 16 + 8, y: y * 16 + 8, k: 'reef' }); v = near(out, q => q); }
+  } else if (g === 'ghost' && m.flow) { const out = []; for (let y = 0; y < m.h; y += 2) for (let x = 0; x < m.w; x += 2) if (m.flow[y * m.w + x]) out.push({ x: x * 16 + 8, y: y * 16 + 8, k: 'current' }); v = near(out, q => d2(q.x, q.y) > 32 * 32 ? q : null); }
+  if (!v && !g && s.treasure) v = { x: s.treasure.x * 16 + 8, y: s.treasure.y * 16 + 8, k: 'treasure' };
+  GOAL = { t: S.time, g: s.goal, v: v || dock };
+  return GOAL.v;
+}
+
 // ---------------- test hooks ----------------
 if (typeof window !== 'undefined') {
   window.__raft = {
@@ -490,6 +534,7 @@ if (typeof window !== 'undefined') {
     give() { const b = st.ctx.bag; b.add('plank', 4); b.add('sailcloth', 1); b.add('rope', 2); return { plank: b.count('plank'), sailcloth: b.count('sailcloth'), rope: b.count('rope') }; },
     damage(n = 1) { const s = st.ctx.S.sea; if (s) s.raft.hp -= n; return s ? s.raft.hp : null; },
     mash() { mash(); return st.caught ? st.caught.meter : null; },
+    compass: () => ({ pos: CPOS ? { x: CPOS.x, y: CPOS.y, r: CPOS.r } : null, goal: GOAL ? GOAL.v : null, sea: st.ctx && st.ctx.S.sea ? st.ctx.S.sea.goal : null }),   /* plan-44 D1 */
     floats: () => ({ crates: st.crates.filter(f => !f.dead).map(f => [f.x, f.y]), planks: st.planks.filter(f => !f.dead).map(f => [f.x, f.y]) })   /* QA: vị trí thùng / ván trôi */
   };
 }

@@ -1,0 +1,183 @@
+{
+ "frames": [
+  {
+   "filename": "bk-ridge-hump-sand 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.75
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-hump-sand 1.png",
+   "frame": {
+    "x": 104,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.75
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-hump-sand 2.png",
+   "frame": {
+    "x": 208,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.75
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-hump-sand 3.png",
+   "frame": {
+    "x": 0,
+    "y": 92,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.75
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-hump-sand 4.png",
+   "frame": {
+    "x": 104,
+    "y": 92,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.75
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-hump-sand 5.png",
+   "frame": {
+    "x": 208,
+    "y": 92,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.75
+   },
+   "duration": 100
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "bk-ridge-hump-sand.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 312,
+   "h": 184
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 52,
+   "y": 69
+  },
+  "frameTags": [
+   {
+    "name": "bk-ridge-hump-sand",
+    "from": 0,
+    "to": 5,
+    "direction": "forward"
+   }
+  ]
+ }
+}

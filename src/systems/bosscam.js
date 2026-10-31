@@ -32,8 +32,18 @@ export function bossCamReset(ctx) { ctx.S.camDX = 0; ctx.S.camDY = 0; }
 /* 2026-10-13 (anh Hùng): thanh máu trùm KHÔNG được đè nút HUD (điện thoại dọc: cụm nút góc phải trên). Dùng chung cho cả 3 trùm Vết Nứt.
    bossBarBox(ug, wantW, needH) → { x, y, w, cx }: dò từ mép trên xuống, tìm dải ngang cao needH (px canvas UI) trống nút HUD, lấy khoảng trống rộng nhất
    (≥ min(wantW, 220)); thanh rộng tối đa wantW, ưu tiên giữa màn. Toạ độ nút đọc từ DOM (getBoundingClientRect) quy ra px của canvas UI. */
-const HUD_IDS = ['hud-tl', 'hud-tr', 'px-clock', 'btn-menu', 'btn-photo', 'btn-rot', 'btn-chat', 'herobar', 'hotbar', 'mslots', 'btn-a', 'btn-b'];
+const HUD_IDS = ['hud-tl', 'hud-tr', 'px-clock', 'btn-menu', 'btn-photo', 'btn-rot', 'btn-chat', 'herobar', 'hotbar', 'mslots', 'btn-a', 'btn-b', 'px-status', 'altw'];   /* 2026-10-15: + chip trạng thái (điện thoại giờ ở trái-trên) + cần độ cao */
+/* plan-37: kết quả đo DOM giữ 0,5 s (trước: getComputedStyle + getBoundingClientRect ~30 phần tử MỖI KHUNG → ép layout) */
+const BBC = { k: '', t: 0, out: null };
 export function bossBarBox(ug, wantW, needH, minW = 220) {
+  const now = typeof performance !== 'undefined' ? performance.now() : 0, key = ug.canvas.width + 'x' + ug.canvas.height + '|' + Math.round(wantW) + '|' + Math.round(needH) + '|' + minW;
+  if (BBC.out && BBC.k === key && now - BBC.t < 500) { BBL.box = BBC.out; BBL.t = now; return BBC.out; }
+  const r = bossBarBox0(ug, wantW, needH, minW); BBC.k = key; BBC.t = now; BBC.out = r; BBL.box = r; BBL.t = now; return r;
+}
+/* plan-44 C2: khung thanh máu trùm vừa dùng gần nhất (diff.js vẽ dấu 'Dễ' dưới mép phải) */
+const BBL = { box: null, t: -1e9 };
+export function lastBossBar() { return BBL; }
+function bossBarBox0(ug, wantW, needH, minW) {
   const cv = ug.canvas, W = cv.width, H = cv.height, rects = [];
   if (typeof document !== 'undefined' && cv.getBoundingClientRect) {
     const cr = cv.getBoundingClientRect(), kx = W / (cr.width || W), ky = H / (cr.height || H);

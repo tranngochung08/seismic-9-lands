@@ -295,7 +295,8 @@ export const trees = {
         const mt = ctx.mouseTile && ctx.mouseTile(), od = ctx.O[o.type], lx = o.x * TS + ((od && od.ox) || 0), by = (o.y + ((od && od.fh) || 1)) * TS;
         const under = mt && od && mt.wx >= lx && mt.wx < lx + od.w && mt.wy >= by - od.h && mt.wy < by;   /* đúng khung hình cây */   /* chuột trên cây này (thân/tán) → ưu tiên, kể cả khi xa hơn một chút */
         const d = under && d0 < REACH * 1.5 ? -1 : d0;
-        if (d < REACH && d < bd) { bd = d; best = holdAxe(ctx) ? { label: t.chop, x: under ? mt.wx : wx, y: under ? mt.wy : wy, limit: REACH, data: { kind: 'tree', o } } : { label: ctx.needHold('axe'), x: under ? mt.wx : wx, y: under ? mt.wy : wy, limit: REACH, need: true, needId: 'axe', cursor: 'tool', data: { kind: 'need' } }; }
+        const fr = (() => { const v = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir & 3], dd = d0 || 1; return ((wx - p.x) * v[0] + (wy - p.y) * v[1]) / dd > 0.4; })();   /* plan-43 K1: cây ở phía mặt nhìn */
+        if (d < REACH && d < bd) { bd = d; best = holdAxe(ctx) ? { label: t.chop, x: under ? mt.wx : wx, y: under ? mt.wy : wy, limit: REACH, ...(fr ? { priority: 1.1 } : {}), data: { kind: 'tree', o } } : { label: ctx.needHold('axe'), x: under ? mt.wx : wx, y: under ? mt.wy : wy, limit: REACH, need: true, needId: 'axe', cursor: 'tool', data: { kind: 'need' } }; }
       }
     }
     const s = ST.dealer;

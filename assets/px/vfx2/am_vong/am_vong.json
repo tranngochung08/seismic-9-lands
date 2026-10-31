@@ -1,0 +1,1 @@
+{"n": 10, "fw": 60.0, "fh": 34.0, "ax": 30.0, "ay": 19.0, "fps": 12, "note": "echo ripples around the caster (3 shrinking-echo pulses); the 2 faint echo clones of the creature are engine-side (tinted copies of its own sprite); ground decal, draw BEFORE the creature", "layers": "draw BEFORE the struck creature"}

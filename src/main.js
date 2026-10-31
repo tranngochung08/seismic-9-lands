@@ -4,12 +4,15 @@ import { TS, T, O, PAL, tiles, buildTiles, buildObjects, charSheet, lookFor, rng
 import { loadRoster, membersOfLevel, pickNpcs, LEVEL_COLORS, isLeader, isBooster, ROSTER, byId, nationOf, findMember, nationGroups, nationStats } from './data.js';
 import { ZONES, ZONE_LIST, freeTiles, getG, setG, isSolid, setSolid, removeObject, zoneTier, place, computeReach, hasObjectAt, rebuildPlot, tierCap, MAX_TIER, FLOW } from './world.js';
 import { SYSTEMS } from './systems/index.js';
+import { drawWeather69, drawFireflies69 } from './systems/weather69.js';   /* plan-69: thời tiết / môi trường vẽ code */
 import * as AUDIO from './audio.js';
 import { ITEMS, TOOLS, BAG_CAP, itemName, itemIcon } from './items.js';
 import { obj as defineObject } from './gfx.js';
 import { setNationLang } from './data.js';
 import { Player, NPC } from './entities.js';
-import { loadSave, writeSave, defaultSave, clearSave } from './save.js';
+import { loadSave, writeSave, defaultSave, clearSave, useSlot } from './save.js';
+import { nextStep } from './nextstep.js';   /* plan-44 D3: dòng Việc kế tiếp */
+import { drawZoneMap, planZoneWalk } from './zonemap.js';   /* plan-44 D4: bản đồ Vùng này (+ đợt D: chạm bản đồ → tự đi) */
 import { CONFIG } from './config.js';
 import * as UI from './ui.js';
 import { FRIEND, friendSheet, drawScarf, normalizeStory, storyItemsLeft, ITEMS3 } from './story.js';
@@ -21,11 +24,13 @@ import * as HB from './hotbar.js';   /* plan-20: hotbar kiểu Stardew */
 import * as HUD from './hud.js';
 import * as MS from './mslots.js';   /* 2026-10-11 anh: điện thoại — ô đồ tròn quanh nút A thay thanh công cụ PC */
 import { setupStaff, tickStaff, drawStaffTags } from './staff.js';
+import { PERF, GFX } from './perf.js';   /* plan-37: ?fps — đo khung + từng phần */
+import * as DG from './dungeon.js';   /* plan-46 C: vùng hầm v3 (nền ghép, lớp sáng, viền sáng, camera 1,25×) */
 import * as TGT from './systems/target.js';   /* 2026-10-11: khóa mục tiêu (click / Tab / 🎯) cho súng + mọi kỹ năng */   /* plan-22: quầy/nhà → NPC */   /* plan-22: HUD kiểu Stardew, toàn pixel */
 
 const $ = s => document.querySelector(s);
 const cv = $('#c'), g = cv.getContext('2d');
-const uiCv = $('#ui'), ug = uiCv.getContext('2d'); // full-resolution overlay for crisp text labels
+const uiCv = $('#ui'), ugUI = uiCv.getContext('2d'); let ug = ugUI; // full-resolution overlay for crisp text labels   /* plan-42 A1: ug = ugUI (lớp #ui) hoặc g (vẽ thẳng lên canvas chính khi cùng độ phân giải) */
 const seis = $('#seis'), sg = seis.getContext('2d', { willReadFrequently: true });
 let scale = 3, VW = 320, VH = 200;
 
@@ -72,6 +77,7 @@ const CTX = {
   give: (id, n = 1, x, y, opts) => { if (CTX.drop && !CTX.noMonsters && S.sys.some(s => s.id === 'drops')) { CTX.drop(id, n, x, y, opts); return n; } return CTX.bag.add(id, n); },   /* vùng không chạy drops (Vực Kraken) / demo / promo → vào thẳng túi */   /* plan-24: đồ rơi ra đất rồi mới nhặt (demo/promo không có drops → vào thẳng túi) */
   hotbarSlotOf: id => HB.slotOf(id), flyItem: (id, slot, done, wx, wy, n) => HUD.flyToSlot(id, slot, done, null, wx, wy, n),   /* plan-24: nhặt đồ dưới đất → bay vào ô */
   hotbarFirstEmpty: id => HB.firstEmpty(id), hotbarPut: (i, id) => HB.putAt(i, id), flyToSlot: (kind, slot, done, file) => HUD.flyToSlot(kind, slot, done, file),   /* phím T ném thú */   /* plan-23 wreck.js: vật đổ nát không chắn đường */
+  setZoomOut: k => { k = k ? 1 : 0; if ((S.zoomOut || 0) === k) return; S.zoomOut = k; resize(); },   /* 2026-10-14: khung nhìn rộng cho trùm khổng lồ */
   setMode: m => setMode(m), registerCloser: (mode, fn) => { S.closers[mode] = fn; }, onAction: (mode, fn) => { (S.actions ||= {})[mode] = fn; },
   toast: (t, big) => UI.toast(t, big), bubble: (n, t, sec) => UI.bubble(n, t, sec), drawBubble: (ug, n, sx, sy, fs) => UI.drawBubble(ug, n, sx, sy, fs), quake: s => quake(s), persist: () => persist(), lang: () => UI.lang(),
   openDialog: o => UI.openDialog(o), levelBadge: UI.levelBadge, avatarHTML: UI.avatarHTML,
@@ -83,7 +89,7 @@ const CTX = {
   FRIEND, friendSheet, drawScarf, ITEMS3,
   story: () => S.save.story,                                            // { act, step, items{}, rescued, attempts, flashback, seaDone, keepsake } — edit then ctx.persist()
   storyAct: act => { S.save.story.act = act; persist(); },
-  travel: (id, entry = 'default') => { if (!ZONES[id] || fadeCb) return false; fadeTo(() => enterZone(id, entry)); return true; },   // fade out, load another zone
+  travel: (id, entry = 'default', opt) => { if (!ZONES[id] || fadeCb) return false; fadeTo(() => enterZone(id, entry), opt); return true; },   // fade out, load another zone
   finale: o => { setMode('end'); UI.openEnd(S.save.met.length, ROSTER.length, o); },            // custom end screen: { title, body, btn? } (Esc / button → play; credits button rolls credits)
   rollCredits: () => startCredits(), closeDialog: () => UI.dialogClose(),
   achieve: id => { if (!S.save.achievements.includes(id)) { S.save.achievements.push(id); if (UI.L.ach[id]) UI.toast(UI.L.achGot(UI.L.ach[id][0])); persist(); } },
@@ -108,6 +114,7 @@ const CTX = {
   tool: { tier: id => (S.save.toolTier || {})[id] || (S.save.tools?.[id] ? 1 : 0), set: (id, t) => { (S.save.toolTier ||= {})[id] = t; if (S.save.tools) S.save.tools[id] = t > 0; if (id === 'rod' && t > 0) S.save.tools.rodBought = true; persist(); } },
   defineObject: (name, w, h, fw, fh, fn, opts) => { if (!O[name]) defineObject(name, w, h, fw, fh, fn, opts); return name; },
   sfx: name => AUDIO.sfx(name),
+  duelSfx: (name, d) => AUDIO.duelSfx(name, d),   /* p49c: tiếng Đấu Chấn Thú (file mp3, bản nháp audio.js) */
   nationName: key => { const n = nationOf({ ro: [key] }); return n ? n.name : key; },
   // BFS on tiles from (x0,y0) to (x1,y1) in tile units; returns pixel waypoints (tile centres) or null. Limited to a box around both points.
   pathTo: (x0, y0, x1, y1, margin = 6) => {
@@ -143,11 +150,13 @@ const CTX = {
     const el = $('#h-alert'); el.innerHTML = S.alerts.map(a => `<div>${HUD.pxText(a.text)}</div>`).join(''); el.hidden = !S.alerts.length;
     clearTimeout(S._alertT); const next = Math.min(...S.alerts.map(a => a.until)); if (S.alerts.length && Number.isFinite(next)) S._alertT = setTimeout(() => CTX.alert(undefined), Math.max(50, next - now + 20));
   },
-  trust: key => { const mine = S.npcs.filter(n => !n.m.guide && nationOf(n.m)?.key === key); if (!mine.length) return 0; const met = new Set(S.save.met); return mine.filter(n => met.has(n.m.id)).length / mine.length; }
+  trust: key => { const TC = trustC; const tb = Math.floor(S.time * 4); if (TC.tb !== tb || TC.sv !== S.save || TC.npcs !== S.npcs || TC.nn !== S.npcs.length || TC.met !== S.save.met.length) { TC.tb = tb; TC.sv = S.save; TC.npcs = S.npcs; TC.nn = S.npcs.length; TC.met = S.save.met.length; TC.v = new Map(); } if (TC.v.has(key)) return TC.v.get(key); const r = trust0(key); TC.v.set(key, r); return r; }   /* plan-42 A5: nhớ ≤ 0,25 s (đổi save / danh sách dân / số người đã gặp thì tính lại ngay) */
 };
+const trustC = { sv: null, v: new Map() };
+const trust0 = key => { const mine = S.npcs.filter(n => !n.m.guide && nationOf(n.m)?.key === key); if (!mine.length) return 0; const met = new Set(S.save.met); return mine.filter(n => met.has(n.m.id)).length / mine.length; };
 /* ---------- F01 (plan-17): đồng hồ game + tiện ích plot cho module đợt 1 (hợp đồng: src/systems/API.md, docs/contract-dot1.md) ---------- */
 const CLOCK = createClock({
-  S, persist: () => persist(), fadeTo: cb => { if (fadeCb) return false; fadeTo(cb); return true; }, setMode: m => setMode(m),
+  S, persist: () => persist(), fadeTo: (cb, opt) => { if (fadeCb) return false; fadeTo(cb, opt); return true; }, setMode: m => setMode(m),
   registerCloser: (m, fn) => { S.closers[m] = fn; }, onAction: (m, fn) => { (S.actions ||= {})[m] = fn; }, lang: () => UI.lang(), panel: id => CTX.panel(id), toast: t => UI.toast(t)
 });
 CTX.clock = CLOCK; CTX.season = () => CLOCK.season;
@@ -249,11 +258,13 @@ async function boot() {
   AUDIO.setEnabled(sv ? sv.music !== false : true); UI.setMusicLabel(AUDIO.isEnabled());
   for (const ev of ['keydown', 'pointerdown']) window.addEventListener(ev, () => AUDIO.initAudio(), { passive: true }); // browsers only allow audio after a user gesture
   document.addEventListener('fullscreenchange', resize);
-  setInterval(() => { if (cv.width !== VW * ART.hi || cv.height !== VH * ART.hi || Math.abs(cv.clientWidth - viewSize().w) > 1 || Math.abs(cv.clientHeight - viewSize().h) > 1) resize(); }, 500);
+  setInterval(() => { if (cv.width !== CVW || cv.height !== CVH || Math.abs(cv.clientWidth - viewSize().w) > 1 || Math.abs(cv.clientHeight - viewSize().h) > 1) resize(); }, 500);
   setupDiscord();
   $('#loading').hidden = true; $('#title').hidden = false;
   TITLE.initTitle({ resize, persist: () => { if (S.save) persist(); } }); TITLE.showTitle();   /* plan-13 */
   for (const b of document.querySelectorAll('#title .btn')) if (ART.on && ART.man && ART.man.ui && ART.man.ui.title && ART.man.ui.title.btn) b.classList.add('px');
+  CTX.gfxLow = GFX.low; CTX.gfx = GFX;   /* plan-37 (h): bậc đồ hoạ tự động — hệ hỏi ctx.gfxLow() */
+  PERF.init({ on: PERF.autoOn, systems: SYSTEMS, canvas: () => cv, tier: () => GFX.tierName() });
   requestAnimationFrame(loop);
   const q = new URLSearchParams(location.search);
   window.__S = S; window.__CTX = CTX; window.__enterZone = (id, e) => enterZone(id, e || 'default'); window.__target = { ...TGT, state: TGT.debug };
@@ -263,6 +274,7 @@ async function boot() {
   if (q.get('showcase') === 'p19') { setTimeout(() => import('./showcase19.js').then(m => m.runShowcase19({ S, CTX, UI, setMode, enterZone })), 1500); } else
   if (q.has('showcase')) { setTimeout(() => import('./showcase.js').then(m => m.runShowcase({ S, CTX, UI, setMode, enterZone })), 1500); }   /* bảng check nhanh tính năng mới (?auto&zone=village&showcase=dot1) */
   if (q.has('preset')) { import('./presets.js').then(m => m.runPreset({ q, S, CTX, startGame, defaultSave, UI })); return; }   /* điểm lưu chơi thật (ô lưu test riêng) */
+  if (q.get('find')) { $('#t-find').value = q.get('find'); history.replaceState(null, '', location.pathname + (q.get('lang') ? '?lang=' + q.get('lang') : '')); findMe(); return; }   /* plan-44 X1: link Tìm tôi chia sẻ được (?find=tên) */
   if (q.has('auto')) startGame(sv || defaultSave()); // debug: skip the title screen
   if (q.has('zone') && ZONES[q.get('zone')]) { S.save = S.save || defaultSave(); if (!S.player) startGame(S.save); enterZone(q.get('zone'), 'default'); }
   window.__S = S; window.__CTX = CTX; window.__enterZone = (id, e) => enterZone(id, e || 'default');
@@ -286,10 +298,38 @@ function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => { });
   else (el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : Promise.reject()).catch(() => UI.toast('F11'));
 }
+/* plan-44 Q8: Tìm tôi — vùng đã mở → như cũ (ghi save thật); chưa có save / vùng chưa mở → đi xem bằng Ô LƯU KHÁCH (không đụng save thật), có hỏi trước nếu đã có save */
+function zoneUnlocked(sv, zid) { const list = SHOWN_ZONES(), i = list.findIndex(z => z.id === zid); if (i < 0) return true; const prev = list[i - 1]; return !prev || prev.lv < 1 || (sv.badges || []).includes(prev.lv); }
+function zoneNeed(zid) { const list = SHOWN_ZONES(), i = list.findIndex(z => z.id === zid); return i > 0 ? list[i - 1].lv : 0; }
 function findMe() {
   const m = findMember($('#t-find').value); if (!m) { UI.toast(UI.L.notFound); return; }
-  const sv = loadSave() || defaultSave(); sv.target = m.id; sv.zone = zoneOfLevel(m.lv); sv.entry = 'default';
+  const zid = zoneOfLevel(m.lv), real = loadSave();
+  if (real && zoneUnlocked(real, zid)) { real.target = m.id; real.zone = zid; real.entry = 'default'; startGame(real); UI.toast(UI.L.targetWaiting(m.n, S.zone.name[UI.lang()]), true); return; }
+  if (!real) { guestVisit(m, null); return; }
+  askGuest(m, real, zid);
+}
+function askGuest(m, real, zid) {
+  let el = $('#p44-ask'); if (!el) { el = document.createElement('div'); el.id = 'p44-ask'; el.className = 'p44ov'; document.body.appendChild(el); }
+  const Z = ZONES[zid], esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  el.innerHTML = `<div class="panel"><p>${esc(UI.L.findLockedAsk(m.n, Z ? Z.name[UI.lang()] : zid))}</p><div class="hc-btns"><button type="button" class="btn primary" data-a="guest">${esc(UI.L.findGuest)}</button><button type="button" class="btn" data-a="no">${esc(UI.L.findCancel)}</button></div></div>`;
+  el.hidden = false;
+  el.onclick = e => { const k = e.target.closest('button'); if (!k) return; el.hidden = true; if (k.dataset.a === 'guest') guestVisit(m, real); };
+}
+function guestVisit(m, real) {
+  useSlot('guest_find'); clearSave();   /* ô lưu khách: save thật không bị ghi */
+  const sv = defaultSave(), zid = zoneOfLevel(m.lv);
+  sv.name = (real && real.name) || $('#t-name').value.trim() || sv.name; sv.nation = real && real.nation !== undefined ? real.nation : null; if (real && real.outfit) sv.outfit = { ...real.outfit };
+  sv.story = { ...sv.story, act: 2, step: 127, seaDone: true, keepsake: true, flashback: false, guideStoryTold: true, path: (real && real.story && real.story.path) || 'noxx' };
+  sv.zone = zid; sv.entry = 'default'; sv.target = m.id; sv.guest = true;
   startGame(sv); UI.toast(UI.L.targetWaiting(m.n, S.zone.name[UI.lang()]), true);
+  let chip = $('#p44-guest'); if (!chip) { chip = document.createElement('div'); chip.id = 'p44-guest'; document.body.appendChild(chip); } chip.innerHTML = HUD.pxText(UI.L.guestChip); chip.hidden = false;
+  window.__guest = { slot: 'guest_find', target: m.id, zone: zid };
+}
+/* plan-44 R1: Bia Vinh Danh → thẻ nghệ sĩ → Dẫn tôi tới (chỉ vùng đã mở): đặt mục tiêu Tìm tôi rồi vào vùng đó (người đó đợi gần lối vào) */
+function guideTo(m) {
+  const zid = zoneOfLevel(m.lv); if (!zoneUnlocked(S.save, zid)) return;
+  UI.closeHall(); S.save.target = m.id; persist(); setMode('play');
+  fadeTo(() => { enterZone(zid, 'default'); UI.toast(UI.L.targetWaiting(m.n, S.zone.name[UI.lang()]), true); });
 }
 
 // ---------- zones ----------
@@ -324,7 +364,7 @@ function enterZone(id, entry) {
   S.nations = nationGroups(z.lv); // nations present at this level, biggest first → one fenced district each (names localized)
   const saved = (S.save.districts || {})[id] || {};
   const map = z.build(rngFrom(hashStr(id)), { nations: S.nations.map((g, i) => ({ key: g.key, size: g.members.length, tier: saved[i]?.tier })) });
-  S.zone = z; z.tier = zoneTier(id); S.map = map; artMapBuilt(map); S.sys = z.systems ? SYSTEMS.filter(sy => z.systems.includes(sy.id) || sy.always) : SYSTEMS;   /* sy.always: hệ chạy ở mọi vùng (plan-29 dragon: ngoại hình + báo 'không gọi được rồng ở đây') */ S.save.zone = id; S.save.entry = entry; S.hazards = []; S.hazNext = 3; S.talking = null;
+  S.zone = z; z.tier = zoneTier(id); S.map = map; artMapBuilt(map); DG.preload(map); if (!!map.dungeon !== !!S.dgZoom) resize();   /* plan-46 C: vào / ra vùng hầm → đổi camera */ S.sys = z.systems ? SYSTEMS.filter(sy => z.systems.includes(sy.id) || sy.always) : SYSTEMS;   /* sy.always: hệ chạy ở mọi vùng (plan-29 dragon: ngoại hình + báo 'không gọi được rồng ở đây') */ S.save.zone = id; S.save.entry = entry; S.hazards = []; S.hazNext = 3; S.talking = null;
   const e = map.entries[entry] || map.entries.default;
   S.player.x = e.x * TS + 8; S.player.y = e.y * TS + 14; S.player.dir = 0;
   const { members, placed } = placeNpcs(z, id, map, e);
@@ -389,30 +429,46 @@ const ACH = [
   { id: 'nations', test: s => new Set(s.met.map(id => { const n = nationOf(byId.get(id) || {}); return n && n.key; }).filter(Boolean)).size >= 10 },
   { id: 'shop', test: s => s.owned.length >= 1 }, { id: 'scholar', test: s => Object.values(s.tasks).some(t => t.quiz >= 1) },
   // granted by systems (photo / sea_life / sumo / pet push the id themselves); listed here so the Codex shows them
-  ...['photographer', 'captain', 'pet', 'rescue', 'keepsake', 'hacrocky', 'trongdong', 'guong', 'hoden', 'dongho'].map(id => ({ id, test: s => s.achievements.includes(id) }))
+  ...['photographer', 'captain', 'pet', 'rescue', 'keepsake', 'hacrocky', 'trongdong', 'guong', 'hoden', 'dongho', 'bakunawa', 'lyron'].map(id => ({ id, test: s => s.achievements.includes(id) }))
 ];
 function checkAchievements() {
   for (const a of ACH) if (!S.save.achievements.includes(a.id) && a.test(S.save)) { S.save.achievements.push(a.id); setTimeout(() => UI.toast(UI.L.achGot(UI.L.ach[a.id][0])), 1600); }
 }
-const SHOWN_ZONES = () => ZONE_LIST.filter(z => !z.hidden);   // the Kraken Trench is reached from the pier, not from the map
+const SHOWN_ZONES = () => ZONE_LIST.filter(z => !z.hidden);   // hidden zones (underwater layers, lairs, rifts) are reached in-world, not from the map
 function openWorldMap() { setMode('map'); const sb = S.map && S.map.sky && S.map.below, here = sb ? (ZONES[sb] && ZONES[sb].road ? ZONES[sb].road.lower : sb) : S.zone.id;   /* plan-31: đang ở trên trời → đánh dấu vùng đất bên dưới + ☁ */
-  UI.openMap(SHOWN_ZONES(), S.save, here, id => { setMode('play'); fadeTo(() => enterZone(id, 'default')); }, !!sb); }
+  const zv = S.map && !S.map.sky && !S.map.air && !COVER_MAP() ? { name: S.zone.name[UI.lang()], draw: (cv, leg) => drawZoneMap(cv, leg, S, CTX, UI.lang(), UI.L, zoneWalk) } : null;   /* plan-44 D4: thẻ Vùng này */
+  UI.openMap(SHOWN_ZONES(), S.save, here, id => { setMode('play'); fadeTo(() => enterZone(id, 'default')); }, !!sb, zv); }
+function zoneWalk(wx, wy) {   /* plan-44 đợt D: chạm 1 điểm trên bản đồ Vùng này → đóng bản đồ, tự đi tới đó (cùng cơ chế p.autoPath của bấm-chuột-tự-đi; joystick / phím đi = dừng) */
+  const p = S.player; let caught = false; try { caught = !!(S.sea && window.__raft && window.__raft.info().caught); } catch (e) { }
+  if (!p || !S.map || (S.sea && S.sea.diving) || caught) return { ok: false, why: 'busy' };
+  const r = planZoneWalk(S, wx, wy); if (!r.ok) return r;
+  UI.closeMap(); setMode('play'); S.clickGoal = null; p.autoPath = r.path; p.autoStuck = 0;
+  window.__zwalk = { tx: r.tx, ty: r.ty, exact: r.exact, steps: r.steps, n: r.path.length };
+  return r;
+}
+const COVER_MAP = () => !!(S.zone && /^(mind_|sky_)/.test(S.zone.id));
 function openCodex() { setMode('codex'); UI.openCodex(S.save, SHOWN_ZONES(), ACH.map(a => ({ id: a.id, done: S.save.achievements.includes(a.id) })), ROSTER.length); }
 // the main quest line in the HUD
 function storyText() {
-  const st = S.save.story, lg = UI.lang(); if (!st) return '';
+  const st = S.save.story, lg = UI.lang(); if (!st || S.bossFight) return '';   /* 2026-10-14: đang đánh trùm (S.bossFight, bakunawa.js đặt) → ẩn dòng nhiệm vụ cốt truyện */
+  { const ly = (S.save.sys || {}).lyron; if (ly && ly.stage === 'meet') return UI.L.storyMeet; }   /* 2026-10-15: hạ Rết xong — Lyron đợi ở cầu tàu (lyron_finale.js meet) */
   if (st.act === 2) return UI.L.storyGather(ITEMS3.map(k => `${itemIcon(k)}${st.items[k] ? '✓' : '·'}`).join(' '));
-  if (st.act === 3) return S.zone.id === 'trench' ? UI.L.storyInTrench : UI.L.storyDive;
+  if (st.act === 3) return S.zone.id === 'kraken' ? UI.L.storyInTrench : UI.L.storyDive;   /* 2026-10-15: bỏ Vực Kraken cốt truyện — lồng Lyron ở Hang Ổ Kraken (krstory.js) */
   return '';
 }
 
 // ---------- input ----------
+/* plan-37: toạ độ canvas trên màn (getBoundingClientRect ép layout) — đo lại khi đổi cỡ / mỗi 0,5 s */
+let CVR = null, CVR_T = 0;
+function cvRect() { const t = performance.now(); if (!CVR || t - CVR_T > 500) { CVR = cv.getBoundingClientRect(); CVR_T = t; } return CVR; }
 const KEYS = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
 function bindInput() {
   window.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') { if (e.code === 'Escape') e.target.blur(); return; }
     if (S.mode === 'quiz') { UI.quizKey(e.code); e.preventDefault(); return; }
     if (S.mode === 'menu' && menuKey(e.code)) { e.preventDefault(); return; }   /* plan-10: đổi thẻ, nuốt phím đi */
+    if (S.mode === 'dialog' && (e.code === 'ArrowDown' || e.code === 'KeyS') && UI.dialogMore()) { e.preventDefault(); return; }   /* plan-44 Q7: ↓ = Kể thêm */
+    if ((e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') && !e.repeat) { ePrevT = eLastT; eLastT = eDownT = performance.now(); }   /* plan-44 Q7: giữ E lật nhanh */
     if ((e.code === 'KeyB' || e.code === 'KeyI' || e.code === 'KeyQ' || e.code === 'KeyO') && (S.mode === 'play' || S.mode === 'menu') && S.save && S.map) { toggleMenu(e.code === 'KeyQ' ? 'quest' : e.code === 'KeyO' ? 'shop' : 'bag'); e.preventDefault(); return; }   /* O: mua nhanh (P đã dùng cho chụp ảnh) */
     if (e.code === 'Tab' && S.mode === 'play' && S.save && S.map) { TGT.cycle(e.shiftKey ? -1 : 1); e.preventDefault(); return; }   /* khóa mục tiêu kế tiếp (Shift+Tab: lùi) */
     for (const sys of S.sys) if (sys.key && sys.key(e.code, CTX)) { e.preventDefault(); return; }
@@ -424,8 +480,8 @@ function bindInput() {
     if (e.code === 'KeyM') mapQueued = true;
     if (e.code === 'KeyC') codexQueued = true;
   });
-  window.addEventListener('keyup', e => { if (KEYS[e.code]) input[KEYS[e.code]] = false; });
-  window.addEventListener('blur', () => { for (const k in input) input[k] = false; });
+  window.addEventListener('keyup', e => { if (KEYS[e.code]) input[KEYS[e.code]] = false; if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') eDownT = 0; });
+  window.addEventListener('blur', () => { for (const k in input) input[k] = false; eDownT = 0; });
   { const joy = $('#joy'), knob = joy && joy.querySelector('.jknob');   /* 2026-10-11 anh: cần điều khiển tròn kéo thả (8 hướng) thay 4 nút mũi tên */
     if (joy) { let pid = null; const R = 46, DEAD = 12;
       const set = (cx, cy) => { const r = joy.getBoundingClientRect(), ox = r.left + r.width / 2, oy = r.top + r.height / 2; let dx = cx - ox, dy = cy - oy; const d = Math.hypot(dx, dy) || 1; if (d > R) { dx = dx / d * R; dy = dy / d * R; }
@@ -440,7 +496,7 @@ function bindInput() {
     const k = b.dataset.k, on = e => { e.preventDefault(); input[k] = true; }, off = e => { e.preventDefault(); input[k] = false; };
     b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
   }
-  $('#btn-a').addEventListener('pointerdown', e => { e.preventDefault(); interactQueued = true; });
+  $('#btn-a').addEventListener('pointerdown', e => { e.preventDefault(); interactQueued = true; ePrevT = eLastT; eLastT = performance.now(); });
   $('#btn-menu').addEventListener('pointerdown', e => { e.preventDefault(); escQueued = true; });
   { const bt = $('#btn-tgt'); if (bt) bt.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (S.mode === 'play') TGT.cycle(1); }); }   /* điện thoại: 🎯 đổi mục tiêu */
   { const br = $('#btn-rot'); if (br) br.addEventListener('click', async e => {   /* 2026-10-11 anh: điện thoại chơi được XOAY NGANG — toàn màn hình + khóa chiều ngang (Android); máy không cho khóa (iPhone) → hướng dẫn tự xoay */
@@ -461,15 +517,21 @@ function viewSize() {
   const r = document.documentElement.style; r.setProperty('--vvw', w + 'px'); r.setProperty('--vvh', h + 'px'); r.setProperty('--vvt', Math.round(vv ? vv.offsetTop : 0) + 'px'); r.setProperty('--vvl', Math.round(vv ? vv.offsetLeft : 0) + 'px');
   return { w, h };
 }
+let CVW = 0, CVH = 0;
 function resize() {
   const { w, h } = viewSize();
   scale = Math.max(2, Math.round(w / 340)); if (h / scale < 150) scale = Math.max(2, Math.floor(h / 150));
   { let pref = 0; try { pref = +localStorage.getItem('seismic.scale') || 0; } catch (e) { } if (pref >= 2 && w / pref >= 200) scale = pref; }   /* plan-13: tỉ lệ pixel người chơi chọn */
   VW = Math.ceil(w / scale); VH = Math.ceil(h / scale);
   if (ART.on) scale = Math.max(ART.hi, Math.round(scale / ART.hi) * ART.hi), VW = Math.ceil(w / scale), VH = Math.ceil(h / scale); // bội của hi → mỗi pixel art = số nguyên pixel màn hình
-  cv.width = VW * ART.hi; cv.height = VH * ART.hi; cv.style.width = w + 'px'; cv.style.height = h + 'px'; g.setTransform(ART.hi, 0, 0, ART.hi, 0, 0); g.imageSmoothingEnabled = false;
+  if (ART.on && S.zoomOut) { const z = scale - ART.hi * S.zoomOut; if (z >= 2 && Math.ceil(w / z) <= 760) { scale = z; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); } }   /* 2026-10-14 trùm khổng lồ: thu nhỏ khung nhìn (bớt 1 bậc pixel) để thấy trọn con trùm — CTX.setZoomOut */
+  let K = ART.hi; S.dgZoom = 0;
+  if (ART.on && !S.zoomOut && S.map && S.map.dungeon && DG.DUNGEON.zoom > 1) { scale *= DG.DUNGEON.zoom; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); K = Math.min(scale, ART.hi * DG.DUNGEON.zoom * 2); S.dgZoom = DG.DUNGEON.zoom; }   /* plan-46 C: vùng hầm gần 1,25× — canvas ≈ độ phân giải màn (K) để pixel lẻ 2,5× đều hơn; UI/HUD (DOM, #ui) không phóng */
+  CVW = Math.round(VW * K); CVH = Math.round(VH * K); let KX = K, KY = K;
+  if (S.dgZoom && K === scale) { CVW = w; CVH = h; KX = w / VW; KY = h / VH; }   /* canvas đúng bằng màn → nhãn vẽ thẳng (plan-42 A1), lệch < 1 px */
+  CVR = null; cv.width = CVW; cv.height = CVH; cv.style.width = w + 'px'; cv.style.height = h + 'px'; g.setTransform(KX, 0, 0, KY, 0, 0); g.imageSmoothingEnabled = false;
   uiCv.width = w; uiCv.height = h; uiCv.style.width = w + 'px'; uiCv.style.height = h + 'px';
-  CTX.VW = VW; CTX.VH = VH; CTX.scale = scale;
+  CTX.VW = VW; CTX.VH = VH; CTX.scale = scale; CTX.zoomM = Math.max(1, Math.round(w / CVW)); CTX.cssK = w / VW; CTX.zoomView = () => CTX._zv || null;   /* plan-49a: m = điểm ảnh màn / điểm ảnh canvas (nấc phóng k/m) */
   CTX.mouseTile = () => S.vm ? { tx: Math.floor(S.vm.wx / TS), ty: Math.floor(S.vm.wy / TS), wx: S.vm.wx, wy: S.vm.wy } : MOUSE.on && CTX.cam ? { tx: Math.floor((CTX.cam.cx + MOUSE.sx) / TS), ty: Math.floor((CTX.cam.cy + MOUSE.sy) / TS), wx: CTX.cam.cx + MOUSE.sx, wy: CTX.cam.cy + MOUSE.sy } : null;
 }
 
@@ -477,6 +539,7 @@ function resize() {
 const KIND = o => o.bed ? 'bed' : o.hall ? 'hall' : o.rocky ? 'rocky' : o.nation ? 'nation' : o.shop ? 'shop' : o.fire ? 'fire' : o.ore ? 'ore' : o.lever ? 'lever' : o.quiz ? 'quiz' : o.item ? 'item' : o.text ? 'sign' : null;
 const RK_FREE = new Set(['monsters', 'drops', 'pet', 'rubble', 'road', 'spar', 'dragon', 'hero', 'petgun', 'target']);
 function findNear() {
+  if (CTX.alt && CTX.alt.h && CTX.alt.h() > 10 && !/^sky/.test(S.zone.id) && !(S.map && S.map.air)) return null;   /* 2026-10-14: đang bay > 10 m trên vùng đất → không nói chuyện / nhặt / tương tác mặt đất */
   const p = S.player; let best = null, bd = Infinity;
   /* chuột kiểu Stardew: thứ đang trỏ (NPC / vật thể / neo của hệ) trong tầm với (≤ 1,5× tầm E) thắng mọi thứ khác; MOUSE.hit → con trỏ bàn tay */
   const mt = CTX.mouseTile && CTX.mouseTile(); MOUSE.hit = false; let hitBest = null, hitD = Infinity;
@@ -485,13 +548,14 @@ function findNear() {
   const consider = (cand, dist, limit, bias = 0) => { if (dist < limit && dist - bias < bd) { bd = dist - bias; best = cand; } }; // bias: systems may claim priority over NPCs/objects
   const hk0 = CTX.heldKind ? CTX.heldKind() : null, busy0 = (hk0 === 'tool' || hk0 === 'seed') && !(CTX.holding && (CTX.holding('sword') || CTX.holding('petgun')));   /* đang cầm dụng cụ/hạt: nói chuyện nhường phím E cho việc của dụng cụ (farm_land 2026-10-11: dân đứng cạnh chiếm mất 'Cày đất'); click vào người vẫn nói chuyện */
   const lkN = TGT.mode() === 'hand' ? TGT.npc() : null;   /* đã khóa dân/NPC + tay không → nói chuyện với ĐÚNG người đó */
-  for (const n of allNpcs()) { if (n.m.friend) continue; const dist = Math.hypot(n.x - p.x, n.y - p.y); consider(n === lkN ? { kind: 'npc', npc: n, isLock: true } : { kind: 'npc', npc: n }, dist, 22, n === lkN ? 4000 : busy0 ? -24 : 0); if (mt && Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) hover({ kind: 'npc', npc: n }, dist, 22); }   // the story friend is handled by the story systems' near()
+  for (const n of allNpcs()) { if (n.m.friend) continue; const dist = Math.hypot(n.x - p.x, n.y - p.y), bias = n === lkN ? 4000 : busy0 ? -24 : 0; if (dist < 22 && dist - bias < bd) consider(n === lkN ? { kind: 'npc', npc: n, isLock: true } : { kind: 'npc', npc: n }, dist, 22, bias);   /* plan-42 A5: tạo ứng viên chỉ khi thắng */ if (mt && Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) hover({ kind: 'npc', npc: n }, dist, 22); }   // the story friend is handled by the story systems' near()
   const hk = CTX.heldKind ? CTX.heldKind() : null, busy = hk === 'tool' || hk === 'seed';
   for (const o of S.map.objects) {
+    if (Math.abs(o.x * TS - p.x) > 140 || Math.abs(o.y * TS - p.y) > 140) continue;   /* plan-37: vật xa > 140 px không bao giờ trong tầm E / trỏ chuột (tầm ≤ ~1,5 × 60) → bỏ sớm */
     const kind = KIND(o); if (!kind || o.rkRuin) continue;   /* vật bị Rocky-ha bắn sập: tạm không tương tác tới khi vào lại vùng */ if ((kind === 'fire' && o.lit) || (kind === 'lever' && o.on) || (kind === 'hall' && o.ruined)) continue;   /* bia đã bị Xealist đập vỡ: không mở bảng bia nữa */
     const d = O[o.type];
     const cx = o.x * TS + d.fw * 8, cy = (o.y + d.fh) * TS - 4, dist = Math.hypot(cx - p.x, cy - p.y), lim = 24 + d.fw * 4;
-    consider({ kind, obj: o }, dist, lim, busy && INFO_KINDS.has(kind) ? -24 : 0);   /* đang cầm công cụ/hạt: bảng/biển/tượng chỉ-để-xem nhường phím E cho việc của công cụ (QA 2026-10-10: cày ngay dưới bảng Leader mở bảng) */
+    { const bias = busy && INFO_KINDS.has(kind) ? -24 : 0; if (dist < lim && dist - bias < bd) consider({ kind, obj: o }, dist, lim, bias); }   /* plan-42 A5 */   /* đang cầm công cụ/hạt: bảng/biển/tượng chỉ-để-xem nhường phím E cho việc của công cụ (QA 2026-10-10: cày ngay dưới bảng Leader mở bảng) */
     if (mt && mt.wx >= o.x * TS && mt.wx < (o.x + d.fw) * TS && mt.wy >= (o.y + d.fh) * TS - Math.max(d.h, d.fh * TS) && mt.wy < (o.y + d.fh) * TS) hover({ kind, obj: o }, dist, lim);
   }
   /* chuột đang nằm trên HÌNH một vật thể / NPC (tán cây, nhà, người…) → các hệ nhắm theo ô (ruộng, cắt cỏ, đào cát) nhường cho vật đó */
@@ -566,10 +630,22 @@ function clickArrive() {   /* mỗi khung khi đang tự đi: thứ ở điểm 
   try { if (hit && n) { p.autoPath = null; S.clickGoal = null; S.near = n; interact(); } else if (!p.autoPath) S.clickGoal = null; }
   finally { S.vm = null; }   /* giữ "điểm đã click" trong lúc làm (camera đã đi theo người, chuột thật không còn trên đích) */
 }
-let autoBusy = false;
+let autoBusy = false, eDownT = 0, eFastT = 0, eLastT = -1e9, ePrevT = -1e9;
 function talkTo(npc) {   /* nói chuyện đúng người này (click tay không vào dân, đã trong tầm) */
   if (Math.hypot(npc.x - S.player.x, npc.y - S.player.y) <= 33) { S.near = { kind: 'npc', npc }; interact(true); }
 }
+/* plan-44 Q1: hộp hỏi trước khi ngủ — game dừng (mode 'sleepask'); E / A = Ngủ nhưng bỏ qua 0,6 s đầu (bấm E liên tục / giữ E không ngủ nhầm), Esc / Thôi = về chơi */
+let sleepT0 = 0;
+function openSleepAsk() {
+  let el = $('#p44-sleep'); if (!el) { el = document.createElement('div'); el.id = 'p44-sleep'; document.body.appendChild(el);
+    el.addEventListener('pointerdown', e => { const k = e.target.closest('button'); if (!k) return; e.preventDefault(); e.stopPropagation(); if (k.dataset.a === 'yes') sleepYes(true); else sleepNo(); }); }
+  const k = HUD.isTouchUI() ? 'Ⓐ' : 'E', esc = HUD.isTouchUI() ? '☰' : 'Esc';
+  el.innerHTML = `<div class="sq">${HUD.pxText(UI.L.sleepQ)}</div><div class="hc-btns"><button type="button" class="btn primary" data-a="yes">${UI.L.sleepYes} · ${k}</button><button type="button" class="btn" data-a="no">${UI.L.sleepNo} · ${esc}</button></div>`;
+  el.hidden = false; sleepT0 = performance.now(); setMode('sleepask'); AUDIO.sfx('pickup');
+}
+function sleepNo() { const el = $('#p44-sleep'); if (el) el.hidden = true; if (S.mode === 'sleepask') setMode('play'); }
+function sleepYes(click) { if (!click && (performance.now() - sleepT0 < 600 || eLastT - ePrevT < 600)) return;   /* bấm E dồn dập (< 0,6 s giữa 2 lần) không bao giờ xác nhận — phải dừng tay rồi bấm */ const el = $('#p44-sleep'); if (el) el.hidden = true; setMode('play'); CLOCK.sleep(false); }
+S.closers.sleepask = sleepNo; (S.actions ||= {}).sleepask = () => sleepYes(false);
 function interact(fromLock) {
   if (!fromLock && TGT.tooFar(S.near)) { TGT.sayFar(); return; }   /* đã khóa mà ở xa: KHÔNG tự đi tới (anh chốt) — chỉ báo xa quá */
   const n = S.near; if (!n) { HB.eatHeld(); return; } const lg = UI.lang(), o = n.obj;
@@ -589,8 +665,8 @@ function interact(fromLock) {
   if (n.kind === 'sys') { try { n.sys.interact?.(CTX, n.cand); } catch (e) { console.error(n.sys.id, e); if (S.mode !== 'play') setMode('play'); } return; }
   switch (n.kind) {
     case 'sign': setMode('dialog'); UI.openDialog({ title: '📜', pages: [o.text[lg]], onClose: () => setMode('play') }); return;
-    case 'bed': CLOCK.sleep(false); return;   /* F01: ngủ chủ động → hết ngày */
-    case 'hall': setMode('hall'); UI.openHall(S.zone.lv); return;
+    case 'bed': openSleepAsk(); return;   /* plan-44 Q1: E ở giường chỉ HỎI (hộp nhỏ Ngủ / Thôi) — không ngủ ngay */
+    case 'hall': setMode('hall'); UI.openHall(S.zone.lv, { save: S.save, zoneName: lv => { const Z = ZONES[zoneOfLevel(lv)]; return Z ? Z.name[lg] : ''; }, canGo: mm => { const zid = zoneOfLevel(mm.lv); return zoneUnlocked(S.save, zid) ? true : zoneNeed(zid); }, onGuide: guideTo }); return;   /* plan-44 R1 */
     case 'nation': case 'rocky': { const st = nationStats(o.nation, S.zone.lv); if (!st) return; setMode('nation'); UI.openNation(st, S.save, S.zone.tier || 0); if (CTX.nationBoardExtra) CTX.nationBoardExtra(o.nation); return; }   /* plan-18: nút gia nhập/đổi nước */
     case 'shop': setMode('shop'); UI.openShop(S.save, shopPick); return;
     case 'fire': o.type = 'campfire'; o.lit = true; S.save.flags[flagKey(o)] = true; taskSet('fires', taskVal('fires') + 1); UI.toast(UI.L.fireLit); checkQuest(); return;
@@ -623,11 +699,11 @@ function interact(fromLock) {
     return;
   }
   const m = npc.m, first = !S.save.met.includes(m.id);
-  const pages = UI.linesFor(m, S.zone, first, rngFrom(hashStr(m.id) ^ (Date.now() | 0)), lg);
+  const pages = UI.linesFor(m, S.zone, first, rngFrom(hashStr(m.id) ^ (Date.now() | 0)), lg), more = pages.more;   /* plan-44 Q7: lần đầu 1 trang + 'Kể thêm' */
   if (m.elder && !S.save.flags[`m8:elder:${m.id}`]) pages.push(UI.L.elderIntro);
   setMode('dialog');
   UI.openDialog({
-    m, pages, onClose: () => {
+    m, pages, more, share: true, onClose: () => {
       setMode('play'); S.talking = null;
       if (first) { S.save.met.push(m.id); S.save.shards++; UI.toast(UI.L.shardGet); if (isLeader(m)) quake(1); if (S.save.target === m.id) S.save.target = null; }
       if (m.elder && !S.save.flags[`m8:elder:${m.id}`]) { elderRiddle(m); return; }
@@ -658,8 +734,12 @@ function checkGates() {
   fadeTo(() => enterZone(onGate.to, onGate.entry));
 }
 function pushBack(gt) { const p = S.player; if (gt.y <= 1) p.y += 12; else if (gt.x <= 1) p.x += 12; else if (gt.x >= S.map.w - 3) p.x -= 12; else p.y -= 12; }
-let fade = 0, fadeCb = null;
-function fadeTo(cb) { fade = 0.01; fadeCb = cb; }
+/* plan-45 BD2: điểm sáng ban đêm trên ảnh vật [tỉ lệ x, tỉ lệ y trên ảnh, bán kính px] — đài tưởng niệm (ngọn lửa + 2 nến), chuồng gà (ô cửa tròn), quầy chợ (đèn dưới mái) */
+const WIN45 = { memorial: [[0.5, 0.345, 16], [0.33, 0.85, 7], [0.64, 0.85, 7]], eco_coop: [[0.53, 0.64, 10]], stall: [[0.5, 0.45, 18]] }, GLOW45 = { n: 0 };
+if (typeof window !== 'undefined') window.__p45glow = () => ({ n: GLOW45.n });   /* móc test: số vầng sáng vẽ trong khung vừa rồi */
+let fade = 0, fadeCb = null, fadeSp = 2.5, fadeHold = null;   /* plan-45 BD3: fadeSp = tốc độ (2,5 = 0,4 s mỗi chiều; ngủ 1 = 1 s), fadeHold() true → giữ đen (bảng Ngày mới đang mở) */
+function fadeTo(cb, opt) { fade = 0.01; fadeCb = cb; fadeSp = (opt && opt.speed) || 2.5; fadeHold = (opt && opt.hold) || null; }
+if (typeof window !== 'undefined') window.__fade45 = () => fade <= 1 ? fade : 2 - fade;   /* móc test: độ đen hiện tại 0…1 */
 
 // ---------- hazards (M4 falling rocks, M7 lava spurts) ----------
 function updateHazards(dt) {
@@ -715,7 +795,9 @@ function stopCredits() { credits = null; $('#credits').hidden = true; setMode('p
 let last = 0;
 function loop(t) {
   const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t; S.time += dt; clock.t += dt;
+  PERF.begin(t); GFX.frame(t);
   if (S.mode !== 'title') { update(dt * (S.timeScale ?? 1)); render(); }   /* S.timeScale: chậm thời gian ngắn (cảnh biến hình bạn tập, spar.js) */
+  PERF.end();
   requestAnimationFrame(loop);
 }
 function update(dt) {
@@ -733,6 +815,7 @@ function update(dt) {
     if (S.mode === 'play') interact(); else if (S.mode === 'dialog') UI.dialogAdvance(); else if (S.mode === 'credits') stopCredits();
     else if (S.actions && S.actions[S.mode]) { try { S.actions[S.mode](); } catch (e) { console.error(e); } } // E / touch A inside a system's own mode
   }
+  if (S.mode === 'dialog' && eDownT && performance.now() - eDownT > 450 && performance.now() - eFastT > 130) { eFastT = performance.now(); UI.dialogFast(); }   /* plan-44 Q7: giữ E > 0,45 s → lật trang nhanh (dừng ở trang cuối, không tự đóng) */
   if (credits) { credits.y += dt * 60 * scale; if (credits.y > (credits.names.length / 4 + 12) * 22 * (scale / 2) + uiCv.height) stopCredits(); }
   // screen shake only on events (entering a land, earning a badge, lightning, meeting a Leader) — never continuously
   const tr = S.zone.tremor;
@@ -740,32 +823,40 @@ function update(dt) {
   S.shakeAmp = S.quakeOn > 0 ? Math.min(S.quakeOn, 1) * (2 + tr * 4) : 0;
   if (S.zone.lightning) { S.boltNext -= dt; if (S.boltNext <= 0) { S.flash = 0.7; S.boltNext = 8 + Math.random() * 10; quake(0.5); } }
   S.flash = Math.max(0, S.flash - dt * 2.5);
-  if (fade > 0) { fade += dt * 2.5; if (fade >= 1 && fadeCb) { fadeCb(); fadeCb = null; } if (fade >= 2) fade = 0; }
+  if (fade > 0) { if (fade >= 1 && !fadeCb && fadeHold && fadeHold()) fade = 1; else fade += Math.min(dt, 0.05) * fadeSp; if (fade >= 1 && fadeCb) { fade = 1; fadeCb(); fadeCb = null; } if (fade >= 2) { fade = 0; fadeHold = null; fadeSp = 2.5; } }
   if (S.save && S.save.clock) { CLOCK.tick(dt, CTX); S.dayT = CLOCK.dayT(); S.dark = CLOCK.darkness(); CLOCK.hud(UI.lang()); } else { S.dayT = 0; S.dark = 0; }   /* F01: đồng hồ game thay chu kỳ 10 phút giờ máy */
+  PERF.lap('u.misc');
   const others = allNpcs().concat(S.staff || []);
   if (S.mode === 'play' && !fadeCb) { S.player.update(dt, input, S.map, others); checkGates(); }
   else { S.player.moving = false; S.player.animate(dt); }
+  PERF.lap('u.player');
   for (const sys of S.sys) { try { sys.update?.(dt, CTX); } catch (e) { console.error(sys.id, e); } }
   try { TGT.update(dt); } catch (e) { console.error('target', e); }
-  for (const n of others) n.update(dt, S.map, others.concat([S.player]), S.talking === n ? S.player : null);
-  tickStaff(S, dt);
-  updateHazards(dt);
+  { const all = others.concat([S.player]); for (const n of others) n.update(dt, S.map, all, S.talking === n ? S.player : null); }   /* plan-42 A5: 1 mảng / khung (trước: 1 mảng / NPC / khung) */
+  PERF.lap('u.npcs');
+  tickStaff(S, dt); PERF.lap('u.staff');
+  updateHazards(dt); PERF.lap('u.hazards');
   AUDIO.audioTick(S, dt, CTX);   /* 2026-10-10: bước chân, câu cá, bị đánh, quái kêu, ngày/đêm, nhạc theo vùng + gộp tiếng trong khung (audio.js) */
   if (S.pops && S.pops.length) { for (const q of S.pops) q.t += dt; S.pops = S.pops.filter(q => q.t < 1.1); }
+  PERF.lap('u.audio');
   S.near = S.mode === 'play' ? findNear() : null;
   /* plan-12: đứng cạnh nghệ sĩ ~0,8 s → họ nói một câu chào ngắn trong bong bóng (mỗi người tối đa 1 lần / 40 s) */
   if (S.near && S.near.npc && !S.near.npc.m.guide) { const n = S.near.npc; S.nearT = (S.nearT || 0) + dt; if (S.nearT > 0.8 && !n.bubble && (!n.bubbleAt || S.time - n.bubbleAt > 40)) { n.bubbleAt = S.time; const hi = UI.L.hi; if (hi) UI.bubble(n, hi[hashStr('hi' + n.m.id + Math.floor(S.time / 40)) % hi.length], 2.6); } } else S.nearT = 0;
   { const apL = S.mode === 'play' && MOUSE.on && TGT.hoverLabel() || (S.mode === 'play' && TGT.tooFar(S.near) ? TGT.farLabel() : null);   /* trỏ vào mục tiêu: nhãn = click sẽ làm gì + tên; khóa ngoài tầm: '<tên> ở xa quá'   /* khóa ngoài tầm: nhãn '<tên> ở xa quá — lại gần hơn' */
     const lbl = apL ? apL : S.near ? (S.near.kind === 'sys' ? S.near.label : UI.L[PROMPT[S.near.kind]]) : HB.heldKind() === 'food' && !HB.hidden() ? `🍽 ${UI.lang() === 'vi' ? 'Ăn' : 'Eat'} ${itemName(HB.held(), UI.lang())}` : null;   /* plan-22: nhãn cạnh con trỏ / trên vật, thay thanh 'E · …' */
     UI.showPrompt(null);
-    if (!lbl || S.mode !== 'play' || !CTX.cam) HUD.setLabel(null);   /* CTX.cam có từ frame vẽ đầu tiên */ else if (MOUSE.on && MOUSE.cx != null) HUD.setLabel(lbl, MOUSE.cx + 18, MOUSE.cy + 14);
-    else { const r = cv.getBoundingClientRect(), k = r.width / VW, tx = !apL && S.near ? (S.near.kind === 'sys' ? S.near.cand.x : S.near.npc ? S.near.npc.x : S.near.obj ? S.near.obj.x * TS + 8 : S.player.x) : S.player.x, ty = !apL && S.near ? (S.near.kind === 'sys' ? S.near.cand.y : S.near.npc ? S.near.npc.y - 24 : S.near.obj ? S.near.obj.y * TS - 6 : S.player.y - 26) : S.player.y - 26; HUD.setLabel((MOUSE.on ? '' : HUD.keyHint('E') + ' · ') + lbl, r.left + (tx - CTX.cam.cx) * k, r.top + (ty - CTX.cam.cy) * k - 34); } }
+    if (!lbl || S.mode !== 'play' || !CTX.cam || (CTX.lblHide && CTX.lblHide(S.player.x, S.player.y))) HUD.setLabel(null);   /* CTX.cam có từ frame vẽ đầu tiên */ else if (MOUSE.on && MOUSE.cx != null) HUD.setLabel(lbl, MOUSE.cx + 18, MOUSE.cy + 14);
+    else { const r = cvRect(), k = r.width / VW, tx = !apL && S.near ? (S.near.kind === 'sys' ? S.near.cand.x : S.near.npc ? S.near.npc.x : S.near.obj ? S.near.obj.x * TS + 8 : S.player.x) : S.player.x, ty = !apL && S.near ? (S.near.kind === 'sys' ? S.near.cand.y : S.near.npc ? S.near.npc.y - 24 : S.near.obj ? S.near.obj.y * TS - 6 : S.player.y - 26) : S.player.y - 26; HUD.setLabel((MOUSE.on ? '' : HUD.keyHint('E') + ' · ') + lbl, r.left + (tx - CTX.cam.cx) * k, r.top + (ty - CTX.cam.cy) * k - 34); } }
+  PERF.lap('u.near+label');
   applyCursor(); HB.tick(dt); MS.tick(dt); HUD.tick(dt);   /* plan-20/22 */
+  PERF.lap('u.hudTick');
   let it = invText(); const stl = []; for (const sys of S.sys) { if (!sys.hudLines || sys.id === 'crafting' || sys.id === 'trees') continue; try { for (const l of sys.hudLines(CTX) || []) { it += ' · ' + l; stl.push(l); } } catch (e) { } }
-  HUD.setStatus(stl);   /* plan-22: dòng dài → icon trạng thái nhỏ dưới đồng hồ (dụng cụ, thẻ tranh đã có ở hotbar/túi) */
+  PERF.lap('u.hudLines'); HUD.setStatus(stl);   /* plan-22: dòng dài → icon trạng thái nhỏ dưới đồng hồ (dụng cụ, thẻ tranh đã có ở hotbar/túi) */
   if (it !== S._inv) { S._inv = it; $('#h-inv').textContent = it; }
   const q = S.zone.quest, target = S.save.target ? byId.get(S.save.target) : null;
-  UI.updateHud({ zone: S.zone, shards: S.save.shards, metInZone: metCountInZone(), totalInZone: membersOfLevel(S.zone.lv).length, quest: q ? q.meet : 0, questN: questCount(), leaders: !!(q && q.leaders), tasks: taskText(), done: questComplete(), target: target && target.lv === S.zone.lv ? UI.L.targetHere(target.n) : '', story: storyText() });
+  if (S.time - (S._nxT ?? -9) > 1 || S._nxZ !== S.zone.id) { S._nxT = S.time; S._nxZ = S.zone.id; try { S._nx = nextStep(S, CTX, UI.lang()); } catch (e) { console.error('nextStep', e); S._nx = null; } }   /* plan-44 D3 */
+  UI.updateHud({ next: S._nx, zone: S.zone, shards: S.save.shards, metInZone: metCountInZone(), totalInZone: membersOfLevel(S.zone.lv).length, quest: q ? q.meet : 0, questN: questCount(), leaders: !!(q && q.leaders), tasks: taskText(), done: questComplete(), target: target && target.lv === S.zone.lv ? UI.L.targetHere(target.n) : '', story: storyText() });
+  PERF.lap('u.hudDom');
 }
 
 function render() {
@@ -775,13 +866,17 @@ function render() {
   /* 2026-10-13 anh: nhân vật LUÔN ở giữa màn hình (không kẹp camera ở mép bản đồ) — ngoài mép: nối tiếp nền ô mép rồi tối dần (sương), xem vẽ ở vòng ô dưới */
   if (S.shakeAmp > 0) { cx += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); cy += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); }
   g.fillStyle = '#0d0b14'; g.fillRect(0, 0, VW, VH);
+  const AV = CTX.altView ? CTX.altView() : null, COVER = !!(CTX.fsCover && CTX.fsCover());   /* plan-37: COVER — hệ vẽ cảnh phủ kín màn (tha bay) → bỏ nền + vật */   /* 2026-10-14 độ cao liền mạch: dải Trên cao — đất thu nhỏ theo bậc, chỉ vẽ thứ đang bay */
   const wf = Math.floor(S.time * 2) % 2;
   const x0 = Math.floor(cx / TS) - 1, y0 = Math.floor(cy / TS) - 1, x1 = Math.ceil((cx + VW) / TS) + 1, y1 = Math.ceil((cy + VH) / TS) + 1;
-  for (let ty0 = y0; ty0 <= y1; ty0++) for (let tx0 = x0; tx0 <= x1; tx0++) {
+  const DGB = !AV && !COVER && !!m.dungeon && DG.drawBase(g, m, cx, cy, VW, VH, S.time);   /* plan-46 C: vùng hầm — ảnh nền ghép sẵn thay ô */
+  const chunked = !DGB && !AV && !COVER && !!(ART.groundChunks && ART.groundChunks(g, m, cx, cy, VW, VH, (tx, ty, sx, sy) => { const t = m.ground[ty * m.w + tx], fr = tiles[t]; if (!fr) return; g.drawImage(fr.pick ? fr.pick(tx, ty) : fr[wf % fr.length], sx, sy);
+    if (t === T.WATER || t === T.DEEP) { g.fillStyle = '#dff3ff'; const wat = v => v === T.WATER || v === T.DEEP || v === T.REEF; if (!wat(getG(m, tx, ty - 1)) && getG(m, tx, ty - 1) !== T.NONE) g.fillRect(sx, sy + (wf ? 1 : 0), TS, 1); if (!wat(getG(m, tx - 1, ty)) && getG(m, tx - 1, ty) !== T.NONE) g.fillRect(sx + (wf ? 1 : 0), sy, 1, TS); } }));   /* plan-37: nền Wang đệm theo khối 16×16 ô (art.js) */
+  if (!DGB && !AV && !COVER && (!chunked || m.flow)) for (let ty0 = y0; ty0 <= y1; ty0++) for (let tx0 = x0; tx0 <= x1; tx0++) {
     const tx = Math.max(0, Math.min(m.w - 1, tx0)), ty = Math.max(0, Math.min(m.h - 1, ty0));   /* ngoài bản đồ → lặp ô mép gần nhất */
     const t = m.ground[ty * m.w + tx]; const fr = tiles[t]; if (!fr) continue;
     const sx = tx0 * TS - cx, sy = ty0 * TS - cy;
-    const handled = !!(ART.ground && ART.ground(g, m, tx, ty, sx, sy)); if (!handled) g.drawImage(fr.pick ? fr.pick(tx, ty) : fr[wf % fr.length], sx, sy);
+    const handled = chunked || !!(ART.ground && ART.ground(g, m, tx, ty, sx, sy)); if (!handled) g.drawImage(fr.pick ? fr.pick(tx, ty) : fr[wf % fr.length], sx, sy);
     if (!handled && (t === T.WATER || t === T.DEEP)) {   // viền bọt theo ô chỉ cho art code; nền Wang có bờ hữu cơ riêng
       g.fillStyle = '#dff3ff'; const wat = v => v === T.WATER || v === T.DEEP || v === T.REEF;
       if (!wat(getG(m, tx, ty - 1)) && getG(m, tx, ty - 1) !== T.NONE) g.fillRect(sx, sy + (wf ? 1 : 0), TS, 1);
@@ -796,32 +891,37 @@ function render() {
       else { g.fillRect(ax - 2, ay + 3, 1, 1); g.fillRect(ax - 1, ay + 2, 1, 1); g.fillRect(ax, ay + 1, 1, 1); g.fillRect(ax + 1, ay + 2, 1, 1); g.fillRect(ax + 2, ay + 3, 1, 1); }
     } }
   }
-  if (ART.groundDone) ART.groundDone(g);   /* decor Wang tràn ô vẽ sau cùng */
-  for (let ty0 = y0; ty0 <= y1; ty0++) for (let tx0 = x0; tx0 <= x1; tx0++) {   /* sương tối ngoài mép bản đồ: bậc theo ô (pixel), xa mép càng tối */
+  PERF.lap('r.tiles');
+  if (AV) { try { AV.ground(g, cx, cy); } catch (e) { console.error('altView', e); } }
+  else if (ART.groundDone && !DGB) ART.groundDone(g);   /* decor Wang tràn ô vẽ sau cùng */
+  PERF.lap(AV ? 'r.altGround' : 'r.groundDone');
+  if (!AV && !DGB) for (let ty0 = y0; ty0 <= y1; ty0++) for (let tx0 = x0; tx0 <= x1; tx0++) {   /* sương tối ngoài mép bản đồ: bậc theo ô (pixel), xa mép càng tối */
     const dx = tx0 < 0 ? -tx0 : tx0 >= m.w ? tx0 - m.w + 1 : 0, dy = ty0 < 0 ? -ty0 : ty0 >= m.h ? ty0 - m.h + 1 : 0, d = Math.max(dx, dy); if (!d) continue;
-    g.fillStyle = `rgba(13,11,20,${Math.min(1, 0.45 + d * 0.18).toFixed(2)})`; g.fillRect(tx0 * TS - cx, ty0 * TS - cy, TS, TS);
+    g.fillStyle = FOG_EDGE[Math.min(7, d)]; g.fillRect(tx0 * TS - cx, ty0 * TS - cy, TS, TS);
   }
-  for (const sys of S.sys) { if (!sys.drawGround) continue; try { sys.drawGround(g, CTX, cx, cy); } catch (e) { console.error(sys.id, e); } }   /* lớp nền của hệ (ao…): dưới mọi nhân vật / vật thể */
-  for (const gt of m.gates) { const open = !gt.requires || S.save.badges.includes(gt.requires); g.fillStyle = open ? 'rgba(255,212,94,.18)' : 'rgba(255,31,75,.15)'; g.fillRect(gt.x * TS - cx, gt.y * TS - cy, gt.w * TS, gt.h * TS); }
+  if (!COVER) for (const sys of S.sys) { if (!sys.drawGround || (AV && !AV.sys(sys.id))) continue; try { sys.drawGround(g, CTX, cx, cy); } catch (e) { console.error(sys.id, e); } }   /* lớp nền của hệ (ao…): dưới mọi nhân vật / vật thể */
+  PERF.lap('r.edge+sysGround');
+  if (!AV && !DGB) for (const gt of m.gates) { const open = !gt.requires || S.save.badges.includes(gt.requires); g.fillStyle = open ? 'rgba(255,212,94,.18)' : 'rgba(255,31,75,.15)'; g.fillRect(gt.x * TS - cx, gt.y * TS - cy, gt.w * TS, gt.h * TS); }
   // hazard warnings (shadows) under everything
-  for (const h of S.hazards) if (h.phase === 'warn') { const k = 1 - h.t / (h.kind === 'rock' ? 1.0 : 0.8); g.fillStyle = h.kind === 'rock' ? `rgba(0,0,0,${0.15 + k * 0.4})` : `rgba(255,80,0,${0.2 + k * 0.5})`; g.beginPath(); g.ellipse(h.x * TS + 8 - cx, h.y * TS + 10 - cy, 3 + k * 5, 2 + k * 3, 0, 0, 7); g.fill(); }
+  if (!AV) for (const h of S.hazards) if (h.phase === 'warn') { const k = 1 - h.t / (h.kind === 'rock' ? 1.0 : 0.8); g.fillStyle = h.kind === 'rock' ? `rgba(0,0,0,${0.15 + k * 0.4})` : `rgba(255,80,0,${0.2 + k * 0.5})`; g.beginPath(); g.ellipse(h.x * TS + 8 - cx, h.y * TS + 10 - cy, 3 + k * 5, 2 + k * 3, 0, 0, 7); g.fill(); }
   for (const o of m.objects) if (o.exit) o.type = !o.exit.requires || S.save.badges.includes(o.exit.requires) ? 'exit_sign' : 'exit_sign_lock';   /* 2026-10-11: biển lối chuyển vùng — có huy hiệu là tự mở */
   // depth-sorted drawables
-  const draws = [];
-  for (const o of m.objects) { if (o.ghost) continue; const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; draws.push({ y: o.ruined ? o.y * TS + 1 : by, f: () => { const rs = ruinStage(o), ri = rs && ART.ruinOf ? ART.ruinOf(o.orig || o.type, rs) : null;   /* plan-23: hư hỏng / đổ nát (PixelLab) */
-    if (ri) { const od = O[o.orig || o.type] || d, rby = (o.y + od.fh) * TS; g.drawImage(ri, o.x * TS - cx + (od.ox || 0), rby - ri.height / ART.hi - cy + (od.oy || 0)); return; }
-    const im = o.artImg || (d.frames ? d.frames[loopFrame(d.frames.length, d.animFlag ? FPS.flag : FPS.loop, o.x * 3 + o.y)] : d.img); g.drawImage(im, o.x * TS - cx + (o.artImg ? 0 : (d.ox || 0)), by - (o.artImg ? im.height / ART.hi : d.h) - cy + (o.artImg ? 0 : (d.oy || 0))); } }); }
-  for (const n of allNpcs().concat(S.staff || [])) draws.push({ y: n.y, n });
-  draws.push({ y: p.y, n: p, self: true });
+  const draws = DRAWS; draws.length = 0; let pO = 0, pN = 0;   /* plan-42 A5: dùng lại mảng + mục vẽ (trước: 1 closure / vật / khung ≈ 90 KB rác mỗi khung) */
+  if (!AV) for (const o of m.objects) { if (o.ghost) continue; const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; const it = POOL_O[pO] || (POOL_O[pO] = { y: 0, p42o: null, d: null, by: 0 }); pO++; it.y = o.ruined ? o.y * TS + 1 : by; it.p42o = o; it.d = d; it.by = by; draws.push(it); }
+  if (!AV) { const st = S.staff || [], np = allNpcs(); for (let i = 0, N = np.length + st.length; i < N; i++) { const n = i < np.length ? np[i] : st[i - np.length]; if (n.x < cx - 48 || n.x > cx + VW + 48 || n.y < cy - 16 || n.y > cy + VH + 72) continue; const it = POOL_N[pN] || (POOL_N[pN] = { y: 0, n: null }); pN++; it.y = n.y; it.n = n; draws.push(it); } }   /* plan-37: bỏ vẽ dân ngoài màn */
+  draws.push({ y: p.y + (p.sortUp || 0), n: p, self: true });   /* p.sortUp (sky.js): bay cao hơn vật → vẽ người (+ Rocky bay cùng) trên cây / nhà / cột */
   for (const h of S.hazards) {
     if (h.kind === 'rock') { if (h.phase === 'warn') { const k = 1 - h.t; draws.push({ y: h.y * TS + 16 + 100, f: () => g.drawImage(O.rock_s.img, h.x * TS - cx, h.y * TS - cy - (1 - k) * 70) }); } else draws.push({ y: h.y * TS + 16, f: () => g.drawImage(O.rock_s.img, h.x * TS - cx, h.y * TS - cy) }); }
     else if (h.phase === 'hit') draws.push({ y: h.y * TS + 16, f: () => { const r = 4 + Math.sin(S.time * 40) * 2; g.fillStyle = '#ff8c1a'; g.beginPath(); g.ellipse(h.x * TS + 8 - cx, h.y * TS + 6 - cy, r, r * 1.6, 0, 0, 7); g.fill(); g.fillStyle = '#ffd45e'; g.beginPath(); g.ellipse(h.x * TS + 8 - cx, h.y * TS + 8 - cy, r * 0.5, r, 0, 0, 7); g.fill(); } });
   }
   CTX.g = g; CTX.cam = { cx, cy };
-  for (const sys of S.sys) { if (!sys.drawables) continue; try { for (const d of sys.drawables(CTX, cx, cy) || []) draws.push(d); } catch (e) { console.error(sys.id, e); } }
+  for (const sys of S.sys) { if (!sys.drawables || (AV && !AV.sys(sys.id))) continue; try { for (const d of sys.drawables(CTX, cx, cy) || []) { if (DGB && sys.id === 'monsters') d.dgRim = 1; draws.push(d); } } catch (e) { console.error(sys.id, e); } }
+  PERF.lap('r.collect');
   draws.sort((a, b) => a.y - b.y);
-  for (const d of draws) {
-    if (!d.n) { d.f(); continue; }
+  PERF.lap('r.sort');
+  if (!COVER) for (const d of draws) {
+    if (d.p42o) { drawObjItem(d.p42o, d.d, d.by, cx, cy); continue; }
+    if (!d.n) { if (d.dgRim) { const i0 = DG.recMark(); DG.recStart(g); try { d.f(); } finally { DG.recStop(g); } RIMG.push({ i0, i1: DG.recMark(), x: null, y: d.y }); } else d.f(); continue; }
     g.save(); g.translate(-cx, -cy);
     const n = d.n, mm = n.m;
     if (mm && isBooster(mm)) { g.strokeStyle = 'rgba(255,212,94,.9)'; g.lineWidth = 1; g.beginPath(); g.ellipse(Math.round(n.x), Math.round(n.y) - 1, 8, 3, 0, 0, 7); g.stroke(); }
@@ -830,35 +930,78 @@ function render() {
       else { g.fillStyle = '#ffd45e'; g.fillRect(Math.round(n.x) - 2, Math.round(n.y) - 21, 5, 2); }
     }
     if (mm && mm.elder) g.drawImage(O.elder_mark.img, Math.round(n.x) - 8, Math.round(n.y) - 28);
-    n.draw(g); g.restore();
-  }
-  for (const gt of m.gates) if (gt.gx !== undefined && gt.requires && !S.save.badges.includes(gt.requires)) g.drawImage(O.lock.img, gt.gx * TS + 16 - cx, gt.gy * TS - 12 - cy);   /* lối đường-ra-mép (gt.path) không có vòm: khóa hiện trên biển exit_sign_lock */
-  for (const sys of S.sys) { try { sys.draw?.(g, CTX, cx, cy); } catch (e) { console.error(sys.id, e); } }
-  try { TGT.drawWorld(g, cx, cy); } catch (e) { console.error('target', e); }   /* dấu mục tiêu đang khóa (PixelLab, tĩnh) */
-  drawWeather();
-  if (S.zone.tint) { g.fillStyle = S.zone.tint; g.fillRect(0, 0, VW, VH); }
-  if (S.dark > 0.02) { // gentle night + warm glow around every lamp, torch, campfire and crystal light; the lighthouse sweeps the sea
-    g.fillStyle = `rgba(10,12,40,${S.dark.toFixed(3)})`; g.fillRect(0, 0, VW, VH);
-    const LIGHT = { lantern: 22, torch: 20, arena_pillar: 26, campfire: 18, crystal_p: 24, crystal_b: 20, lighthouse: 30, gcrystal: 44, vent: 10 };
-    g.save(); g.globalCompositeOperation = 'lighter';
-    for (const o of m.objects) { const r = LIGHT[o.type]; if (!r || o.ruined) continue; const d = O[o.type], lx = o.x * TS + d.fw * 8 - cx, ly = (o.y + d.fh) * TS - 10 - cy; if (lx < -r || ly < -r || lx > VW + r || ly > VH + r) continue; const gr = g.createRadialGradient(lx, ly, 2, lx, ly, r); gr.addColorStop(0, `rgba(255,200,110,${(S.dark * 1.6).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,200,110,0)'); g.fillStyle = gr; g.fillRect(lx - r, ly - r, r * 2, r * 2); }
+    if (DGB && d.self) { const i0 = DG.recMark(); DG.recStart(g); try { n.draw(g); } finally { DG.recStop(g); } RIMG.push({ i0, i1: DG.recMark(), x: n.x, y: n.y }); } else n.draw(g);
     g.restore();
   }
+  if (DGB) { DG.drawLight(g, S, cx, cy, VW, VH); DG.rimFlush(g, S, RIMG, cx, cy, cv.width / VW); }   /* plan-46 C: lớp sáng + viền sáng một phía SAU nhân vật, TRƯỚC hiệu ứng nổi / nhãn */
+  RIMG.length = 0;
+  PERF.lap('r.drawList');
+  for (let i = 0; i < pO; i++) POOL_O[i].p42o = POOL_O[i].d = null; for (let i = 0; i < pN; i++) POOL_N[i].n = null; draws.length = 0;   /* không giữ vật / dân của vùng cũ */
+  for (const gt of m.gates) if (gt.gx !== undefined && gt.requires && !S.save.badges.includes(gt.requires)) g.drawImage(O.lock.img, gt.gx * TS + 16 - cx, gt.gy * TS - 12 - cy);   /* lối đường-ra-mép (gt.path) không có vòm: khóa hiện trên biển exit_sign_lock */
+  for (const sys of S.sys) { if (AV && !AV.sys(sys.id)) continue; try { sys.draw?.(g, CTX, cx, cy); } catch (e) { console.error(sys.id, e); } }
+  try { TGT.drawWorld(g, cx, cy); } catch (e) { console.error('target', e); }   /* dấu mục tiêu đang khóa (PixelLab, tĩnh) */
+  PERF.lap('r.sysDraw');
+  drawWeather(cx, cy);
+  if (S.zone.tint && !DGB) { g.fillStyle = S.zone.tint; g.fillRect(0, 0, VW, VH); }
+  if (S.dark > 0.02 && !DGB) { // gentle night + warm glow around every lamp, torch, campfire and crystal light; the lighthouse sweeps the sea
+    g.fillStyle = `rgba(10,12,40,${S.dark.toFixed(3)})`; g.fillRect(0, 0, VW, VH);
+    GLOW45.n = 0;
+    const LIGHT = { lantern: 22, torch: 20, arena_pillar: 26, campfire: 18, crystal_p: 24, crystal_b: 20, lighthouse: 30, gcrystal: 44, vent: 10 };
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (const o of m.objects) { const r = LIGHT[o.type]; if (!r || o.ruined) continue; const d = O[o.type], lx = o.x * TS + d.fw * 8 - cx, ly = (o.y + d.fh) * TS - 10 - cy; if (lx < -r || ly < -r || lx > VW + r || ly > VH + r) continue; const gr = g.createRadialGradient(lx, ly, 2, lx, ly, r); gr.addColorStop(0, `rgba(255,200,110,${(S.dark * 1.6).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,200,110,0)'); g.fillStyle = gr; g.fillRect(lx - r, ly - r, r * 2, r * 2); GLOW45.n++; }
+    for (const o of m.objects) { const pts = WIN45[o.type]; if (!pts || o.ruined) continue; const d = O[o.type]; if (!d) continue; const ix = o.x * TS + (d.ox || 0) - cx, iy = (o.y + d.fh) * TS - d.h - cy;   /* plan-45 BD2: cửa sổ / nến / đèn quầy theo điểm tỉ lệ trên ảnh (đo từ ảnh PixelLab) */
+      for (const [fx, fy, r] of pts) { const lx = ix + fx * d.w, ly = iy + fy * d.h; if (lx < -r || ly < -r || lx > VW + r || ly > VH + r) continue; const gr = g.createRadialGradient(lx, ly, 1, lx, ly, r); gr.addColorStop(0, `rgba(255,196,104,${(S.dark * 1.5).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,196,104,0)'); g.fillStyle = gr; g.fillRect(lx - r, ly - r, r * 2, r * 2); GLOW45.n++; } }
+    g.restore();
+  }
+  drawFireflies69(g, S, cx, cy, VW, VH);   /* plan-69: đom đóm sau lớp tối */
   if (m.sea) { const lh = m.objects.find(o => o.lighthouse); if (lh) { const lx = lh.x * TS + 16 - cx, ly = lh.y * TS + 32 - 58 - cy, a = S.time * 0.9; g.save(); g.globalAlpha = 0.22 + S.dark; g.fillStyle = '#fff3b0'; g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + Math.cos(a) * 160 - Math.sin(a) * 14, ly + Math.sin(a) * 160 + Math.cos(a) * 14); g.lineTo(lx + Math.cos(a) * 160 + Math.sin(a) * 14, ly + Math.sin(a) * 160 - Math.cos(a) * 14); g.closePath(); g.fill(); g.restore(); } }
+  PERF.lap('r.night');
+  CTX._zv = null;
   if (S.camZoom > 1.01 && S.camFocus) {   /* phóng to cảnh quanh 1 điểm (cảnh biến hình, spar.js): cắt vùng giữa canvas rồi kéo giãn — giữ pixel sắc */
     const z = S.camZoom, hi = cv.width / VW, fx = Math.max(VW / (2 * z), Math.min(VW - VW / (2 * z), S.camFocus.x - cx)), fy = Math.max(VH / (2 * z), Math.min(VH - VH / (2 * z), S.camFocus.y - cy));
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(cv, Math.round((fx - VW / (2 * z)) * hi), Math.round((fy - VH / (2 * z)) * hi), Math.round(VW / z * hi), Math.round(VH / z * hi), 0, 0, cv.width, cv.height); g.restore();
-  }
-  if (S.zone.vignette) { const gr = g.createRadialGradient(VW / 2, VH / 2, VH * 0.3, VW / 2, VH / 2, VH * 0.9); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(10,0,30,.75)'); g.fillStyle = gr; g.fillRect(0, 0, VW, VH); }
+    if (S.camZoomSnap) {   /* plan-49a (đấu thú): nấc z = k/m → mỗi điểm ảnh canvas = z·m điểm ảnh màn (số nguyên); góc cắt khớp lưới canvas. Nấc nguyên: chép phóng trên canvas; nấc lẻ: CSS scale (trình duyệt phóng pixelated) */
+      const X0 = Math.round((fx - VW / (2 * z)) * hi) / hi, Y0 = Math.round((fy - VH / (2 * z)) * hi) / hi; CTX._zv = { X0, Y0, z };
+      if (Math.abs(z - Math.round(z)) < 1e-3) { const zi = Math.round(z), sw = Math.ceil(cv.width / zi), sh = Math.ceil(cv.height / zi); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(cv, Math.round(X0 * hi), Math.round(Y0 * hi), sw, sh, 0, 0, sw * zi, sh * zi); g.restore(); cssZoom(null); }
+      else cssZoom(CTX._zv);
+    } else {
+    cssZoom(null); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(cv, Math.round((fx - VW / (2 * z)) * hi), Math.round((fy - VH / (2 * z)) * hi), Math.round(VW / z * hi), Math.round(VH / z * hi), 0, 0, cv.width, cv.height); g.restore(); }
+  } else cssZoom(null);
+  if (S.zone.vignette && !DGB) g.drawImage(vignetteImg(), 0, 0, VW, VH);   /* plan-37: viền tối dựng sẵn 1 lần theo cỡ khung (trước: tạo gradient + tô cả màn mỗi khung) */
   if (S.flash > 0) { g.fillStyle = `rgba(255,255,255,${(S.flash * 0.8).toFixed(2)})`; g.fillRect(0, 0, VW, VH); }
   if (fade > 0) { g.fillStyle = `rgba(0,0,0,${fade <= 1 ? fade : 2 - fade})`; g.fillRect(0, 0, VW, VH); }
-  if (!(S.camZoom > 1.01)) drawLabels(cx, cy);
+  PERF.lap('r.post');
+  S.altSys = AV ? AV.sys : null; if (!(S.camZoom > 1.01) || S.camZoomUI) drawLabels(cx, cy); else drawLabelsZoom(cx, cy);   /* plan-48 review7: S.camZoomUI = hệ tự vẽ UI theo camZoom (sân đấu) → vẫn vẽ lớp UI mỗi khung */   /* dải Trên cao: chỉ nhãn của hệ đang bay */
+  PERF.lap('r.labels');
   drawSeis(tr());
+  PERF.lap('r.seis');
 }
 const tr = () => S.zone.tremor;
+const DRAWS = [], POOL_O = [], POOL_N = [], RIMG = [];
+function drawObjItem(o, d, by, cx, cy) {   /* plan-42 A5: thân hàm cũ trong closure f() của từng vật — y nguyên */
+  const rs = ruinStage(o), ri = rs && ART.ruinOf ? ART.ruinOf(o.orig || o.type, rs) : null;   /* plan-23: hư hỏng / đổ nát (PixelLab) */
+  if (ri) { const od = O[o.orig || o.type] || d, rby = (o.y + od.fh) * TS; g.drawImage(ri, o.x * TS - cx + (od.ox || 0), rby - ri.height / ART.hi - cy + (od.oy || 0)); return; }
+  const im = o.artImg || (d.frames ? d.frames[loopFrame(d.frames.length, d.animFlag ? FPS.flag : FPS.loop, o.x * 3 + o.y)] : d.img); g.drawImage(im, o.x * TS - cx + (o.artImg ? 0 : (d.ox || 0)), by - (o.artImg ? im.height / ART.hi : d.h) - cy + (o.artImg ? 0 : (d.oy || 0)));
+}
+let VIG = null;
+function cssZoom(v) {   /* plan-49a: phóng nấc lẻ bằng CSS transform của #c (translate tròn điểm ảnh màn); null = bỏ */
+  const k = CTX.cssK || scale, s2 = v ? `translate(${-Math.round(v.X0 * k * v.z)}px, ${-Math.round(v.Y0 * k * v.z)}px) scale(${v.z})` : '';
+  if (s2 !== (CTX._cssz || '')) { CTX._cssz = s2; cv.style.transformOrigin = '0 0'; cv.style.transform = s2; }
+}
+function lxy(x, y, cx, cy) {   /* plan-49a: toạ độ thế giới → lớp nhãn, theo khung phóng camZoom của sân đấu (trước: nhãn tên lệch khi phóng) */
+  const v = S.camZoomUI && CTX._zv; if (v) return [Math.round(((x - cx) - v.X0) * v.z * scale), Math.round(((y - cy) - v.Y0) * v.z * scale)];
+  return [Math.round((x - cx) * scale), Math.round((y - cy) * scale)];
+}
+function vignetteImg() {   /* plan-37: cùng công thức gradient cũ, vẽ vào canvas ở độ phân giải canvas chính */
+  const hi = ART.hi || 1, w = VW * hi, h = VH * hi;
+  if (VIG && VIG.width === w && VIG.height === h) return VIG;
+  const c = VIG && VIG.width === w ? VIG : document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
+  const gr = x.createRadialGradient(w / 2, h / 2, h * 0.3, w / 2, h / 2, h * 0.9); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(10,0,30,.75)'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
+  return VIG = c;
+}
+const FOG_EDGE = Array.from({ length: 8 }, (_, d) => `rgba(13,11,20,${Math.min(1, 0.45 + d * 0.18).toFixed(2)})`);   /* plan-37: chuỗi màu sương mép dựng sẵn */
 // ambient particles per land: leaves (M3), dust (M4), ash (M7), snow (M8), embers (M9)
 const WEATHER = { m3: { n: 18, c: '#7fd14b', vx: 12, vy: 18, s: 2 }, m4: { n: 10, c: 'rgba(200,190,170,.5)', vx: 3, vy: -6, s: 1 }, m7: { n: 30, c: 'rgba(120,110,120,.8)', vx: -8, vy: 14, s: 2 }, m8: { n: 40, c: '#ffffff', vx: 20, vy: 26, s: 2 }, m9: { n: 24, c: '#b48cff', vx: 4, vy: -12, s: 1 } };
-function drawWeather() {
+function drawWeather(cx = 0, cy = 0) { if (drawWeather69(g, S, cx, cy, VW, VH)) return;   /* plan-69 */
   const w = WEATHER[S.zone.id]; if (!w) return; g.fillStyle = w.c;
   for (let i = 0; i < w.n; i++) {
     const h = hashStr('p' + i), ox = h % 1000, oy = (h >>> 10) % 1000, ph = (h >>> 20) % 100 / 100;
@@ -868,49 +1011,95 @@ function drawWeather() {
   }
 }
 // name labels on the full-resolution overlay canvas (crisp text)
+/* plan-42 A1: lớp #ui toàn màn bị xoá + vẽ lại mỗi khung → trình duyệt phải cập nhật thêm 1 lớp canvas mỗi khung (~7 ms ×4).
+   Khi #ui và #c cùng số điểm ảnh (điện thoại: 390×844 = 390×844) → vẽ nhãn thẳng lên #c (transform 1:1). Trạng thái vẽ (font, màu, alpha…)
+   được giữ riêng như một context thứ hai (UST) để mỗi khung bắt đầu y như #ui cũ. Ảnh chụp (photo) cần tách lớp → lúc chụp vẫn dùng #ui. */
+const UI_PROPS = ['font', 'textAlign', 'textBaseline', 'direction', 'fillStyle', 'strokeStyle', 'lineWidth', 'lineCap', 'lineJoin', 'miterLimit', 'lineDashOffset', 'globalAlpha', 'globalCompositeOperation', 'imageSmoothingEnabled', 'imageSmoothingQuality', 'shadowBlur', 'shadowColor', 'shadowOffsetX', 'shadowOffsetY', 'filter', 'letterSpacing', 'wordSpacing', 'fontKerning', 'fontStretch', 'fontVariantCaps', 'textRendering'];
+let UST = null, uiDirty = true, uiZoomShown = false;
+function ustRead(c) { const o = {}; for (const k of UI_PROPS) if (k in c) o[k] = c[k]; o.__tf = c.getTransform(); o.__dash = c.getLineDash(); return o; }
+function ustApply(c, o) { for (const k of UI_PROPS) if (k in o) { try { c[k] = o[k]; } catch (e) { } } c.setTransform(o.__tf); c.setLineDash(o.__dash); }
+function uiDirect() { return !window.__uiNoDirect && uiCv.width === cv.width && uiCv.height === cv.height && S.mode !== 'photo'; }
 function drawLabels(cx, cy) {
+  uiZoomShown = false;
+  if (!uiDirect()) { if (UST) { ustApply(ugUI, UST); UST = null; } ug = ugUI; ug.clearRect(0, 0, uiCv.width, uiCv.height); uiDirty = true; drawLabels0(cx, cy); return; }
+  if (uiDirty) { ugUI.clearRect(0, 0, uiCv.width, uiCv.height); uiDirty = false; }
+  if (!UST) UST = ustRead(ugUI);
+  g.save(); ustApply(g, UST); ug = g;
+  try { drawLabels0(cx, cy); } finally { UST = ustRead(g); ug = ugUI; g.restore(); }
+}
+function drawLabelsZoom(cx, cy) {   /* cảnh phóng to (camZoom): bản cũ không vẽ lại #ui → nhãn khung trước đứng yên trên lớp #ui; giữ y vậy */
+  if (uiZoomShown || !UST) return; uiZoomShown = true;
+  ustApply(ugUI, UST); UST = null; ug = ugUI; ug.clearRect(0, 0, uiCv.width, uiCv.height); uiDirty = true; drawLabels0(cx, cy);
+}
+/* ---- plan-45 D5 (2026-10-18): bộ xếp nhãn tránh chồng ----
+   LB45 = hộp nhãn đã vẽ trong khung này (px canvas UI). lblPlace(x, y, w, h) → độ dời dọc (≤ 0): đụng hộp nào thì đẩy lên trên hộp đó, lặp tới khi trống.
+   Thứ tự = ưu tiên: biển chức danh (staff.js, đứng yên) → tên người chơi → tên dân → nhãn cờ / biển vật → lối ra → nhãn của hệ (land.js qua ctx.lblPlace). */
+const LB45 = [];
+const STAFF_T45 = { trader: ['Thương nhân', 'Trader'], dealer: ['Nhà buôn tranh', 'Art dealer'], tailor: ['Thợ may', 'Tailor'] };   /* chép từ staff.js TITLE (chỉ để đo hộp) */
+function lblPlace(x, y, w, h, t, k) {
+  let y1 = y;
+  for (let i = 0; i < 10; i++) { const hit = LB45.find(b => x < b.x1 && x + w > b.x0 && y1 < b.y1 && y1 + h > b.y0); if (!hit) break; y1 = hit.y0 - h - 2; }
+  LB45.push({ x0: x, y0: y1, x1: x + w, y1: y1 + h, t: t || '', k: k || '' }); return y1 - y;
+}
+function staffTagBoxes(cx, cy) {
+  if (!S.staff) return; const vi = UI.lang() === 'vi', f = Math.max(12, Math.round(scale * 4.2)); ug.save(); ug.font = `${f}px VT323, monospace`;
+  for (const n of S.staff) { const tt = STAFF_T45[n.m.staff] || (n.m.tag ? [n.m.tag, n.m.tag] : null); if (!tt) continue;
+    const sx = Math.round((n.x - cx) * scale), sy = Math.round((n.y - 30 - cy) * scale); if (sx < -100 || sy < -40 || sx > uiCv.width + 100 || sy > uiCv.height + 40) continue;
+    const w = Math.ceil(ug.measureText(tt[vi ? 0 : 1]).width) + 10, h = f + 4; LB45.push({ x0: sx - w / 2 - 2, y0: sy - h / 2 - 2, x1: sx + w / 2 + 2, y1: sy + h / 2 + 2, t: tt[vi ? 0 : 1], k: 'staff' }); }
+  ug.restore();
+}
+/* độ hiện của nhãn phụ theo khoảng cách người chơi (px thế giới): ≤ r0 hiện rõ, ≥ r1 ẩn */
+function nearA(x, y, r0, r1) { const p = S.player; if (!p) return 1; const d = Math.hypot(p.x - x, p.y - y); return d <= r0 ? 1 : d >= r1 ? 0 : 1 - (d - r0) / (r1 - r0); }
+CTX.lblPlace = lblPlace; CTX.nearA = nearA;
+if (typeof window !== 'undefined') window.__lbl45 = () => LB45.map(b => ({ ...b }));   /* móc test */
+function drawLabels0(cx, cy) {
   const p = S.player, fs = Math.max(10, scale * 3);
-  ug.clearRect(0, 0, uiCv.width, uiCv.height);
   if (credits) { drawCredits(); return; }
   ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
-  const label = (text, x, y, color, mark) => {
+  LB45.length = 0;   /* plan-45 D5: bộ xếp nhãn tránh chồng — mỗi khung đăng ký hộp nhãn, nhãn sau đụng nhãn trước thì đẩy LÊN */
+  const label = (text, x, y, color, mark, kind, free) => {
     if (S.hideLabels) return;   /* plan-29: cảnh Rồng Thần — ẩn tên/biển chữ để không đè rồng */
-    const sx = Math.round((x - cx) * scale), sy = Math.round((y - 20 - cy) * scale);
+    let [sx, sy] = lxy(x, y - 20, cx, cy);
     if (sx < -100 || sx > uiCv.width + 100 || sy < -20 || sy > uiCv.height + 20) return;
     const w = ug.measureText(text).width + 8, h = fs + 4;
+    if (!free) sy += lblPlace(sx - w / 2, sy - h - (mark ? 9 : 0), w, h + (mark ? 9 : 0), text, kind);   /* free: số nổi bay (không chiếm chỗ) */
     ug.fillStyle = 'rgba(13,11,20,.6)'; ug.beginPath(); ug.roundRect(sx - w / 2, sy - h, w, h, 3); ug.fill();
     ug.fillStyle = color; ug.fillText(text, sx, sy - 2);
     if (mark) { ug.fillStyle = '#ffd45e'; ug.beginPath(); ug.moveTo(sx - 4, sy - h - 8); ug.lineTo(sx + 4, sy - h - 8); ug.lineTo(sx, sy - h - 2); ug.fill(); }
   };
-  drawStaffTags(ug, S, cx, cy, scale);
-  for (const n of S.staff || []) if (n.bubble) UI.drawBubble(ug, n, Math.round((n.x - cx) * scale), Math.round((n.y - 20 - cy) * scale) - fs - 6, fs);
-  for (const n of allNpcs()) {
-    if (n.bubble) UI.drawBubble(ug, n, Math.round((n.x - cx) * scale), Math.round((n.y - 20 - cy) * scale) - fs - 6, fs);   /* plan-12: bong bóng nổi */
+  if (!S.altSys) { drawStaffTags(ug, S, cx, cy, scale); staffTagBoxes(cx, cy); }   /* biển chức danh (staff.js) đứng yên → đăng ký trước, nhãn khác né */
+  const av = selfAvatar();
+  const headUp = ((p.sheet && p.sheet.skin && p.sheet.skin.headUp) || 0) + (p.labelUp || 0);   /* plan-31: p.labelUp — đang cưỡi Rocky bay (sky.js) thì tên lên trên đầu */   /* plan-29: ngoại hình cao (Chad) → tên/ảnh đại diện lên trên đầu */
+  ug.font = `bold ${fs}px VT323, monospace`;
+  if (av) { let [sx, sy] = lxy(p.x, p.y - 22 - headUp, cx, cy); const r = Math.round(scale * 4); sy += lblPlace(sx - r, sy - 2 * r, 2 * r, 2 * r, 'me', 'me'); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
+  else if (S.save.name) label(S.save.name, p.x, p.y - headUp, '#ffd45e', false, 'me');   /* plan-45 D5: tên người chơi xếp TRƯỚC (giữ chỗ), nhãn khác né */
+  if (!S.altSys) for (const n of S.staff || []) if (n.bubble) UI.drawBubble(ug, n, lxy(n.x, n.y - 20, cx, cy)[0], lxy(n.x, n.y - 20, cx, cy)[1] - fs - 6, fs);
+  if (!S.altSys) for (const n of allNpcs()) {
+    if (n.bubble) UI.drawBubble(ug, n, lxy(n.x, n.y - 20, cx, cy)[0], lxy(n.x, n.y - 20, cx, cy)[1] - fs - 6, fs);   /* plan-12: bong bóng nổi */
+    if (CTX.lblHide && CTX.lblHide(n.x, n.y)) continue;   /* plan-48: ẩn tên dân trong ~120 px quanh 2 thú đang đấu (linhduel.js đặt CTX.lblHide) */
     const mm = n.m, met = !mm.guide && S.save.met.includes(mm.id), isT = S.save.target === mm.id;
     const pre = mm.guide ? '' : mm.friend ? '♥ ' : isT ? '➤ ' : isLeader(mm) ? '★ ' : mm.elder ? '☆ ' : isBooster(mm) ? '⚡ ' : '';
-    label(pre + (mm.guide ? UI.L.guideName : mm.n), n.x, n.y - (mm.elder ? 8 : 0), isT ? '#ffd45e' : met ? '#9ad' : (mm.guide || mm.friend ? '#ffd45e' : '#fff'), S.near && S.near.npc === n);
+    label(pre + (mm.guide ? UI.L.guideName : mm.n), n.x, n.y - (mm.elder ? 8 : 0), isT ? '#ffd45e' : met ? '#9ad' : (mm.guide || mm.friend ? '#ffd45e' : '#fff'), S.near && S.near.npc === n, 'npc');
   }
   ug.font = `${Math.max(9, scale * 2.6)}px VT323, monospace`;
-  for (const o of S.map.objects) if (o.flag && o.label) { const grp = S.nations.find(n => n.key === o.flag); label(UI.flagLabel(o.flag) + (grp ? ` · ${grp.members.length}` : ''), o.x * TS + 24, o.y * TS - 14, '#f2ebe0', false); }
-  for (const o of S.map.objects) if (o.tag) { const d = O[o.type]; label(o.tag[UI.lang()] || o.tag.en, o.x * TS + d.w / 2 + (d.ox || 0), (o.y + d.fh) * TS - d.h + 18, '#ffd45e', false); }   /* 2026-10-11: tên trên biển chỉ đường (Sàn Đấu Ngầm) */
+  if (!S.altSys) for (const o of S.map.objects) if (o.flag && o.label) {   /* plan-45 D5: nhãn cờ (nhãn phụ) chỉ hiện khi tới gần ≤ 6 ô, mờ dần 6–8 ô */
+    const fx = o.x * TS + 24, fy = o.y * TS - 14, a = nearA(fx, fy, 96, 128); if (a <= 0) continue;
+    const grp = S.nations.find(n => n.key === o.flag); ug.globalAlpha = a; label(UI.flagLabel(o.flag) + (grp ? ` · ${grp.members.length}` : ''), fx, fy, '#f2ebe0', false, 'flag'); ug.globalAlpha = 1; }
+  if (!S.altSys) for (const o of S.map.objects) if (o.tag) { const d = O[o.type]; label(o.tag[UI.lang()] || o.tag.en, o.x * TS + d.w / 2 + (d.ox || 0), (o.y + d.fh) * TS - d.h + 18, (typeof o.tagColor === 'function' ? o.tagColor() : o.tagColor) || '#ffd45e', false, 'tag'); }   /* plan-44 D6: o.tagColor (đỏ khi yếu hơn cấp đề nghị) */   /* 2026-10-11: tên trên biển chỉ đường (Sàn Đấu Ngầm) */
   { const ef = Math.round(fs * 1.4); ug.font = `bold ${ef}px VT323, monospace`;   /* 2026-10-11: nhãn biển lối chuyển vùng (thay vòm cổng) — tên vùng đích, chữ to hơn tên người cho dễ đọc; lối khóa: hồng + 'Cần huy hiệu Mx' */
-    for (const o of S.map.objects) if (o.exit && !S.hideLabels) { const d = O[o.type], e = o.exit, vi = UI.lang() === 'vi', lk = e.requires && !S.save.badges.includes(e.requires);
+    for (const o of S.map.objects) if (o.exit && !S.hideLabels && !S.altSys) { const d = O[o.type], e = o.exit, vi = UI.lang() === 'vi', lk = e.requires && !S.save.badges.includes(e.requires);
       const text = (e.name[UI.lang()] || e.name.en) + e.ar + (lk ? (vi ? ` · Cần huy hiệu M${e.requires}` : ` · Needs M${e.requires} badge`) : '');
       const sx = Math.round((o.x * TS + d.w / 2 + (d.ox || 0) - cx) * scale), sy = Math.round(((o.y + d.fh) * TS - d.h - 2 - cy) * scale);
       if (sx < -300 || sx > uiCv.width + 300 || sy < -20 || sy > uiCv.height + 40) continue;
-      const w = ug.measureText(text).width + 10, h = ef + 4, x0 = Math.max(2, Math.min(uiCv.width - w - 2, sx - w / 2)), y0 = Math.max(2, sy - h);
+      const w = ug.measureText(text).width + 10, h = ef + 4, x0 = Math.max(2, Math.min(uiCv.width - w - 2, sx - w / 2)), y00 = Math.max(2, sy - h), y0 = y00 + lblPlace(x0, y00, w, h, text, 'exit');
       ug.fillStyle = 'rgba(13,11,20,.7)'; ug.beginPath(); ug.roundRect(x0, y0, w, h, 3); ug.fill(); ug.fillStyle = lk ? '#ff9a9a' : '#ffd45e'; ug.fillText(text, x0 + w / 2, y0 + h - 2); } }
   ug.font = `bold ${fs}px VT323, monospace`;
-  const av = selfAvatar();
-  const headUp = ((p.sheet && p.sheet.skin && p.sheet.skin.headUp) || 0) + (p.labelUp || 0);   /* plan-31: p.labelUp — đang cưỡi Rocky bay (sky.js) thì tên lên trên đầu */   /* plan-29: ngoại hình cao (Chad) → tên/ảnh đại diện lên trên đầu */
-  if (av) { const sx = Math.round((p.x - cx) * scale), sy = Math.round((p.y - 22 - headUp - cy) * scale), r = Math.round(scale * 4); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
-  else if (S.save.name) label(S.save.name, p.x, p.y - headUp, '#ffd45e', false);
   if (S.pops && S.pops.length) {   /* plan-14: số nổi bay lên rồi mờ (dùng label() sẵn có cho chắc) */
     ug.font = `bold ${Math.max(11, Math.round(scale * 3.6))}px VT323, VT323, monospace`;
-    for (const q of S.pops) { const k = q.t / 1.1; ug.globalAlpha = k < 0.7 ? 1 : Math.max(0, 1 - (k - 0.7) / 0.3); label(q.text, q.x, q.y + 12 - k * 18, q.color, false); }
+    for (const q of S.pops) { const k = q.t / 1.1; ug.globalAlpha = k < 0.7 ? 1 : Math.max(0, 1 - (k - 0.7) / 0.3); label(q.text, q.x, q.y + 12 - k * 18, q.color, false, 'pop', true); }
     ug.globalAlpha = 1; ug.font = `bold ${fs}px VT323, monospace`;
   }
-  for (const sys of S.sys) { try { sys.drawUI?.(ug, CTX, cx, cy, scale); } catch (e) { console.error(sys.id, e); } }
+  for (const sys of S.sys) { if (S.altSys && !S.altSys(sys.id) && !/^(hero|aircombat|bakunawa|sky|lyronFinale)$/.test(sys.id)) continue; try { sys.drawUI?.(ug, CTX, cx, cy, scale); } catch (e) { console.error(sys.id, e); } }
   try { TGT.drawUI(ug, cx, cy, scale); } catch (e) { console.error('target', e); }
 }
 function drawCredits() {
@@ -925,7 +1114,7 @@ function drawCredits() {
 }
 function drawSeis(t) {
   const w = seis.width, h = seis.height;
-  const img = sg.getImageData(1, 0, w - 1, h); sg.clearRect(0, 0, w, h); sg.putImageData(img, 0, 0);
+  sg.globalCompositeOperation = 'copy'; sg.drawImage(seis, 1, 0, w - 1, h, 0, 0, w - 1, h); sg.globalCompositeOperation = 'source-over'; sg.clearRect(w - 1, 0, 1, h);   /* plan-37: dịch trái 1 px không đọc pixel về CPU */
   const amp = 1 + t * 2 + S.shakeAmp * 2;
   const y = h / 2 + (Math.random() - 0.5) * amp * 2;
   sg.fillStyle = LEVEL_COLORS[S.zone.lv]; sg.fillRect(w - 1, Math.min(y, S.seisY || y), 1, Math.max(1, Math.abs(y - (S.seisY || y)))); S.seisY = y;

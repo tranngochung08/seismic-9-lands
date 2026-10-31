@@ -1,9 +1,9 @@
 // guong.js — plan-30 TRÙM 3: GƯƠNG ĐỊA CHẤN "Nữ Hoàng Pha Lê Vạn Kính" (Vết Nứt Magnitude) — agent trùm 3, 2026-10-13.
 //  · Khe nứt (ảnh PixelLab rift_crack dùng chung) ở M6 Thành Nghiêng, phía Đông quảng trường thư viện (world.js riftCrackM2(m, 'rift3')). Mở khi: đã qua đèo
-//    tới M6 (save.sys.road.won.road6 / maxZ ≥ 6 / save cũ có huy hiệu M6) + Rocky ≥ cấp 40. Chưa đủ → khe mờ + nhãn điều kiện ✔/✘.
+//    tới M6 (save.sys.road.won.road6 / maxZ ≥ 6 / save cũ có huy hiệu M6) + Rocky ≥ cấp 45. Chưa đủ → khe mờ + nhãn điều kiện ✔/✘.
 //  · Vào khe → vùng 'rift3' (world.js buildRift3): sàn gạch thư viện + sàn gương pha lê (Wang PixelLab), 4 cột gương + 2 kệ sách PHÁ ĐƯỢC (arena.js BREAK,
 //    ảnh hư / đổ nát PixelLab riêng), gương lớn ở vách Bắc, lối ra Nam LUÔN mở. Ngất → bảng ngất (hồi sinh tại chỗ thì đánh tiếp) / về M6 cạnh khe.
-//  · Trùm = 1 quái trong ctx.monsters (aiFn / drawFn / onDown). NHÂN VẬT PixelLab v3 (tools/px-guong.py): cao 70 px ảnh = 35 logic ≈ 2× người chơi, 4 hướng (tây = lật đông),
+//  · Trùm = 1 quái trong ctx.monsters (aiFn / drawFn / onDown). NHÂN VẬT PixelLab v3 (tools/px-guong.py): cao 85 px ảnh = 42,5 logic ≈ 2,4× người chơi (plan-45 5B2, tools/px-p45b2.py), 8 hướng (S, SE, E, NE, N; tây = lật),
 //    clip idle / walk (lướt) / control (vung tay điều khiển gương) / cast (phóng) / vanish (tan thành mảnh gương — chạy ngược = bước ra) / stun / shatter (vỡ). Vẽ 1:1.
 //  · 6 MẢNH GƯƠNG bay quanh người (ảnh PixelLab 6 màu cầu vồng boss/guong/shards). Đập theo thứ tự ĐỎ → CAM → VÀNG → LỤC → LAM → TÍM (sai → mảnh lành lại + phạt nhẹ)
 //    → GƯƠNG THẬT trên mặt LỘ 9 s (choáng 2,5 s): Rocky-ha xuyên được (×1,5), kiếm ×1,3. Bình thường đòn Rocky chỉ 30 %, Rocky-ha bị PHẢN.
@@ -20,9 +20,11 @@
 //    âm bản lúc vẽ — không đụng canvas nguồn, không vướng shim __hi): chém kiếm (clip attack của người chơi), lướt áp sát; hạ được → vỡ thành mảnh gương → thắng.
 //  · Mục tiêu theo THÙ HẬN (như Hắc Rocky): Rocky là đối thủ nền; người chơi chém trúng / đập gương / đứng sát lâu → nhắm người chơi; Rocky gục → người chơi.
 //  · Thưởng lần đầu: sách Rocky bậc 8 (ctx.hrBook.add), Ngọc Rồng, thành tựu 'guong', XP + đá; đánh lại giảm. Lưu save.sys.guong = { wins, tries, best }.
+import { easyHp } from './diff.js';   /* plan-44 C2: Độ khó Dễ — máu ×0,6 */
 import { obj as defObj } from '../gfx.js';
 import { ART } from '../art.js';
 import * as LV from './petlv.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 import { bossCam, bossCamReset, bossBarBox } from './bosscam.js';
 import { beamKey, sheet as bSheet, drawAt as bDraw, frameAt as bFrame } from './beamfx.js';
 
@@ -30,7 +32,7 @@ const TS = 16;
 const STR = {
   vi: {
     name: 'Nữ Hoàng Pha Lê Vạn Kính', sub: 'Gương Địa Chấn', enter: 'Vào Khe Nứt Magnitude', ph2name: 'Bóng Gương', ph2sub: 'chính bạn trong gương',
-    locked: (a, b, lv) => `Khe nứt còn khép — cần: ${a ? '✔' : '✘'} qua đèo tới M6 · ${b ? '✔' : '✘'} Rocky cấp 40 (đang ${lv})`, noRocky: 'Khe nứt chỉ mở khi có Rocky đi cùng',
+    locked: (a, b, lv) => `Khe nứt còn khép — cần: ${a ? '✔' : '✘'} qua đèo tới M6 · ${b ? '✔' : '✘'} Rocky cấp 45 (đang ${lv})`, noRocky: 'Khe nứt chỉ mở khi có Rocky đi cùng',
     intro: 'Bóng của bạn trong gương… mỉm cười.', rise: 'NỮ HOÀNG PHA LÊ VẠN KÍNH bước ra từ gương!', skip: 'Bỏ qua',
     colors: ['ĐỎ', 'CAM', 'VÀNG', 'LỤC', 'LAM', 'TÍM'], hitShard: (c, n) => `Đập mảnh gương ${c} (${n}/6)`, turn: 'Đánh xoay gương',
     good: (c, n) => `Vỡ mảnh ${c}! (${n}/6)`, wrong: 'Sai thứ tự! Các mảnh gương lành lại', order: 'Thứ tự: ĐỎ → CAM → VÀNG → LỤC → LAM → TÍM',
@@ -43,7 +45,7 @@ const STR = {
   },
   en: {
     name: 'Myriad Mirror Crystal Queen', sub: 'Quake Mirror', enter: 'Enter the Magnitude Rift', ph2name: 'Mirror Shadow', ph2sub: 'yourself in the glass',
-    locked: (a, b, lv) => `The rift is sealed — needs: ${a ? '✔' : '✘'} cross the pass to M6 · ${b ? '✔' : '✘'} Rocky Lv 40 (now ${lv})`, noRocky: 'The rift only opens with Rocky at your side',
+    locked: (a, b, lv) => `The rift is sealed — needs: ${a ? '✔' : '✘'} cross the pass to M6 · ${b ? '✔' : '✘'} Rocky Lv 45 (now ${lv})`, noRocky: 'The rift only opens with Rocky at your side',
     intro: 'Your reflection in the mirror… smiles.', rise: 'THE MYRIAD MIRROR QUEEN steps out of the glass!', skip: 'Skip',
     colors: ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE', 'VIOLET'], hitShard: (c, n) => `Smash the ${c} shard (${n}/6)`, turn: 'Strike to turn the mirror',
     good: (c, n) => `${c} shard shattered! (${n}/6)`, wrong: 'Wrong order! The shards mend', order: 'Order: RED → ORANGE → YELLOW → GREEN → BLUE → VIOLET',
@@ -71,17 +73,19 @@ const DMG = { sweep: 0.09, bolt: 0.07, lance: 0.05, soul: 0.06, warp: 0.08, lase
 const CD = { lance: 11, soul: 17, warp: 13, bolt: 3.2, sweep: 1.4, ult: 32 };   /* hồi chiêu riêng từng chiêu (s) */
 const SPD = [62, 74];   /* lướt (px/s) pha thường / nổi giận (< 50 %) */
 const AG = { rk: 10, hit: 4.5, shard: 6, near: 3, decay: 2.5, back: 6, hold: 4, gap: 3, restless: [9, 13], burst: 12 };
-const ORB = { rx: 26, ry: 15, lift: 18, sp: 1.15 };   /* quỹ đạo mảnh gương quanh người (elip trên mặt đất, nâng lên lift px khi vẽ) */
+const ORB = { rx: 31, ry: 18, lift: 22, sp: 1.15 };   /* plan-45 5B2: nới theo thân 2,4× (cũ 26 / 15 / 18) */   /* quỹ đạo mảnh gương quanh người (elip trên mặt đất, nâng lên lift px khi vẽ) */
 function bossHp(ctx) {
   const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40;
-  return Math.round(per * 140 + st * 50);
+  return easyHp(Math.round(per * 140 + st * 50));
 }
-function shHp(ctx) { const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40; return Math.round(per * 36 + st * 18); }
+function shHp(ctx) { const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40; return easyHp(Math.round(per * 36 + st * 18)); }
 const sv = ctx => { const s = ctx.S.save; s.sys ||= {}; const h = (s.sys.guong ||= {}); h.wins ||= 0; h.tries ||= 0; return h; };
 const rk = ctx => (ctx.rocky && ctx.rocky.pet && ctx.rocky.pet()) || (((ctx.S.save.sys || {}).pet || {}).pet) || null;
 const rkLv = ctx => { const p = rk(ctx); return p ? LV.levelFromXp(p.xp || 0).lv : 0; };
 function roadOk(ctx) { const s = ctx.S.save, r = (s.sys || {}).road || {}; return !!((r.won || {}).road6 || (r.maxZ || 0) >= 6 || (s.badges || []).includes(6)); }   /* save cũ không có cờ đèo mà đã có huy hiệu M6 → coi như đã qua */
-const riftOpen = ctx => roadOk(ctx) && rkLv(ctx) >= 40;
+const RK_NEED = 45, RK_OLD = 40;   /* plan-50 §D (anh duyệt): M6 cần Rocky 45 (trước 40). Save cũ đã từng vào / thắng Gương với Rocky ≥ 40 → vẫn mở (không khoá người đã qua) */
+const rkOk = ctx => { const g = ((ctx.S.save.sys || {}).guong) || {}, ach = ctx.S.save.achievements || []; return rkLv(ctx) >= RK_NEED || (rkLv(ctx) >= RK_OLD && ((g.wins || 0) > 0 || (g.tries || 0) > 0 || ach.includes('guong'))); };
+const riftOpen = ctx => roadOk(ctx) && rkOk(ctx);
 const inGm = ctx => !!(ctx.S.zone && ctx.S.zone.id === 'rift3');
 const inM6 = ctx => !!(ctx.S.zone && ctx.S.zone.id === 'm6');
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -278,6 +282,7 @@ function fx(name, x, y, opt = {}) { const s = VX(name); if (!s) return false; ST
 /* ---------------- sát thương ---------------- */
 function hurtPlayer(ctx, frac, from, react = 'stagger', power = 1, key = '') {
   const h = ctx.hero, p = ctx.S.player; if (!h || h.fainted) return false;
+  if (ST.won || ST.death) return false;   /* plan-43 E1: trùm đã gục (cảnh vỡ / đã thắng) → đòn còn bay không trúng người chơi nữa — trước: ngất ngay lúc thắng, mất bảng thưởng */
   const ok = h.hit(Math.max(1, Math.round(h.max * frac))); if (!ok) return false;
   ST.stats.hits[key] = (ST.stats.hits[key] || 0) + 1; log('hit ' + key);
   if (ctx.knockPlayer && react) { const d = Math.hypot(p.x - from.x, p.y - from.y) || 1; ctx.knockPlayer({ type: react, power, dir: { x: (p.x - from.x) / d, y: (p.y - from.y) / d }, src: from, bound: (x, y) => !inGm(ctx) || y < (ctx.S.map.h - 3) * TS }); }
@@ -287,15 +292,18 @@ const rkPos = ctx => (ctx.rocky && ctx.rocky.pos && ctx.rocky.pos()) || null;
 const rkEnt = ctx => (ctx.rocky && ctx.rocky.ent && ctx.rocky.ent()) || null;
 const rkAway = ctx => { const pt = rk(ctx); return !pt || (pt.koT || 0) > 0 || !rkPos(ctx); };
 function hurtRocky(ctx, frac, from, kb = 50) {
+  if (ST.won || ST.death) return false;   /* plan-43 E1 */
   const pos = rkPos(ctx); if (!pos) return false; const pt = rk(ctx); if (!pt || !ctx.rocky.hitBy) return false;
   const d = Math.hypot(pos.x - from.x, pos.y - from.y) || 1, raw = Math.round(LV.maxHpOf(rkLv(ctx)) * frac * 1.1);
   ctx.rocky.hitBy(raw, ST.boss || ST.sh, (pos.x - from.x) / d, (pos.y - from.y) / d, kb); return true;
 }
 /* đòn vùng: trúng người chơi + Rocky trong bán kính r quanh (x, y) */
+/* 2026-10-15 máu linh thú: đòn trúng chỗ linh thú đang ra trận (mọi con trong đội) → trừ máu (frac như Rocky; kind 'fly' = hất bay) */
+function ltHitAt(ctx, test, frac, from, kind) { let n = 0; for (const q of (ctx.ltPets ? ctx.ltPets() : [])) if (test(q) && ctx.ltHit(frac * 1.1, from, kind, q.id)) n++; return n > 0; }
 function areaHit(ctx, x, y, r, frac, key, react = 'stagger', pw = 1) {
   const p = ctx.S.player; let n = 0;
   if (Math.hypot(p.x - x, p.y - y) < r) n += hurtPlayer(ctx, frac, { x, y }, react, pw, key) ? 1 : 0;
-  const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - x, rp.y - y) < r) n += hurtRocky(ctx, frac, { x, y }, react === 'fly' ? 70 : 50) ? 1 : 0;
+  const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - x, rp.y - y) < r) n += hurtRocky(ctx, frac, { x, y }, react === 'fly' ? 70 : 50) ? 1 : 0; ltHitAt(ctx, q => Math.hypot(q.x - x, q.y - y) < r, frac, { x, y }, react === 'fly' ? 'fly' : 'hit');
   return n;
 }
 
@@ -342,7 +350,7 @@ function hitShard(ctx, k) {
 }
 function expose(ctx, sec, why) {
   const b = ST.boss; if (!b) return; ST.exposed = sec; ST.stats.exposes++; b.act = null; b.stunT = STUN_T; ST.tele = ST.tele.filter(q => q.keep);
-  ST.banner = { txt: L(ctx).exposed, t: 2.4 }; fx('gm_shatter', b.x, b.y - 22, { top: true }); fx('gm_glint', b.x, b.y - 30, { top: true }); ctx.sfx('gate_open'); if (ctx.quake) ctx.quake(0.25); log('EXPOSED ' + why);
+  ST.banner = { txt: L(ctx).exposed, t: 2.4 }; fx('gm_shatter', b.x, b.y - 26, { top: true }); fx('gm_glint', b.x, b.y - 36, { top: true }); ctx.sfx('gate_open'); if (ctx.quake) ctx.quake(0.25); log('EXPOSED ' + why);
 }
 function mendAll(ctx) { ST.next = 0; for (const s of ST.shards) { s.alive = true; s.mend = 0.8; } const b = ST.boss; if (b) fx('gm_arrive', b.x, b.y, {}); log('shards mend'); }
 
@@ -350,7 +358,7 @@ function mendAll(ctx) { ST.next = 0; for (const s of ST.shards) { s.alive = true
 function mirrors(ctx) {   /* danh sách mặt gương: {kind, x0,y0,x1,y1 (đoạn) | cx,cy,r (lồi)} — toạ độ VẼ (đã nâng) */
   const out = [], b = ST.boss;
   if (b && !ST.won && !(ST.warp && ST.warp.ph !== 'in') && !(b.intro > 0)) {
-    if (!(ST.exposed > 0)) out.push({ kind: 'queen', cx: b.x, cy: b.y - 20, r: 11 });
+    if (!(ST.exposed > 0)) out.push({ kind: 'queen', cx: b.x, cy: b.y - 24, r: 13 });
     if (shardsHome()) for (const S of ST.shards) { if (!S.alive) continue; const q = shardPos(S.k), ta = Math.atan2(Math.sin(q.a) * ORB.ry, Math.cos(q.a) * ORB.rx) + Math.PI / 2, hx = Math.cos(ta) * 7, hy = Math.sin(ta) * 7; out.push({ kind: 'shard', k: S.k, x0: q.x - hx, y0: q.y - q.dy - hy, x1: q.x + hx, y1: q.y - q.dy + hy, nx: Math.cos(q.a), ny: Math.sin(q.a) }); }
   }
   for (const o of ctx.S.map.objects) if (o.type === 'gm_pillar' && !o.ruined) { const y = (o.y + 1) * TS - 14; out.push({ kind: 'pillar', o, x0: o.x * TS + 3, y0: y, x1: o.x * TS + 13, y1: y, nx: 0, ny: 1 }); }   /* mặt gương cột hướng Nam */
@@ -395,7 +403,7 @@ function haFilter(ctx, ox, oy, ang, len, w, tier) {
   const p = ctx.S.player, rp = rkPos(ctx), hw = (w || 10) / 2 + 5;
   for (const s of segs) { if (s.bounce || s.pre) continue;
     if (!R.hitP && segD(p.x, p.y - 10, s.x0, s.y0, s.x1, s.y1) < hw) { R.hitP = true; ST.stats.reflHitP++; hurtPlayer(ctx, DMG.reflect, { x: s.x0, y: s.y0 + 10 }, 'fly', 0.9, 'reflect'); }
-    if (!R.hitR && rp && segD(rp.x, rp.y - 10, s.x0, s.y0, s.x1, s.y1) < hw) { R.hitR = true; ST.stats.reflHitR++; hurtRocky(ctx, 0.07, { x: s.x0, y: s.y0 + 10 }, 40); }
+    if (!R.hitR && rp && segD(rp.x, rp.y - 10, s.x0, s.y0, s.x1, s.y1) < hw) { R.hitR = true; ST.stats.reflHitR++; hurtRocky(ctx, 0.07, { x: s.x0, y: s.y0 + 10 }, 40); } if (!R.hitL && ltHitAt(ctx, q => segD(q.x, q.y - 10, s.x0, s.y0, s.x1, s.y1) < hw, DMG.reflect, { x: s.x0, y: s.y0 + 10 }, 'fly')) R.hitL = true;
   }
   log('reflect ' + h.m.kind + ' hp ' + R.hitP + ' hr ' + R.hitR);
   return cut;
@@ -408,16 +416,16 @@ function drawBoss(g, mo, x, y) {
   const Q = ST.q; if (!Q || Q.hidden) return;
   if (ST.warp && (ST.warp.ph === 'gone' || Q.alpha <= 0)) return;
   Q.flash = mo.flash || 0; Q.exposed = ST.exposed > 0;
-  g.fillStyle = 'rgba(20,10,40,.32)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 12, 4, 0, 0, 7); g.fill();
+  if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, 24, Math.round(mo.lift || 0), Q.alpha != null ? Math.max(0, Q.alpha) : 1); else { g.fillStyle = 'rgba(20,10,40,.32)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 12, 4, 0, 0, 7); g.fill(); }   /* plan-66 */
   drawQ(g, Q, x, y);
-  if (ST.exposed > 0 && !(Q.alpha < 0.5)) { const gl = VX('gm_glint'); if (gl && ST.t % 1.6 < 0.35) drawSheet(g, gl, Math.min(gl.n - 1, Math.floor((ST.t % 1.6) * 16)), x + 1, y - 29, 0.9); }   /* mặt gương thật lóe 1 lần / 1,6 s CHỈ khi đang lộ */
+  if (ST.exposed > 0 && !(Q.alpha < 0.5)) { const gl = VX('gm_glint'); if (gl && ST.t % 1.6 < 0.35) drawSheet(g, gl, Math.min(gl.n - 1, Math.floor((ST.t % 1.6) * 16)), x + 1, y - 35, 0.9); }   /* mặt gương thật lóe 1 lần / 1,6 s CHỈ khi đang lộ */
 }
 
 /* ---------------- tạo trùm ---------------- */
 const INTRO = 3.5;
 function spawnBoss(ctx) {
   const m = ctx.S.map, b = m.gmBoss || { x: 15, y: 6 }, hp = bossHp(ctx), t = L(ctx);
-  const cfg = { key: 'guong', vi: STR.vi.name, en: STR.en.name, hp, dmg: 12, armor: 0, sp: 60, xp: 0, w: 22, h: 34, c: ['#7a6aa0', '#cfe6ff', '#ffffff'], gmBoss: true, noXpTag: true,
+  const cfg = { key: 'guong', vi: STR.vi.name, en: STR.en.name, hp, dmg: 12, armor: 0, sp: 60, xp: 0, w: 26, h: 41, c: ['#7a6aa0', '#cfe6ff', '#ffffff'], gmBoss: true, noXpTag: true,
     aiFn: (c2, mo, dt, p, dp, canHit) => bossAi(c2, mo, dt, p, dp, canHit), drawFn: (g, mo, x, y) => drawBoss(g, mo, x, y), onDown: mo => queenDown(ctx, mo), tip: { vi: STR.vi.reflect, en: STR.en.reflect } };
   const mo = ctx.monsters.add(cfg, b.x * TS + 8, b.y * TS + 10);
   Object.assign(mo, { phase: 1, angry: true, warned: true, intro: INTRO, act: null, stunT: 0 });
@@ -429,7 +437,7 @@ function skipIntro(ctx) { const mo = ST.boss; if (!mo || !(mo.intro > 0)) return
 function introTick(ctx, mo, dt) {   /* 0–1,2 s bóng người chơi trong gương · 1,2–2 s bóng bước ra · 2 s bóng vỡ → Nữ Hoàng bước ra (clip tan chạy ngược) */
   const it = INTRO - mo.intro, Q = ST.q;
   if (it >= 2.0 && Q.hidden && !ST.introFr) { ST.introFr = true; const o = ST.mirrorO, T = o ? { x: o.x * TS + 12, y: (o.y + 1) * TS + 6 } : { x: mo.x, y: mo.y - 40 }; Q.clip = 'idle'; Q.t = 0; Q.dir = 'south'; makeFrags(qCell(Q), mo.x, mo.y, 'out', T, { dur: 0.75 }); fx('gm_shatter', T.x, T.y - 14, { top: true }); fx('gm_ripple', T.x, T.y, { ground: true }); ctx.sfx('smash'); ST.banner = { txt: L(ctx).rise, t: 2 }; log('queen out'); }   /* bóng vỡ → mảnh bay từ gương ra ghép thành Nữ Hoàng */
-  if (ST.introFr && Q.hidden && it >= 2.75) { Q.hidden = false; Q.alpha = 1; fx('gm_glint', mo.x, mo.y - 30, { top: true }); fx('gm_arrive', mo.x, mo.y, {}); if (ctx.quake) ctx.quake(0.2); }
+  if (ST.introFr && Q.hidden && it >= 2.75) { Q.hidden = false; Q.alpha = 1; fx('gm_glint', mo.x, mo.y - 36, { top: true }); fx('gm_arrive', mo.x, mo.y, {}); if (ctx.quake) ctx.quake(0.2); }
 }
 
 /* ---------------- AI ---------------- */
@@ -467,7 +475,7 @@ function bossAi(ctx, mo, dt, p, dp, canHit) {
   const STRONG = [['hop', () => ST.cd.warp <= 0 && dtp > 30 && home, () => startHop(ctx, mo)], ['lance', () => ST.cd.lance <= 0 && !(ST.exposed > 0) && home, () => start(ctx, mo, 'lance', tp)], ['soul', () => ST.cd.soul <= 0 && !ST.soul, () => start(ctx, mo, 'soul', p)]];
   for (const [k, ok, go] of STRONG) if (ok() && fresh(k)) return go();
   if (ST.cd.bolt <= 0 && dtp > 40 && fresh('bolt')) return start(ctx, mo, 'bolt', tp);
-  if (dtp < 36 && ST.cd.sweep <= 0 && fresh('sweep')) return start(ctx, mo, 'sweep', tp);
+  if (dtp < 40 && ST.cd.sweep <= 0 && fresh('sweep')) return start(ctx, mo, 'sweep', tp);
   if (ST.cd.bolt <= 0 && dtp > 30 && !fresh('sweep') && fresh('bolt')) return start(ctx, mo, 'bolt', tp);   /* quét 2 lần liền rồi → đổi sang tia */
   /* đi tới ≤ 30 px (trong tầm quét 36 px → không có vùng chết khoảng cách) */
   if (dtp > 30) {   /* lướt theo vector tự do: tiến về mục tiêu + lượn vòng (thành phần tiếp tuyến đổi chiều 2–3 s) → đi chéo / cong, không chỉ theo trục */
@@ -494,10 +502,10 @@ const fresh = k => { const n = ST.skills.length; return !(n >= 2 && ST.skills[n 
 function start(ctx, mo, k, tp) {
   skill(k);
   const t = L(ctx), Q = ST.q, fast = mo.phase === 2; Q.dir = faceOf(tp.x - mo.x, tp.y - mo.y);
-  if (k === 'sweep') { const T = fast ? 0.5 : 0.6; mo.act = { k, t: 0, T }; ST.tele.push({ type: 'c', x: mo.x, y: mo.y, r: 36, t: T, T0: T, col: '#cfe6ff' }); qPlay('control'); ctx.sfx('spar_charge'); }
+  if (k === 'sweep') { const T = fast ? 0.5 : 0.6; mo.act = { k, t: 0, T }; ST.tele.push({ type: 'c', x: mo.x, y: mo.y, r: 40, t: T, T0: T, col: '#cfe6ff' }); qPlay('control'); ctx.sfx('spar_charge'); }
   else if (k === 'bolt') {   /* Tia Gương: tia trắng bắn vào 1 mảnh gương trước mặt (lăng kính) → tách thành 7 tia phổ toả ra phía mục tiêu */
     const a = Math.atan2(tp.y - mo.y, tp.x - mo.x), T = fast ? 0.6 : 0.75, px0 = mo.x + Math.cos(a) * 24, py0 = mo.y + Math.sin(a) * 24;
-    mo.act = { k, t: 0, T, a, px: px0, py: py0 }; ST.tele.push({ type: 'fan', x: px0, y: py0, a, len: 240, spread: BOLT_SPREAD, t: T, T0: T }); qPlay('cast', 0.2); ctx.sfx('spar_charge'); if (ctx.pop) ctx.pop(mo.x, mo.y - 40, t.bolt, '#e8dcff'); }
+    mo.act = { k, t: 0, T, a, px: px0, py: py0 }; ST.tele.push({ type: 'fan', x: px0, y: py0, a, len: 240, spread: BOLT_SPREAD, t: T, T0: T }); if (ctx.threat) { const pl = ctx.S.player, dP = Math.hypot(pl.x - px0, pl.y - py0); ctx.threat.add({ kind: 'beam', from: { x: px0, y: py0 - 6 }, to: { x: px0 + Math.cos(a) * 240, y: py0 - 6 + Math.sin(a) * 240 }, in: T, width: Math.min(110, dP * BOLT_SPREAD + 14) }); }   /* plan-34: Ki né */ qPlay('cast', 0.2); ctx.sfx('spar_charge'); if (ctx.pop) ctx.pop(mo.x, mo.y - 40, t.bolt, '#e8dcff'); }
   else if (k === 'lance') { startLance(ctx, mo, tp); }
   else if (k === 'soul') { startSoul(ctx, mo); }
   log('act ' + k);
@@ -505,7 +513,7 @@ function start(ctx, mo, k, tp) {
 function actTick(ctx, mo, A, dt, p) {
   A.t += dt; const fast = mo.phase === 2;
   if (A.k === 'sweep') {
-    if (!A.hit && A.t >= A.T) { A.hit = true; ctx.sfx('whoosh_big'); fx('gm_prism', mo.x, mo.y - 12, { top: true }); areaHit(ctx, mo.x, mo.y, 38, DMG.sweep, 'sweep', 'fly', 1); }
+    if (!A.hit && A.t >= A.T) { A.hit = true; ctx.sfx('whoosh_big'); fx('gm_prism', mo.x, mo.y - 15, { top: true }); areaHit(ctx, mo.x, mo.y, 42, DMG.sweep, 'sweep', 'fly', 1); }
     if (A.t >= A.T + 0.3) { mo.act = null; ST.cd.sweep = fast ? 1.1 : 1.4; }
     return;
   }
@@ -526,15 +534,15 @@ function startDodge(ctx, mo, p) {   /* lướt né sang ngang / lùi 56 px tới
 
 const BOLT_SPREAD = 0.62;   /* góc toả chùm 7 tia (rad) */
 function fireBolt(ctx, mo, A) {
-  const H0 = 14, pp = ctx.S.player, rp = rkPos(ctx); let hitP = false, hitR = false;
-  addRay({ x0: mo.x, y0: mo.y - H0 - 4, x1: A.px, y1: A.py - H0, col: 'w', grow: 0.08, life: 0.5, noTip: true, quiet: true });   /* tia trắng từ tay vào lăng kính */
+  const H0 = 17, pp = ctx.S.player, rp = rkPos(ctx); let hitP = false, hitR = false;
+  addRay({ x0: mo.x, y0: mo.y - H0 - 4, x1: A.px, y1: A.py - H0, col: 'w', grow: 0.08, life: 0.5, noTip: true, quiet: true, gy: mo.y });   /* tia trắng từ tay vào lăng kính */
   fx('gm_glint', A.px, A.py - H0, { top: true }); fx('gm_prism', A.px, A.py - H0, { top: true });
   for (let i = 0; i < 7; i++) {
     const a = A.a + (i - 3) * BOLT_SPREAD / 6, ux = Math.cos(a), uy = Math.sin(a); let len = 240;
     for (let s = 6; s < 240; s += 4) if (solidAt(ctx, A.px + ux * s, A.py + uy * s)) { len = s; if (i === 3 && ctx.arenaImpact) ctx.arenaImpact(A.px + ux * s, A.py + uy * s, 1.2, 'land'); break; }
-    addRay({ x0: A.px, y0: A.py - H0, x1: A.px + ux * len, y1: A.py + uy * len - H0, col: i, grow: 0.12 + i * 0.012, life: 0.5, delay: 0 });
+    addRay({ x0: A.px, y0: A.py - H0, x1: A.px + ux * len, y1: A.py + uy * len - H0, col: i, grow: 0.12 + i * 0.012, life: 0.5, delay: 0, gy: A.py });
     if (!hitP && segD(pp.x, pp.y, A.px, A.py, A.px + ux * len, A.py + uy * len) < 7) { hitP = true; hurtPlayer(ctx, DMG.bolt, { x: A.px, y: A.py }, 'fly', 0.85, 'bolt'); }
-    if (!hitR && rp && segD(rp.x, rp.y, A.px, A.py, A.px + ux * len, A.py + uy * len) < 8) { hitR = true; hurtRocky(ctx, DMG.bolt, mo, 40); }
+    if (!hitR && rp && segD(rp.x, rp.y, A.px, A.py, A.px + ux * len, A.py + uy * len) < 8) { hitR = true; hurtRocky(ctx, DMG.bolt, mo, 40); } if (!A.hitL && ltHitAt(ctx, q => segD(q.x, q.y, A.px, A.py, A.px + ux * len, A.py + uy * len) < 8, DMG.bolt, { x: A.px, y: A.py }, 'fly')) A.hitL = true;
   }
   A.len = 240;
 }
@@ -561,7 +569,7 @@ function lanceTick(ctx, dt) {
       const p = ctx.S.player, rp = rkPos(ctx);
       const pv = F.trail[F.trail.length - 1] || F;   /* va chạm QUÉT theo đoạn di chuyển trong khung (mảnh bay nhanh, không lọt qua người khi khung hình thưa) */
       if (!La.hitP[S.k] && segD(p.x, p.y - 4, pv.x, pv.y, F.x, F.y) < 9) { La.hitP[S.k] = hurtPlayer(ctx, DMG.lance, { x: F.x, y: F.y }, 'stagger', 0.7, 'lance'); }
-      if (!La.hitR[S.k] && rp && segD(rp.x, rp.y - 4, pv.x, pv.y, F.x, F.y) < 9) { La.hitR[S.k] = true; hurtRocky(ctx, DMG.lance, F, 30); }
+      if (!La.hitR[S.k] && rp && segD(rp.x, rp.y - 4, pv.x, pv.y, F.x, F.y) < 9) { La.hitR[S.k] = true; hurtRocky(ctx, DMG.lance, F, 30); } if (!(La.hitL || (La.hitL = {}))[S.k] && ltHitAt(ctx, q => segD(q.x, q.y - 4, pv.x, pv.y, F.x, F.y) < 9, DMG.lance, { x: F.x, y: F.y }, 'hit')) La.hitL[S.k] = true;
     }
   }
   for (const S of ST.shards) if (S.fly) for (const tr of S.fly.trail) tr.t += dt;
@@ -603,9 +611,9 @@ function warpTick(ctx, mo, dt, p) {
   const W = ST.warp, Q = ST.q; W.t += dt;
   if (W.ph === 'out') {   /* 0,25 s gồng (clip tan) → thân vỡ thành mảnh, xoáy hút vào mặt gương sàn dưới chân (gợn sóng) */
     if (!W.shat && W.t >= 0.25) { W.shat = true; makeFrags(qCell(Q), mo.x, mo.y, 'into', { x: mo.x, y: mo.y - 2 }); Q.alpha = 0; fx('gm_ripple', mo.x, mo.y, { ground: true, dur: 0.9 }); ctx.sfx('whirl'); }
-    if (W.t >= 0.95) { W.ph = 'gone'; W.t = 0; Q.alpha = 0; ST.tele.push({ type: 'c', x: W.x, y: W.y, r: 32, t: 0.85, T0: 0.85, col: '#cfa8ff' }); fx('gm_glint', W.x, W.y - 24, { top: true }); fx('gm_ripple', W.x, W.y, { ground: true, dur: 1.2 }); } return; }
+    if (W.t >= 0.95) { W.ph = 'gone'; W.t = 0; Q.alpha = 0; ST.tele.push({ type: 'c', x: W.x, y: W.y, r: 36, t: 0.85, T0: 0.85, col: '#cfa8ff' }); if (ctx.threat) ctx.threat.add({ kind: 'slam', from: { x: W.x, y: W.y - 60 }, to: { x: W.x, y: W.y - 6 }, in: 0.85, dur: 0.6, radius: 34 }); fx('gm_glint', W.x, W.y - 24, { top: true }); fx('gm_ripple', W.x, W.y, { ground: true, dur: 1.2 }); } return; }
   if (W.ph === 'gone') { if (W.t >= 0.85) { W.ph = 'in'; W.t = 0; mo.x = W.x; mo.y = W.y; Q.clip = 'idle'; Q.t = 0; Q.rev = false; Q.alpha = 0; Q.dir = 'south'; makeFrags(qCell(Q), mo.x, mo.y, 'out', { x: mo.x, y: mo.y - 2 }, { dur: 0.6 }); ctx.sfx('smash'); } return; }   /* mảnh từ mặt gương bay ra, ghép lại thành người */
-  if (!W.land && W.t >= 0.6) { W.land = true; Q.alpha = 1; fx('gm_arrive', mo.x, mo.y, {}); fx('gm_glint', mo.x, mo.y - 30, { top: true }); if (ctx.quake) ctx.quake(0.15); areaHit(ctx, mo.x, mo.y, 34, DMG.warp, 'warp', 'fly', 0.9); }
+  if (!W.land && W.t >= 0.6) { W.land = true; Q.alpha = 1; fx('gm_arrive', mo.x, mo.y, {}); fx('gm_glint', mo.x, mo.y - 36, { top: true }); if (ctx.quake) ctx.quake(0.15); areaHit(ctx, mo.x, mo.y, 37, DMG.warp, 'warp', 'fly', 0.9); }
   if (W.t >= 0.9) { ST.warp = null; Q.alpha = 1; qClip('idle'); ST.cd.lance = Math.min(ST.cd.lance, 1.5); log('warp done'); }
 }
 
@@ -619,7 +627,7 @@ const U_WARN = 0.5, U_ON = 0.8, U_PATS = 7, U_HOP = 0.11, FLY_SP = 420;
 /* khung camera khi mảnh rải ngoài sân: tâm X,Y sao cho Nữ Hoàng (c) nằm DƯỚI thanh máu và người chơi vẫn trong khung */
 function ultView(ctx, c, p) {
   const VW = ctx.VW || 480, VH = ctx.VH || 270, top = Math.max(30, (ST.uiTopL || 60)) + 10;
-  let X = c.x, Y = c.y - 40 - top + VH / 2;
+  let X = c.x, Y = c.y - 44 - top + VH / 2;   /* 5B2: đỉnh vương miện ~44 px trên chân (thân 2,4×) */
   const mx = VW / 2 - 20, myT = VH / 2 - top, myB = VH / 2 - 26;
   if (p.x < X - mx) X = p.x + mx; if (p.x > X + mx) X = p.x - mx; if (p.y - 18 < Y - myT) Y = p.y - 18 + myT; if (p.y > Y + myB) Y = p.y - myB;
   return { X, Y, x0: X - VW / 2 + 22, x1: X + VW / 2 - 22, y0: Y - VH / 2 + top + 26, y1: Y + VH / 2 - 18 };
@@ -661,9 +669,11 @@ function startUlt(ctx, mo) {
   ST.ult = { t0: ST.t, ph: 'gather', t: 0, cx: c.x, cy: c.y, M: [], pat: -1, on: false, segs: [], chain: [], hits: 0, hp0: mo.hp, hitP: false, hitR: false, trail: [], safe: [] };
   mo.act = null; ST.lastUlt = ST.t; ST.cd.ult = 12; ST.banner = { txt: L(ctx).ult, t: 2.4 }; qPlay('control', 1); ctx.sfx('spar_roar'); if (ctx.quake) ctx.quake(0.3); log('ult');
 }
+function ultFromQ(U, sg) { return !sg.toQ && sg.x0 === U.cx && sg.y0 === U.cy - 24; }   /* 2026-10-16: chặng tia phóng từ thân Nữ Hoàng (chặng 1 của chuỗi) */
+function ultRay(U, sg, k, tk) { return { x0: sg.x0, y0: sg.y0, x1: sg.x1, y1: sg.y1, col: sg.toQ ? 2 : sg.col === 'w' ? 'w' : [0, 1, 2, 3, 4, 6][sg.col], t: tk, grow: 0.12, life: U_ON - k * U_HOP - 0.12, fade: 0.12, bright: true, seed: k * 7.3 }; }
 function chainSegs(U, chain, aim) {   /* Nữ Hoàng → mảnh … → chặng cuối nhắm người chơi (aim); gặp mảnh đã xoay → bẻ vào trùm */
-  const out = []; let x = U.cx, y = U.cy - 20, col = 'w';
-  for (const i of chain) { const m = U.M[i]; out.push({ x0: x, y0: y, x1: m.x, y1: m.y - 14, to: m, col }); x = m.x; y = m.y - 14; col = m.k; if (m.turned) { out.push({ x0: x, y0: y, x1: U.cx, y1: U.cy - 20, toQ: true, from: m, col }); return out; } }
+  const out = []; let x = U.cx, y = U.cy - 24, col = 'w';
+  for (const i of chain) { const m = U.M[i]; out.push({ x0: x, y0: y, x1: m.x, y1: m.y - 14, to: m, col }); x = m.x; y = m.y - 14; col = m.k; if (m.turned) { out.push({ x0: x, y0: y, x1: U.cx, y1: U.cy - 24, toQ: true, from: m, col }); return out; } }
   if (aim && chain.length) { const L0 = Math.hypot(aim.x - x, aim.y - 10 - y) || 1, ux = (aim.x - x) / L0, uy = (aim.y - 10 - y) / L0, len = Math.min(240, L0 + 50); out.push({ x0: x, y0: y, x1: x + ux * len, y1: y + uy * len, col, last: true }); }   /* chặng cuối: qua chỗ người chơi thêm 50 px */
   return out;
 }
@@ -709,9 +719,9 @@ function ultTick(ctx, mo, dt) {
         const tk = U.onT - k * U_HOP; if (tk <= 0) return; const L0 = Math.hypot(sg.x1 - sg.x0, sg.y1 - sg.y0), head = L0 * Math.min(1, tk / 0.12), ux = (sg.x1 - sg.x0) / (L0 || 1), uy = (sg.y1 - sg.y0) / (L0 || 1), hx = sg.x0 + ux * head, hy = sg.y0 + uy * head;
         if (head >= L0 - 0.5 && !U.fans[k] && sg.to) { U.fans[k] = true; const nb = U.segs[k + 1]; prismFan(sg.x1, sg.y1, nb ? Math.atan2(nb.y1 - nb.y0, nb.x1 - nb.x0) : Math.atan2(uy, ux), 26, 1.0, { grow: 0.08, life: 0.28, fade: 0.12, noTip: true, quiet: true }); }
         if (!U.hitP && segD(p.x, p.y - 10, sg.x0, sg.y0, hx, hy) < 7) U.hitP = hurtPlayer(ctx, DMG.laser, { x: p.x - uy * 10, y: p.y + ux * 10 }, 'fly', 0.8, 'laser') || U.hitP;
-        if (!U.hitR && rp && segD(rp.x, rp.y - 10, sg.x0, sg.y0, hx, hy) < 7) { U.hitR = true; hurtRocky(ctx, DMG.laser, { x: sg.x0, y: sg.y0 + 10 }, 30); }
+        if (!U.hitR && rp && segD(rp.x, rp.y - 10, sg.x0, sg.y0, hx, hy) < 7) { U.hitR = true; hurtRocky(ctx, DMG.laser, { x: sg.x0, y: sg.y0 + 10 }, 30); } if (!U.hitL && ltHitAt(ctx, q => segD(q.x, q.y - 10, sg.x0, sg.y0, hx, hy) < 7, DMG.laser, { x: sg.x0, y: sg.y0 + 10 }, 'fly')) U.hitL = true;
         if (sg.last && head >= L0 - 0.5 && !U.wallHit) { U.wallHit = true; if (ctx.arenaImpact && solidAt(ctx, sg.x1, sg.y1 + 14)) ctx.arenaImpact(sg.x1, sg.y1 + 14, 1.1, 'wall'); }   /* chỉ khi chạm vật cứng (không để hố trên sàn trống) */
-        if (sg.toQ && head >= L0 - 0.5 && !U.qHit) { U.qHit = true; U.hits++; ST.stats.ultHits++; mo.hp = Math.max(1, mo.hp - Math.round(mo.max * 0.035)); U.hp0 = mo.hp; mo.flash = 0.2; U.trail.push({ ...sg, t: 0 }); fx('gm_glint', mo.x, mo.y - 22, { top: true }); prismFan(U.cx, U.cy - 20, Math.atan2(uy, ux), 34, 1.2, { grow: 0.1, life: 0.3, fade: 0.15, quiet: true }); ctx.toast(L(ctx).ultHit, true); ctx.sfx('smash'); log('ult hit queen ' + U.hits); }
+        if (sg.toQ && head >= L0 - 0.5 && !U.qHit) { U.qHit = true; U.hits++; ST.stats.ultHits++; mo.hp = Math.max(1, mo.hp - Math.round(mo.max * 0.035)); U.hp0 = mo.hp; mo.flash = 0.2; U.trail.push({ ...sg, t: 0 }); fx('gm_glint', mo.x, mo.y - 22, { top: true }); prismFan(U.cx, U.cy - 24, Math.atan2(uy, ux), 34, 1.2, { grow: 0.1, life: 0.3, fade: 0.15, quiet: true }); ctx.toast(L(ctx).ultHit, true); ctx.sfx('smash'); log('ult hit queen ' + U.hits); }
       });
       if (U.onT > U_ON - 0.05) U.wallHit = false;
     }
@@ -743,9 +753,9 @@ function hopTick(ctx, mo, dt, p) {
       H.dst = tgt || null; if (H.dst) { H.last = H.M.indexOf(H.dst); ST.tele.push({ type: 'c', x: H.dst.x, y: H.dst.y + 6, r: 30, t: 0.4 + 0.3, T0: 0.7, col: '#cfa8ff' }); } }
     if (H.t >= 0.3) { H.ph = 'gone'; H.t = 0; if (!H.dst) return hopEnd(ctx, mo); } return; }
   if (H.ph === 'gone') { if (H.t >= 0.4) { H.ph = 'in'; H.t = 0; const d = H.dst; mo.x = d.x; mo.y = d.y + 6; Q.clip = 'idle'; Q.t = 0; Q.alpha = 0; Q.dir = faceOf(p.x - mo.x, p.y - mo.y); makeFrags(qCell(Q), mo.x, mo.y, 'out', { x: d.x, y: d.y - 4 }, { dur: 0.35 }); fx('gm_ripple', mo.x, mo.y, { ground: true, dur: 0.6 }); ctx.sfx('smash'); H.cur = d; } return; }
-  if (H.ph === 'in') { if (H.t >= 0.35) { H.ph = 'atk'; H.t = 0; Q.alpha = 1; fx('gm_glint', mo.x, mo.y - 30, { top: true });
-      if (Math.hypot(p.x - mo.x, p.y - mo.y) < 40) { qPlay('control'); fx('gm_prism', mo.x, mo.y - 12, { top: true }); areaHit(ctx, mo.x, mo.y, 32, DMG.sweep * 0.8, 'hop', 'fly', 0.85); }
-      else { qPlay('cast'); const a = Math.atan2(p.y - mo.y, p.x - mo.x); prismFan(mo.x + Math.cos(a) * 14, mo.y - 14 + Math.sin(a) * 14, a, 90, 0.4, { grow: 0.1, life: 0.3, fade: 0.12 }); for (let i = 0; i < 7; i++) { const aa = a + (i - 3) * 0.4 / 6; if (segD(p.x, p.y, mo.x, mo.y, mo.x + Math.cos(aa) * 104, mo.y + Math.sin(aa) * 104) < 7) { hurtPlayer(ctx, DMG.bolt * 0.8, mo, 'stagger', 0.7, 'hop'); break; } } }
+  if (H.ph === 'in') { if (H.t >= 0.35) { H.ph = 'atk'; H.t = 0; Q.alpha = 1; fx('gm_glint', mo.x, mo.y - 36, { top: true });
+      if (Math.hypot(p.x - mo.x, p.y - mo.y) < 40) { qPlay('control'); fx('gm_prism', mo.x, mo.y - 15, { top: true }); areaHit(ctx, mo.x, mo.y, 40, DMG.sweep * 0.8, 'hop', 'fly', 0.85); }
+      else { qPlay('cast'); const a = Math.atan2(p.y - mo.y, p.x - mo.x); prismFan(mo.x + Math.cos(a) * 16, mo.y - 17 + Math.sin(a) * 16, a, 90, 0.4, { grow: 0.1, life: 0.3, fade: 0.12, gy: mo.y + Math.sin(a) * 14 }); for (let i = 0; i < 7; i++) { const aa = a + (i - 3) * 0.4 / 6; if (segD(p.x, p.y, mo.x, mo.y, mo.x + Math.cos(aa) * 104, mo.y + Math.sin(aa) * 104) < 7) { hurtPlayer(ctx, DMG.bolt * 0.8, mo, 'stagger', 0.7, 'hop'); break; } } }
       H.done++; log('hop in ' + H.done); }
     return; }
   if (H.ph === 'atk') { if (H.t >= 0.3) { if (H.done >= H.n) return hopEnd(ctx, mo); H.ph = 'out'; H.t = 0; H.shat = false; } return; }
@@ -779,12 +789,12 @@ function queenDown(ctx, mo) {
   ST.boss = null; ST.lance = null; ST.ult = null; ST.warp = null; ST.hop = null; ST.soul = null; ST.tele = []; ST.exposed = 0;
   for (const S of ST.shards) { if (S.alive) { const a = ST.orbA + S.k * Math.PI / 3; ST.falling.push({ k: S.k, x: mo.x + Math.cos(a) * ORB.rx, y: mo.y + Math.sin(a) * ORB.ry, z: ORB.lift, vx: Math.cos(a) * 40, vz: 40, t: 0 }); } S.alive = false; S.fly = null; }
   ST.burst = { t: 0, x: mo.x, y: mo.y }; ST.q = { clip: 'shatter', t: 0, dir: 'south', alpha: 1 };
-  ST.banner = { txt: L(ctx).burst, t: 2.4 }; ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.4); fx('gm_shatter', mo.x, mo.y - 20, { top: true }); log('queen down');
+  ST.banner = { txt: L(ctx).burst, t: 2.4 }; ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.4); fx('gm_shatter', mo.x, mo.y - 24, { top: true }); log('queen down');
 }
 function burstTick(ctx, dt) {
   const B = ST.burst, Q = ST.q; B.t += dt; Q.t += dt;
-  if (B.t > 0.5 && !B.boom) { B.boom = true; makeFrags(qCell(Q), B.x, B.y, 'burst', { x: B.x, y: B.y }, { dur: 1.4, grid: 6 }); Q.alpha = 0; fx('gm_shatter', B.x, B.y - 20, { top: true }); fx('gm_prism', B.x, B.y - 24, { top: true }); prismFan(B.x, B.y - 22, -Math.PI / 2, 60, Math.PI * 1.7, { grow: 0.12, life: 0.35, fade: 0.2, quiet: true }); ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.3); }   /* nổ tung: mảnh pha lê phản chiếu màu + chùm phổ toả tròn */
-  if (B.t > 0.9 && !B.crack) { B.crack = true; fx('gm_shatter', B.x, B.y - 18, { top: true }); const o = ST.mirrorO; if (o) { o.hpMax = 2; o.hp = 1; fx('gm_glint', o.x * TS + 16, o.y * TS - 6, { top: true }); } ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.2); log('mirror cracks'); }
+  if (B.t > 0.5 && !B.boom) { B.boom = true; makeFrags(qCell(Q), B.x, B.y, 'burst', { x: B.x, y: B.y }, { dur: 1.4, grid: 6 }); Q.alpha = 0; fx('gm_shatter', B.x, B.y - 24, { top: true }); fx('gm_prism', B.x, B.y - 29, { top: true }); prismFan(B.x, B.y - 22, -Math.PI / 2, 60, Math.PI * 1.7, { grow: 0.12, life: 0.35, fade: 0.2, quiet: true }); ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.3); }   /* nổ tung: mảnh pha lê phản chiếu màu + chùm phổ toả tròn */
+  if (B.t > 0.9 && !B.crack) { B.crack = true; fx('gm_shatter', B.x, B.y - 22, { top: true }); const o = ST.mirrorO; if (o) { o.hpMax = 2; o.hp = 1; fx('gm_glint', o.x * TS + 16, o.y * TS - 6, { top: true }); } ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.2); log('mirror cracks'); }
   if (B.t > 1.6 && !ST.sh && !ST.won) spawnShadow(ctx);
   if (B.t > 2.4) ST.burst = null;
 }
@@ -818,7 +828,7 @@ function drawSh8(g, mo, x, y, alpha) {
   if (mo.glow > 0) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = alpha * 0.35 * mo.glow; g.filter = 'brightness(2.2) saturate(0.4)'; if (flip) g.drawImage(im, f * cw, row * ch, cw, ch, -cw / 4, Y - ch / 2 + 1, cw / 2, ch / 2); else g.drawImage(im, f * cw, row * ch, cw, ch, X - cw / 4, Y - ch / 2 + 1, cw / 2, ch / 2); }
   g.restore(); ST.sh8n = (ST.sh8n || 0) + 1; return true;
 }
-function drawSh(g, mo, x, y) { const E = mo.E; if (!E) return; g.fillStyle = 'rgba(20,10,40,.3)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 6, 2.2, 0, 0, 7); g.fill(); const al = Math.min(1, 0.4 + mo.fade); if (drawSh8(g, mo, x, y, al)) return; drawGhost(g, E, x, y, mo.flash > 0 ? 'brightness(2.2)' : SH_FILTER, al, mo.glow > 0 ? 0.35 * mo.glow : 0); }   /* lấp lánh dọc thân CHỈ lúc ra đòn (mo.glow) */
+function drawSh(g, mo, x, y) { const E = mo.E; if (!E) return; if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, 12, Math.round(mo.lift || 0)); else { g.fillStyle = 'rgba(20,10,40,.3)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 6, 2.2, 0, 0, 7); g.fill(); } const al = Math.min(1, 0.4 + mo.fade); if (drawSh8(g, mo, x, y, al)) return; drawGhost(g, E, x, y, mo.flash > 0 ? 'brightness(2.2)' : SH_FILTER, al, mo.glow > 0 ? 0.35 * mo.glow : 0); }   /* lấp lánh dọc thân CHỈ lúc ra đòn (mo.glow) */
 function shAi(ctx, mo, dt, p, dp, canHit) {
   const E = mo.E; E.x = mo.x; E.y = mo.y; mo.fade = Math.min(1, mo.fade + dt);   /* đồng bộ vị trí thực thể bóng (faceTo tính theo E.x/E.y) */ if (mo.glow > 0) mo.glow = Math.max(0, mo.glow - dt * 2.5); for (const k in mo.cd) if (mo.cd[k] > 0) mo.cd[k] -= dt;
   if (mo.justHit) { mo.justHit = false; mo.recent.push(ST.t); } mo.recent = mo.recent.filter(t => ST.t - t < 1.2);
@@ -833,7 +843,7 @@ function shAi(ctx, mo, dt, p, dp, canHit) {
   if (!canHit || ST.hold) { E.moving = false; return; }
   const a = Math.atan2(p.y - mo.y, p.x - mo.x);
   if (mo.recent.length >= 2 && mo.cd.dodge <= 0) { mo.cd.dodge = 2.6; const s = Math.random() < 0.5 ? 1 : -1, q = clampIn(ctx, mo.x - Math.sin(a) * 40 * s, mo.y + Math.cos(a) * 40 * s); if (!solidAt(ctx, q.x, q.y)) { mo.act = { k: 'dodge', t: 0, T: 0.2, x0: mo.x, y0: mo.y, x1: q.x, y1: q.y }; fx('gm_glint', mo.x, mo.y - 12); ctx.sfx('whoosh_big'); return; } }
-  if (dp > 50 && dp < 150 && mo.cd.dash <= 0) { let len = Math.min(dp + 16, 150); for (let s = 8; s < len; s += 4) if (solidAt(ctx, mo.x + Math.cos(a) * s, mo.y + Math.sin(a) * s)) { len = s - 6; break; } const q = { x: mo.x + Math.cos(a) * len, y: mo.y + Math.sin(a) * len }; mo.act = { k: 'dash', t: 0, T: 0.38, a, x0: mo.x, y0: mo.y, x1: q.x, y1: q.y }; ST.tele.push({ type: 'l', x: mo.x, y: mo.y, a, len, t: 0.38, T0: 0.38, col: '#b8a0ff' }); ctx.sfx('spar_charge'); log('sh dash'); return; }
+  if (dp > 50 && dp < 150 && mo.cd.dash <= 0) { let len = Math.min(dp + 16, 150); for (let s = 8; s < len; s += 4) if (solidAt(ctx, mo.x + Math.cos(a) * s, mo.y + Math.sin(a) * s)) { len = s - 6; break; } const q = { x: mo.x + Math.cos(a) * len, y: mo.y + Math.sin(a) * len }; mo.act = { k: 'dash', t: 0, T: 0.38, a, x0: mo.x, y0: mo.y, x1: q.x, y1: q.y }; if (ctx.threat) ctx.threat.add({ id: 'gm_shdash', kind: 'lunge', from: { x: mo.x, y: mo.y - 6 }, to: { x: q.x, y: q.y - 6 }, in: 0.38, dur: 0.22, width: 22 }); ST.tele.push({ type: 'l', x: mo.x, y: mo.y, a, len, t: 0.38, T0: 0.38, col: '#b8a0ff' }); ctx.sfx('spar_charge'); log('sh dash'); return; }
   if (dp < 26 && mo.cd.slash <= 0) { E.faceTo(p.x, p.y); mo.act = { k: 'slash', t: 0, T: 0.34, a }; ST.tele.push({ type: 'arc', x: mo.x, y: mo.y, a, r: 22, t: 0.34, T0: 0.34, col: '#d8c8ff' }); log('sh slash'); return; }
   if (dp > 18) { const sp = 80 * (mo.hp < mo.max * 0.5 ? 1.1 : 1), ux = (p.x - mo.x) / dp, uy = (p.y - mo.y) / dp;
     if (!(mo.sideT > ST.t)) { mo.side = Math.random() < 0.5 ? -1 : 1; mo.sideT = ST.t + 1.5 + Math.random(); }
@@ -849,6 +859,9 @@ function shDown(ctx, mo) {
 function deathTick(ctx, dt) { const D = ST.death; D.t += dt; if (D.t >= 0.6 && !D.won) { D.won = true; const o = ST.mirrorO; if (o) { o.ruined = true; o.orig = o.type; } onWin(ctx, D); } if (D.t > 3) ST.death = null; }
 
 /* ---------------- thắng ---------------- */
+function bookLater(ctx, ms, n = 40) {   /* plan-43 E1/CK1: bảng thưởng (sách bậc 8) chờ tới khi người chơi rảnh (không ngất / không đang thoại / bảng khác) rồi mới mở — trước: mở đúng lúc ngất / chuyển vùng nên mất */
+  setTimeout(() => { if (!ctx.hrBook || !ctx.hrBook.open) return; const busy = ctx.S.mode !== 'play' || (ctx.hero && ctx.hero.fainted); if (busy && n > 0) { bookLater(ctx, 700, n - 1); return; } ctx.hrBook.open(); }, ms);
+}
 function onWin(ctx, mo) {
   const h = sv(ctx), first = h.wins === 0, t = L(ctx), secs = Math.round(ST.t - ST.startT);
   h.wins++; h.best = h.best ? Math.min(h.best, secs) : secs; ST.won = true; ST.boss = null; ST.tele = [];
@@ -857,7 +870,7 @@ function onWin(ctx, mo) {
   ctx.give('stone', first ? 350 : 80, mo.x, mo.y); ctx.give('soul', first ? 3 : 1, mo.x + 8, mo.y);
   const r = ((ctx.S.save.sys ||= {}).road ||= {}); r.balls ||= []; const miss = [1, 2, 3, 4, 5, 6, 7].filter(n => !r.balls.includes(n));
   if (miss.length && (first || Math.random() < 0.2)) { const n = miss[(Math.random() * miss.length) | 0]; r.balls.push(n); ctx.give('dball' + n, 1, mo.x - 10, mo.y, { beam: true }); setTimeout(() => ctx.toast(ctx.lang() === 'vi' ? `🐉 NGỌC RỒNG ${n} SAO rơi ra!` : `🐉 The ${n}-STAR DRAGON BALL dropped!`, true), 1800); }
-  if (first) { if (ctx.hrBook && ctx.hrBook.add) ctx.hrBook.add(1); h.book = 1; if (ctx.achieve) ctx.achieve('guong'); setTimeout(() => ctx.toast(t.title, true), 3200); setTimeout(() => { if (ctx.hrBook) ctx.hrBook.open(); }, 4200); }
+  if (first) { if (ctx.hrBook && ctx.hrBook.add) ctx.hrBook.add(1); h.book = 1; if (ctx.achieve) ctx.achieve('guong'); setTimeout(() => ctx.toast(t.title, true), 3200); bookLater(ctx, 4200); }
   else setTimeout(() => ctx.toast(t.again, true), 2400);
   ctx.persist(); log('WIN ' + secs + 's first ' + first);
 }
@@ -918,7 +931,7 @@ export const guong = {
     if (inM6(ctx)) {
       const o = ctx.S.map.objects.find(q => q.rift === 'rift3'); if (!o) return null; const x = o.x * TS + 16, y = o.y * TS + 10;
       if (Math.hypot(p.x - x, p.y - y) > 48) return null;
-      const ok = riftOpen(ctx); return { label: ok ? t.enter : t.locked(roadOk(ctx), rkLv(ctx) >= 40, rkLv(ctx)), x, y, limit: 48, priority: 5, data: { rift3: true, ok } };
+      const ok = riftOpen(ctx); return { label: ok ? t.enter : t.locked(roadOk(ctx), rkOk(ctx), rkLv(ctx)), x, y, limit: 48, priority: 5, data: { rift3: true, ok } };
     }
     if (!inGm(ctx)) return null;
     if (ST.boss && ST.boss.intro > 0 && INTRO - ST.boss.intro > 0.25) return { label: t.skip, x: p.x, y: p.y - 20, limit: 999, priority: 9, mouse: false, data: { gmSkip: true } };
@@ -933,7 +946,7 @@ export const guong = {
     if (d.gmMirror) { swingAt(ctx, { mirror: d.gmMirror, x: d.gmMirror.x, y: d.gmMirror.y }); return; }
     if (!d.rift3) return;
     if (!rk(ctx)) { ctx.toast(L(ctx).noRocky); return; }
-    if (!d.ok) { ctx.toast(L(ctx).locked(roadOk(ctx), rkLv(ctx) >= 40, rkLv(ctx)), true); ctx.sfx('fail'); return; }
+    if (!d.ok) { ctx.toast(L(ctx).locked(roadOk(ctx), rkOk(ctx), rkLv(ctx)), true); ctx.sfx('fail'); return; }
     ctx.sfx('whirl'); ctx.travel('rift3', 'default');
   },
   onClick(ctx, mt) {   /* click trúng mảnh gương / gương xoay trong tầm → đập */
@@ -981,7 +994,7 @@ export const guong = {
       out.push({ y: So.y, f: () => drawGhost(g, E, So.x - cx, So.y - cy, SOUL_FILTER, al, 0.25) }); }
     /* Tia Gương (tia sáng trắng — sheet luồng PixelLab đổi màu) */
     if (b && b.act && b.act.k === 'bolt' && !b.act.fired) { const A = b.act, im = SHARD(5); if (im) out.push({ y: A.py + 1, f: () => blitC(g, im, A.px - cx, A.py - 14 - cy, Math.min(1, A.t / 0.2)) }); }   /* lăng kính (mảnh gương) bay ra trước mặt */
-    if (ST.rays.length) out.push({ y: 1e8 + 2, f: () => { for (const r of ST.rays) drawRay(g, r, cx, cy); } });
+    if (ST.rays.length) { const top = ST.rays.filter(r => r.gy == null); if (top.length) out.push({ y: 1e8 + 2, f: () => { for (const r of top) drawRay(g, r, cx, cy); } });   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): tia phóng từ thân / lăng kính trước mặt: khoá = chân kẻ phóng ∓ 0,5 (tia lên → sau lưng, tia xuống → trước mặt) */ for (const r of ST.rays) if (r.gy != null) out.push({ y: r.gy + (r.y1 < r.y0 ? -0.5 : 0.5), skill: 'gm_ray', f: () => drawRay(g, r, cx, cy) }); }
     for (const F of ST.frags) out.push({ y: F.mode === 'burst' ? 1e8 : F.y + 1, f: () => drawFrags(g, F, cx, cy) });
     /* luồng Rocky-ha PHẢN XẠ: vẽ bằng chính sheet Rocky-ha PixelLab theo từng đoạn + vệt phổ màu (3 bản lệch sắc) lúc tắt dần */
     for (const R of ST.refl) { const s = bSheet(beamKey(R.tier || 4)); if (!s) continue; out.push({ y: 1e8, f: () => {
@@ -996,9 +1009,10 @@ export const guong = {
       if (!U.on) {   /* báo trước: vạch mờ VẼ DẦN theo chuỗi */
         g.save(); g.globalAlpha = 0.38; g.lineWidth = 1; g.setLineDash([3, 3]); const prog = Math.min(1, (U.warnT || 0) / (U_WARN * 0.8)) * U.segs.length;
         U.segs.forEach((sg, k) => { const f2 = Math.max(0, Math.min(1, prog - k)); if (f2 <= 0) return; g.strokeStyle = sg.col === 'w' ? '#e8dcff' : SPEC[[0, 1, 2, 3, 4, 6][sg.col] ?? 0]; g.beginPath(); g.moveTo(Math.round(sg.x0 - cx), Math.round(sg.y0 - cy)); g.lineTo(Math.round(sg.x0 + (sg.x1 - sg.x0) * f2 - cx), Math.round(sg.y0 + (sg.y1 - sg.y0) * f2 - cy)); g.stroke(); }); g.restore();
-      } else U.segs.forEach((sg, k) => { const tk = (U.onT || 0) - k * U_HOP; if (tk <= 0) return; drawRay(g, { x0: sg.x0, y0: sg.y0, x1: sg.x1, y1: sg.y1, col: sg.toQ ? 2 : sg.col === 'w' ? 'w' : [0, 1, 2, 3, 4, 6][sg.col], t: tk, grow: 0.12, life: U_ON - k * U_HOP - 0.12, fade: 0.12, bright: true, seed: k * 7.3 }, cx, cy); });   /* tia đổi màu theo màu mảnh vừa nảy */
+      } else U.segs.forEach((sg, k) => { const tk = (U.onT || 0) - k * U_HOP; if (tk <= 0 || ultFromQ(U, sg)) return; drawRay(g, ultRay(U, sg, k, tk), cx, cy); });   /* tia đổi màu theo màu mảnh vừa nảy */
       for (const tr of U.trail) for (let c2 = 0; c2 < 7; c2 += 2) drawRay(g, { x0: tr.x0, y0: tr.y0 + (c2 - 3), x1: tr.x1, y1: tr.y1 + (c2 - 3), col: c2, t: 0.2, grow: 0.1, life: 1, fade: 1, seed: c2, noTip: true }, cx, cy);
     } });
+    if (U && U.ph === 'grid' && U.on) U.segs.forEach((sg, k) => { const tk = (U.onT || 0) - k * U_HOP; if (tk > 0 && ultFromQ(U, sg)) out.push({ y: U.cy + (sg.y1 < sg.y0 ? -0.5 : 0.5), skill: 'gm_ult_ray', f: () => drawRay(g, ultRay(U, sg, k, tk), cx, cy) }); });   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): chặng phóng từ thân Nữ Hoàng */
     /* Nữ Hoàng lúc vỡ (ngoài lúc đó monsters vẽ qua drawFn) */
     if (ST.burst && ST.q) { const B = ST.burst, Q = ST.q; out.push({ y: B.y, f: () => drawQ(g, Q, B.x - cx, B.y - cy) }); }
     if (ST.death && ST.death.E && ST.death.t < 0.6) { const D = ST.death; out.push({ y: D.y, f: () => drawGhost(g, D.E, D.x - cx, D.y - cy, 'brightness(2.4)', 1 - D.t / 0.6, 0) }); }

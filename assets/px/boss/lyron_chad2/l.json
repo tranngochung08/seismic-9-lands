@@ -1,0 +1,208 @@
+{
+ "cw": 80,
+ "ch": 76,
+ "clips": {
+  "idle": {
+   "n": 6,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "walk": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "flex": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "pound": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "lasso": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "punch": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "stare": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "hurt": {
+   "n": 7,
+   "rows": [
+    "south"
+   ]
+  },
+  "defeat": {
+   "n": 9,
+   "rows": [
+    "south"
+   ]
+  },
+  "sk_beam": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_summon": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_snap": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_blur": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_whistle": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_mirror": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_ora": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_upper": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_floor": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_hold": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_blast": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_conduct": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_combo": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_quake": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_floor2": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "sk_bite": {
+   "n": 9,
+   "rows": [
+    "south"
+   ]
+  },
+  "rot": {
+   "n": 1,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  }
+ }
+}

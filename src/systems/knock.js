@@ -10,6 +10,7 @@
 // Luật: không điều khiển được trong lúc phản ứng; miễn sát thương lúc bay + 0,6 s sau khi đứng dậy; ô cứng / mép vòng → dừng (đập tường rồi trượt xuống);
 //   hiệu ứng chỉ theo SỰ KIỆN (lúc bị đánh / chạm đất / đập tường), không vòng lặp kéo dài.
 import { ART } from '../art.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 const G = 560;   /* trọng lực (px/s²) cho độ cao z */
 const TYPES = {
   stagger: { sp: 70, vz: 0, spin: 0, fric: 9, stop: 0, minT: 0.32 },
@@ -24,8 +25,12 @@ const ST = { k: null, last: null, log: [], dizzy: null };
 const p_ = ctx => ctx.S.player;
 const faceOf = (dx, dy) => (Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 2 : 1) : (dy >= 0 ? 0 : 3));
 const clip = (p, n) => p.sheet && p.sheet.actions && p.sheet.actions[n];
-function fx(ctx, name, x, y, top, flip) { return !!(ctx.vfx && ctx.vfx(name, x, y, 0, top, flip)); }
+const KW = { knock_jab: 'jab', knock_heavy: 'heavy', knock_land: 'land', knock_wall: 'wall', knock_erupt: 'erupt' };   /* plan-69: cảnh code (pxfx_world.js) */
+function fx(ctx, name, x, y, top, flip) { if ((name === 'knock_land' || name === 'knock_erupt') && ctx.waterAt && ctx.waterAt(x, y - 2)) { if (ctx.waterSplash) ctx.waterSplash(x, y - 2, name === 'knock_land' ? 1.5 : 1.1); return true; }   /* plan-68: rơi xuống nước → toé nước */
+  const k = KW[name]; if (k && ctx.wfx && ctx.wfx(k, x, y, { top: !!top, flip: !!flip })) return true;   /* plan-69: cảnh code (pxfx_world.js) */
+  return !!(ctx.vfx && ctx.vfx(name, x, y, 0, top, flip)); }
 function start(ctx, o) {
+  if (ctx.kiAbort) ctx.kiAbort();   /* plan-34: huỷ lộn / lướt của Ki trước khi bị hất (Ki không giữ speedMul nữa — trước đây knock lưu nhầm 0) */
   const p = p_(ctx), T = TYPES[o.type] || TYPES.stagger, pw = Math.max(0.3, Math.min(1.6, o.power || 1));
   const l = Math.hypot(o.dir && o.dir.x || 0, o.dir && o.dir.y || 0) || 1, ux = (o.dir ? o.dir.x : 0) / l, uy = (o.dir ? o.dir.y : 1) / l;
   if (ST.k) end(ctx, true);
@@ -33,12 +38,13 @@ function start(ctx, o) {
   const type = o.type in TYPES ? o.type : 'stagger';
   const k = { type, T, pw, ux, uy, vx: ux * T.sp * pw, vy: uy * T.sp * pw * 0.85, z: 0, vz: T.vz * (0.75 + 0.25 * pw), ang: 0, spinDir: ux >= 0 ? 1 : -1,
     t: 0, stop: T.stop, air: T.vz > 0, bounced: false, down: -1, flash: type === 'stagger' ? 0.05 : 0.08, bound: o.bound || null, own, sm: p.speedMul, wall: false, x0: p.x, y0: p.y,
-    dir: faceOf(-ux, -uy), mdir: faceOf(ux, uy), heavy: type !== 'stagger' && type !== 'hold' && pw >= 1, follow: o.follow || null, onLand: o.onLand || null };   /* mặt quay về phía kẻ đánh, thân văng ngược lại */
+    dir: faceOf(-ux, -uy), mdir: faceOf(ux, uy), heavy: type !== 'stagger' && type !== 'hold' && pw >= 1, follow: o.follow || null, onLand: o.onLand || null, lite: !!o.lite };   /* plan-48: o.lite — đòn từ trận Đấu Linh Thú: chỉ chớp nhỏ, không sao nổ to / bụi vòng / sao quay */   /* mặt quay về phía kẻ đánh, thân văng ngược lại */
   k.air0 = k.air ? 2 * k.vz / G : 0;
   k.spinSp = k.air0 && T.spin && pw >= 1.05 ? T.spin * Math.PI * 2 / k.air0 : 0;   /* lộn vòng chỉ khi cú thật nặng; còn lại ngả nhẹ */
   p.autoPath = null; p.speedMul = 0; if (p.endAct) p.endAct(); if (own) p.custom = (g, pp) => draw(g, pp, k);
   if (ctx.hero && ctx.hero.iframes) ctx.hero.iframes(type === 'stagger' ? 0.15 : 3);   /* lảo đảo: chỉ khựng ngắn (combo jab vẫn nối được) */
-  if (type === 'stagger') fx(ctx, 'knock_jab', p.x - ux * 3, p.y - 5, true);
+  if (o.lite) { fx(ctx, 'knock_jab', p.x - ux * 3, p.y - 5, true); if (type !== 'stagger') ctx.sfx('knock_whoosh'); }   /* plan-48: chớp nhỏ ≤ cỡ người */
+  else if (type === 'stagger') fx(ctx, 'knock_jab', p.x - ux * 3, p.y - 5, true);
   else if (type === 'hold') { /* tiếng do hệ gọi lo */ }
   else {
     ctx.sfx('knock_whoosh'); if (ctx.quake) ctx.quake(0.1);
@@ -52,7 +58,7 @@ function end(ctx, cut) {
   const k = ST.k, p = p_(ctx); if (!k) return; ST.k = null;
   if (k.own && p.custom) p.custom = null; p.speedMul = k.sm == null ? 1 : k.sm; p.dir = k.dir;
   if (ctx.hero && ctx.hero.iframes && k.type !== 'stagger') ctx.hero.iframes(cut ? 0.2 : 0.6);   /* đứng dậy xong: thêm 0,6 s miễn sát thương */
-  if (!cut && k.heavy && k.type !== 'throw') ST.dizzy = { t: 0, dur: 1 };   /* sao quay ~1 s sau cú nặng nhất (sự kiện ngắn) */
+  if (!cut && k.heavy && !k.lite && k.type !== 'throw') ST.dizzy = { t: 0, dur: 1 };   /* sao quay ~1 s sau cú nặng nhất (sự kiện ngắn) */
   ST.last = { type: k.type, dx: Math.round(p.x - k.x0), dy: Math.round(p.y - k.y0), wall: k.wall, maxZ: Math.round(k.maxZ || 0), spins: +(Math.abs(k.spun || 0) / (Math.PI * 2)).toFixed(2), t: +k.t.toFixed(2), cut: !!cut, down: k.down >= 0 };
 }
 function moveGround(ctx, k, dx, dy) {   /* đi từng bước nhỏ; ô cứng / mép vòng → dừng */
@@ -77,7 +83,7 @@ function clipFrame(p, k) {
 }
 function draw(g, p, k) {
   const x = Math.round(p.x), y = Math.round(p.y), cy = y - 9, z = Math.round(k.z), s = Math.max(0.45, 1 - k.z / 90);
-  g.fillStyle = `rgba(0,0,0,${0.3 * s})`; g.beginPath(); g.ellipse(x, y + 1, 6 * s, 2.2 * s, 0, 0, 7); g.fill();   /* bóng nằm trên đất suốt lúc bay */
+  if (SHADOW.on) shadowFor(g, p.x, p.y, x, y + 1, 12, k.z); else { g.fillStyle = `rgba(0,0,0,${0.3 * s})`; g.beginPath(); g.ellipse(x, y + 1, 6 * s, 2.2 * s, 0, 0, 7); g.fill(); }   /* bóng nằm trên đất suốt lúc bay (plan-66: ảnh chung, nhỏ + nhạt theo z) */
   const st = ART.vfx && ART.vfx.knock_streak;
   if (st && k.air && (k.type === 'fly' || k.type === 'throw') && Math.hypot(k.vx, k.vy) > 50) {   /* vệt gió sau thân (sheet vẽ cho hướng bay sang phải → bay trái thì lật) */
     const f = Math.floor(k.t * (st.fps || 12)) % st.n, hi = st.img.__hi ? 1 : 2, left = k.vx < 0;
@@ -121,10 +127,10 @@ export const knock = {
         else { k.wall = true; k.vx = -k.vx * 0.15; k.vy = -k.vy * 0.15; k.vz = Math.min(k.vz, 0); k.spinSp *= 0.3; k.flash = 0.06; }
       }
       if (k.z <= 0 && k.vz < 0) {   /* chạm đất */
-        if (k.T.bounce && !k.bounced) { k.bounced = true; k.vz = k.T.bounce; k.vx *= 0.4; k.vy *= 0.4; ctx.sfx('knock_land'); if (ctx.quake) ctx.quake(0.1); fx(ctx, 'knock_land', p.x, p.y + 2, false); }
+        if (k.T.bounce && !k.bounced) { k.bounced = true; k.vz = k.T.bounce; k.vx *= 0.4; k.vy *= 0.4; ctx.sfx('knock_land'); if (ctx.quake && !k.lite) ctx.quake(0.1); if (!k.lite) fx(ctx, 'knock_land', p.x, p.y + 2, false); }
         else {
           k.air = false; k.z = 0; k.ang = 0; k.down = k.t; if (ctx.arenaImpact) ctx.arenaImpact(p.x, p.y, k.heavy ? 1.2 : 0.8, 'land'); ctx.sfx('knock_land'); if (ctx.quake) ctx.quake(0.1); if (k.onLand) { try { k.onLand(p.x, p.y); } catch (e) { console.error('knock onLand', e); } }
-          if (!k.bounced) fx(ctx, 'knock_land', p.x, p.y + 2, false); if (!k.T.skid) { k.vx *= 0.2; k.vy *= 0.2; }
+          if (!k.bounced && !k.lite) fx(ctx, 'knock_land', p.x, p.y + 2, false); if (!k.T.skid) { k.vx *= 0.2; k.vy *= 0.2; }
         }
       }
       return;

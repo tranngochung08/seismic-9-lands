@@ -157,7 +157,7 @@ export const swim = {
   hudLines(ctx) { if (st.mode === 'swim' || st.mode === 'drown') return [`🏊 ${Math.ceil(st.stam)}s`]; if (st.mode === 'wade') return ['💧']; return []; },
   drawables(ctx, cx, cy) {
     const out = [], g = ctx.g;
-    for (const f of st.fx) out.push({ y: f.y - 300, f: () => { const k = f.t / 0.6; g.strokeStyle = `rgba(230,246,255,${(0.7 * (1 - k)).toFixed(2)})`; g.lineWidth = 1; g.beginPath(); g.ellipse(f.x - cx, f.y - cy, f.r + k * 10, (f.r + k * 10) * 0.45, 0, 0, Math.PI * 2); g.stroke(); } });
+    if (!(ctx.ART && ctx.ART.waterNew)) for (const f of st.fx) out.push({ y: f.y - 300, f: () => { const k = f.t / 0.6; g.strokeStyle = `rgba(230,246,255,${(0.7 * (1 - k)).toFixed(2)})`; g.lineWidth = 1; g.beginPath(); g.ellipse(f.x - cx, f.y - cy, f.r + k * 10, (f.r + k * 10) * 0.45, 0, 0, Math.PI * 2); g.stroke(); } });
     const r = st.rescue;
     if (r) out.push({ y: r.y + 6, f: () => drawBoat(g, ctx, r, cx, cy) });
     return out;

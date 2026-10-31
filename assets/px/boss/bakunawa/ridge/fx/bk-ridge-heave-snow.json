@@ -1,0 +1,183 @@
+{
+ "frames": [
+  {
+   "filename": "bk-ridge-heave-snow 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.717391304347826
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-heave-snow 1.png",
+   "frame": {
+    "x": 104,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.717391304347826
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-heave-snow 2.png",
+   "frame": {
+    "x": 208,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.717391304347826
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-heave-snow 3.png",
+   "frame": {
+    "x": 0,
+    "y": 92,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.717391304347826
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-heave-snow 4.png",
+   "frame": {
+    "x": 104,
+    "y": 92,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.717391304347826
+   },
+   "duration": 100
+  },
+  {
+   "filename": "bk-ridge-heave-snow 5.png",
+   "frame": {
+    "x": 208,
+    "y": 92,
+    "w": 104,
+    "h": 92
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 104,
+    "h": 92
+   },
+   "sourceSize": {
+    "w": 104,
+    "h": 92
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.717391304347826
+   },
+   "duration": 100
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "bk-ridge-heave-snow.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 312,
+   "h": 184
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 52,
+   "y": 66
+  },
+  "frameTags": [
+   {
+    "name": "bk-ridge-heave-snow",
+    "from": 0,
+    "to": 5,
+    "direction": "forward"
+   }
+  ]
+ }
+}

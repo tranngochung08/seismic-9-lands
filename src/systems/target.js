@@ -181,13 +181,63 @@ export function tooFar(near) {
   return near.kind === 'npc' || !!(d.mo || d.animal || d.talk || d.pet || d.gift || d.fire || d.grab);
 }
 export function farLabel() { const t = active(); return t ? TXT().far(nameOf(t)) : null; }
-export function sayFar() { const t = active(); if (!t) return; if (D.S.time - ST.farT > 1) { ST.farT = D.S.time; D.CTX.toast(TXT().far(nameOf(t))); D.CTX.sfx('fail'); } }
+export function sayFar() { const t = active(); if (!t) return; if (D.CTX.kiDash && D.CTX.kiDash()) return;   /* plan-34: đủ Ki + mục tiêu cách 3–7 ô → lướt tới chém (ki.js) thay vì báo xa quá */ if (D.S.time - ST.farT > 1) { ST.farT = D.S.time; D.CTX.toast(TXT().far(nameOf(t))); D.CTX.sfx('fail'); } }
+
+/* ---------- plan-43 K1 (anh duyệt 2026-10-16): phím E ưu tiên NGƯỜI trước mặt ----------
+   Đứng sát NPC (≤ 22 px) mà NPC ở phía mặt nhìn (hoặc sát rạt ≤ 10 px) → E = nói chuyện, thắng vuốt Rocky / chặt cây / biển gỗ / phá đồ trong đất mình.
+   Chỉ khi tay không / cầm đồ ăn / cầm vũ khí (rìu, kiếm, cuốc); cầm dụng cụ khác (cuốc đất, hạt…) giữ luật cũ (việc của dụng cụ trước).
+   Hệ road.js (chạy ở mọi vùng) đưa ứng viên này vào findNear với priority 1.6; land.js nhường E khi npcAhead(). */
+export function npcAhead() {
+  if (!D || !D.S) return null; const S = D.S, p = S.player; if (!p || !S.map || S.mode !== 'play') return null;
+  const md = mode(); if (md !== 'hand' && md !== 'weapon') return null;
+  if (D.CTX.isDarkPath && D.CTX.isDarkPath()) return null;   /* phe Xealist: E cạnh dân là móc túi / hóa đá (xealist.js) — giữ nguyên */
+  const fx = p.dir === 1 ? -1 : p.dir === 2 ? 1 : 0, fy = p.dir === 0 ? 1 : p.dir === 3 ? -1 : 0;
+  let best = null, bd = 1e9;
+  for (const n of D.allNpcs()) {
+    if (!n || n === p || !n.m || n.m.friend || n.ghost || n.hurtSit) continue;
+    if (md === 'weapon' && darkVillager(n)) continue;   /* phe Xealist cầm vũ khí: hóa đá dân là việc của xealist.js */
+    const dx = n.x - p.x, dy = (n.y - p.y) * 1.2, d = Math.hypot(dx, dy); if (d > 22) continue;
+    const front = d < 1 || (dx * fx + dy * fy) / d > 0.35; if (!front && d > 10) continue;
+    const sc = d - (front ? 6 : 0); if (sc < bd) { bd = sc; best = n; }
+  }
+  return best;
+}
+export function talkCand() {
+  const n = npcAhead(); if (!n) return null; const C = D.CTX, p = D.S.player;
+  if (C.monsters && C.monsters.list && C.monsters.list().some(mo => !(mo.c && mo.c.spar) && mo.hp > 0 && mo.angry && Math.hypot(mo.x - p.x, mo.y - p.y) < 64)) return null;   /* đang bị quái đánh sát bên: E dành cho đòn */
+  return { label: (vi() ? 'Nói chuyện · ' : 'Talk · ') + nameOf({ kind: 'npc', ref: n }), x: n.x, y: n.y, limit: 24, priority: 1.6, mouse: false, data: { talkNpc: n } };
+}
+export function talkNow(n) { if (n && D && D.talkTo) D.talkTo(n); }
+
+/* ---------- plan-44 Q5 (2026-10-17): đang CẦM DỤNG CỤ (rìu, cuốc, xẻng, liềm, cần câu, hạt…) → Rocky và quầy Thương nhân KHÔNG giành phím E ----------
+   Bọc near() của hệ 'pet' và 'market' (không sửa file của chúng): Vuốt ve / Cho ăn Rocky xuống -1 (chỉ thắng khi quanh đó KHÔNG còn việc gì của
+   dụng cụ), lời mời Rocky vốn đã -1 thì bỏ hẳn (khỏi vuốt nhầm khi bấm E liên tục); quầy xuống -1. Giữ thứ tự K1 plan-43:
+   người (talkCand 1.6) > nhiệm vụ > vật / việc của dụng cụ > Rocky > phá đồ. Tay không / cầm kiếm / súng: như cũ. */
+const E_YIELD = new Set(['pet', 'market']);
+export function toolBusy() {
+  const C = D && D.CTX; if (!C || !C.heldKind) return false;
+  const hk = C.heldKind(); if (hk !== 'tool' && hk !== 'seed' && hk !== 'place') return false;
+  return !(C.holding && (C.holding('sword') || C.holding('petgun')));
+}
+function yieldE(id, c) {
+  if (!c || !toolBusy()) return c;
+  const d = c.data || {};
+  if (id === 'pet') { if (d.egg) return c; const pr = typeof c.priority === 'number' ? c.priority : c.priority ? 1 : 0; if (pr < 0) return null; return { ...c, priority: -1 }; }
+  return { ...c, priority: -1 };
+}
+function wrapE() {
+  for (const sy of D.S.sys || []) {
+    if (!sy || !E_YIELD.has(sy.id) || sy.__eYield || typeof sy.near !== 'function') continue;
+    const orig = sy.near; sy.near = function (ctx) { return yieldE(sy.id, orig.call(this, ctx)); }; sy.__eYield = true;
+  }
+}
 
 /* ---------- vòng lặp ---------- */
 export function init(deps) { D = deps; }
 export function onZoneEnter() { ST.t = null; ST.hover = null; ST.conf = null; }
 export function update(dt) {
   const S = D.S;
+  try { wrapE(); } catch (e) { /* hệ chưa nạp */ }
   if (ST.t && !alive(ST.t)) get();   /* bị hạ / hóa đá / biến mất → get() bỏ khóa, quái thì tự khóa con gần nhất (KHÔNG theo khoảng cách) */
   if ((ST.btnT -= dt) <= 0) {   /* nút 🎯 trên điện thoại: chỉ hiện khi có ≥ 2 mục tiêu */
     ST.btnT = 0.3; ST.nCand = S.mode === 'play' ? candidates().length : 0;

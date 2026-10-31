@@ -1,0 +1,83 @@
+{
+ "cw": 90,
+ "ch": 118,
+ "clips": {
+  "idle": {
+   "file": "boss/xealist/x_idle.png",
+   "n": 6,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "walk": {
+   "file": "boss/xealist/x_walk.png",
+   "n": 10,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "cast": {
+   "file": "boss/xealist/x_cast.png",
+   "n": 9,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "summon": {
+   "file": "boss/xealist/x_summon.png",
+   "n": 9,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "punch": {
+   "file": "boss/xealist/x_punch.png",
+   "n": 9,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "hurt": {
+   "file": "boss/xealist/x_hurt.png",
+   "n": 5,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "petrify": {
+   "file": "boss/xealist/x_petrify.png",
+   "n": 10,
+   "rows": [
+    "south"
+   ]
+  }
+ },
+ "bodyH": 81,
+ "bodyW": 44,
+ "src": "plan-45 5B2 px-p45b2.py",
+ "note": "ảnh 2× — vẽ ô cỡ cw/2 × ch/2 logic (1:1 với người chơi), chân ở đáy ô − 1 px logic"
+}

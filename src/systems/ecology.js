@@ -340,7 +340,12 @@ function freeTile(ctx, tx, ty) {
   return !inPlot(map, tx, ty, 1) && !onRoad(map, tx, ty);
 }
 function walkable(ctx, x, y) { return freeTile(ctx, tileOf(x), tileOf(y)); }
+let OCC = null;   /* plan-42 A4: lưới ô có vật — chỉ bật trong lúc quét cả bản đồ (vòng quét không đặt / bớt vật) thay cho quét m.objects ở từng ô */
+function withOcc(map, O, f) { const g = new Uint8Array(map.w * map.h); for (const o of map.objects) { const d = O[o.type]; if (!d) continue; for (let j = 0; j < d.fh; j++) for (let i = 0; i < d.fw; i++) { const x = o.x + i, y = o.y + j; if (x >= 0 && y >= 0 && x < map.w && y < map.h) g[y * map.w + x] = 1; } }
+  const prev = OCC; OCC = { map, g, n: map.objects.length }; try { return f(); } finally { OCC = prev; } }
+const occHit = (map, x, y) => OCC && OCC.map === map && OCC.n === map.objects.length && x >= 0 && y >= 0 && x < map.w && y < map.h ? OCC.g[y * map.w + x] : -1;
 function objAt(ctx, tx, ty) {
+  { const h = occHit(ctx.S.map, tx, ty); if (h >= 0) return h === 1; }
   return ctx.S.map.objects.some(o => { const d = ctx.O[o.type]; return d && tx >= o.x && tx < o.x + d.fw && ty >= o.y && ty < o.y + d.fh; });
 }
 /* 2026-10-11 anh: cua (thú nước) được lội ô nước NÔNG ngoài khu nhà; thú khác giữ nguyên (nước = vật chắn) */
@@ -439,7 +444,8 @@ function defineObjects(ctx) {
   }, { solid: true });
 }
 // a 2×2 patch as close to the village plaza as we can get: off the roads, out of the nation yards
-function coopSpot(ctx) {
+function coopSpot(ctx) { return withOcc(ctx.S.map, ctx.O, () => coopSpot0(ctx)); }
+function coopSpot0(ctx) {
   const map = ctx.S.map;
   const ok = (x, y) => {
     for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {

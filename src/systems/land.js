@@ -5,7 +5,8 @@
 //  · Cọc ranh 4 góc + biển tên người chơi (ảnh PixelLab land_post / land_sign). Lưu save.lands[vùng] = [{ nation, x, y, w, h }].
 const W = 6, H = 6, FRIEND = 5;
 import { ART } from '../art.js';   /* ô vuông đất phá/đào (ART.soilSq) */
-import { immune } from './villagers.js';   /* 2026-10-11: khu bị chiếm (hóa đá hết dân) */
+import { immune } from './villagers.js';
+import { npcAhead } from './target.js';   /* plan-43 K1: có người trước mặt → phá / đào đất mình không giành phím E */   /* 2026-10-11: khu bị chiếm (hóa đá hết dân) */
 const ST = { list: [], objs: [], chiefs: [], placed: false };
 const vi = ctx => ctx.lang() === 'vi';
 const zid = ctx => (ctx.S.zone && ctx.S.zone.id) || '';
@@ -100,6 +101,7 @@ function applyCleared(ctx, l) {
   for (const k of Object.keys(l.dug || {})) { const [x, y] = k.split(',').map(Number); if (!(ctx.S.save.sys && ctx.S.save.sys.ponds && (ctx.S.save.sys.ponds[zid(ctx)] || {})[k])) { sqMark(m, x, y); ctx.setG(m, x, y, ctx.T.DIRT, false); } }
 }
 function clearCand(ctx) {
+  if (npcAhead()) return null;   /* plan-43 K1 (anh duyệt 2026-10-16): đứng trước người → E là nói chuyện, không phá đồ trong đất mình */
   const p = ctx.S.player, under = { tx: Math.floor(p.x / 16), ty: Math.floor((p.y - 2) / 16) }, d = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir & 3];
   const fr = { tx: under.tx + d[0], ty: under.ty + d[1] }, vi2 = vi(ctx);
   const lk = ctx.target && ctx.target.obj(), ll = lk && !lk.landOf && ctx.target.objGap(lk) <= 12 ? parcelAt(ctx, lk.x, lk.y) : null;   /* 2026-10-11: vật đã khóa (target.js) ở sát bên → phá ĐÚNG nó */
@@ -146,6 +148,23 @@ function markParcel(ctx, l) {
   put('land_post', l.x, l.y); put('land_post', l.x + l.w - 1, l.y); put('land_post', l.x, l.y + l.h - 1); put('land_post', l.x + l.w - 1, l.y + l.h - 1);
   put('land_sign', l.x + 1, l.y);
 }
+/* plan-43f (anh duyệt 2026-10-16): Leader đứng / đi lại trong 1 góc khu 3×2 ô, không chồng lên làn cột cổng trên–dưới (cột x+4..x+5) lẫn làn hàng cổng hông (hàng y+3..y+4).
+   Trước: nhà = giữa khu = đúng chỗ 2 làn giao nhau → hay đứng chắn lối từ cổng dưới lên cổng trên. Chọn góc nhiều ô trống nhất (ưu tiên dưới phải, dưới trái, trên phải, trên trái). */
+function chiefPen(ctx, p) {
+  const Q = [[p.x + 6, p.y + p.h - 3], [p.x + 1, p.y + p.h - 3], [p.x + 6, p.y + 1], [p.x + 1, p.y + 1]];
+  let best = null;
+  for (const [qx, qy] of Q) { const fr = []; for (let y = qy; y < qy + 2; y++) for (let x = qx; x < qx + 3; x++) if (free(ctx, x, y)) fr.push({ x, y }); if (fr.length > (best ? best.length : 1)) best = fr; }
+  if (!best) return null;
+  const xs = best.map(t => t.x), ys = best.map(t => t.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), cx = (x0 + x1 + 1) / 2, cy = (y0 + y1 + 1) / 2;
+  const at = best.slice().sort((a, b) => Math.hypot(a.x + 0.5 - cx, a.y + 0.5 - cy) - Math.hypot(b.x + 0.5 - cx, b.y + 0.5 - cy))[0];
+  return { at, home: { x: cx * 16, y: cy * 16 + 4 }, pen: { x0: x0 * 16 + 6, x1: (x1 + 1) * 16 - 6, y0: y0 * 16 + 7, y1: (y1 + 1) * 16 } };
+}
+const inPen = n => n.x >= n.pen.x0 && n.x <= n.pen.x1 && n.y >= n.pen.y0 && n.y <= n.pen.y1;
+/* bước đi lang thang làm Leader ra khỏi góc → huỷ bước đó; hệ khác dắt đi (goal / path) thì vẫn đi được, ở ngoài thì tự quay về góc (radius nhỏ) */
+function penWrap(n) {
+  const up0 = n.update;
+  n.update = function (...a) { const ox = this.x, oy = this.y, was = inPen(this); up0.apply(this, a); if (was && !inPen(this) && !this.goal && !(this.path && this.path.length)) { this.x = ox; this.y = oy; this.faceTo(this.home.x, this.home.y); this.timer = 0.3 + Math.random() * 0.6; } };   /* quay về giữa góc rồi đi tiếp (không đứng ìát ở mép) */
+}
 /* người có quyền nhất của mỗi quốc gia: Leader thật trong roster, không có thì người được tương tác nhiều nhất — đứng trong khu của nước đó */
 function placeChiefs(ctx) {
   ST.chiefs = []; const plots = ctx.S.map.plots || []; if (!plots.length || !ctx.byId || !ctx.NPC) return;
@@ -153,10 +172,12 @@ function placeChiefs(ctx) {
   for (const p of plots) {
     const b = best[p.nation]; if (!b) continue;
     const sd = ctx.S.save; if ((sd.dead && sd.dead[b.m.id]) || (sd.fallen || []).some(f => f.id === b.m.id)) continue;   /* Leader đang/đã hóa đá → khu không có người bán đất */
-    let at = null; for (let r = 1; r < 4 && !at; r++) for (let dy = 0; dy <= r && !at; dy++) for (let dx = 0; dx <= r && !at; dx++) { const x = p.x + 2 + dx, y = p.y + 2 + dy; if (free(ctx, x, y)) at = { x, y }; }
+    const pz = chiefPen(ctx, p);   /* plan-43f: góc khu ngoài 2 làn cổng */
+    let at = pz ? pz.at : null; for (let r = 1; r < 4 && !at; r++) for (let dy = 0; dy <= r && !at; dy++) for (let dx = 0; dx <= r && !at; dx++) { const x = p.x + 2 + dx, y = p.y + 2 + dy; if (free(ctx, x, y)) at = { x, y }; }
     if (!at) continue;
     const n = new ctx.NPC({ ...b.m, staff: 'chief', tag: `Leader · ${b.nat.name}` }, at.x * 16 + 8, at.y * 16 + 14, ctx.npcSheet(b.m), () => 0.5);
     n.busy = false; n.radius = 36; n.staffStill = false; n.rng = Math.random;   /* rng cũ () => 0.5 → luôn 1 hướng, đụng vật là đứng */ n.home = { x: (p.x + p.w / 2) * 16, y: (p.y + p.h / 2) * 16 + 6 };   /* 2026-10-11 anh: Leader đi lại quanh khu của mình (không đứng im như quầy bán) */
+    if (pz) { n.radius = 12; n.home = pz.home; n.pen = pz.pen; penWrap(n); }   /* plan-43f: đi lại trong góc khu, không ra 2 làn cổng */
     n.chief = { nat: b.nat, m: b.m }; ST.chiefs.push(n); (ctx.S.staff ||= []).push(n);
   }
 }
@@ -212,8 +233,13 @@ export const land = {
     for (const l of lands(ctx)) {
       const sx = Math.round(((l.x + 1) * 16 + 8 - cx) * scale), sy = Math.round((l.y * 16 - 4 - cy) * scale), txt = t.sign(nm), w = ug.measureText(txt).width + 8;
       if (sx < -100 || sy < -30 || sx > ug.canvas.width + 100 || sy > ug.canvas.height + 30) continue;
+      /* plan-45 D5: biển tên đất = nhãn phụ → chỉ hiện khi tới gần (≤ 7 ô quanh tâm mảnh, mờ dần tới 9 ô), và né nhãn khác (ctx.lblPlace, main.js) */
+      const al = ctx.nearA ? ctx.nearA((l.x + 3) * 16, (l.y + 3) * 16, 112, 144) : 1; if (al <= 0) continue;
+      const dy = ctx.lblPlace ? ctx.lblPlace(sx - w / 2 - 2, sy - fs / 2 - 2, w + 4, fs + 4, txt, 'land') : 0;
+      ug.globalAlpha = al; ug.translate(0, dy);
       ug.fillStyle = '#352022'; ug.fillRect(sx - w / 2 - 2, sy - fs / 2 - 2, w + 4, fs + 4); ug.fillStyle = '#f6e7c8'; ug.fillRect(sx - w / 2, sy - fs / 2, w, fs);
       ug.fillStyle = '#3b2412'; ug.fillText(txt, sx, sy + 1);
+      ug.translate(0, -dy); ug.globalAlpha = 1;
     }
     ug.restore();
   },

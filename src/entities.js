@@ -19,12 +19,15 @@ export class Entity {
   }
   box(x = this.x, y = this.y) { return { x: x - this.boxW / 2, y: y - this.boxH, w: this.boxW, h: this.boxH }; }
   blocked(x, y, map, others) {
-    const b = this.box(x, y);
-    const x0 = Math.floor(b.x / 16), x1 = Math.floor((b.x + b.w - 1) / 16), y0 = Math.floor(b.y / 16), y1 = Math.floor((b.y + b.h - 1) / 16);
+    /* plan-42 A5: hộp va chạm mặc định tính thẳng ra số (trước: 2 + 1/đối tượng object mỗi lần thử bước ≈ 50 KB rác / khung); box() bị thay (hệ) → gọi như cũ */
+    let bx, by, bw, bh; if (this.box === BOX0) { bw = this.boxW; bh = this.boxH; bx = x - bw / 2; by = y - bh; } else { const b = this.box(x, y); bx = b.x; by = b.y; bw = b.w; bh = b.h; }
+    const x0 = Math.floor(bx / 16), x1 = Math.floor((bx + bw - 1) / 16), y0 = Math.floor(by / 16), y1 = Math.floor((by + bh - 1) / 16);
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) { if (this.passable ? !this.passable(map, tx, ty) : isSolid(map, tx, ty)) return true; }
     if (this.ghost) return false;
-    const cur = this.box(), hit = (a, c) => a.x < c.x + c.w && a.x + a.w > c.x && a.y < c.y + c.h && a.y + a.h > c.y;
-    for (const o of others) { if (o === this || o.ghost) continue; const ob = o.box(); if (hit(b, ob) && !hit(cur, ob)) return true; } // already-overlapping entities may always move apart
+    let cx, cy, cw, chh; if (this.box === BOX0) { cw = this.boxW; chh = this.boxH; cx = this.x - cw / 2; cy = this.y - chh; } else { const c = this.box(); cx = c.x; cy = c.y; cw = c.w; chh = c.h; }
+    for (const o of others) { if (o === this || o.ghost) continue;
+      let ox, oy, ow, oh; if (o.box === BOX0) { ow = o.boxW; oh = o.boxH; ox = o.x - ow / 2; oy = o.y - oh; } else { const ob = o.box(); ox = ob.x; oy = ob.y; ow = ob.w; oh = ob.h; }
+      if (bx < ox + ow && bx + bw > ox && by < oy + oh && by + bh > oy && !(cx < ox + ow && cx + cw > ox && cy < oy + oh && cy + chh > oy)) return true; } // already-overlapping entities may always move apart
     return false;
   }
   tryMove(dx, dy, map, others) {
@@ -39,17 +42,21 @@ export class Entity {
     else { this.frame = 0; this.animT = 0; }
     this.idleT = this.moving || this.action ? 0 : (this.idleT || 0) + dt;   /* plan-19: clip idle (thở) khi đứng yên */
   }
+  diagRow() { return this.diag != null && this.diagFor === this.dir ? this.diag : -1; }   /* p62: hàng chéo 0 SE, 1 SW, 2 NE, 3 NW; hệ nào đổi dir thì tự bỏ chéo */
   faceTo(px, py) { const dx = px - this.x, dy = py - this.y; this.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 2 : 1) : (dy > 0 ? 0 : 3); }
   draw(g) {
     if (this.custom) { this.custom(g, this); return; }
     const a = this.action, sh = a && this.sheet.actions && this.sheet.actions[a.name];   // clip động tác PixelLab (art.js gắn vào sheet)
-    const idle = !a && !this.moving && this.idleT > 0 && this.sheet.actions && this.sheet.actions.idle;
-    if (idle) { const f = Math.floor(this.idleT * FPS.idle / 2) % idle.n, ch = idle.ch || 20, cw = idle.cw || 16; g.drawImage(idle.img, f * cw, this.dir * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return; }   /* 8 FPS, mỗi khung giữ 2 nhịp → 1 hơi thở ≈ 1 s */
+    const acts = this.sheet.actions, dg = acts && !a && this.diagRow ? this.diagRow() : -1;   /* p62: hướng chéo = hàng SE, SW, NE, NW của clip idle_d / walk_d; thân chưa có clip chéo thì 4 hướng như cũ */
+    const idle = !a && !this.moving && this.idleT > 0 && acts && ((dg >= 0 && acts.idle_d) || acts.idle), irow = idle && idle === acts.idle_d ? dg : this.dir;
+    if (idle) { const f = Math.floor(this.idleT * FPS.idle / 2) % idle.n, ch = idle.ch || 20, cw = idle.cw || 16; g.drawImage(idle.img, f * cw, irow * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return; }   /* 8 FPS, mỗi khung giữ 2 nhịp → 1 hơi thở ≈ 1 s */
     if (sh) {
       // walk (bế): clip AI mở đầu bằng khung giơ tay dần → chỉ dùng 3 khung cuối (tay đã giơ): đứng = khung n-3, bước = n-2/n-1 luân phiên
       const k = Math.floor(a.t * clipFps(a.name, sh)), f = a.walk ? sh.n - 3 + (this.moving ? CYCLE[Math.floor(this.animT * FPS.walk) % 4] : 0) : a.loop ? k % sh.n : Math.min(sh.n - 1, k);   /* plan-19: khung theo FPS chung (anim.js), không kéo giãn theo dur */   /* clip đi: 3 cột cuối = đứng/bước/bước như sheet đi */
       const ch = sh.ch || 20, cw = sh.cw || 16; g.drawImage(sh.img, f * cw, this.dir * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return;   /* cw: ô động tác rộng 24 (px-actions 2026-09-28) */
     }
+    const wk = !a && this.moving && acts && ((dg >= 0 && acts.walk_d) || acts.walk), wrow = wk && wk === acts.walk_d ? dg : this.dir;   /* plan-47: đi bộ PixMiniMax 8 khung (manifest actions.walk); không có thì dùng sheet 3 khung cũ */
+    if (wk) { const f = Math.floor(this.animT * 10) % wk.n, ch = wk.ch || 20, cw = wk.cw || 16; g.drawImage(wk.img, f * cw, wrow * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return; }
     const sk = this.sheet.skin;   /* plan-29: ngoại hình to (Chad) — sheet đi riêng ô sk.cw×sk.ch logic, đáy ô = chân (y+2), vẽ 1:1 */
     const body = sk ? () => g.drawImage(sk.img, this.frame * sk.cw, this.dir * sk.ch, sk.cw, sk.ch, Math.round(this.x) - Math.floor(sk.cw / 2), Math.round(this.y) + 2 - sk.ch, sk.cw, sk.ch)
       : () => g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, Math.round(this.x) - 8, Math.round(this.y) - 18, 16, 20);
@@ -68,6 +75,7 @@ export class Entity {
   hasAct(name) { return !!(this.sheet && this.sheet.actions && this.sheet.actions[name]); }
   tickAct(dt) { const a = this.action; if (!a) return; a.t += dt; if (a.t >= a.dur) { if (a.hold) a.t = a.dur - 0.0001; else this.action = null; } }
 }
+const BOX0 = Entity.prototype.box;   /* plan-42 A5: hộp mặc định (so để biết box() có bị hệ thay không) */
 
 export class Player extends Entity {
   update(dt, input, map, others) {
@@ -86,6 +94,9 @@ export class Player extends Entity {
         if (horiz ? ay > ax * 1.6 : ax > ay * 1.6) this.dir = ax > ay ? (dx > 0 ? 2 : 1) : (dy > 0 ? 0 : 3);
         else if (horiz) this.dir = dx > 0 ? 2 : dx < 0 ? 1 : this.dir; else this.dir = dy > 0 ? 0 : dy < 0 ? 3 : this.dir;
       } else if (Math.abs(dx) >= Math.abs(dy) && dx) this.dir = dx > 0 ? 2 : 1; else if (dy) this.dir = dy > 0 ? 0 : 3;
+      { const ax = Math.abs(dx), ay = Math.abs(dy), lo = Math.min(ax, ay) / (Math.max(ax, ay) || 1);   /* p62: 8 hướng: chéo khi đi 2 trục (phím / joystick chéo); tự đi có trễ để khỏi nháy */
+        const on = this.diag != null, dia = this.autoPath ? (on ? lo > 0.3 : lo > 0.55) : !!(dx && dy);
+        this.diag = dia ? (dy > 0 ? 0 : 2) + (dx < 0 ? 1 : 0) : null; this.diagFor = this.dir; }
       const sp = 84 * dt * this.speedMul * (this.fedT > 0 ? 1.2 : 1);   /* plan-19: ăn no → đi nhanh 20 % một lúc */
       const ok = this.tryMove(dx * sp, dy * sp, map, others);
       if (this.autoPath) { this.autoStuck = ok ? 0 : (this.autoStuck || 0) + dt; if (this.autoStuck > 0.6) { this.autoPath = null; this.autoStuck = 0; } }   /* kẹt (NPC chắn…) → dừng */

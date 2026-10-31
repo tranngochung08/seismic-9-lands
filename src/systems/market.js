@@ -10,7 +10,8 @@ const STR = {
     empty: 'Your head is empty — go catch something!',
     each: 'each', got: n => `+${n} 🪨`,
     rod: '🎣 Fishing rod', rodNote: 'Cast at any shore', gotRod: 'Fishing rod bought! Cast at the shore.',
-    poor: 'Not enough stones — sell animals/fish here or mine rocks with a pickaxe',
+    poor: 'Not enough stones — mine purple veins (bare hands), chop trees and sell the wood here, sell animals/fish, meet new artists',   /* plan-44 Q3 */
+    firstMine: n => `First Seismic vein! +${n} 🪨 newcomer bonus — enough to start saving for a Sword (30 🪨)`,
     seeds: 'Seeds of the season', seedNote: 'sow on tilled soil in your district', gotSeed: n => `+1 ${n}`,
     names: { fish: '🐟 Fish', fishBig: '🐟 Big fish', chicken: '🐔 Chicken', bird: '🐦 Bird', cow: '🐄 Cow', sheep: '🐏 Sheep', rabbit: '🐰 Rabbit', crab: '🦀 Crab', bat: '🦇 Bat', wood: '🪵 Wood', squid: '🦑 Squid', goldfish: '🐠 Golden fish' }
   },
@@ -22,7 +23,8 @@ const STR = {
     empty: 'Trên đầu chưa có gì — đi bắt thú đi!',
     each: 'mỗi cái', got: n => `+${n} 🪨`,
     rod: '🎣 Cần câu', rodNote: 'Thả câu ở bờ nước', gotRod: 'Đã mua cần câu! Ra bờ nước thả câu.',
-    poor: 'Không đủ đá — bán thú/cá ở đây hoặc đập đá bằng cuốc',
+    poor: 'Không đủ đá — đào mỏ tím (tay không), chặt cây rồi bán gỗ ở đây, bán thú/cá, gặp nghệ sĩ mới',   /* plan-44 Q3 */
+    firstMine: n => `Mỏ đá Seismic đầu tiên! +${n} 🪨 thưởng người mới — gom đủ 30 🪨 là mua được Kiếm`,
     seeds: 'Hạt giống theo mùa', seedNote: 'gieo trên đất đã cày trong khu của bạn', gotSeed: n => `+1 ${n}`,
     names: { fish: '🐟 Cá', fishBig: '🐟 Cá to', chicken: '🐔 Gà', bird: '🐦 Chim', cow: '🐄 Bò', sheep: '🐏 Cừu', rabbit: '🐰 Thỏ', crab: '🦀 Cua', bat: '🦇 Dơi', wood: '🪵 Gỗ', squid: '🦑 Mực', goldfish: '🐠 Cá vàng' }
   }
@@ -33,6 +35,8 @@ const PRICE = { fish: 2, fishBig: 5, chicken: 3, bird: 4, cow: 6, sheep: 5, rabb
 for (const k of ['fish', 'chicken', 'bird', 'cow', 'sheep', 'rabbit', 'crab', 'bat', 'squid', 'goldfish']) PRICE['a_' + k] = PRICE[k];   /* thú đã ném vào túi (phím T) */
 PRICE.a_fishbig = PRICE.fishBig;   /* 2026-10-11 bỏ xô: cá câu được vào thẳng túi, cá to giữ giá 5 */
 const ROD_PRICE = 8;
+const FIRST_BONUS = 8;   /* plan-44 Q3: 2 (mỏ) + 8 = 10 🪨 ở mỏ đầu tiên */
+let VEINS = null, VT = 0;
 /* F02: Thương nhân bán hạt 2 đá/hạt, chỉ hạt đúng mùa hiện tại (tag mùa hoặc 'any') */
 const SEED_PRICE = 2;
 const CROP_SEEDS = ['turnip', 'strawberry', 'tomato', 'corn', 'pumpkin', 'yam', 'starmush', 'quakeflower'];
@@ -51,10 +55,16 @@ let el = null;      // the panel element
 let open = false;
 
 // --- placement -----------------------------------------------------------
+let OCC = null;   /* plan-42 A4: lưới ô có vật — chỉ bật trong lúc quét cả bản đồ (vòng quét không đặt / bớt vật) thay cho quét m.objects ở từng ô */
+function withOcc(map, O, f) { const g = new Uint8Array(map.w * map.h); for (const o of map.objects) { const d = O[o.type]; if (!d) continue; for (let j = 0; j < d.fh; j++) for (let i = 0; i < d.fw; i++) { const x = o.x + i, y = o.y + j; if (x >= 0 && y >= 0 && x < map.w && y < map.h) g[y * map.w + x] = 1; } }
+  const prev = OCC; OCC = { map, g, n: map.objects.length }; try { return f(); } finally { OCC = prev; } }
+const occHit = (map, x, y) => OCC && OCC.map === map && OCC.n === map.objects.length && x >= 0 && y >= 0 && x < map.w && y < map.h ? OCC.g[y * map.w + x] : -1;
 function objAt(ctx, map, tx, ty) {
+  { const h = occHit(map, tx, ty); if (h >= 0) return h === 1; }
   return map.objects.some(o => { const d = ctx.O[o.type]; return d && tx >= o.x && tx < o.x + d.fw && ty >= o.y && ty < o.y + d.fh; });
 }
-function findSpot(ctx, map) {
+function findSpot(ctx, map) { return withOcc(map, ctx.O, () => findSpot0(ctx, map)); }
+function findSpot0(ctx, map) {
   const reach = ctx.computeReach(map, map.entries.default);
   const free = (x, y) => !ctx.isSolid(map, x, y) && !objAt(ctx, map, x, y);
   // 2×1 footprint, with somewhere to stand in front of it.
@@ -62,8 +72,10 @@ function findSpot(ctx, map) {
   // until the bridge is up, so we fall back to the plain walkability test there.
   const mk = strict => {
     const walk = (x, y) => free(x, y) && (!strict || reach[y * map.w + x]);
-    return (x, y) => free(x, y) && free(x + 1, y) && (walk(x, y + 1) || walk(x + 1, y + 1));
+    return (x, y) => free(x, y) && free(x + 1, y) && (walk(x, y + 1) || walk(x + 1, y + 1)) && !gateFront(x, y);
   };
+  /* plan-43f (theme gateClear, hiện chỉ M4): người bán đứng ở (x+1, y+1,5) — không đứng trong làn cột cổng trên (cột q.x+4..q.x+5) ngay trên khu rào */
+  const gateFront = (x, y) => !!(map.theme && map.theme.gateClear) && (map.plots || []).some(q => y + 1 >= q.y - 3 && y + 1 < q.y && (x + 1) * 16 + 5 > (q.x + 4) * 16 && (x + 1) * 16 - 5 < (q.x + 6) * 16);
   for (const strict of [true, false]) {
     const ok = mk(strict);
     for (const y of [8, 7, 9]) for (const x of [47, 48, 49, 46, 50, 33, 32, 31, 30, 34]) if (ok(x, y)) return { x, y };
@@ -141,6 +153,7 @@ function render(ctx) {
       ${GOODS.filter(id => id === 'wood' || inv[id] > 0).map(id => goodsRow(ctx, id, inv[id] || 0)).join('')}
       <div class="hrow" style="opacity:.7"><span class="hwho"><b>${S.shop}</b></span><span class="hnum"></span><span></span></div>
       ${rodRow(ctx)}
+      ${ctx.chanthuShopRow ? ctx.chanthuShopRow() : ''}
       <div class="hrow" style="opacity:.7"><span class="hwho"><b>${S.seeds}</b> <span class="dim">${S.seedNote}</span></span><span class="hnum"></span><span></span></div>
       ${seedsOfSeason(ctx).map(id => seedRow(ctx, id)).join('')}
     </div></div>
@@ -152,6 +165,7 @@ function render(ctx) {
   for (const b of el.querySelectorAll('[data-w]')) b.onclick = () => sellGoods(ctx, b.dataset.g, b.dataset.w);
   for (const b of el.querySelectorAll('[data-buy]')) b.onclick = () => buyRod(ctx);
   for (const b of el.querySelectorAll('[data-seed]')) b.onclick = () => buySeed(ctx, b.dataset.seed);
+  if (ctx.chanthuShopBind) ctx.chanthuShopBind(el, () => render(ctx));   /* plan-58 C.2: Ấn Thu (chanthu.js) */
 }
 function sellCarry(ctx, which) {
   const S = L(ctx), inv = ctx.S.save.inv;
@@ -225,7 +239,21 @@ export const market = {
     stall = ctx.place(map, 'stall', spot.x, spot.y, { trader: true });
   },
 
-  onZoneLeave(ctx) { if (open) close(ctx); stall = null; },
+  onZoneLeave(ctx) { if (open) close(ctx); stall = null; VEINS = null; },
+
+  /* plan-44 Q3: mỏ đá Seismic ĐẦU TIÊN đào ở Làng ra thêm FIRST_BONUS 🪨 (1 lần mỗi save, cờ save.sys.p44a.firstMine) — tân thủ đỡ phải cày ~15 mỏ / cây mới đủ Kiếm */
+  update(dt, ctx) {
+    const S = ctx.S; if (!S.zone || S.zone.id !== 'village' || !S.save) return;
+    const f = ((S.save.sys ||= {}).p44a ||= {}); if (f.firstMine) return;
+    if ((VT += dt) < 0.25) return; VT = 0;
+    if (!VEINS || VEINS.map !== S.map) { VEINS = { map: S.map, list: S.map.objects.filter(o => o.type === 'seisvein') }; return; }
+    for (const o of VEINS.list) {
+      if (S.map.objects.includes(o)) continue;
+      const x = o.x * TILE + 8, y = o.y * TILE + 12, p = S.player; VEINS.list = VEINS.list.filter(q => q !== o);
+      if (Math.hypot(x - p.x, y - p.y) > 48) continue;   /* gỡ vì lý do khác (không phải người chơi đào) → bỏ qua */
+      f.firstMine = true; ctx.give('stone', FIRST_BONUS, x, y); ctx.toast(L(ctx).firstMine(FIRST_BONUS), true); ctx.sfx('coin'); ctx.persist(); return;
+    }
+  },
 
   near(ctx) {
     if (!stall || open) return null;

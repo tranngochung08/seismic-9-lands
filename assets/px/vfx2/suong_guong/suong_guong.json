@@ -1,0 +1,1 @@
+{"n": 10, "fw": 36.0, "fh": 44.0, "ax": 18.0, "ay": 42.0, "fps": 10, "note": "ice mirror stands in front of the caster (+x side, ~16 logic px), reflects 50 % for 3 s (hold frames 3-7, shimmer at 4/6); anchor = base centre; draw AFTER the caster"}

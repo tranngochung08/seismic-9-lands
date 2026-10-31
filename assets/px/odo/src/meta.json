@@ -1,0 +1,32 @@
+{
+ "n": {
+  "cell": 52,
+  "logic": 26,
+  "foot": 24.0,
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north",
+   "north-east"
+  ],
+  "top": 3.0,
+  "scale": 0.8077,
+  "body_logic": 21.0
+ },
+ "p": {
+  "cell": 60,
+  "logic": 30,
+  "foot": 27.0,
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north",
+   "north-east"
+  ],
+  "top": 4.0,
+  "scale": 0.8214,
+  "body_logic": 23.0
+ }
+}

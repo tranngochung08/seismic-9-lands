@@ -23,7 +23,7 @@ import { pet } from './pet.js';
 import { rubble } from './blast.js';   /* 2026-10-12 tối: đào dọn đổ nát / bứng gốc cây do Rocky phá */
 import { storySea } from './story_sea.js';
 import { storyLand } from './story_land.js';
-import { trench } from './trench.js';
+import { krstory } from './krstory.js';   /* 2026-10-15: bỏ Vực Kraken cốt truyện (trench.js → _bak/kstory) — lồng Lyron ở Hang Ổ Kraken */
 import { swim } from './swim.js';
 import { farm } from './farm.js';   /* plan-17 F02 (tác nhân A1) */
 import { pens } from './pens.js';   /* plan-17 F03 (tác nhân A2) */
@@ -35,8 +35,12 @@ import { wreck } from './wreck.js';
 import { drops } from './drops.js';
 import { land } from './land.js';
 import { ponds } from './ponds.js';
+import { water } from './water.js';   /* plan-68: VFX nước + cá bơi vẽ code */
 import { petgun } from './petgun.js';   /* 2026-10-11: Súng Hóa Đá (phe Xealist) — trước monsters để click khi cầm súng = bắn */
-import { knock } from './knock.js';   /* 2026-10-11: phản ứng trúng đòn của người chơi (ctx.knockPlayer) */
+import { knock } from './knock.js';
+import { ki } from './ki.js';   /* plan-34: Ki 7 viên ngọc + nhào lộn né / lướt tới đánh tự động; ctx.threat cho trùm khai báo đòn có báo trước */
+import { aircombat } from './aircombat.js';   /* 2026-10-14: KHÔNG CHIẾN (sân trời không sàn) + trùm bay ĐUỔI THEO qua tầng / vùng — ĐẦU danh sách: vẽ bầu trời (drawGround) dưới mọi hệ; bọc ctx.knockPlayer lười trong update */   /* 2026-10-11: phản ứng trúng đòn của người chơi (ctx.knockPlayer) */
+import { terrain } from './terrain.js';   /* 2026-10-14: gói kỹ năng THEO ĐỊA HÌNH cho trùm bay đuổi theo (biển, dưới nước, rừng, cát, đèo, làng) */
 import { spar } from './spar.js';
 import { road } from './road.js';   /* plan-28: đường đèo giữa các vùng (bạn tập chắn đường, cổng đèo) */
 import { arena } from './arena.js';   /* 2026-10-11: Sàn Đấu Ngầm (vật thể + Rocky chờ ở mép sàn) */   /* 2026-10-11: bạn tập gọi qua Xealist */
@@ -49,7 +53,19 @@ import { trongdong } from './trongdong.js';   /* plan-30 trùm 2: Trống Đồn
 import { guong } from './guong.js';
 import { hoden } from './hoden.js';   /* plan-30 trùm 4: Hố Đen Địa Tâm (khe nứt M4 → vùng rift4) — sau guong */   /* plan-30 trùm 3: Gương Địa Chấn (khe nứt M6 → vùng rift3) — sau trongdong */
 import { dongho } from './dongho.js';   /* plan-30 trùm 5: Đồng Hồ Đứt Dây (khe nứt M7 → vùng rift5) — sau hoden */
+import { bakunawa } from './bakunawa.js';   /* plan-30 trùm 6: Bakunawa Nuốt Nhật (Cổng Trời M9 → vùng sky_bakunawa) — sau dongho */
+import { lyronFinale } from './lyron_finale.js';   /* plan-33 mục 9: PLOT TWIST LYRON — sau bakunawa (bọc ctx.enterBakunawa), móc ctx.lyronFinale.start */
 import { sky } from './sky.js';   /* plan-31: Quần Đảo Mây + Rocky Phản Lực (always: bến khí cầu ở Làng, cất cánh X ở vùng đất) */
-import { cloudshade } from './cloudshade.js';   /* 2026-10-13 anh: bóng mây trôi trên mặt đất ban ngày (vùng ngoài trời) */
+import { cloudshade } from './cloudshade.js';
+import { worldmosaic } from './worldmosaic.js';   /* 2026-10-14 plan-33 mục 13: chụp vùng đang chơi cho khảm thế giới (vẽ thì sky.js gọi drawMosaic) */   /* 2026-10-13 anh: bóng mây trôi trên mặt đất ban ngày (vùng ngoài trời) */
+import { linhthu } from './linhthu.js';   /* plan-39: linh thú — mỗi vùng 1 loài, bắt bằng đánh đuối + cho ăn, 1 con đi cùng (trước monsters) */
+import { rockycore } from './rockycore.js';   /* plan-38: Rocky ăn mảnh lõi trùm → 6 chiêu (mang 2), tự dùng + VFX va chạm (dừng hình, đấu chưởng, Hợp Kích) — sau pet / ki / các trùm (bọc hero.hit, monsters.damage) */
+import { stats } from './stats.js';   /* plan-44 P2: thống kê chơi (giây chơi, số lần ngất, quãng đường) — save.stats */
 import { dragon } from './dragon.js';   /* plan-29: 7 Ngọc Rồng → Rồng Thần, 5 điều ước, ngoại hình Chad, chiêu Rồng Thần Giáng (cuối danh sách: vẽ trên cùng, bắt clip động tác sau mọi hệ) */
-export const SYSTEMS = [nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, pet, rubble, storySea, storyLand, trench, hero, underwater, fortress, villagers, petgun, monsters, spar, road, arena, hacrocky, trongdong, guong, hoden, dongho, knock, wreck, drops, land, ponds, xealist, cloudshade, vfx, sky, dragon].filter(Boolean);
+import { diff } from './diff.js';
+import { hopthe } from './hopthe.js';   /* plan-50: Hợp Thể người + Rocky (always) */   /* plan-44 C2: Độ khó Dễ / Thường (always) — dấu 'Dễ' cạnh thanh máu trùm + gợi ý sau 2 lần thua liền */
+import { odo } from './odo.js';   /* plan-57: Ở Dơ — kẻ rình hút 20 % KN khi người chơi hạ quái (always; chỉ hiện ở vùng có quái, cấp ≥ 5) */
+import { chanthu } from './chanthu.js';   /* plan-58 C.2: con khởi đầu + Chấn Thú hoang + Ấn Thu (always) */
+import { linhduel } from './linhduel.js';   /* plan-48 Đ1: đấu linh thú tại chỗ (always) — cuối danh sách: HUD trên cùng */
+import { shadow } from './shadow.js';   /* plan-66: bóng dưới chân người chơi + dân (lớp nền); hệ khác gọi shadowAt trong hàm vẽ */
+export const SYSTEMS = [aircombat, terrain, nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, pet, hopthe, rubble, storySea, storyLand, krstory, hero, underwater, fortress, villagers, petgun, linhthu, monsters, odo, spar, road, arena, hacrocky, trongdong, guong, hoden, dongho, bakunawa, lyronFinale, knock, ki, wreck, drops, land, ponds, water, xealist, cloudshade, worldmosaic, rockycore, vfx, sky, stats, dragon, diff, chanthu, linhduel, shadow].filter(Boolean);

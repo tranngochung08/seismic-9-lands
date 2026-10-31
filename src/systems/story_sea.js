@@ -15,19 +15,19 @@ const STR = {
     wake: 'You wake on a plank… adrift on the Sea of Origins', noPaddle: 'No paddle — paddle with your hands (arrow keys / WASD), the current helps.', sail: 'A sail on the horizon!',
     meet: ['Hey! Hold on! Grab my hand!', "I'm Lyron. Seismic never leaves anyone at sea.", 'And this little rock is Rocky — my buddy. Say hi, Rocky!', "Two on one raft, then. You paddle — I know these waters. Let's get you ashore!"],
     goal: {
-      whirl: 'Ride the current east — mind the whirlpool!', reef: 'Careful, the reefs here are sharp. Keep an eye on the logs.',
+      whirl: 'See the whirlpool? The compass points at it. Ride into it, then mash E to paddle out!', reef: 'Careful, the reefs here are sharp. Keep an eye on the logs.',
       hermit: 'The hermit on the middle island trades sailcloth for 2 shells. Dive the bright reef for shells!',
       ghost: 'Night is falling. Something pale is following us — ride a current, it cannot follow!', bottle: 'Wait — a bottle! Let me tell you a story.',
       done: "That's the lighthouse! Follow the lane south — the pier is right there."
     },
-    short: { whirl: 'ride the current east', reef: 'patch the raft (2 planks = 1 ♥)', hermit: 'sailcloth from the hermit (2 🐚)', ghost: 'lose the ghost ship on a current', bottle: "Lyron's story", done: 'head for the pier' },
+    short: { whirl: 'escape a whirlpool (mash E)', reef: 'patch the raft (2 planks = 1 ♥)', hermit: 'sailcloth from the hermit (2 🐚)', ghost: 'lose the ghost ship on a current', bottle: "Lyron's story", done: 'head for the pier' },
     mash: 'Mash E! Paddle out of it!', escaped: 'Ha! That is how you beat a whirlpool.',
     reefHit: 'The reef tears the raft!', reefBubble: 'Fish out planks — 2 planks patch one log!', patched: 'Good as new. Well — nearly.', lyronPatch: 'Lyron patches the raft with spare planks',
     trade: 'Trade 2 shells for sailcloth', traded: 'The hermit hands you sailcloth ⛵', hermitDone: 'Sailcloth! Rope + cloth = a sail. Faster raft.',
     ghostGone: 'It gave up. Ghosts hate currents.',
     bottleToast: 'Lyron fishes a bottle out of the water',
     bottle: ['See this bottle? Notes from artists all over the world. Seismic is an encrypted blockchain — but the #artwork channel is where the people live.', 'Every artist you meet ashore is real. They posted, they cheered each other on. Go find them — and tell them Lyron sent you.'],
-    kraken: 'Something is rising from the deep!', taken: "The Kraken's light turns Lyron to stone… the statue is dragged into the deep", scarfUp: 'A red scarf floats up…', pushed: 'Lyron pushes you and Rocky onto a plank',
+    kraken: 'Something is rising from the deep!', taken: "The Kraken's light turns Lyron to stone… the statue is dragged into the deep — its face still smiling", scarfUp: 'A red scarf floats up…', pushed: 'Lyron pushes you and Rocky onto a plank',
     cut: ['Go! Find help — the trench… it keeps what it takes!', 'Rocky — look after them! Take the plank, both of you. Seismic never leaves anyone at sea. Not even me. GO!'],
     pier: 'You reach the pier', scarfPick: "Pick up Lyron's scarf", scarfGot: "Lyron's scarf 🧣 — a keepsake", skip: 'E · skip', hud: '♥ Lyron', drifting: '🪵 drifting to the pier'
   },
@@ -35,19 +35,19 @@ const STR = {
     wake: 'Bạn tỉnh dậy trên một mảnh ván… trôi giữa Biển Khởi Nguồn', noPaddle: 'Không có mái chèo — khua tay mà chèo (phím mũi tên / WASD), dòng nước sẽ đẩy thêm.', sail: 'Một cánh buồm ở chân trời!',
     meet: ['Này! Bám chắc! Nắm lấy tay tôi!', 'Tôi là Lyron. Seismic không bỏ ai lại giữa biển.', 'Còn hòn đá nhỏ này là Rocky — bạn đồng hành của tôi. Chào bạn mới đi, Rocky!', 'Vậy là hai người một bè. Bạn chèo — tôi rành vùng nước này. Đưa bạn vào bờ thôi!'],
     goal: {
-      whirl: 'Đi theo dòng chảy về phía đông — coi chừng xoáy nước!', reef: 'Cẩn thận, đá ngầm ở đây sắc lắm. Để ý mấy khúc gỗ.',
+      whirl: 'Thấy xoáy nước không? La bàn đang chỉ đó. Lao vào xoáy rồi bấm E liên tục để chèo ra!', reef: 'Cẩn thận, đá ngầm ở đây sắc lắm. Để ý mấy khúc gỗ.',
       hermit: 'Ẩn sĩ ở đảo giữa đổi vải buồm lấy 2 vỏ sò. Lặn xuống rạn san hô sáng mà nhặt sò!',
       ghost: 'Đêm xuống rồi. Có thứ gì nhợt nhạt đang bám theo — vào hải lưu đi, nó không theo được!', bottle: 'Khoan — một cái chai! Để tôi kể bạn nghe một chuyện.',
       done: 'Hải đăng kia rồi! Theo làn nước xuôi nam — bến tàu ngay đó.'
     },
-    short: { whirl: 'theo dòng chảy về đông', reef: 'vá bè (2 ván = 1 ♥)', hermit: 'vải buồm từ ẩn sĩ (2 🐚)', ghost: 'cắt đuôi tàu ma bằng hải lưu', bottle: 'chuyện của Lyron', done: 'hướng về bến tàu' },
+    short: { whirl: 'thoát 1 xoáy nước (bấm E liên tục)', reef: 'vá bè (2 ván = 1 ♥)', hermit: 'vải buồm từ ẩn sĩ (2 🐚)', ghost: 'cắt đuôi tàu ma bằng hải lưu', bottle: 'chuyện của Lyron', done: 'hướng về bến tàu' },
     mash: 'Bấm E liên tục! Chèo ra khỏi nó!', escaped: 'Ha! Xoáy nước là phải trị như thế.',
     reefHit: 'Đá ngầm xé toạc bè!', reefBubble: 'Vớt ván đi — 2 ván vá được một khúc gỗ!', patched: 'Như mới. Ừ thì — gần như mới.', lyronPatch: 'Lyron vá bè bằng ván dự phòng',
     trade: 'Đổi 2 vỏ sò lấy vải buồm', traded: 'Ẩn sĩ đưa bạn tấm vải buồm ⛵', hermitDone: 'Vải buồm! Dây + vải = cánh buồm. Bè nhanh hơn.',
     ghostGone: 'Nó bỏ cuộc rồi. Ma ghét hải lưu.',
     bottleToast: 'Lyron vớt một cái chai dưới nước lên',
     bottle: ['Thấy cái chai này không? Thư của nghệ sĩ khắp thế giới. Seismic là một blockchain mã hóa — nhưng kênh #artwork mới là nơi mọi người sống.', 'Mỗi nghệ sĩ bạn gặp trên bờ đều là người thật. Họ đăng tranh, cổ vũ nhau. Đi tìm họ đi — và nói là Lyron gửi bạn tới.'],
-    kraken: 'Có thứ gì đang trồi lên từ vực sâu!', taken: 'Tia sáng của Kraken hóa đá Lyron… tượng đá bị kéo xuống biển sâu', scarfUp: 'Một chiếc khăn đỏ nổi lên…', pushed: 'Lyron đẩy bạn và Rocky lên một mảnh ván',
+    kraken: 'Có thứ gì đang trồi lên từ vực sâu!', taken: 'Tia sáng của Kraken hóa đá Lyron… tượng đá bị kéo xuống biển sâu — gương mặt tượng vẫn mỉm cười', scarfUp: 'Một chiếc khăn đỏ nổi lên…', pushed: 'Lyron đẩy bạn và Rocky lên một mảnh ván',
     cut: ['Đi đi! Tìm người giúp — vực sâu… nó giữ những gì nó bắt!', 'Rocky — trông chừng bạn ấy nhé! Cả hai bám lấy ván. Seismic không bỏ ai lại giữa biển. Kể cả tôi. ĐI ĐI!'],
     pier: 'Bạn đã tới bến tàu', scarfPick: 'Nhặt khăn của Lyron', scarfGot: 'Khăn của Lyron 🧣 — kỷ vật', skip: 'E · bỏ qua', hud: '♥ Lyron', drifting: '🪵 trôi về bến tàu'
   }
@@ -374,7 +374,7 @@ function updateRide(dt, ctx) {
     }
   }
   // --- Lyron announces the current goal (after a beat when it changes)
-  const now = curGoal(ctx);
+  const now = curGoal(ctx); s.goal = now; s.goalAt = ctx.S.time;   /* plan-44 D1: la bàn bè (sea_raft.js) chỉ mục tiêu này */
   if (now !== st.curShown) { st.goalDelay -= dt; if (st.goalDelay <= 0) { say(t.goal[now], 6); st.curShown = now; } }
   // --- the climax: all five done within 14 tiles of the dock, or the raft reaches row 48 whatever the checklist says
   if (riding && !caught && !(raidState() && raidState().kraken)) {
@@ -486,7 +486,7 @@ function land(ctx) {
   s.raft.hp = 1; s.x = p.x; s.y = p.y;
   st.phase = 'landed'; st.drift = null;
   ctx.toast(t.pier, true); ctx.sfx('splash'); ctx.persist();
-  if (!story(ctx).path) setTimeout(() => openFaction(ctx), 1400);   /* plan-25: lên bến → chọn phe */
+  if (!story(ctx).path) setTimeout(() => meetFactions(ctx), 1400);   /* plan-25: lên bến → chọn phe; plan-43 H4: Noxx + Xealist ra cầu tàu giới thiệu trước */
 }
 
 /* ---------------------------------------------------------------- plan-25: chọn phe Noxx / Xealist (bắt buộc chọn, không đóng bằng Esc) */
@@ -506,7 +506,7 @@ function openFaction(ctx) {
   const s = story(ctx); if (s.path) return;
   const t = FACTION[ctx.lang() === 'vi' ? 'vi' : 'en'];
   const col = (who, port, say, btn) => `<div class="fac-col fac-${who}"><img class="face" src="assets/px/ui/${port}" alt=""><b>${who === 'noxx' ? t.noxx : t.xea}</b><p>${say}</p><button class="btn" data-fac="${who}">${btn}</button></div>`;
-  const el = ctx.panel('faction', `<h2>${t.title}</h2><div class="fac-row">${col('noxx', 'port_noxx_0.png', t.noxxSay, t.noxxBtn)}${col('xealist', 'port_xealist.png', t.xeaSay, t.xeaBtn)}</div>`);
+  const el = ctx.panel('faction', `<h2>${t.title}</h2><div class="fac-row">${col('noxx', 'port_noxx_0.png', t.noxxSay, t.noxxBtn)}${col('xealist', 'port_xealist_c.png', t.xeaSay, t.xeaBtn)}</div>`);
   el.panel.classList.add('wide', 'faction');
   ctx.setMode('faction'); ctx.registerCloser('faction', () => {});   /* bắt buộc chọn */
   el.hidden = false; ctx.sfx('roar');
@@ -517,7 +517,80 @@ function openFaction(ctx) {
     const p = ctx.S.player;
     if (who === 'noxx') { if (ctx.vfx) ctx.vfx('stone_free', p.x, p.y + 2, 0, true); if (ctx.vfx) ctx.vfx('level_up', p.x, p.y + 2, 0, true); ctx.sfx('win'); ctx.toast(t.noxxDone, true); }
     else { if (ctx.vfx) ctx.vfx('petrify', p.x, p.y + 4, 0, true); ctx.quake && ctx.quake(0.6); ctx.sfx('roar'); ctx.toast(t.xeaDone, true); }
+    setTimeout(() => afterPick(ctx, who), 900);   /* plan-43 H4 */
   };
+}
+
+/* ---------------------------------------------------------------- plan-43 H4 (anh duyệt 2026-10-16): GẶP HAI PHE trước khi chọn
+   Lên bến (hoặc vào lại Biển khi đã lên bờ mà chưa chọn) → Noxx và Xealist từ lối cát phía Nam (lối về Làng) đi ra cầu tàu, mỗi người 2 câu (chân dung riêng)
+   → bảng chọn phe → người được chọn nói 1 câu rồi đi trước dẫn đường vào Làng (chờ nếu bạn tụt lại), người kia bỏ đi. Không có quái quanh bến lúc này (monsters.js: Biển chưa chọn phe = không Mòng Biển). */
+const MEET = {
+  vi: { noxx: ['Này! Cậu dạt vào bờ trên mảnh ván à? Tôi là Noxx — người giữ Làng Xuất Phát.', 'Tôi thấy hết rồi… Kraken hóa đá Lyron. Nhưng đá thì phá được — cậu không cô độc đâu.'],
+    xea: ['Khoan đã, Noxx. Để người ta tự chọn.', 'Tôi là Xealist. Cậu vừa thấy sức mạnh thật sự của Kraken — sức mạnh đó có thể là của cậu.'],
+    leadNoxx: 'Đi thôi! Làng ở ngay dưới bãi cát này — theo tôi. Mọi người trong làng sẽ giúp ta cứu Lyron.',
+    leadXea: 'Lựa chọn khôn ngoan. Theo tôi vào Làng — tôi sẽ chỉ cậu cách lấy sức mạnh.',
+    follow: n => `Đi theo ${n} vào Làng ↓ (lối cát phía Nam)` },
+  en: { noxx: ['Hey! You washed ashore on a plank? I am Noxx — I look after Harbor Village.', 'I saw it all… the Kraken turned Lyron to stone. But stone can be broken — you are not alone.'],
+    xea: ['Not so fast, Noxx. Let them choose.', 'I am Xealist. You just saw what real power looks like — that power could be yours.'],
+    leadNoxx: "Let's go! The village is just past this sand — follow me. Everyone there will help us save Lyron.",
+    leadXea: 'A wise choice. Follow me into the village — I will show you how to take that power.',
+    follow: n => `Follow ${n} into the village ↓ (the sand path to the south)` },
+};
+const XEA_META = { n: 'Xealist', k: 'Xealist', id: 'xealist', friend: true, a: 'assets/px/ui/port_xealist_c.png', title: { vi: 'Thủ lĩnh phe Xealist', en: 'Head of the Xealist faction' }, ro: [] };
+const meetL = ctx => MEET[ctx.lang() === 'vi' ? 'vi' : 'en'];
+function meetExit(ctx) { const m = ctx.S.map; return { x: m.dock.x * TILE + 8, y: (m.h - 3) * TILE + 8 }; }
+function meetNpc(ctx, who, x, y) {
+  const meta = who === 'noxx' ? { friend: true, meet: true, n: 'Noxx', tag: 'Noxx' } : { friend: true, meet: true, n: 'Xealist', tag: 'Xealist' };
+  const n = new NPC(meta, x, y, ctx.charSheetOf({ hero: who === 'noxx' ? 'noxx' : 'xealist' }), () => 0.5);
+  n.busy = true; n.ghost = true; n.radius = 0; ctx.S.npcs.push(n); return n;
+}
+function dropMeet(ctx) { const M = st.meet; if (!M) return; for (const n of [M.noxx, M.xea]) { const i = ctx.S.npcs.indexOf(n); if (i >= 0) ctx.S.npcs.splice(i, 1); } st.meet = null; }
+function toDock(ctx) {   /* save cũ đã lên bờ (seaDone) mà chưa chọn phe, vào lại Biển đang ở ngoài khơi → đặt lên bến như lúc ván trôi vào (land) */
+  const p = ctx.S.player, s = ctx.S.sea, d = ctx.S.map.dock; if (!s || Math.hypot(p.x / TILE - d.x, p.y / TILE - d.y) <= 7 || ctx.S.mode !== 'play') return;
+  s.riding = null; s.diving = false; restore(p); p.x = d.x * TILE + 8; p.y = d.y * TILE + 14; p.dir = 0; s.x = p.x; s.y = p.y; if (s.raft && s.raft.hp < 1) s.raft.hp = 1; ring(p.x, p.y, 1);
+}
+function meetFactions(ctx) {
+  const s = story(ctx); if (s.path || st.meet || !ctx.S.map || !ctx.S.map.sea) return;
+  if (ctx.S.mode !== 'play') { setTimeout(() => meetFactions(ctx), 600); return; }   /* đang thoại / bảng khác → đợi */
+  { const d = ctx.S.map.dock, q = ctx.S.player; if (Math.hypot(q.x / TILE - d.x, q.y / TILE - d.y) > 7) {   /* save cũ còn ngoài khơi (chưa chọn phe): đợi về tới bến mới gặp */
+    if (!st.meetHint) { st.meetHint = true; ctx.toast(ctx.lang() === 'vi' ? '⚓ Về bến cảng (phía Nam) — có người đang đợi bạn' : '⚓ Head back to the dock (south) — someone is waiting for you'); }
+    setTimeout(() => meetFactions(ctx), 800); return; } }
+  const p = ctx.S.player, ex = meetExit(ctx);
+  st.meet = { t: 0, stage: 'walk', noxx: meetNpc(ctx, 'noxx', ex.x - 12, ex.y), xea: meetNpc(ctx, 'xea', ex.x + 12, ex.y + 6) };
+  st.meet.noxx.goal = { x: p.x - 15, y: p.y + 3 }; st.meet.xea.goal = { x: p.x + 15, y: p.y + 3 };   /* hai bên người chơi trên cầu tàu (khung thoại ở dưới không che) */
+  ctx.sfx('pickup');
+}
+function updateMeet(dt, ctx) {
+  const M = st.meet; if (!M) return; M.t += dt; const p = ctx.S.player;
+  if (M.stage === 'walk') {
+    if (ctx.S.mode !== 'play') return;
+    if ((!M.noxx.goal && !M.xea.goal) || M.t > 5) {
+      M.stage = 'talk'; for (const n of [M.noxx, M.xea]) { n.goal = null; n.faceTo(p.x, p.y); } if (p.faceTo) p.faceTo(M.noxx.x, M.noxx.y);
+      const t = meetL(ctx); ctx.setMode('dialog');
+      ctx.openDialog({ guide: true, pages: t.noxx.slice(), onClose: () => {
+        if (p.faceTo) p.faceTo(M.xea.x, M.xea.y); ctx.setMode('dialog');
+        ctx.openDialog({ m: XEA_META, pages: t.xea.slice(), onClose: () => { ctx.setMode('play'); M.stage = 'pick'; openFaction(ctx); } });
+      } });
+    }
+  } else if (M.stage === 'lead') {
+    const n = M.lead, ex = meetExit(ctx), d = Math.hypot(n.x - p.x, n.y - p.y);
+    n.speedMul = d > 64 ? 0 : 1;   /* bạn tụt lại thì đứng chờ */
+    if (!n.goal && Math.hypot(n.x - ex.x, n.y - ex.y) < 10) n.goal = { x: ex.x, y: (ctx.S.map.h - 1) * TILE + 6 };
+    if (M.gone) { M.gone.t -= dt; if (M.gone.t <= 0) { const i = ctx.S.npcs.indexOf(M.gone.n); if (i >= 0) ctx.S.npcs.splice(i, 1); M.gone = null; } }
+    if (n.y >= (ctx.S.map.h - 1.5) * TILE || M.t > 90) dropMeet(ctx);
+  }
+}
+function afterPick(ctx, who) {
+  const M = st.meet; if (!M || !ctx.S.map || !ctx.S.map.sea) return;
+  if (ctx.S.mode !== 'play') { setTimeout(() => afterPick(ctx, who), 500); return; }
+  const t = meetL(ctx), lead = who === 'noxx' ? M.noxx : M.xea, other = who === 'noxx' ? M.xea : M.noxx, p = ctx.S.player;
+  lead.faceTo(p.x, p.y); if (p.faceTo) p.faceTo(lead.x, lead.y); ctx.setMode('dialog');
+  ctx.openDialog({ ...(who === 'noxx' ? { guide: true } : { m: XEA_META }), pages: [who === 'noxx' ? t.leadNoxx : t.leadXea], onClose: () => {
+    ctx.setMode('play'); const ex = meetExit(ctx);
+    M.stage = 'lead'; M.t = 0; M.lead = lead; lead.goal = { x: ex.x, y: ex.y };
+    other.goal = { x: other.x + (other === M.xea ? 70 : -70), y: other.y + 30 }; M.gone = { n: other, t: 2.2 };
+    ctx.toast(t.follow(who === 'noxx' ? 'Noxx' : 'Xealist'), true);
+  } });
 }
 
 
@@ -590,7 +663,7 @@ export const storySea = {
     buildOpenReef(ctx);
     if (s.act !== 1 || s.seaDone) {                                    // after the prologue: only the scarf, if it was never picked up
       st.on = true; st.phase = 'landed';
-      if (s.seaDone && !s.path) setTimeout(() => { if (!story(ctx).path && ctx.S.map && ctx.S.map.sea) openFaction(ctx); }, 1600);   /* tắt game giữa lúc ván trôi vào bến → vào lại vẫn được chọn phe */
+      if (s.seaDone && !s.path) setTimeout(() => { if (!story(ctx).path && ctx.S.map && ctx.S.map.sea) { toDock(ctx); meetFactions(ctx); } }, 1600);   /* tắt game giữa lúc ván trôi vào bến → vào lại vẫn được chọn phe */
       if (!s.keepsake) { const h = scarfHome(ctx); spawnScarf(ctx, h.x, h.y); st.scarf.home = h; }
       return;
     }
@@ -604,6 +677,7 @@ export const storySea = {
   },
 
   onZoneLeave(ctx) {
+    st.meet = null;   /* plan-43 H4: NPC tạm của cảnh gặp hai phe đi theo danh sách NPC của vùng (dựng lại khi vào vùng) */
     if (ctx.S.sea && ctx.S.sea.riding === 'plank') { restore(ctx.S.player); ctx.S.sea.riding = null; }
     if (ctx.S.mode === 'cutscene') ctx.setMode('play');
     removeLyron(ctx);
@@ -616,6 +690,7 @@ export const storySea = {
     updateFx(dt);
     if (st.bubble) { st.bubble.t -= dt; if (st.bubble.t <= 0) st.bubble = null; }
     updateScarf(dt, ctx);
+    if (st.meet) updateMeet(dt, ctx);   /* plan-43 H4 */
     const t = L(ctx);
     if (st.phase === 'plank') {
       if (ctx.S.sea.riding !== 'plank') toPlank(ctx);                  // another system touched the player: take him back
@@ -740,6 +815,7 @@ if (typeof window !== 'undefined') {
     faction: () => { const ctx = st.ctx; if (!ctx) return null; delete story(ctx).path; openFaction(ctx); return 'open'; },
     plank: () => { const ctx = st.ctx; if (!ctx || !ctx.S.sea) return null; startPlank(ctx); ctx.setMode('play'); return st.phase; },   /* test: vào thẳng cảnh trôi trên ván */
     completeStep: name => { const ctx = st.ctx; if (!ctx || !GOAL_FLAG[name]) return 'unknown'; finishGoal(ctx, name, null); return curGoal(ctx); },
+    meet: () => { const M = st.meet; return M ? { stage: M.stage, t: +M.t.toFixed(1), noxx: [Math.round(M.noxx.x), Math.round(M.noxx.y)], xea: [Math.round(M.xea.x), Math.round(M.xea.y)], lead: M.lead ? M.lead.m.n : null } : null; },
     completeAll: () => { const ctx = st.ctx; if (!ctx) return null; persistStep(ctx, ALL5); st.goalDelay = 0.2; return story(ctx).step; },
     climax: () => { const ctx = st.ctx; if (!ctx || st.phase !== 'ride') return st.phase; startClimax(ctx); return st.phase; },
     skipCut: () => { if (st.ctx) skipClimax(st.ctx); return st.phase; },

@@ -7,7 +7,7 @@ import { notify as hudNotify, pxText } from './hud.js';   /* plan-22: thông bá
 export const STR = {
   en: {
     tagline: 'Journey through the 9 Lands of Magnitude', play: 'New game', cont: 'Continue', lang: 'Tiếng Việt', namePh: 'Your name (optional)',
-    controls: 'Move: WASD / arrows · Interact: E or Space · Map: M · Codex: C · Menu: Esc · Fullscreen: F', fs: '⛶ Fullscreen',
+    controls: 'WASD / arrows: move · E / Space: interact · Shift: Ki roll · K / right-click: Ki dash · M: map · C: codex · Esc: menu · F: fullscreen', fs: '⛶ Fullscreen',
     talk: 'Talk', sleep: 'Sleep (end the day)', read: 'Read', hall: 'Hall of Magnitude', shop: 'Market', light: 'Light the fire', mine: 'Mine', pull: 'Pull the lever', study: 'Study', pickup: 'Pick up',
     shards: 'shards', met: 'met', questMeet: (n, t) => `Meet ${n}/${t} artists`, questDone: 'Land complete — north gate is open',
     badge: lv => `Magnitude ${lv}.0 badge earned!`, locked: lv => `This road needs the Magnitude ${lv}.0 badge — finish the M${lv} land quest (press Q to see it).`,
@@ -32,21 +32,27 @@ export const STR = {
     findLabel: 'Find an artist', findPh: 'Discord username…', findBtn: 'Find me', notFound: 'No artist with that name in the roster.', targetWaiting: (name, zone) => `${name} is waiting near the entrance of ${zone}.`, targetHere: name => `➤ ${name} is in this land`,
     discordBtn: 'Play as yourself (Discord)', discordNote: 'Verify with Discord to play with your own avatar.', discordOk: name => `Welcome back, ${name}! Playing as yourself.`, discordNotMember: 'That Discord account is not in the #artwork roster.', discordFail: 'Discord sign-in failed.',
     music: 'Music', on: 'on', off: 'off',
+    /* plan-44 */ sleepQ: '🛏 Sleep until 6:00 tomorrow? The day ends.', sleepYes: 'Sleep', sleepNo: 'Not now',
+    tellMore: 'Tell me more ▾', moreKey: '↓ more', copyLink: '🔗 Copy link', linkCopied: 'Link copied — send it to a friend!', linkFail: 'Could not copy — the link is:',
+    mapWorld: 'World', mapZone: 'This land', zHint: 'Gold = still to do here · artists you have not met · exits.', zYou: 'You', zQuest: 'To do', zExit: 'Exit', zArtist: 'Not met yet', zTreasure: 'Treasure', zTarget: 'Searched artist', zNothing: 'Nothing left to do here.',
+    zFire: 'Unlit campfire', zOre: 'Ore vein', zLever: 'Lever', zQuiz: 'Library', zObs: 'Obsidian', zElder: 'Elder', zLeader: 'Leader not met', zFurnace: 'Furnace (diving bell)', zDock: 'Pier',
+    hallHint: 'Tap a name to see the artist.', cardMet: 'Met ✓', cardNotMet: 'Not met yet', cardLand: z => `Lives in ${z}`, cardGo: 'Lead me there', cardLocked: lv => `That land is still locked (needs the M${lv} badge).`, cardHere: 'Lead me there (they will wait by the entrance)',
+    findLockedAsk: (n, z) => `${n} lives in ${z} — a land you have not unlocked yet.`, findGuest: 'Just visit (guest — your save is not touched)', findCancel: 'Cancel', guestChip: '👀 Guest visit — nothing is saved. Reload to go back.',
     nationBoard: 'Read the board', nationAt: lv => lv < 0 ? 'in Harbor Village' : `at Magnitude ${lv}.0`, nArtists: 'artists here', nArtworks: 'artworks', nPosts: 'posts', nReacts: 'reactions',
     nRank: (r, n) => `#${r} of ${n} nations`, nLeaders: 'Leaders', nBoosters: 'Boosters', nPioneer: 'Pioneer', nPioneerDesc: d => `first post ${d}`, nOverall: 'Whole community', nTotal: 'artists in the roster', nAt9: 'at Magnitude 9.0', nShare: 'of all artists', nTop: 'Top artists here',
     medalTitles: { count: 'Most artists', art: 'Most artworks', react: 'Most reactions' },
     tiers: ['Camp', 'Yard', 'Court', 'Estate', 'Citadel', 'Sanctum'], tierNote: 'Districts grow grander with every Magnitude.', rocky: 'Admire Rocky',
     // the storyline: Lyron, the Kraken, the three things, the trench
-    storyGather: s => `Save Lyron: ${s}`, storyDive: 'Save Lyron: dive at the pier of the Sea of Origins', storyInTrench: 'Save Lyron: reach the bubble cage',
+    storyGather: s => `Save Lyron: ${s}`, storyMeet: '🏮 Back to the Village — someone is waiting on the pier', storyDive: 'Save Lyron: dive under the pier, through the deep to the Kraken\'s Lair', storyInTrench: 'Save Lyron: beat the Kraken, break the cage with the Great Crystal',
     guideStory: ['The Kraken keeps what it takes in the Kraken Trench, under the reef. Nobody goes down there empty-handed.', 'You will need three things: a diving bell forged at the Rockfall Mine furnace (M4), the map of the trench from the Leaning City library (M6), and the Great Crystal that the fifteen Leaders keep at the Core (M9).', 'Walk the nine lands, meet the artists, gather the three. Then come back to the pier and dive. And if a nation lets you pilot its Rocky, keep that trust — only Rocky can stand up to the Kraken.'],
     guideFlashback: ['You were adrift, once. A raft with a torn sail found you — Lyron, the founder himself, pulled you aboard.', 'You crossed the whole sea together. Then, in sight of the lighthouse, the Kraken rose and took him down with the raft. You reached the pier on a plank.', 'I have his scarf. It floated back. Keep it — and listen.'],
     guideGather: left => `Still missing: ${left}. Lyron is waiting.`, guideDive: 'You have all three. Go to the pier of the Sea of Origins and dive. Take a Rocky that trusts you.', guideAfter: 'Lyron is home. The whole village is lit tonight because of you.',
-    ach: { first: ['First hello', 'Meet your first artist'], ten: ['Ten friends', 'Meet 10 artists'], hundred: ['Community', 'Meet 100 artists'], leaders: ['Council of Fifteen', 'Meet all 15 Leaders'], boosters: ['Lights on', 'Meet every server Booster'], badges: ['Nine badges', 'Earn every Magnitude badge'], nations: ['World tour', 'Meet artists from 10 countries'], shop: ['New look', 'Buy something at the market'], scholar: ['Scholar', 'Pass the library exam'], photographer: ['Say cheese', 'Take your first photo (P)'], captain: ['Captain', "Finish the hermit's buoy race under 150 s"], sumo: ['Sumo champion', 'Push another nation\'s Rocky out of the ring'], pet: ['Rock parent', 'Hatch the crystal egg from the Core'], keepsake: ['The scarf', "Pick up Lyron's scarf from the water"], rescue: ['The friend returns', 'Bring Lyron back from the Kraken Trench'], hacrocky: ['Shadow Twin Slayer', 'Defeat Shadow Rocky in the Magnitude Rift'], trongdong: ['Beat Keeper', 'Silence the Thunder Bronze Drum in the Magnitude Rift'], guong: ['Mirror Breaker', 'Shatter the Myriad Mirror Crystal Queen in the Magnitude Rift'], hoden: ['Void Filler', 'Put out the Magnitude Devourer black hole in the Magnitude Rift'], dongho: ['Time Mender', 'Stop the Rewinding Gear God in the Magnitude Rift'] },
+    ach: { first: ['First hello', 'Meet your first artist'], ten: ['Ten friends', 'Meet 10 artists'], hundred: ['Community', 'Meet 100 artists'], leaders: ['Council of Fifteen', 'Meet all 15 Leaders'], boosters: ['Lights on', 'Meet every server Booster'], badges: ['Nine badges', 'Earn every Magnitude badge'], nations: ['World tour', 'Meet artists from 10 countries'], shop: ['New look', 'Buy something at the market'], scholar: ['Scholar', 'Pass the library exam'], photographer: ['Say cheese', 'Take your first photo (P)'], captain: ['Captain', "Finish the hermit's buoy race under 150 s"], sumo: ['Sumo champion', 'Push another nation\'s Rocky out of the ring'], pet: ['Rock parent', 'Hatch the crystal egg from the Core'], keepsake: ['The scarf', "Pick up Lyron's scarf from the water"], rescue: ['The friend returns', 'Bring Lyron back from the Kraken Trench'], hacrocky: ['Shadow Twin Slayer', 'Defeat Shadow Rocky in the Magnitude Rift'], trongdong: ['Beat Keeper', 'Silence the Thunder Bronze Drum in the Magnitude Rift'], guong: ['Mirror Breaker', 'Shatter the Myriad Mirror Crystal Queen in the Magnitude Rift'], hoden: ['Void Filler', 'Put out the Magnitude Devourer black hole in the Magnitude Rift'], dongho: ['Time Mender', 'Stop the Rewinding Gear God in the Magnitude Rift'], bakunawa: ['Centipede Slayer', 'Defeat the Thunder Centipede God above the M9 clouds'], lyron: ["Rocky's Keeper", "Break Lyron's red scarf, win Rocky back and seal Lyron above the storm"] },
     endRescue: { title: 'Lyron is home', body: 'You went down into the Kraken Trench and came back up with your friend.\nHarbor Village hangs its lanterns tonight. Thank you — and thank you, Seismic community.' }
   },
   vi: {
     tagline: 'Hành trình qua 9 Vùng Đất Magnitude', play: 'Chơi mới', cont: 'Chơi tiếp', lang: 'English', namePh: 'Tên của bạn (không bắt buộc)',
-    controls: 'Di chuyển: WASD / mũi tên · Tương tác: E hoặc Space · Bản đồ: M · Sổ tay: C · Menu: Esc · Toàn màn hình: F', fs: '⛶ Toàn màn hình',
+    controls: 'WASD / mũi tên: đi · E / Space: tương tác · Shift: Ki lộn · K / chuột phải: Ki lướt · M: bản đồ · C: sổ tay · Esc: menu · F: toàn màn hình', fs: '⛶ Toàn màn hình',
     talk: 'Nói chuyện', sleep: 'Ngủ (hết ngày)', read: 'Đọc', hall: 'Bia Vinh Danh', shop: 'Chợ', light: 'Đốt lửa', mine: 'Đào', pull: 'Gạt cần', study: 'Đọc sách', pickup: 'Nhặt',
     shards: 'mảnh', met: 'đã gặp', questMeet: (n, t) => `Gặp ${n}/${t} nghệ sĩ`, questDone: 'Xong vùng — cổng Bắc đã mở',
     badge: lv => `Nhận huy hiệu Magnitude ${lv}.0!`, locked: lv => `Lối này cần huy hiệu Magnitude ${lv}.0 — hoàn thành nhiệm vụ vùng M${lv} (bấm Q xem việc).`,
@@ -71,15 +77,21 @@ export const STR = {
     findLabel: 'Tìm một nghệ sĩ', findPh: 'Username Discord…', findBtn: 'Tìm tôi', notFound: 'Không có nghệ sĩ nào tên đó trong danh sách.', targetWaiting: (name, zone) => `${name} đang đợi gần lối vào ${zone}.`, targetHere: name => `➤ ${name} đang ở vùng này`,
     discordBtn: 'Chơi bằng chính mình (Discord)', discordNote: 'Xác minh qua Discord để chơi bằng avatar của bạn.', discordOk: name => `Chào mừng trở lại, ${name}! Đang chơi bằng chính bạn.`, discordNotMember: 'Tài khoản Discord này không có trong danh sách #artwork.', discordFail: 'Đăng nhập Discord thất bại.',
     music: 'Nhạc', on: 'bật', off: 'tắt',
+    /* plan-44 */ sleepQ: '🛏 Ngủ tới 6:00 sáng mai? Hết ngày hôm nay.', sleepYes: 'Ngủ', sleepNo: 'Thôi',
+    tellMore: 'Kể thêm ▾', moreKey: '↓ kể thêm', copyLink: '🔗 Sao chép link', linkCopied: 'Đã chép link — gửi cho bạn bè nhé!', linkFail: 'Không chép được — link là:',
+    mapWorld: 'Thế giới', mapZone: 'Vùng này', zHint: 'Vàng = việc còn làm ở đây · nghệ sĩ chưa gặp · lối ra.', zYou: 'Bạn', zQuest: 'Việc cần làm', zExit: 'Lối ra', zArtist: 'Chưa gặp', zTreasure: 'Kho báu', zTarget: 'Nghệ sĩ đang tìm', zNothing: 'Vùng này hết việc rồi.',
+    zFire: 'Đống lửa chưa đốt', zOre: 'Mạch quặng', zLever: 'Cần gạt', zQuiz: 'Thư viện', zObs: 'Obsidian', zElder: 'Trưởng lão', zLeader: 'Leader chưa gặp', zFurnace: 'Lò nung (chuông lặn)', zDock: 'Bến tàu',
+    hallHint: 'Bấm vào tên để xem nghệ sĩ.', cardMet: 'Đã gặp ✓', cardNotMet: 'Chưa gặp', cardLand: z => `Ở ${z}`, cardGo: 'Dẫn tôi tới', cardLocked: lv => `Vùng đó chưa mở (cần huy hiệu M${lv}).`, cardHere: 'Dẫn tôi tới (người đó sẽ đợi ở lối vào)',
+    findLockedAsk: (n, z) => `${n} ở ${z} — vùng bạn chưa mở.`, findGuest: 'Chỉ đi xem (ô lưu khách — save của bạn không bị đụng)', findCancel: 'Huỷ', guestChip: '👀 Đang đi xem (khách) — không lưu gì. Tải lại trang để quay về.',
     nationBoard: 'Đọc bảng', nationAt: lv => lv < 0 ? 'ở Làng Xuất Phát' : `ở Magnitude ${lv}.0`, nArtists: 'nghệ sĩ ở đây', nArtworks: 'tranh', nPosts: 'bài', nReacts: 'reaction',
     nRank: (r, n) => `hạng ${r}/${n} quốc gia`, nLeaders: 'Leader', nBoosters: 'Booster', nPioneer: 'Người tiên phong', nPioneerDesc: d => `đăng bài đầu ${d}`, nOverall: 'Toàn cộng đồng', nTotal: 'nghệ sĩ trong danh sách', nAt9: 'đạt Magnitude 9.0', nShare: 'tổng số nghệ sĩ', nTop: 'Nghệ sĩ nổi bật ở đây',
     medalTitles: { count: 'Đông nhất', art: 'Nhiều tranh nhất', react: 'Nhiều reaction nhất' },
     tiers: ['Trại', 'Sân', 'Dinh', 'Điền trang', 'Thành trì', 'Thánh điện'], tierNote: 'Khu quốc gia càng lên Magnitude cao càng bề thế.', rocky: 'Ngắm tượng Rocky',
-    storyGather: s => `Cứu Lyron: ${s}`, storyDive: 'Cứu Lyron: lặn ở cầu tàu Biển Khởi Nguồn', storyInTrench: 'Cứu Lyron: tới lồng bong bóng',
+    storyGather: s => `Cứu Lyron: ${s}`, storyMeet: '🏮 Về Làng — có ai đó đang đợi ở cầu tàu', storyDive: 'Cứu Lyron: lặn qua khu nước dưới cầu tàu tới Hang Ổ Kraken', storyInTrench: 'Cứu Lyron: hạ Kraken, phá lồng bằng Đại Pha Lê',
     guideStory: ['Kraken giữ thứ nó bắt trong Vực Kraken, dưới rạn san hô. Không ai xuống đó tay không.', 'Bạn cần ba thứ: chuông lặn đúc ở lò nung Mỏ Đá Lở (M4), bản đồ vực trong thư viện Thành Nghiêng (M6), và Đại tinh thể mà mười lăm Leader giữ ở Lõi (M9).', 'Đi qua chín vùng đất, gặp các nghệ sĩ, gom đủ ba thứ. Rồi quay lại cầu tàu mà lặn. Và nếu nước nào cho bạn điều khiển Rocky của họ, hãy giữ lòng tin đó — chỉ Rocky mới đương đầu nổi với Kraken.'],
     guideFlashback: ['Ngày trước bạn từng lênh đênh ngoài kia. Một chiếc bè buồm rách tìm thấy bạn — Lyron, chính nhà sáng lập, kéo bạn lên.', 'Hai người vượt cả biển. Rồi ngay khi thấy hải đăng, Kraken trồi lên, kéo cậu ấy cùng chiếc bè xuống vực. Bạn dạt vào cầu tàu trên một mảnh ván.', 'Mình giữ chiếc khăn của cậu ấy. Nó nổi lại. Bạn cầm lấy — và nghe mình nói này.'],
     guideGather: left => `Còn thiếu: ${left}. Lyron đang đợi.`, guideDive: 'Đủ ba thứ rồi. Ra cầu tàu Biển Khởi Nguồn mà lặn. Dẫn theo một Rocky tin bạn.', guideAfter: 'Lyron về rồi. Đêm nay cả làng treo đèn là nhờ bạn.',
-    ach: { first: ['Lời chào đầu', 'Gặp nghệ sĩ đầu tiên'], ten: ['Mười người bạn', 'Gặp 10 nghệ sĩ'], hundred: ['Cộng đồng', 'Gặp 100 nghệ sĩ'], leaders: ['Hội đồng 15', 'Gặp đủ 15 Leader'], boosters: ['Giữ đèn sáng', 'Gặp tất cả Booster'], badges: ['Chín huy hiệu', 'Nhận đủ huy hiệu Magnitude'], nations: ['Vòng quanh thế giới', 'Gặp nghệ sĩ từ 10 quốc gia'], shop: ['Diện mạo mới', 'Mua gì đó ở chợ'], scholar: ['Học giả', 'Qua bài thi thư viện'], photographer: ['Cười lên nào', 'Chụp tấm ảnh đầu tiên (P)'], captain: ['Thuyền trưởng', 'Đua phao của ẩn sĩ dưới 150 giây'], sumo: ['Vô địch sumo', 'Đẩy Rocky nước khác ra khỏi sàn'], pet: ['Cha mẹ đá', 'Ấp nở trứng tinh thể ở Lõi'], keepsake: ['Chiếc khăn', 'Nhặt khăn của Lyron trên mặt nước'], rescue: ['Người bạn trở về', 'Đưa Lyron về từ Vực Kraken'], hacrocky: ['Kẻ Thắng Bóng Mình', 'Hạ Hắc Rocky trong Khe Nứt Magnitude'], trongdong: ['Người Giữ Nhịp', 'Hạ Trống Đồng Thiên Lôi trong Khe Nứt Magnitude'], guong: ['Người Phá Vạn Kính', 'Đập tan Nữ Hoàng Pha Lê Vạn Kính trong Khe Nứt Magnitude'], hoden: ['Kẻ Lấp Hư Không', 'Dập tắt Hố Đen Địa Tâm của Lão Thợ Mỏ Hư Không trong Khe Nứt Magnitude'], dongho: ['Kẻ Sửa Thời Gian', 'Hạ Thần Bánh Răng Ngược Thời trong Khe Nứt Magnitude'] },
+    ach: { first: ['Lời chào đầu', 'Gặp nghệ sĩ đầu tiên'], ten: ['Mười người bạn', 'Gặp 10 nghệ sĩ'], hundred: ['Cộng đồng', 'Gặp 100 nghệ sĩ'], leaders: ['Hội đồng 15', 'Gặp đủ 15 Leader'], boosters: ['Giữ đèn sáng', 'Gặp tất cả Booster'], badges: ['Chín huy hiệu', 'Nhận đủ huy hiệu Magnitude'], nations: ['Vòng quanh thế giới', 'Gặp nghệ sĩ từ 10 quốc gia'], shop: ['Diện mạo mới', 'Mua gì đó ở chợ'], scholar: ['Học giả', 'Qua bài thi thư viện'], photographer: ['Cười lên nào', 'Chụp tấm ảnh đầu tiên (P)'], captain: ['Thuyền trưởng', 'Đua phao của ẩn sĩ dưới 150 giây'], sumo: ['Vô địch sumo', 'Đẩy Rocky nước khác ra khỏi sàn'], pet: ['Cha mẹ đá', 'Ấp nở trứng tinh thể ở Lõi'], keepsake: ['Chiếc khăn', 'Nhặt khăn của Lyron trên mặt nước'], rescue: ['Người bạn trở về', 'Đưa Lyron về từ Vực Kraken'], hacrocky: ['Kẻ Thắng Bóng Mình', 'Hạ Hắc Rocky trong Khe Nứt Magnitude'], trongdong: ['Người Giữ Nhịp', 'Hạ Trống Đồng Thiên Lôi trong Khe Nứt Magnitude'], guong: ['Người Phá Vạn Kính', 'Đập tan Nữ Hoàng Pha Lê Vạn Kính trong Khe Nứt Magnitude'], hoden: ['Kẻ Lấp Hư Không', 'Dập tắt Hố Đen Địa Tâm của Lão Thợ Mỏ Hư Không trong Khe Nứt Magnitude'], dongho: ['Kẻ Sửa Thời Gian', 'Hạ Thần Bánh Răng Ngược Thời trong Khe Nứt Magnitude'], bakunawa: ['Kẻ Diệt Ngô Công', 'Hạ Ngô Công Lôi Thần trên mây M9'], lyron: ['Người Giữ Rocky', 'Cắt đứt khăn đỏ của Lyron, giành lại Rocky và phong ấn Lyron trên bão mây'] },
     endRescue: { title: 'Lyron đã về nhà', body: 'Bạn đã xuống Vực Kraken và trở lên cùng người bạn của mình.\nĐêm nay Làng Xuất Phát treo đèn. Cảm ơn bạn — và cảm ơn cộng đồng Seismic.' }
   }
 };
@@ -118,7 +130,10 @@ export function linesFor(m, zone, first, rng, lg) {
   if (/encrypt/i.test(m.k || '')) flavor.push(vi ? '<Encrypted>… bạn chỉ được biết tới đó thôi.' : "<Encrypted>… that's all you'll get out of me.");
   if (nat) flavor.push(vi ? `Gửi lời chào từ ${nat.name} ${nat.flag}!` : `Greetings from ${nat.name} ${nat.flag}!`);
   flavor.push(pick(zone.flavor ? zone.flavor[vi ? 'vi' : 'en'] : L.npcM1, rng));
-  if (first) return [pick(greet, rng), stats[0], stats.length > 1 ? stats[1] : pick(flavor, rng), pick(flavor, rng)];
+  if (first) {   /* plan-44 Q7: lần đầu gọn 1 trang (lời chào + số tranh); phần còn lại để sau nút 'Kể thêm' (openDialog more) */
+    const out = [pick(greet, rng) + ' ' + stats[0]], f1 = stats.length > 1 ? stats[1] : pick(flavor, rng), f2 = pick(flavor, rng);
+    out.more = f1 === f2 ? [f1] : [f1, f2]; return out;
+  }
   return [pick(greet.concat(stats, flavor), rng)];
 }
 
@@ -148,7 +163,7 @@ function setPortrait(m, guide, title) {
 }
 const PUNCT_PAUSE = { '.': 9, '!': 9, '?': 9, '…': 9, ',': 3, ';': 3, ':': 3, '\n': 6 };
 let voice = 500;
-export function openDialog({ m, guide, title, pages, onClose }) {
+export function openDialog({ m, guide, title, pages, onClose, more, share }) {
   const d = $('#dialog');
   d.querySelector('.dlg').classList.toggle('px', !!(dialogArt && dialogArt.px));
   voice = guide ? 330 : m && m.friend ? 260 : m ? 380 + (hashStr('v' + (m.id || m.n)) % 240) : 440;
@@ -162,12 +177,12 @@ export function openDialog({ m, guide, title, pages, onClose }) {
     $('#d-name').textContent = m.n; $('#d-nick').textContent = m.k && m.k !== m.n ? m.k : '';
     if (m.friend) { $('#d-chips').innerHTML = `<span class="chip elder">♥ ${esc(m.title ? m.title[lang()] : '')}</span>`; $('#d-badge').innerHTML = ''; $('#d-stats').innerHTML = ''; }   // the story friend: a title instead of roster stats
     else {
-      $('#d-chips').innerHTML = (m.ro || []).filter(r => r !== 'Verified').map(r => `<span class="chip">${nat && nat.key === r ? nat.flag + ' ' : ''}${esc(r)}</span>`).join('') + (m.elder ? '<span class="chip elder">☆ Elder</span>' : '');
+      $('#d-chips').innerHTML = (m.ro || []).filter(r => r !== 'Verified').map(r => `<span class="chip">${nat && nat.key === r ? nat.flag + ' ' + esc(nat.name) : esc(r)}</span>`).join('') + (m.elder ? '<span class="chip elder">☆ Elder</span>' : '');
       $('#d-badge').innerHTML = levelBadge(m.lv);
       $('#d-stats').innerHTML = `<span><b>${nf(m.i)}</b> ${L.imgs}</span><span><b>${nf(m.p)}</b> ${L.posts}</span><span><b>${nf(m.r)}</b> ${L.reacts}</span><span class="dim">${L.active} ${m.f} → ${m.l}</span>`;
     }
   }
-  dlg = { pages, i: 0, onClose, typing: null };
+  dlg = { pages, i: 0, onClose, typing: null, more: more && more.length ? more.slice() : null, share: share && m && !m.friend && !guide ? m : null };   /* plan-44 Q7 'Kể thêm' + X1 'Sao chép link' */
   d.hidden = false; showPage();
 }
 function showPage() {
@@ -183,7 +198,26 @@ function showPage() {
     if (++mouth % 5 === 0) drawPortrait(mouth % 10 < 5);
     if (k >= text.length) { clearInterval(dlg.typing); dlg.typing = null; drawPortrait(false); }
   }, 22);
-  $('#d-hint').textContent = (dlg.i < dlg.pages.length - 1 ? L.next : L.close) + '  ·  E';
+  $('#d-hint').textContent = (dlg.i < dlg.pages.length - 1 ? L.next : L.close) + '  ·  E' + (dlg.more && dlg.i >= dlg.pages.length - 1 ? '   ·   ' + L.moreKey : '');
+  renderActs();
+}
+/* ---- plan-44: nút trong khung thoại — 'Kể thêm' (trang cuối, khi còn chuyện) + 'Sao chép link' Tìm tôi của nghệ sĩ này ---- */
+function renderActs() {
+  let bar = document.getElementById('d-acts');
+  if (!bar) { const h = $('#d-hint'); if (!h) return; bar = document.createElement('div'); bar.id = 'd-acts'; h.parentNode.insertBefore(bar, h.nextSibling);
+    bar.addEventListener('pointerdown', e => { const k = e.target.closest('button'); if (!k) return; e.preventDefault(); e.stopPropagation(); if (k.dataset.a === 'more') dialogMore(); else if (k.dataset.a === 'copy' && dlg.share) copyFindLink(dlg.share); }); }
+  const last = dlg.i >= dlg.pages.length - 1, html = (dlg.more && last ? `<button type="button" class="btn dact" data-a="more">${esc(L.tellMore)}</button>` : '') + (dlg.share ? `<button type="button" class="btn dact" data-a="copy">${esc(L.copyLink)}</button>` : '');
+  if (bar.innerHTML !== html) bar.innerHTML = html; bar.hidden = !html;
+}
+export function dialogMore() { if (!dlg.more || $('#dialog').hidden) return false; if (dlg.typing) { clearInterval(dlg.typing); dlg.typing = null; } dlg.pages = dlg.pages.concat(dlg.more); dlg.more = null; dlg.i++; showPage(); return true; }
+/* giữ E: lật nhanh tới trang cuối (không tự đóng) */
+export function dialogFast() { if ($('#dialog').hidden) return; if (dlg.typing) { clearInterval(dlg.typing); dlg.typing = null; $('#d-text').textContent = dlg.pages[dlg.i]; drawPortrait(false); return; } if (dlg.i < dlg.pages.length - 1) { dlg.i++; showPage(); } }
+export function findLink(m) { return location.origin + location.pathname + '?find=' + encodeURIComponent(m.n) + '&lang=' + lang(); }
+export function copyFindLink(m) {
+  const url = findLink(m), ok = () => toast(L.linkCopied), bad = () => toast(L.linkFail + ' ' + url, true);
+  const fallback = () => { try { const t = document.createElement('textarea'); t.value = url; t.style.cssText = 'position:fixed;left:-999px;top:0'; document.body.appendChild(t); t.select(); const r = document.execCommand('copy'); t.remove(); r ? ok() : bad(); } catch (e) { bad(); } };
+  window.__lastLink = url;
+  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, fallback); else fallback(); } catch (e) { fallback(); }
 }
 export function dialogAdvance() {
   if (dlg.typing) { clearInterval(dlg.typing); dlg.typing = null; $('#d-text').textContent = dlg.pages[dlg.i]; drawPortrait(false); return; }
@@ -217,9 +251,11 @@ export function drawBubble(ug, n, sx, sy, fs) {
 }
 
 // ---- hall of magnitude ----
-export function openHall(lv) {
+export function openHall(lv, opt = {}) {   /* plan-44 R1: opt = { save, zoneName(lv), canGo(m) → true | lv-cần-huy-hiệu, onGuide(m) } → bấm tên mở thẻ nghệ sĩ */
   const list = membersOfLevel(lv), p = $('#hall');
-  $('#h-title').innerHTML = `${L.hall} ${levelBadge(lv)}`; $('#h-desc').textContent = L.hallDesc(nf(list.length), lv);
+  $('#h-title').innerHTML = `${L.hall} ${levelBadge(lv)}`; $('#h-desc').textContent = L.hallDesc(nf(list.length), lv) + (opt.onGuide ? ' · ' + L.hallHint : '');
+  hallOpt = opt; hideCard();
+  $('#h-list').onclick = e => { const r = e.target.closest('.hrow[data-id]'); if (!r || !hallOpt.onGuide) return; const m = byId.get(r.dataset.id); if (m) showCard(m); };
   const q = $('#h-q'); q.value = ''; q.placeholder = L.search;
   const render = () => {
     const s = q.value.trim().toLowerCase();
@@ -228,15 +264,29 @@ export function openHall(lv) {
   };
   q.oninput = render; render(); p.hidden = false; setTimeout(() => q.focus(), 50);
 }
+let hallOpt = {};
+function hideCard() { const c = document.getElementById('h-card'); if (c) c.hidden = true; }
+function showCard(m) {   /* plan-44 R1: thẻ nghệ sĩ (đã gặp chưa, ở vùng nào) + Dẫn tôi tới (chỉ vùng đã mở) + Sao chép link */
+  let c = document.getElementById('h-card'); const pn = $('#hall .panel') || $('#hall');
+  if (!c) { c = document.createElement('div'); c.id = 'h-card'; pn.appendChild(c); c.addEventListener('click', e => { const k = e.target.closest('button'); if (!k) return; const mm = byId.get(c.dataset.id); if (k.dataset.a === 'go' && mm && hallOpt.onGuide) hallOpt.onGuide(mm); else if (k.dataset.a === 'copy' && mm) copyFindLink(mm); else if (k.dataset.a === 'x') hideCard(); }); }
+  const sv = hallOpt.save || {}, met = (sv.met || []).includes(m.id), nat = nationOf(m), can = hallOpt.canGo ? hallOpt.canGo(m) : true, zn = hallOpt.zoneName ? hallOpt.zoneName(m.lv) : '';
+  c.dataset.id = m.id;
+  c.innerHTML = `<div class="hc-top">${avatarHTML(m)}<div><b>${esc(m.n)}</b> <span class="dim">${esc(m.k && m.k !== m.n ? m.k : '')}</span><div>${levelBadge(m.lv)} ${nat ? nat.flag + ' ' + esc(nat.name) : ''}${isLeader(m) ? ' · ★ Leader' : ''}</div></div></div>`
+    + `<div class="hc-st"><span><b>${nf(m.i)}</b> ${L.imgs}</span> · <span><b>${nf(m.r)}</b> ${L.reacts}</span></div>`
+    + `<div class="hc-st">${met ? `<b class="good">${L.cardMet}</b>` : `<span class="dim">${L.cardNotMet}</span>`} · ${esc(L.cardLand(zn))}</div>`
+    + (can === true ? '' : `<div class="hc-st badt">${esc(L.cardLocked(can))}</div>`)
+    + `<div class="hc-btns"><button type="button" class="btn primary" data-a="go"${can === true ? '' : ' disabled'}>${esc(L.cardGo)}</button><button type="button" class="btn" data-a="copy">${esc(L.copyLink)}</button><button type="button" class="btn" data-a="x">${esc(L.close)}</button></div>`;
+  c.hidden = false;
+}
 function memberRow(m) {
   const nat = nationOf(m);
-  return `<div class="hrow">${avatarHTML(m, 'av sm')}<div class="hwho"><b>${esc(m.n)}</b> <span class="dim">${esc(m.k && m.k !== m.n ? m.k : '')}</span><div class="dim">${nat ? nat.flag + ' ' : ''}${isLeader(m) ? '★ Leader ' : ''}${isBooster(m) ? '⚡ Booster' : ''}</div></div><div class="hnum"><b>${nf(m.i)}</b><small>${L.imgs}</small></div></div>`;
+  return `<div class="hrow" data-id="${esc(m.id)}">${avatarHTML(m, 'av sm')}<div class="hwho"><b>${esc(m.n)}</b> <span class="dim">${esc(m.k && m.k !== m.n ? m.k : '')}</span><div class="dim">${nat ? nat.flag + ' ' : ''}${isLeader(m) ? '★ Leader ' : ''}${isBooster(m) ? '⚡ Booster' : ''}</div></div><div class="hnum"><b>${nf(m.i)}</b><small>${L.imgs}</small></div></div>`;
 }
-export function closeHall() { $('#hall').hidden = true; }
+export function closeHall() { hideCard(); $('#hall').hidden = true; }
 
 // ---- world map (spiral) ----
 const PIN_IMG = typeof Image !== 'undefined' ? Object.assign(new Image(), { src: 'assets/px/zones/sky/scout/mk_pin.png' }) : {};   /* plan-32 A: ghim ống nhòm (PixelLab) */
-export function openMap(zoneList, save, currentId, onTravel, inSky = false) {
+export function openMap(zoneList, save, currentId, onTravel, inSky = false, zoneView = null) {   /* plan-44 D4: zoneView = { draw(canvas, legendEl) } → thẻ 'Vùng này' */
   const lg = lang(), p = $('#map'); $('#m-title').textContent = L.map; $('#m-hint').textContent = L.mapHint; $('#m-close').textContent = L.close;
   const c = $('#m-cv'), g = c.getContext('2d'), W = c.width, H = c.height;
   const nodes = zoneList.map((z, i) => { const k = i - 1, a = -Math.PI / 2 + k * 0.95, r = 150 - k * 13.5; const prev = zoneList[i - 1]; /* k = -1 puts the sea on the outer rim, before the village */ return { z, i, x: W / 2 + r * Math.cos(a), y: H / 2 + r * Math.sin(a), unlocked: !prev || prev.lv < 1 || save.badges.includes(prev.lv) }; });
@@ -257,7 +307,20 @@ export function openMap(zoneList, save, currentId, onTravel, inSky = false) {
   c.onclick = e => { const r = c.getBoundingClientRect(); go(hit((e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height)); };
   $('#m-list').innerHTML = nodes.map(n => `<div class="mrow${n.unlocked ? '' : ' lk'}${n.z.id === currentId ? ' cur' : ''}" data-i="${n.i}"><span class="lvb" style="background:${n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'};color:${n.unlocked ? '#140a02' : '#6f6585'}">${n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv}</span><span>${esc(n.z.name[lg])}${save.sys && save.sys.sky && save.sys.sky.pin && save.sys.sky.pin.zone === n.z.id ? ' <img src="assets/px/zones/sky/scout/mk_pin.png" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:middle"> ' + esc(save.sys.sky.pin.label || '') : ''}</span>${save.badges.includes(n.z.lv) ? '<span class="star">★</span>' : ''}</div>`).join('');
   $('#m-list').onclick = e => { const r = e.target.closest('.mrow'); if (r) go(nodes[+r.dataset.i]); };
+  mapTabs(zoneView);
   p.hidden = false;
+}
+/* ---- plan-44 D4: thẻ Thế giới | Vùng này trong bảng bản đồ (nhớ thẻ đã chọn theo máy) ---- */
+let MAPTAB = 'zone'; try { MAPTAB = localStorage.getItem('seismic.mapTab') || 'zone'; } catch (e) { }
+function mapTabs(zv) {
+  const wrap = $('#map .mapwrap'); if (!wrap) return;
+  let tabs = document.getElementById('m-tabs'), zw = document.getElementById('m-zone');
+  if (!tabs) { tabs = document.createElement('div'); tabs.id = 'm-tabs'; wrap.parentNode.insertBefore(tabs, wrap); tabs.addEventListener('click', e => { const k = e.target.closest('button'); if (!k) return; MAPTAB = k.dataset.t; try { localStorage.setItem('seismic.mapTab', MAPTAB); } catch (er) { } mapTabs(tabs.__zv); }); }
+  if (!zw) { zw = document.createElement('div'); zw.id = 'm-zone'; zw.innerHTML = '<canvas id="m-zcv" width="480" height="360"></canvas><div id="m-zleg"></div>'; wrap.parentNode.insertBefore(zw, wrap.nextSibling); }
+  tabs.__zv = zv; const t = zv ? MAPTAB : 'world';
+  tabs.innerHTML = zv ? `<button type="button" class="btn${t === 'zone' ? ' primary' : ''}" data-t="zone">${esc(L.mapZone)}</button><button type="button" class="btn${t === 'world' ? ' primary' : ''}" data-t="world">${esc(L.mapWorld)}</button>` : ''; tabs.hidden = !zv;
+  wrap.hidden = t === 'zone'; zw.hidden = t !== 'zone'; $('#m-hint').textContent = t === 'zone' ? L.zHint : L.mapHint; $('#m-title').textContent = t === 'zone' && zv && zv.name ? zv.name : L.map;
+  if (t === 'zone' && zv) { try { zv.draw($('#m-zcv'), $('#m-zleg')); } catch (e) { console.error('zone map', e); } }
 }
 export function closeMap() { $('#map').hidden = true; }
 
@@ -349,14 +412,17 @@ export function closeEnd() { $('#end').hidden = true; }
 
 // ---- hud / toast ----
 let lastHud = '';
-export function updateHud({ zone, shards, metInZone, totalInZone, quest, questN, leaders, tasks, done, target, story }) {
-  const key = `${zone.id}|${shards}|${metInZone}|${quest}|${questN}|${done}|${tasks}|${target}|${story}|${L === STR.vi}`; if (key === lastHud) return; lastHud = key;
+export function updateHud({ zone, shards, metInZone, totalInZone, quest, questN, leaders, tasks, done, target, story, next }) {
+  const nk = next ? next.main + '|' + (next.sub || '') : '';
+  const key = `${zone.id}|${shards}|${metInZone}|${quest}|${questN}|${done}|${tasks}|${target}|${story}|${nk}|${L === STR.vi}`; if (key === lastHud) return; lastHud = key;
+  { let el = document.getElementById('h-next'); const z = $('#h-zone'); if (!el && z) { el = document.createElement('div'); el.id = 'h-next'; z.insertAdjacentElement('afterend', el); }   /* plan-44 D3: Việc kế tiếp — 1 dòng nhỏ dưới tên vùng */
+    if (el) { el.hidden = !next; el.innerHTML = next ? `<span class="nx-k">▸</span> ${pxText(next.main)}${next.sub ? ` <span class="nx-sub">· ${pxText(next.sub)}</span>` : ''}` : ''; el.title = next ? next.main + (next.sub ? ' · ' + next.sub : '') : ''; } }
   $('#h-zone').textContent = zone.name[lang()]; $('#h-zone').style.background = LEVEL_COLORS[zone.lv];
   $('#h-shards').textContent = shards; $('#h-met').textContent = `${metInZone}/${totalInZone}`;
   $('#h-quest').innerHTML = pxText(quest ? (done ? (zone.lv === 9 ? L.coreOpen : L.questDone) : (leaders ? L.questLeaders(questN, quest) : L.questMeet(questN, quest))) : '');   /* plan-22: emoji → icon pixel */
   $('#h-task').innerHTML = pxText(done ? '' : tasks || ''); $('#h-target').innerHTML = pxText(target || ''); $('#h-story').innerHTML = pxText(story || '');
 }
-export function showPrompt(text) { const p = $('#prompt'); if (!text) { p.hidden = true; return; } p.hidden = false; p.textContent = text; }
+export function showPrompt(text) { const p = $('#prompt'); if (!text) { if (!p.hidden) p.hidden = true; return; } if (p.hidden) p.hidden = false; if (p.textContent !== text) p.textContent = text; }   /* plan-42 A6: gọi mỗi khung → chỉ ghi DOM khi đổi */
 let toastT = null;
 export function toast(text, big = false) {
   if (hudNotify(text, big)) return;

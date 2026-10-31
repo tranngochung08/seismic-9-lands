@@ -24,12 +24,16 @@ function scaleLogical(src, w, h) {
 }
 function flipC(src, fx, fy) { const c = mkCanvas(src.width, src.height), g = c.getContext('2d'); g.translate(fx ? src.width : 0, fy ? src.height : 0); g.scale(fx ? -1 : 1, fy ? -1 : 1); g.drawImage(src, 0, 0, src.width, src.height); c.__hi = src.__hi; return c; }
 // pixel giống ô thuần lower (sai khác nhỏ) → trong suốt; giữ __hi
-function maskLower(tile, lower) {
-  const w = tile.width, h = tile.height, c = mkCanvas(w, h), g = c.getContext('2d'); g.drawImage(tile, 0, 0, w, h);
-  const a = g.getImageData(0, 0, w, h), b = lower.getContext('2d').getImageData(0, 0, w, h), da = a.data, db = b.data;
+/* plan-42 A3: đọc điểm ảnh qua 1 canvas nháp willReadFrequently (đọc trên CPU); điểm ảnh ô nền 'lower' đọc 1 lần cho cả bộ (db) */
+let RDC = null;
+function readPx(img, w, h) { if (!RDC || RDC.width < w || RDC.height < h) { RDC = mkCanvas(Math.max(w, RDC ? RDC.width : 0), Math.max(h, RDC ? RDC.height : 0)); RDC.__g = RDC.getContext('2d', { willReadFrequently: true }); } const q = RDC.__g; q.clearRect(0, 0, w, h); q.drawImage(img.__src || img, 0, 0, w, h); return q.getImageData(0, 0, w, h); }
+function maskLower(tile, lower, db) {
+  const w = tile.width, h = tile.height, c = mkCanvas(w, h), g = c.getContext('2d');
+  const a = readPx(tile, w, h), da = a.data; db = db || readPx(lower, w, h).data;
   for (let i = 0; i < da.length; i += 4) { if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) < 6) da[i + 3] = 0; } /* ngưỡng chặt: chỉ phần chép y nguyên texture nền */
   g.putImageData(a, 0, 0); c.__hi = tile.__hi; return c;
 }
+const MASKED = {}, FLIPS = {};   /* plan-42 A3: cùng 1 bộ Wang dùng ở nhiều gói (wang/f3 ở 14 gói) → làm trong suốt + bản lật 1 lần theo thư mục (kết quả y hệt) */
 const h2 = (a, b) => (((a * 73856093) ^ (b * 19349663) ^ 0x9e3779b9) >>> 0);
 
 export async function initArt(q) {
@@ -73,7 +77,7 @@ function loadWangDir(dir) {   /* tải 16 ô Wang của 1 thư mục, cache theo
     const meta = await fetch(BASE + dir + '/meta.json').then(r => r.json()); const byKey = {};
     await Promise.all(meta.tiles.map(async t => {
       const c = t.corners, key = [c.NW, c.NE, c.SW, c.SE].map(v => v === 'upper' ? 1 : 0).join('');
-      byKey[key] = toCanvas(await load(BASE + dir + '/' + String(t.i).padStart(2, '0') + '.png'));
+      const im = await load(BASE + dir + '/' + String(t.i).padStart(2, '0') + '.png'); byKey[key] = toCanvas(im); byKey[key].__src = im;   /* plan-42 A3: __src = ảnh gốc → maskLower đọc điểm ảnh từ ảnh, không kéo canvas GPU về */
     }));
     return byKey;
   })();
@@ -90,8 +94,9 @@ async function loadPack(file, id) {
   for (const L of j.wang || []) {   // { dir, upper }
     const byKey = { ...await loadWangDir(L.dir) };   /* bộ dùng chung (vd. wang/f2 đất cày ở 12 gói) chỉ tải 1 lần */
     // lớp thứ 2 trở đi: làm trong suốt phần "lower" (so với ô thuần 0000) để không đè mất lớp trước (vd. đường đè cỏ đậm)
-    if (p.layers.length && byKey['0000']) for (const k of Object.keys(byKey)) if (k !== '0000') byKey[k] = maskLower(byKey[k], byKey['0000']);
-    for (const k of ['0000', '1111']) if (byKey[k]) byKey[k + 'v'] = [byKey[k], flipC(byKey[k], 1, 0), flipC(byKey[k], 0, 1), flipC(byKey[k], 1, 1)]; // ô thuần: 4 bản lật chống lặp
+    const msk = !!(p.layers.length && byKey['0000']);
+    if (msk) Object.assign(byKey, MASKED[L.dir] ||= (() => { const o = {}, l0 = byKey['0000'], db = readPx(l0, l0.width, l0.height).data; for (const k of Object.keys(byKey)) if (k !== '0000') o[k] = maskLower(byKey[k], l0, db); return o; })());
+    for (const k of ['0000', '1111']) if (byKey[k]) byKey[k + 'v'] = (FLIPS[L.dir + '|' + k + '|' + msk] ||= [byKey[k], flipC(byKey[k], 1, 0), flipC(byKey[k], 0, 1), flipC(byKey[k], 1, 1)]).slice(); // ô thuần: 4 bản lật chống lặp
     for (const [k, files] of Object.entries(L.variants || {})) {   // biến thể ô thuần sinh thêm (px-variants.py) + bản lật
       for (const f of files) { const v = toCanvas(await load(BASE + f)); (byKey[k + 'v'] ||= [byKey[k]]).push(v, flipC(v, 1, 0)); }
     }
@@ -107,12 +112,12 @@ async function loadPack(file, id) {
   // clip lặp cho vật thể (lửa, đèn, đài phun…): { name: [4 file] } → O[name].frames (main.js chọn khung theo thời gian)
   p.loops = {};
   await Promise.all(Object.entries(j.loops || {}).map(async ([n, files]) => { p.loops[n] = await Promise.all(files.map(f => load(BASE + f).then(toCanvas))); }));
-  p.chars = await Promise.all(((j.chars && j.chars.base) || []).map(async c => ({ ...c, img: toCanvas(await load(BASE + c.file)) })));
+  p.chars = await Promise.all(((j.chars && j.chars.base) || []).map(async c => { const im = await load(BASE + c.file), cv = toCanvas(im); cv.__src = im; return { ...c, img: cv }; }));   /* plan-42 A4: __src cho recolorShirt */
   // clip động tác theo thân: chars.actions = { c0: { chop: {file, n}, … } } → gắn vào phần tử chars có file tương ứng
   for (const [body, clips] of Object.entries((j.chars && j.chars.actions) || {})) {
     const base = p.chars.find(c => c.file.endsWith(`/${body}.png`) || c.file === `chars/${body}.png`); if (!base) continue;
     base.actions = {};
-    for (const [n, a] of Object.entries(clips)) base.actions[n] = { img: toCanvas(await load(BASE + a.file)), n: a.n, ch: a.ch || 20, cw: a.cw || 16, fps: a.fps, impact: a.impact };
+    for (const [n, a] of Object.entries(clips)) { const im = await load(BASE + a.file), cv = toCanvas(im); cv.__src = im; base.actions[n] = { img: cv, n: a.n, ch: a.ch || 20, cw: a.cw || 16, fps: a.fps, impact: a.impact }; }
   }
   // hàng rào nối liền: { fence: { types:['fence_h','fence_v'], post:'file', rail:'#hex', railDark:'#hex', railY:[12,20], railW:3 } }
   p.connect = {};
@@ -149,7 +154,8 @@ export function enterZone(id) {
   { const vp = ART.packs.village; WANG.fish = vp && vp.images && vp.images.fishshadow_0 && vp.images.fishshadow_1 ? [vp.images.fishshadow_0, vp.images.fishshadow_1] : null; }   /* plan-14: bóng cá */
   WANG.cls = {}; if (wp) for (const [name, cls] of Object.entries(wp.classes)) WANG.cls[T[name]] = cls;
   WANG.base = (wp && wp.classes.__base) || 'grass';
-  charCache.clear();
+  { const i = CC_ZONES.indexOf(id); if (i >= 0) CC_ZONES.splice(i, 1); CC_ZONES.push(id);   /* plan-42 A4: trước đây xoá sạch mỗi lần vào vùng → tô áo lại cả vùng (getImageData) */
+    for (let old; (old = CC_ZONES.filter(z => z !== 'village')).length > 3;) { old = old[0]; CC_ZONES.splice(CC_ZONES.indexOf(old), 1); for (const k of [...charCache.keys()]) if (k.startsWith(old + '|')) charCache.delete(k); } }   /* giữ Làng (người chơi) + 3 vùng gần nhất */
   // sinh vật: thay nội dung mảng đã đăng ký tại chỗ
   for (const [kind, reg] of Object.entries(HOOK.creatures)) {
     let src = chain.map(p => p.creatures && p.creatures[kind]).find(Boolean) || reg.fb;
@@ -228,11 +234,13 @@ let shimmed = false;
 function installShim() {
   if (shimmed) return; shimmed = true;
   const raw = CanvasRenderingContext2D.prototype.drawImage;
-  CanvasRenderingContext2D.prototype.drawImage = function (img, ...a) {
-    const k = img && img.__hi; if (!k) return raw.call(this, img, ...a);
-    if (a.length === 2) return raw.call(this, img, a[0], a[1], (img.__w || img.width) / k, (img.__h || img.height) / k);
-    if (a.length === 4) return raw.call(this, img, a[0], a[1], a[2], a[3]);
-    return raw.call(this, img, a[0] * k, a[1] * k, a[2] * k, a[3] * k, a[4], a[5], a[6], a[7]);
+  /* plan-37: không dùng rest-args (...a) — vòng vẽ gọi hàng nghìn lần / khung, mỗi lần cấp phát 1 mảng */
+  CanvasRenderingContext2D.prototype.drawImage = function (img, a0, a1, a2, a3, a4, a5, a6, a7) {
+    const n = arguments.length, k = img && img.__hi;
+    if (!k) return n === 3 ? raw.call(this, img, a0, a1) : n === 5 ? raw.call(this, img, a0, a1, a2, a3) : raw.call(this, img, a0, a1, a2, a3, a4, a5, a6, a7);
+    if (n === 3) return raw.call(this, img, a0, a1, (img.__w || img.width) / k, (img.__h || img.height) / k);
+    if (n === 5) return raw.call(this, img, a0, a1, a2, a3);
+    return raw.call(this, img, a0 * k, a1 * k, a2 * k, a3 * k, a4, a5, a6, a7);
   };
 }
 
@@ -240,6 +248,7 @@ function installShim() {
 // Ô (tx,ty) vẽ 1 tile Wang neo (sx-8, sy-8): 4 góc = lớp đất của 4 ô (tx-1,ty-1) (tx,ty-1) (tx-1,ty) (tx,ty).
 // Lớp theo thứ tự gói: lớp sau đè lớp trước ở ô có góc thuộc lớp đó ("lower" của mọi lớp = đất nền).
 const WANG = { layers: [], cls: {}, decor: {}, base: 'grass', pending: [], fish: null, fishQ: [], foamQ: [] };
+ART.wang = WANG;   /* plan-68: water.js đọc lớp Wang để dựng mặt nạ nước đúng điểm ảnh */
 const isWater = c => c === 'water' || c === 'deep';
 /* 2026-10-10 anh: ô đất cày / đất đào NỐI LIỀN nhau, viền không đen đậm.
    Ghép từ ảnh PixelLab anh chọn (soil_sq): lấy phần đất bên trong làm vân, viền nâu sẫm vừa phải; cạnh nào có ô đất kề thì trải đất ra sát mép, bỏ viền.
@@ -327,6 +336,8 @@ ART.pondTile = (mask, src) => {
   }
   g.putImageData(out, 0, 0); return (POND.cache[mask] = c);
 };
+ART.clsAt = (m, x, y) => clsAt(m, x, y);   /* plan-68 */
+ART.blobCls = mask => blobTile(mask, () => [0, 0, 0], [0, 0, 0], 1).cls;   /* plan-68: hình ô ao (cùng hàm khối bo góc) cho mặt nạ nước */
 ART.soilTile = (wet, mask, wmask = 0) => {   /* wmask: ô kề cũng đã tưới (cùng bit với mask) — để bo góc vết ướt */
   const key = wet ? 'w' + mask + '_' + wmask : 'd' + mask; if (SOIL.cache[key]) return SOIL.cache[key];
   const tx = soilTex(wet); if (!tx) return null;
@@ -378,6 +389,23 @@ ART.tilledWet = (g, m, tx, ty, sx, sy) => {
   for (const [cx, cy, ox, oy, dx, dy] of q) { const img = set[key(cx, cy)]; if (img) g.drawImage(img, ox, oy, 8, 8, sx + dx, sy + dy, 8, 8); }
   return true;
 };
+/* plan-37: tách phần TĨNH (lớp Wang + decor) khỏi phần ĐỘNG (gợn nước sâu, bọt mép nước, bóng cá) để đệm nền theo khối */
+function groundStatic(g, m, tx, ty, sx, sy, c) {
+  let drawn = false;
+  for (const L of WANG.layers) {
+    const key = (c[0] === L.upper ? '1' : '0') + (c[1] === L.upper ? '1' : '0') + (c[2] === L.upper ? '1' : '0') + (c[3] === L.upper ? '1' : '0');
+    if (!drawn || key !== '0000') { let img = L.byKey[key]; const v = L.byKey[key + 'v']; if (v) img = v[h2(tx, ty) % v.length]; if (img) { g.drawImage(img, sx - 8, sy - 8); drawn = true; } }
+  }
+  const dec = WANG.decor[tileName(m.ground[ty * m.w + tx])];
+  if (dec && drawn) for (let i = 0; i < dec.length; i++) {
+    const d = dec[i], h = h2(tx * 7 + i, ty * 13 + i);
+    if ((h % 1000) / 1000 < d.p) for (let k = 0; k < d.n; k++) { const hh = h2(h, k); WANG.pending.push(d.img, sx + (hh % 11) - 2, sy + ((hh >>> 8) % 11) - 4); }
+  }
+  return drawn;
+}
+const cornersOf = (m, tx, ty) => [clsAt(m, tx - 1, ty - 1), clsAt(m, tx, ty - 1), clsAt(m, tx - 1, ty), clsAt(m, tx, ty)];
+/* ô có phần động? (có góc nước → gợn / bọt / bóng cá) */
+const isDynCell = c => isWater(c[0]) || isWater(c[1]) || isWater(c[2]) || isWater(c[3]);
 function groundCell(g, m, tx, ty, sx, sy) {
   if (!WANG.layers.length) return false;
   const c = [clsAt(m, tx - 1, ty - 1), clsAt(m, tx, ty - 1), clsAt(m, tx - 1, ty), clsAt(m, tx, ty)];
@@ -386,7 +414,7 @@ function groundCell(g, m, tx, ty, sx, sy) {
     const key = c.map(v => v === L.upper ? 1 : 0).join('');
     if (!drawn || key !== '0000') { let img = L.byKey[key]; const v = L.byKey[key + 'v']; if (v) img = v[h2(tx, ty) % v.length]; if (img) { g.drawImage(img, sx - 8, sy - 8); drawn = true; } }
   }
-  if (drawn && c[3] === 'water' && c[0] === 'water' && c[1] === 'water' && c[2] === 'water') {   // nước sâu: 2 gợn sáng trôi chậm (không nhấp nháy)
+  if (!ART.waterNew && drawn && c[3] === 'water' && c[0] === 'water' && c[1] === 'water' && c[2] === 'water') {   /* plan-68: nước mới vẽ ở water.js */   // nước sâu: 2 gợn sáng trôi chậm (không nhấp nháy)
     const t = performance.now() / 1000, h = h2(tx, ty), ph = ((t * 0.35 + (h % 100) / 100) % 1);
     g.fillStyle = 'rgba(255,255,255,0.28)'; g.fillRect(sx + Math.round(2 + ph * 10), sy + (h >>> 4) % 12 + 2, 3, 1);
     g.fillRect(sx + Math.round(12 - ph * 8), sy + ((h >>> 9) % 12) + 3, 2, 1);
@@ -398,7 +426,7 @@ function groundCell(g, m, tx, ty, sx, sy) {
     if ((h % 1000) / 1000 < d.p) for (let k = 0; k < d.n; k++) { const hh = h2(h, k); WANG.pending.push(d.img, sx + (hh % 11) - 2, sy + ((hh >>> 8) % 11) - 4); }
   }
   /* plan-14 (học Stardew): bọt trắng động dọc mép nước–đất; bóng cá bơi lững lờ trong ô nước nông (ô có 8 hàng xóm đều nước) */
-  if (drawn) {
+  if (drawn && !ART.waterNew) {   /* plan-68 */
     const wc = c.map(isWater), nw = wc[0] + wc[1] + wc[2] + wc[3];
     if (nw > 0 && nw < 4) {
       const t = performance.now() / 1000, h = h2(tx * 11, ty * 17), segs = [];
@@ -423,16 +451,112 @@ function groundCell(g, m, tx, ty, sx, sy) {
   }
   return drawn;
 }
+/* plan-42 A5: groundDyn không cấp phát (trước: c.map, mảng segs, mảng 4 số / đoạn, cornersOf mỗi ô ≈ 70 KB rác / khung ở Biển); màu gợn đặt 1 lần / khung (cùng chuỗi màu, cùng thứ tự lệnh vẽ) */
+const SG_H = [0, 8, 16, 8], SG_V = [8, 0, 8, 16], SG_A = [0, 8, 8, 0], SG_B = [8, 0, 16, 8], SG_C = [8, 16, 16, 8], SG_D = [0, 8, 8, 16], SEGS = [], C4 = ['', '', '', ''];
+let dynFS = -1;
+function groundDyn(g, m, tx, ty, sx, sy, c) {
+  if (ART.waterNew) return;   /* plan-68: gợn / bọt / bóng cá vẽ code ở water.js */
+  if (c[3] === 'water' && c[0] === 'water' && c[1] === 'water' && c[2] === 'water') {
+    const t = performance.now() / 1000, h = h2(tx, ty), ph = ((t * 0.35 + (h % 100) / 100) % 1);
+    if (dynFS !== gcFrame) { dynFS = gcFrame; g.fillStyle = 'rgba(255,255,255,0.28)'; } g.fillRect(sx + Math.round(2 + ph * 10), sy + (h >>> 4) % 12 + 2, 3, 1);
+    g.fillRect(sx + Math.round(12 - ph * 8), sy + ((h >>> 9) % 12) + 3, 2, 1);
+  }
+  const w0 = isWater(c[0]), w1 = isWater(c[1]), w2 = isWater(c[2]), w3 = isWater(c[3]), nw = w0 + w1 + w2 + w3;
+  if (nw > 0 && nw < 4) {
+    const t = performance.now() / 1000, h = h2(tx * 11, ty * 17), segs = SEGS; segs.length = 0;
+    const T = w0 && w1, B = w2 && w3, Lf = w0 && w2, R = w1 && w3;
+    if ((T && !w2 && !w3) || (B && !w0 && !w1)) segs.push(SG_H);
+    else if ((Lf && !w1 && !w3) || (R && !w0 && !w2)) segs.push(SG_V);
+    else { if (w0 !== w1 || w0 !== w2) { if (w0 !== w1 && w0 !== w2) segs.push(SG_A); if (w1 !== w0 && w1 !== w3) segs.push(SG_B); }
+      if (w3 !== w1 && w3 !== w2) segs.push(SG_C); if (w2 !== w0 && w2 !== w3) segs.push(SG_D); }
+    for (let si = 0; si < segs.length; si++) { const sg = segs[si], x0 = sg[0], y0 = sg[1], x1 = sg[2], y1 = sg[3]; for (let k = 0; k <= 4; k++) {
+      const f = k / 4, a = 0.35 + 0.45 * (0.5 + 0.5 * Math.sin(t * 2.2 + (h % 7) + k * 1.3)); if (a < 0.5) continue;
+      WANG.foamQ.push(sx - 8 + Math.round(x0 + (x1 - x0) * f), sy - 8 + Math.round(y0 + (y1 - y0) * f), a);
+    } }
+  }
+  if (WANG.fish && nw === 4 && c[3] === 'water') {
+    const h = h2(tx * 3 + 1, ty * 5 + 2);
+    if (h % 100 < 4 && isWater(clsAt(m, tx - 1, ty)) && isWater(clsAt(m, tx + 1, ty)) && isWater(clsAt(m, tx, ty - 1)) && isWater(clsAt(m, tx, ty + 1)) && isWater(clsAt(m, tx + 2, ty)) && isWater(clsAt(m, tx - 2, ty))) {
+      const t = performance.now() / 1000, dir = h & 8 ? 1 : -1, sp = 4 + (h >>> 5) % 5, ph = ((h >>> 9) % 1000) / 1000;
+      const x = sx + (((t * sp * dir + ph * 40) % 40) + 40) % 40 - 12, y = sy + (h >>> 12) % 10 + 1, fr = Math.floor(t * 3 + ph * 4) % 2;
+      WANG.fishQ.push(WANG.fish[fr], x, y, dir);
+    }
+  }
+}
+/* ---------- plan-37: ĐỆM NỀN THEO KHỐI 16×16 ô ----------
+   Mỗi khối vẽ 1 lần vào canvas 2× (lớp Wang + decor); mỗi khung chỉ dán khối + vẽ phần động của các ô có nước.
+   Khối tự dựng lại khi chữ ký đổi (ô nền trong khối ±3 ô, ô đất vuông) hoặc đổi bản đồ / gói Wang. Ô ngoài bản đồ lặp ô mép như vòng ô cũ.
+   fb(tx, ty, sx, sy): vẽ ô không có Wang (nền vẽ code) — khối có ô như vậy thì vẽ từng ô như cũ. */
+const GCH = 16, GCH_MAX = 24;
+const GC = { map: null, layers: null, chunks: new Map() };
+function chunkSig(m, X0, Y0) {
+  let h = 2166136261 >>> 0; const sq = ART.sqSoil && m.sqSoil && m.sqSoil.size ? m.sqSoil : null, W = m.w, H = m.h, gr = m.ground;
+  for (let y = Y0 - 3; y < Y0 + GCH + 3; y++) {
+    const yy = y < 0 ? 0 : y >= H ? H - 1 : y;
+    for (let x = X0 - 3; x < X0 + GCH + 3; x++) { const xx = x < 0 ? 0 : x >= W ? W - 1 : x, i = yy * W + xx; h = Math.imul(h ^ (gr[i] + (sq && sq.has(i) ? 977 : 0)), 16777619); }
+  }
+  return h >>> 0;
+}
+function buildChunk(m, X0, Y0, old) {
+  const hi = ART.hi, S = GCH * 16, c = old ? old.c : mkCanvas(S * hi, S * hi), g = c.getContext('2d');
+  c.__hi = 0; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.setTransform(hi, 0, 0, hi, 0, 0); g.imageSmoothingEnabled = false;
+  const cl = (v, n) => v < 0 ? 0 : v >= n ? n - 1 : v, dyn = []; let legacy = false;
+  const pend = WANG.pending.splice(0);   /* giữ decor của khung đang vẽ (nếu có) */
+  for (let ty0 = Y0 - 1; ty0 <= Y0 + GCH; ty0++) for (let tx0 = X0 - 2; tx0 <= X0 + GCH; tx0++) {
+    const tx = cl(tx0, m.w), ty = cl(ty0, m.h), c4 = cornersOf(m, tx, ty);
+    let drawn = WANG.layers.length ? groundStatic(g, m, tx, ty, (tx0 - X0) * 16, (ty0 - Y0) * 16, c4) : false, fbStatic = false;
+    const own = tx0 >= X0 && tx0 < X0 + GCH && ty0 >= Y0 && ty0 < Y0 + GCH;
+    if (!drawn && own) { const tt = m.ground[ty * m.w + tx], fr = tiles[tt]; if (!fr) fbStatic = true; else if (fr.pick || (fr.length === 1 && tt !== T.WATER && tt !== T.DEEP)) { g.drawImage(fr.pick ? fr.pick(tx, ty) : fr[0], (tx0 - X0) * 16, (ty0 - Y0) * 16); fbStatic = true; } }   /* plan-37: ô vẽ code / ảnh ô tĩnh cũng vào khối */
+    if (own && !drawn && !fbStatic) legacy = true;
+    if (own && drawn && isDynCell(c4)) dyn.push(tx0, ty0, tx, ty);
+  }
+  const q = WANG.pending; for (let i = 0; i < q.length; i += 3) g.drawImage(q[i], q[i + 1], q[i + 2]); q.length = 0;
+  for (const v of pend) q.push(v);
+  c.__hi = hi;   /* đánh dấu SAU khi vẽ xong (bài học shim __hi) */
+  return { c, dyn, legacy, sig: 0, used: 0 };
+}
+let gcFrame = 0;
+ART.groundChunks = (g, m, cx, cy, VW, VH, fb) => {
+  if (ART.noChunks) return false;
+  if (GC.map !== m || GC.layers !== WANG.layers) { GC.map = m; GC.layers = WANG.layers; GC.chunks.clear(); }
+  gcFrame++;
+  const X0 = Math.floor(cx / 16 / GCH), Y0 = Math.floor(cy / 16 / GCH), X1 = Math.floor((cx + VW) / 16 / GCH), Y1 = Math.floor((cy + VH) / 16 / GCH);
+  const vis = [];
+  for (let Y = Y0; Y <= Y1; Y++) for (let X = X0; X <= X1; X++) {
+    const k = X + ',' + Y, sig = chunkSig(m, X * GCH, Y * GCH); let ch = GC.chunks.get(k);
+    if (!ch || ch.sig !== sig) {
+      let reuse = ch;
+      if (!reuse && GC.chunks.size >= GCH_MAX) { let lo = null; for (const e of GC.chunks) if (!lo || e[1].used < lo[1].used) lo = e; if (lo && lo[1].used < gcFrame) { GC.chunks.delete(lo[0]); reuse = lo[1]; } }
+      ch = buildChunk(m, X * GCH, Y * GCH, reuse); ch.sig = sig; GC.chunks.set(k, ch);
+    }
+    ch.used = gcFrame; vis.push(X, Y, ch);
+  }
+  for (let i = 0; i < vis.length; i += 3) {
+    const X = vis[i], Y = vis[i + 1], ch = vis[i + 2], ox = X * GCH * 16 - cx, oy = Y * GCH * 16 - cy;
+    if (!ch.legacy) { g.drawImage(ch.c, ox, oy); continue; }
+    for (let ty0 = Y * GCH; ty0 < (Y + 1) * GCH; ty0++) for (let tx0 = X * GCH; tx0 < (X + 1) * GCH; tx0++) {   /* khối có ô vẽ code: vẽ từng ô như cũ */
+      const sx = tx0 * 16 - cx, sy = ty0 * 16 - cy; if (sx < -16 || sy < -16 || sx > VW || sy > VH) continue;
+      const tx = Math.max(0, Math.min(m.w - 1, tx0)), ty = Math.max(0, Math.min(m.h - 1, ty0));
+      if (!groundCell(g, m, tx, ty, sx, sy)) fb(tx, ty, sx, sy);
+    }
+  }
+  for (let i = 0; i < vis.length; i += 3) {
+    const ch = vis[i + 2]; if (ch.legacy) continue; const d = ch.dyn;
+    for (let j = 0; j < d.length; j += 4) { const sx = d[j] * 16 - cx, sy = d[j + 1] * 16 - cy; if (sx < -48 || sy < -24 || sx > VW + 24 || sy > VH + 24) continue; const tx = d[j + 2], ty = d[j + 3]; C4[0] = clsAt(m, tx - 1, ty - 1); C4[1] = clsAt(m, tx, ty - 1); C4[2] = clsAt(m, tx - 1, ty); C4[3] = clsAt(m, tx, ty); groundDyn(g, m, tx, ty, sx, sy, C4); }   /* plan-42 A5: C4 dùng lại = cornersOf */
+  }
+  return true;
+};
+const FOAM_RGBA = [];
 function groundDone(g) {
   const q = WANG.pending; for (let i = 0; i < q.length; i += 3) g.drawImage(q[i], q[i + 1], q[i + 2]); q.length = 0;
-  const fq = WANG.foamQ; for (let i = 0; i < fq.length; i += 3) { g.fillStyle = `rgba(255,255,255,${fq[i + 2].toFixed(2)})`; g.fillRect(fq[i], fq[i + 1], 2, 1); } fq.length = 0;
+  const fq = WANG.foamQ; let lastA = -1; for (let i = 0; i < fq.length; i += 3) { const ai = Math.round(fq[i + 2] * 100); if (ai !== lastA) { lastA = ai; g.fillStyle = FOAM_RGBA[ai] || (FOAM_RGBA[ai] = `rgba(255,255,255,${(ai / 100).toFixed(2)})`); } g.fillRect(fq[i], fq[i + 1], 2, 1); } fq.length = 0;   /* plan-37: chuỗi màu bọt nhớ sẵn theo độ mờ */
   const f = WANG.fishQ; if (f.length) { g.globalAlpha = 0.42; for (let i = 0; i < f.length; i += 4) { const im = f[i], x = f[i + 1], y = f[i + 2], d = f[i + 3]; g.save(); if (d < 0) { g.translate(x * 2 + 16, 0); g.scale(-1, 1); } g.drawImage(im, 0, 0, im.width, im.height, x, y, 16, 16); g.restore(); } g.globalAlpha = 1; f.length = 0; }
 }
 const tileNames = {}; for (const [n, id] of Object.entries(T)) tileNames[id] = n;
 const tileName = id => tileNames[id];
 
 // ---------- nhân vật: thân gần nhất theo da/tóc trong gói vùng, đổi màu áo theo sắc độ ----------
-const charCache = new Map();
+const charCache = new Map(), CC_ZONES = [];
 const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const dist = (a, b) => { const x = hex(a), y = hex(b); return (x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2 + (x[2] - y[2]) ** 2; };
 function rgb2hsl(r, g, b) {
@@ -468,8 +592,8 @@ function charSheetPx(c) {
   return out;
 }
 function recolorShirt(src, shirt, [h0, h1], minSat) {
-  const w = src.width, h = src.height, c = mkCanvas(w, h), g = c.getContext('2d'); g.drawImage(src, 0, 0, w, h); // 4 tham số: shim không đụng
-  const im = g.getImageData(0, 0, w, h), d = im.data, [th, ts, tl] = rgb2hsl(...hex(shirt));
+  const w = src.width, h = src.height, c = mkCanvas(w, h), g = c.getContext('2d');   /* plan-42 A4: đọc điểm ảnh qua canvas nháp CPU (readPx), putImageData ghi đè toàn bộ c */
+  const im = readPx(src, w, h), d = im.data, [th, ts, tl] = rgb2hsl(...hex(shirt));
   let sum = 0, n = 0, idx = [];
   for (let i = 0; i < d.length; i += 4) {
     if (d[i + 3] < 8) continue; const [hh, ss, ll] = rgb2hsl(d[i], d[i + 1], d[i + 2]);

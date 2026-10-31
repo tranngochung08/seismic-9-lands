@@ -6,6 +6,7 @@
 import { blastBeam, smashObj, solidObjAt, jumpBlocked } from './blast.js';   /* 2026-10-12 tối: Rocky-ha phá vật chắn · Rocky nhảy qua (phe Noxx) / đấm vỡ (phe Xealist) vật cản khi đuổi quái */
 import { mkCanvas, FLAG_COLORS, TS, HOOK } from '../gfx.js';
 import { WATER, waterDraw } from '../anim.js';   /* lội nước: che phần dưới như NPC */
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 import * as LV from './petlv.js';
 import { beamKey, chargeKey, sheet as bSheet, drawAt as bDraw, frameAt as bFrame, durOf as bDur } from './beamfx.js';   /* 2026-10-13 anh: Rocky-ha đẹp hơn — sheet vfx_workbench PixelLab */
 
@@ -133,6 +134,7 @@ function frames(scarf) {
 /* plan-27: bộ hình theo cỡ — 'rockypet' (gốc), 'rockybig' (cấp 5+), 'rockysup' (Siêu Cấp). Mỗi bộ: <pre> ngang [đứng, bước A, bước B, ngồi] ·
    <pre>_ds xuống · <pre>_dn lên · <pre>_hop · <pre>_punch_e/_s/_n · <pre>_ha_e/_s/_n (gồng Rocky-ha). Ảnh PixelLab ở gói village (creatures), vẽ 1:1. */
 const PRE = ['rockypet', 'rockybig', 'rockysup'];
+const PUNCH_IMP = { rockypet: { e: 3, s: 3, n: 2 } }, PUNCH_DUR = 0.42, PUNCH_HIT = 0.1, WALK_K = 1.4;   /* plan-47: bộ có đấm 8 khung → khung trúng theo hướng; e.ft tăng 9/s khi đi → 8 khung ≈ 12,6 khung/s */
 function cre(ctx, name) { const vp = ctx.ART && ctx.ART.packs && ctx.ART.packs.village, c = vp && vp.creatures && vp.creatures[name]; return c && c.length ? c : null; }
 function setPre(ctx, pt) { const k = pt.superT > 0 ? 2 : LV.sizeStage(lvOf(pt)); for (let i = k; i >= 0; i--) if (i === 0 || cre(ctx, PRE[i])) return i; return 0; }
 const SZ_FB = [[14, 13], [18, 16], [29, 26]];   /* cỡ logic đo 2026-10-12: Rocky gốc · cấp 5+ · Siêu Cấp */
@@ -188,12 +190,20 @@ function rkKnock(ctx, pt, e, kx, ky, kb, kind) {
   const l = Math.hypot(kx, ky) || 1, ux = kx / l, uy = ky / l, sup = pt.superT > 0, k = sup ? 0.6 : 1;
   const sp = Math.min(200, 60 + kb * 1.4) * k, vz = (kind === 'launch' ? 230 : 120 + Math.min(80, kb * 0.6)) * (sup ? 0.8 : 1);
   e.kfly = { vx: ux * sp, vy: uy * sp * 0.85, z: 0, vz, wall: false, t: 0, x0: e.x, y0: e.y }; e.kdown = 0;
+  if (ctx.air && ctx.air.on()) { const s2 = 230 * k; Object.assign(e.kfly, { air: true, vx: ux * s2, vy: uy * s2 * 0.8, vz: 0, ang: 0, spin: (ux >= 0 ? 1 : -1) * TAU * 1.3 }); }   /* 2026-10-14 không chiến: lộn nhào văng ngang, không rơi */
   ST.beam = null; e.punchT = 0; e.jump = null; e.sit = false; e.moving = false; e.lift = 0;
-  if (Math.abs(ux) >= Math.abs(uy)) { e.face = 'side'; e.dir = ux < 0 ? 1 : -1; } else e.face = uy > 0 ? 'dn' : 'ds';   /* mặt quay về phía kẻ đánh, thân văng ngược lại (clip knockfly 'bị hất ngửa ra sau') */
+  e.diag = null; e.sec8 = null; if (Math.abs(ux) >= Math.abs(uy)) { e.face = 'side'; e.dir = ux < 0 ? 1 : -1; } else e.face = uy > 0 ? 'dn' : 'ds';   /* mặt quay về phía kẻ đánh, thân văng ngược lại (clip knockfly 'bị hất ngửa ra sau') */
   vfx1(ctx, 'knock_heavy', e.x - ux * 4, e.y + 2, null, true); ctx.sfx('knock_whoosh'); ST.knockN = (ST.knockN || 0) + 1;
 }
 function rkKnockTick(ctx, e, dt) {
   const k = e.kfly;
+  if (k && k.air) {   /* giữa trời: trượt + xoay, chạm biên sân thì bật lại, chậm lại → chong chóng giữ thăng bằng (không nằm) */
+    k.t += dt; const f = Math.exp(-2.6 * dt); k.vx *= f; k.vy *= f; const sp = Math.hypot(k.vx, k.vy), nx = e.x + k.vx * dt, ny = e.y + k.vy * dt; e.moving = false; e.lift = 0;
+    if (ctx.air.bound(nx, ny)) { e.x = nx; e.y = ny; } else { k.vx *= -0.2; k.vy *= -0.2; k.wall = true; }
+    if (sp > 40) k.ang += k.spin * dt * Math.min(1, sp / 160); else k.ang *= Math.exp(-9 * dt);
+    if ((sp < 30 && k.t > 0.55) || k.t > 2.2) { ST.knockLast = { dx: Math.round(e.x - k.x0), dy: Math.round(e.y - k.y0), maxZ: 0, wall: k.wall, ok: true, air: true }; e.kfly = null; }
+    return;
+  }
   if (k) {
     k.t += dt; k.vz -= KG * dt; k.z = Math.max(0, k.z + k.vz * dt); e.lift = k.z; e.moving = false; k.maxZ = Math.max(k.maxZ || 0, k.z);
     const n = Math.max(1, Math.ceil(Math.hypot(k.vx, k.vy) * dt / 2));
@@ -522,7 +532,7 @@ function chatUI(ctx) {
     const st = document.createElement('style'); st.id = 'rk-style';
     st.textContent = `#rk-chat{position:fixed;left:calc(var(--vvl,0px) + var(--vvw,100vw) / 2);top:calc(var(--vvt,0px) + var(--vvh,100vh) * .7);transform:translate(-50%,-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:stretch;
       width:min(400px,calc(var(--vvw,100vw) - 32px));box-sizing:border-box;padding:6px 8px;background:#f4e3c4;border:3px solid #6b3416;border-radius:6px;box-shadow:0 3px 0 #3a1c0c;font:18px VT323,monospace;color:#3a1c0c}
-      #rk-chat .rk-row{display:flex;gap:6px;align-items:center} #rk-chat .rk-cmds{display:grid;grid-template-columns:repeat(4,1fr);gap:4px} #rk-chat .rk-cmds button{padding:4px 2px;white-space:nowrap} #rk-chat .rk-cmds button.on{background:#6b3416}
+      #rk-chat .rk-row{display:flex;gap:6px;align-items:center} #rk-chat .rk-cmds{display:grid;grid-template-columns:repeat(4,1fr);gap:4px} #rk-chat .rk-cmds button{padding:4px 2px;white-space:nowrap} #rk-chat .rk-cmds button.on{background:#6b3416} #rk-chat .rk-cmds button.ht{grid-column:1/-1;background:#5a2a8a}
       #rk-chat[hidden]{display:none} #rk-chat .rk-ic{font-size:18px} #rk-chat input{flex:1;min-width:0;font:20px VT323,monospace;background:#fff8e8;border:2px solid #a0703a;border-radius:4px;padding:3px 6px;color:#3a1c0c;outline:none}
       #rk-chat button{font:18px VT323,monospace;background:#ff9426;color:#fff6c8;border:2px solid #6b3416;border-radius:4px;padding:3px 10px;text-shadow:1px 1px 0 #6b3416;cursor:pointer}
       @media (pointer:coarse){#rk-chat{top:calc(var(--vvt,0px) + var(--vvh,100vh) * .44);width:min(300px,calc(var(--vvw,100vw) - 32px));padding:4px 6px;gap:4px} #rk-chat .rk-cmds button{font-size:15px;padding:1px 2px} #rk-chat input{font-size:17px;padding:1px 4px} #rk-chat .rk-row button{padding:1px 8px}}   
@@ -531,7 +541,8 @@ function chatUI(ctx) {
   }
   const el = document.createElement('div'); el.id = 'rk-chat'; el.hidden = true;
   el.innerHTML = `<div class="rk-cmds"></div><div class="rk-row"><span class="rk-ic">🪨</span><input id="rk-chat-in" maxlength="40" autocomplete="off" spellcheck="false" enterkeyhint="send"><button id="rk-chat-send" type="button"></button></div>`;   /* 2026-10-12 anh: 4 nút lệnh bấm thẳng, khỏi gõ */
-  el.querySelector('.rk-cmds').addEventListener('pointerdown', e => { const b = e.target.closest('[data-cmd]'); if (!b) return; e.preventDefault(); e.stopPropagation(); closeChat(ctx); setCmd(ctx, b.dataset.cmd); ctx.sfx('rocky_chirp'); });
+  el.querySelector('.rk-cmds').addEventListener('pointerdown', e => { const hb = e.target.closest('[data-hopthe]'); if (hb) { e.preventDefault(); e.stopPropagation(); closeChat(ctx); if (ctx.hopthe) ctx.hopthe.toggle(); return; }   /* plan-50: nút Hợp thể */
+    const b = e.target.closest('[data-cmd]'); if (!b) return; e.preventDefault(); e.stopPropagation(); closeChat(ctx); setCmd(ctx, b.dataset.cmd); ctx.sfx('rocky_chirp'); });
   document.body.appendChild(el); ST.chatEl = el;
   const inp = el.querySelector('input');
   const send = () => { const v = inp.value; inp.value = ''; closeChat(ctx); chatSend(ctx, v); };
@@ -545,7 +556,8 @@ function chatUI(ctx) {
 function openChat(ctx) {
   const pt = petOf(ctx); if (!pt || ctx.S.mode !== 'play') return false; chatUI(ctx); const t = L(ctx);
   const el = ST.chatEl, inp = el.querySelector('input'); inp.placeholder = t.chatPh; el.querySelector('#rk-chat-send').textContent = t.send;
-  el.querySelector('.rk-cmds').innerHTML = ['protect', 'attack', 'follow', 'home'].map(k => `<button type="button" data-cmd="${k}" class="${pt.cmd === k ? 'on' : ''}">${t.cmd[k]}</button>`).join('');
+  el.querySelector('.rk-cmds').innerHTML = ['protect', 'attack', 'follow', 'home'].map(k => `<button type="button" data-cmd="${k}" class="${pt.cmd === k ? 'on' : ''}">${t.cmd[k]}</button>`).join('')
+    + (ctx.hopthe ? `<button type="button" data-hopthe="1" class="ht">⚡ ${ctx.hopthe.label()}${ctx.hopthe.cdText() ? ' · ' + ctx.hopthe.cdText() : ''}</button>` : '');   /* plan-50: nút Hợp thể / Tách ra (hồi chờ hiện số phút) */
   el.hidden = false; ST.chatOpen = true; ctx.setMode('chat'); placeChat(); setTimeout(() => { try { inp.focus(); } catch (e) { } }, 30); return true;
 }
 function closeChat(ctx) { if (ST.chatEl) { ST.chatEl.hidden = true; const i = ST.chatEl.querySelector('input'); try { i.blur(); } catch (e) { } } ST.chatOpen = false; if (ctx.S.mode === 'chat') ctx.setMode('play'); }
@@ -631,11 +643,46 @@ function punchHit(ctx, pt, h) {
 }
 /* 2026-10-12 tối anh: Rocky-ha bắn theo GÓC THẬT (atan2) thay vì 4 hướng. ang (rad, 0 = phải, π/2 = xuống). */
 const DIR_ANG = [Math.PI / 2, Math.PI, 0, -Math.PI / 2];   /* dir 0 xuống · 1 trái · 2 phải · 3 lên → góc */
+/* plan-53: hướng 8 cung có trễ (đổi cung khi lệch tâm cung > 22,5° + 10°). Chéo: e.face = 'ds'|'dn' + e.diag = e.face; E/W giữ 'side'. */
+function face8(e, dx, dy, hyst = true) {
+  if (Math.hypot(dx, dy) < 1e-4) return; const a = Math.atan2(dy, dx), Q = Math.PI / 4; let sec = ((Math.round(a / Q) % 8) + 8) % 8;
+  const now = performance.now();
+  if (hyst && e.sec8 != null) { let d = a - e.sec8 * Q; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < Q / 2 + 0.26 || (now - (e.sec8At || 0) < 220 && Math.abs(d) < 1.75)) sec = e.sec8; else if (sec !== e.sec8) { if (e.cand8 !== sec) { e.cand8 = sec; e.cand8At = now; sec = e.sec8; } else if (now - e.cand8At < 110 && Math.abs(d) < 2.4) sec = e.sec8; } }   /* trễ: lệch tâm cung > 22,5° + 15°; giữ cung ≥ 0,22 s (trừ quay gắt > 100°); cung mới phải giữ ≥ 0,11 s mới đổi (chống nháy khi rung / đi men tường) */
+  if (sec !== e.sec8) e.sec8At = now; e.sec8 = sec; e.face = sec === 0 || sec === 4 ? 'side' : sec <= 3 ? 'ds' : 'dn'; e.diag = sec % 2 ? e.face : null;
+  if (sec !== 2 && sec !== 6) e.dir = sec <= 1 || sec === 7 ? 1 : -1;
+}
 function faceOfAng(ang) { const c = Math.cos(ang), s = Math.sin(ang); return Math.abs(c) >= Math.abs(s) * 0.9 ? 'side' : s > 0 ? 'ds' : 'dn'; }   /* clip gần nhất S/E/N (W = E lật); chéo 45° → nghiêng về clip ngang */
 function beamOrigin(ctx, pt, e, ang) {   /* gốc luồng: miệng / hai tay chụm của Rocky theo hướng bắn (theo cỡ hình đang dùng) */
   const sz = rkSize(ctx, pt), c = Math.cos(ang), s = Math.sin(ang), f = faceOfAng(ang);
   const hx = f === 'side' ? sz.w * 0.42 : sz.w * 0.12, hy = sz.h * (f === 'dn' ? 0.62 : 0.45);   /* quay lên: tay giơ trên đầu cao hơn */
   return { x: e.x + c * hx, y: e.y - hy + s * (f === 'side' ? 0 : sz.h * 0.2) };
+}
+/* 2026-10-16 anh (QUY TẮC LỚP VẼ CHIÊU): chiêu phóng từ thân — bắn LÊN (sin < 0) thì Rocky vẽ TRƯỚC chiêu (chiêu sau lưng), bắn XUỐNG / ngang thì chiêu vẽ TRƯỚC Rocky.
+   Tụ năng ở tay + luồng Rocky-ha vào lớp sắp chiều sâu: khoá y = chân Rocky ∓ 0,5. Nổ đầu luồng theo chỗ nổ (q.ky). Hình / cỡ / thời gian y như bản vẽ ở draw() cũ. */
+function skillKey(y, ang) { return y + (Math.sin(ang) < 0 ? -0.5 : 0.5); }
+function haDrawables(ctx, out, cx, cy) {
+  const b = ST.beam, e = ST.ent, g = ctx.g, BL = ctx.air && ctx.air.on() ? ctx.air.lift() : 0;   /* 2026-10-14: Rocky bay → luồng Rocky-ha phát từ thân đang nâng */
+  const up = f => () => { if (BL) { g.save(); g.translate(0, -BL); } try { f(); } finally { if (BL) g.restore(); } };
+  if (b && e) {
+    const P = ctx.S.player, ang = b.ang ?? DIR_ANG[b.dir], ky = skillKey(e.state === 'mount' ? P.y + (P.sortUp || 0) : e.y + (e.state === 'ride' ? 0.6 : 0), ang);   /* mount: Rocky bay cùng người trên trời — sky.js vẽ Rocky trong lượt vẽ người (khoá p.y + sortUp) */
+    if (!b.fired) {   /* tụ năng ở tay: quả cầu xoáy lớn dần + hạt hút vào (rk_hacharge, vfx_workbench) */
+      const pt0 = sv(ctx).pet, cs = bSheet(chargeKey(b.tier, !!(pt0 && pt0.superT > 0))) || bSheet('rk_hacharge');
+      if (cs) out.push({ y: ky, skill: 'rk_charge', f: up(() => { const o = pt0 ? beamOrigin(ctx, pt0, e, ang) : { x: e.x, y: e.y - 8 }; bDraw(g, cs, Math.min(cs.n - 1, Math.floor(b.t / Math.max(0.1, b.charge ?? LV.haOf(b.tier).charge) * cs.n)), o.x - cx, o.y - cy); }) });
+    } else {
+      const bs = bSheet(beamKey(b.tier));
+      out.push({ y: ky, skill: 'rk_beam', f: up(() => {
+        if (bs) { bDraw(g, bs, bFrame(bs, b.ft || 0), e.x + (b.ox ?? 0) - cx, e.y + (b.oy ?? -7) - cy, ang, b.len ?? b.range); return; }   /* 2026-10-13: luồng mới — lõi trắng + quầng xanh nhiều lớp, mép gợn sóng, tắt dần thu hẹp; cắt theo độ dài thật, xoay theo góc */
+        const sh = sheetFrame(ctx, `rk_ha_t${LV.haSheet(b.tier)}`, 0.42 - b.show), bl = b.len ?? b.range;   /* dự phòng: sheet cũ rk_ha_t1/t4/t7 — cắt tới chỗ luồng dừng (vật chắn) */
+        const ox = e.x + (b.ox ?? 0) - cx, oy = e.y + (b.oy ?? -7) - cy;
+        g.save(); const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false;
+        g.translate(Math.round(ox), Math.round(oy)); g.rotate(ang);
+        if (sh) { const lw = Math.min(sh.w, Math.max(4, Math.round(bl + 2))); g.drawImage(sh.img, sh.f * sh.w * sh.hi, 0, lw * sh.hi, sh.h * sh.hi, -2, -Math.round(sh.h / 2), lw, sh.h); }   /* cắt (không co giãn) theo độ dài thực — 1:1 */
+        else { g.fillStyle = 'rgba(255,240,170,.85)'; g.fillRect(0, -Math.round(b.w / 2), bl, b.w); g.fillStyle = '#fff'; g.fillRect(0, -1, bl, 2); }
+        g.imageSmoothingEnabled = sm; g.restore();
+      }) });
+    }
+  }
+  const bm = bSheet('rk_haboom'); if (bm) for (const q of ST.booms) if (q.t >= 0) out.push({ y: q.ky ?? q.y, skill: 'rk_boom', f: up(() => bDraw(g, bm, bFrame(bm, q.t), q.x - cx, q.y - cy)) });   /* nổ đầu luồng (vòng sóng + tia lửa + bụi) theo chỗ nổ */
 }
 function lineHits(ctx, o, ang, range, w, pool) {   /* quái nằm trên đường thẳng từ gốc o theo góc ang (rad) */
   const vx = Math.cos(ang), vy = Math.sin(ang), out = [];
@@ -669,7 +716,7 @@ function tryHa(ctx, pt, pool, tg) {
 function aimBeam(ctx, pt, e, ang, tier, H) {
   const f = faceOfAng(ang), c = Math.cos(ang);
   ST.beam = { ang, dir: f === 'ds' ? 0 : f === 'dn' ? 3 : c < 0 ? 1 : 2, t: 0, fired: false, tier, range: H.range, w: H.w, show: 0 }; e.moving = false; e.sit = false;
-  e.face = f; if (Math.abs(c) > 0.05) e.dir = c < 0 ? -1 : 1;
+  e.face = f; e.diag = null; e.sec8 = null; if (Math.abs(c) > 0.05) e.dir = c < 0 ? -1 : 1;
 }
 function beamTick(ctx, pt, dt) {
   const b = ST.beam, e = ST.ent; if (!b || !e) { ST.beam = null; return; }
@@ -685,8 +732,9 @@ function beamTick(ctx, pt, dt) {
     const mh = lineHits(ctx, o, ang, b.len, b.w, monsters(ctx));
     for (const mo of mh) { dealDmg(ctx, mo, st.atk * H.mul, 0); if (!mo.c.boss) mo.kb = { vx: vx * H.kb, vy: vy * H.kb, t: 0.15 }; b.hits = (b.hits || 0) + 1; }
     /* đầu luồng nổ khi chạm vật / quái (rk_haboom: vòng sóng + tia lửa + bụi) */
-    if (bl.len < b.range - 3) ST.booms.push({ x: o.x + vx * bl.len, y: o.y + vy * bl.len + 4, t: -0.08 });
-    for (const mo of mh.slice(0, 3)) ST.booms.push({ x: mo.x, y: mo.y - 2, t: -0.05 });
+    if (bl.len < b.range - 3) { const hz = bl.hits && bl.hits[bl.hits.length - 1], od = hz && hz.stop && ctx.O && ctx.O[hz.type], gy = e.y + vy * bl.len;   /* ky: khoá chiều sâu = chân điểm nổ (chiếu xuống đất); dừng ở vật → vẽ trước mặt vật đó */
+      ST.booms.push({ x: o.x + vx * bl.len, y: o.y + vy * bl.len + 4, t: -0.08, ky: od ? Math.max(gy, (hz.y + (od.fh || 1)) * TS + 0.5) : gy }); }
+    for (const mo of mh.slice(0, 3)) ST.booms.push({ x: mo.x, y: mo.y - 2, t: -0.05, ky: mo.y + 0.5 });
     ST.lastBlast = { sheet: beamKey(b.tier), charge: chargeKey(b.tier, pt.superT > 0), booms: ST.booms.length, tier: b.tier, dir: b.dir, ang: Math.round(ang * 180 / Math.PI), range: b.range, len: bl.len, hits: bl.hits, mons: mh.map(m => m.id), ox: Math.round(o.x), oy: Math.round(o.y) };
     ST.haCd = H.cd; if (ctx.quake) ctx.quake(0.15); ctx.sfx('hit');
   }
@@ -695,7 +743,7 @@ function beamTick(ctx, pt, dt) {
 function startSuper(ctx, pt) {
   const tier = LV.tierOf(pt, 'super'); if (!tier || (pt.superCd || 0) > 0 || pt.superT > 0 || ST.cine || ctx.S.camFocus) return false;
   const e = ST.ent; if (!e) return false;
-  ST.cine = { t: 0, last: performance.now(), swapped: false, tier }; ST.beam = null; e.moving = false; e.sit = false; e.face = 'ds';
+  ST.cine = { t: 0, last: performance.now(), swapped: false, tier }; ST.beam = null; e.moving = false; e.sit = false; e.face = 'ds'; e.diag = null; e.sec8 = null;
   if (ctx.hero && ctx.hero.iframes) ctx.hero.iframes(2);
   ctx.S.timeScale = 0.25; ctx.S.camFocus = { x: e.x, y: e.y - 10 }; ctx.S.camZoom = 1; ctx.sfx('rocky_happy'); if (ctx.quake) ctx.quake(0.15);
   return true;
@@ -744,6 +792,7 @@ function combatTick(ctx, pt, dt, e, spd) {   /* true = Rocky đang bận đánh 
   const pool = eligible(ctx, pt), p = ctx.S.player;
   if (ST.tgt && (!pool.includes(ST.tgt))) ST.tgt = null;
   if (!ST.tgt && pool.length) { let bd = 1e9; for (const mo of pool) { const d = dst(mo, e) + (mo.c.boss ? 30 : 0); if (d < bd) { bd = d; ST.tgt = mo; } } }
+  if (ctx.rkSkill) { try { if (ctx.rkSkill(pt, e, pool, ST.tgt, dt)) { e.moving = false; return true; } } catch (er) { console.error('rkSkill', er); } }   /* plan-38: chiêu học từ trùm (rockycore.js) — true = Rocky đang ra chiêu */
   /* chiêu bậc cao nhất đã mở + sẵn sàng: Siêu Cấp (mục tiêu trong ~100 px) > Rocky-ha > Đấm */
   if (ST.tgt && dst(ST.tgt, e) < 100 && LV.tierOf(pt, 'super') && !(pt.superT > 0) && !((pt.superCd || 0) > 0)) { if (startSuper(ctx, pt)) return true; }
   if (ST.tgt && tryHa(ctx, pt, pool, ST.tgt)) return true;
@@ -754,7 +803,7 @@ function combatTick(ctx, pt, dt, e, spd) {   /* true = Rocky đang bận đánh 
   if (d > reach) { const w = viaPoint(ctx, pt, e, sp), moved = stepToward(ctx, e, w.x, w.y, spd * 1.2, dt, true), d2 = dst(tg, e); e.moving = true; if (!moved || d2 > d - spd * dt * 0.3) obstacle(ctx, pt, e, tg, dt); else e.stuckT = 0; return true; }   /* không lại gần được (vướng / trượt dọc rào) → xử lý vật cản theo phe */
   if (onP && sp.ok && Math.hypot(sp.x - e.x, sp.y - e.y) > 2) { stepToward(ctx, e, sp.x, sp.y, spd * 1.2, dt); e.moving = true; return true; }   /* 2026-10-12 tối anh: đang đè người → dời sang chỗ đứng đấm phía bên kia quái */
   e.moving = false; if (Math.abs(tg.x - e.x) > 2) e.dir = tg.x > e.x ? 1 : -1;
-  const dy = tg.y - e.y; e.face = Math.abs(dy) > Math.abs(tg.x - e.x) * 1.2 ? (dy > 0 ? 'ds' : 'dn') : 'side';
+  const dy = tg.y - e.y; face8(e, tg.x - e.x, dy);   /* plan-53: 8 hướng (có trễ) */
   if (ST.punchCd <= 0) {
     const P = LV.punchOf(LV.tierOf(pt, 'punch')), sup = pt.superT > 0; ST.combo = (ST.combo % P.combo) + 1; const fin = ST.combo === P.combo;
     ST.punchCd = (P.cd + (fin ? 0.45 : 0)) * (sup ? 0.7 : 1); e.punchT = 0.26; e.punchN = (e.punchN || 0) + 1;
@@ -799,7 +848,7 @@ function obstacle(ctx, pt, e, tg, dt) {
 function jumpTick(ctx, e, dt) {
   const j = e.jump; j.t += dt; const k = Math.min(1, j.t / j.dur);
   e.x = j.x0 + (j.x1 - j.x0) * k; e.y = j.y0 + (j.y1 - j.y0) * k; e.lift = Math.sin(k * Math.PI) * j.h; e.moving = true; e.sit = false;
-  if (Math.abs(j.x1 - j.x0) > 1) e.dir = j.x1 > j.x0 ? 1 : -1; e.face = Math.abs(j.y1 - j.y0) > Math.abs(j.x1 - j.x0) * 1.2 ? (j.y1 > j.y0 ? 'ds' : 'dn') : 'side';
+  if (Math.abs(j.x1 - j.x0) > 1) e.dir = j.x1 > j.x0 ? 1 : -1; e.diag = null; e.sec8 = null; e.face = Math.abs(j.y1 - j.y0) > Math.abs(j.x1 - j.x0) * 1.2 ? (j.y1 > j.y0 ? 'ds' : 'dn') : 'side';
   if (k >= 1) { e.jump = null; e.lift = 0; e.hop = 0.25; dust(e.x, e.y, 6); if (!passable(ctx, e.x, e.y)) { const f = freeNear(ctx, e.x, e.y); e.x = f.x; e.y = f.y; } }
 }
 
@@ -824,17 +873,18 @@ function updatePet(dt, ctx) {
   { const st = statsOf(pt); if (pt.hp == null) pt.hp = st.max; if (!((pt.koT || 0) > 0) && now(ctx) - ST.lastHurtT > 6 && pt.hp < st.max) pt.hp = Math.min(st.max, pt.hp + st.max * 0.03 * dt); }
   if (ST.cine) cineTick(ctx, pt);
   if (ST.bubble) { ST.bubble.t -= dt; if (ST.bubble.t <= 0) ST.bubble = null; }
+  if (ctx.hopthe && ctx.hopthe.on()) { ST.ent = null; return; }   /* plan-50: đang HỢP THỂ → Rocky ở trong người chơi, không có mặt trên bản đồ */
   if (isHome(pt)) {   /* ở ổ: ngồi trong ổ (vùng có ổ) hoặc không có mặt */
     if (!ST.nest) { ST.ent = null; return; }
     const e = ST.ent || spawnEnt(ctx); if (e.state !== 'home') { Object.assign(e, { x: ST.nest.x, y: ST.nest.y }); }
-    e.state = 'home'; e.sit = true; e.moving = false; e.face = 'ds'; if (e.hop > 0) e.hop -= dt;
+    e.state = 'home'; e.sit = true; e.moving = false; e.face = 'ds'; e.diag = null; e.sec8 = null; if (e.hop > 0) e.hop -= dt;
     e.blinkT -= dt; if (e.blinkT <= 0) { e.blink = 0.14; e.blinkT = 2 + Math.random() * 3; } if (e.blink > 0) e.blink -= dt;
     return;
   }
   const e = ST.ent || spawnEnt(ctx);
   if (e.state === 'home') { e.state = 'follow'; e.sit = false; }
   { const mnt = ctx.skyMount ? ctx.skyMount() : null;   /* plan-31: người chơi đang CƯỠI Rocky bay (sky.js vẽ cả hai) — Rocky bám theo chỗ cưỡi, chỉ chạy luồng Rocky-ha đã ra lệnh */
-    if (mnt) { e.state = 'mount'; e.x = mnt.x; e.y = mnt.y; e.px = e.x; e.py = e.y; e.face = mnt.face; e.dir = mnt.dir; e.moving = false; e.sit = false; e.kfly = null; e.kdown = 0; if (ST.sparkle) cancelFetch(); ST.tgt = null; if (ST.beam) beamTick(ctx, pt, dt); return; }
+    if (mnt) { e.state = 'mount'; e.x = mnt.x; e.y = mnt.y; e.px = e.x; e.py = e.y; e.face = mnt.face; e.diag = null; e.sec8 = null; e.dir = mnt.dir; e.moving = false; e.sit = false; e.kfly = null; e.kdown = 0; if (ST.sparkle) cancelFetch(); ST.tgt = null; if (ST.beam) beamTick(ctx, pt, dt); return; }
     if (e.state === 'mount') { e.state = 'follow'; e.ghost = 1; } }
   const hungry = pt.hunger < HUNGRY_AT;
   const riding = !!(ctx.S.sea && ctx.S.sea.riding && !ctx.S.sea.diving);   /* anh báo 2026-10-10: chỉ ngồi khi đang trên bè/ván, không phải cả vùng Biển */
@@ -855,8 +905,8 @@ function updatePet(dt, ctx) {
     const small = ctx.S.sea.riding === 'plank', S = sepOf(ctx, pt), lat = Math.max(small ? 9 : 14, S.rx), tx = p.x + side * lat, ty = p.y + (small ? 6 : 4) + behind * 3 - (lat > 14 ? 3 : 0);   /* 2026-10-12 tối: hình lớn / Siêu Cấp ngồi lệch xa hơn, hơi lùi sau (vẽ sau lưng người), không chồng lên người */
     e.state = 'ride'; e.x += (tx - e.x) * Math.min(1, dt * 10); e.y += (ty - e.y) * Math.min(1, dt * 10); e.moving = false;
     e.rideT = (e.rideT || 0) + dt;
-    if (p.moving) { e.sit = false; e.face = p.dir === 0 ? 'ds' : p.dir === 3 ? 'dn' : 'side'; e.dir = p.dir === 1 ? -1 : 1; e.ft += dt * 6; e.fr = 1 + ((e.ft | 0) % 2); }
-    else { e.sit = true; if ((e.lookT = (e.lookT ?? 2) - dt) <= 0) { e.lookT = 2 + Math.random() * 3; const r = Math.random(); e.face = r < 0.4 ? 'ds' : 'side'; e.dir = r < 0.7 ? -e.dir || 1 : e.dir; if (r > 0.8) { e.hop = 0.45; note(e.x, e.y); } } }
+    if (p.moving) { e.sit = false; e.diag = null; e.sec8 = null; e.face = p.dir === 0 ? 'ds' : p.dir === 3 ? 'dn' : 'side'; e.dir = p.dir === 1 ? -1 : 1; e.ft += dt * 6; e.fr = 1 + ((e.ft | 0) % 2); }
+    else { e.sit = true; if ((e.lookT = (e.lookT ?? 2) - dt) <= 0) { e.lookT = 2 + Math.random() * 3; const r = Math.random(); e.diag = null; e.sec8 = null; e.face = r < 0.4 ? 'ds' : 'side'; e.dir = r < 0.7 ? -e.dir || 1 : e.dir; if (r > 0.8) { e.hop = 0.45; note(e.x, e.y); } } }
   } else {
     if (e.state === 'ride') e.state = 'follow';
     const dp = Math.hypot(p.x - e.x, p.y - e.y);
@@ -866,7 +916,9 @@ function updatePet(dt, ctx) {
     const spd = PET_SPEED * (hungry ? 0.7 : 1) * Math.min(2, Math.max(1, p.speedMul || 1)) * statsOf(pt).spd;
     e.moving = false;
     let fighting = false;
-    if (!wait && !ST.cine && e.state !== 'dig') fighting = combatTick(ctx, pt, dt, e, spd);
+    const goal = !wait && !ST.cine && e.state !== 'dig' && ctx.rkGoal ? ctx.rkGoal(e) : null;   /* plan-38: Rocky chạy tới ăn mảnh lõi trùm (rockycore.js) */
+    if (goal) { if (ST.sparkle) cancelFetch(); ST.tgt = null; if (Math.hypot(goal.x - e.x, goal.y - e.y) > 3) { stepToward(ctx, e, goal.x, goal.y, spd * 1.25, dt); e.moving = true; } e.sit = false; fighting = true; }
+    else if (!wait && !ST.cine && e.state !== 'dig') fighting = combatTick(ctx, pt, dt, e, spd);
     else if (ST.beam && !ST.cine) { beamTick(ctx, pt, dt); e.moving = false; fighting = true; }   /* đang đứng chờ (petWait) mà có lệnh bắn Rocky-ha (bắn trả Hắc-ha) → vẫn tụ + bắn */
     if (!ST.ent) return;   /* vừa gục → đã về ổ */
     if (ST.cine) { e.moving = false; }
@@ -912,8 +964,9 @@ function updatePet(dt, ctx) {
   if (e.sit) { e.bounceT -= dt; if (e.bounceT <= 0) { e.bounceT = 5 + Math.random() * 5; e.hop = 0.45; note(e.x, e.y); } }
   if (!riding && !ST.beam && !(e.punchT > 0)) {
     const mx = e.x - (e.px ?? e.x), my = e.y - (e.py ?? e.y);
-    if (e.moving && Math.hypot(mx, my) > 0.05) e.face = Math.abs(my) > Math.abs(mx) * 1.2 ? (my > 0 ? 'ds' : 'dn') : 'side';
-    else if (e.sit) e.face = 'ds';
+    if (Math.hypot(mx, my) > 6) { e.vx8 = 0; e.vy8 = 0; }   /* dịch chuyển tức thời (dịch chỗ, vào vùng) → không tính là hướng đi */
+    else if (e.moving && Math.hypot(mx, my) > 0.05) { e.vx8 = (e.vx8 || 0) * 0.8 + mx * 0.2; e.vy8 = (e.vy8 || 0) * 0.8 + my * 0.2; if (Math.hypot(e.vx8, e.vy8) > 0.25) face8(e, e.vx8, e.vy8); }   /* plan-53: 8 hướng, có trễ */
+    else if (e.sit) { e.face = 'ds'; e.diag = null; e.sec8 = null; }
   }
   e.px = e.x; e.py = e.y;
   if (!riding) { e.ft += dt * (e.moving ? 9 : 0); e.fr = e.moving ? 1 + ((e.ft | 0) % 2) : 0; }
@@ -931,18 +984,30 @@ function sheetFrame(ctx, name, t) {   /* sheet VFX PixelLab (manifest.vfx) → {
   return { img: v.img, f, n, hi, w: v.w, h: v.h, loopF: Math.floor(t * (v.fps || 12)) % n };
 }
 function pickImg(ctx, pt, e, scarfSet) {   /* chọn khung ảnh theo bộ cỡ + hướng + động tác */
-  const k = setPre(ctx, pt), pre = PRE[k], face = e.face || 'side', fx = face === 'ds' ? 's' : face === 'dn' ? 'n' : 'e', flip = e.dir < 0 ? 1 : 0;
+  const k = setPre(ctx, pt), pre = PRE[k], face = e.face || 'side', dg = face !== 'side' && e.diag === face, flip = e.dir < 0 ? 1 : 0;
+  let fx = face === 'ds' ? (dg ? 'se' : 's') : face === 'dn' ? (dg ? 'ne' : 'n') : 'e';   /* plan-53: chéo ĐN/ĐB (TN/TB = lật); bộ không có hàng chéo → hàng ngang */
+  if (dg && !cre(ctx, `${pre}_idle_${fx}`) && !cre(ctx, `${pre}_d${fx}`)) fx = 'e';
+  const FL = x => (x === 'e' || x === 'se' || x === 'ne') ? flip : 0;
   const side = k === 0 ? scarfSet : (cre(ctx, pre) || scarfSet), fr = e.sit ? 3 : e.fr;
-  const clip = name => { const c = cre(ctx, `${pre}_${name}_${fx}`) || (fx !== 'e' ? null : null); return c; };
+  let cfx = fx; const clip = name => { cfx = fx; let c = cre(ctx, `${pre}_${name}_${fx}`); if (!c && (fx === 'se' || fx === 'ne')) { cfx = 'e'; c = cre(ctx, `${pre}_${name}_e`); } return c; };   /* chéo thiếu clip → clip ngang */
   if (ST.cine && ST.cine.swapped) { const c = cre(ctx, `${pre}_transform_s`); if (c) { const i = Math.min(c.length - 1, Math.floor(Math.max(0, ST.cine.t - 0.5) / 0.8 * c.length)); return { img: c[i][0], px: true }; } }   /* cảnh biến hình: dáng gồng hai tay (PixelLab) */
-  if (e.kfly) { const c = cre(ctx, `${pre}_knockfly_${fx}`) || cre(ctx, `${pre}_knockfly_s`); if (c) { const i = Math.floor(e.kfly.t * 12) % c.length; return { img: c[i][fx === 'e' ? flip : 0], px: true }; } const hs = cre(ctx, `${pre}_hop`); if (hs) return { img: hs[Math.min(hs.length - 1, 2)][0], px: true }; }   /* bị hất bay: clip knockfly PixelLab (bay ngửa, tay chân quơ) */
-  if (e.kdown > 0) { const c = cre(ctx, `${pre}_knockdown_${fx}`); if (c) { const u = 1 - e.kdown / (e.kdown0 || 1), i = Math.min(c.length - 1, Math.floor(u * c.length)); return { img: c[i][fx === 'e' ? flip : 0], px: true }; } }   /* ngã nằm rồi chống dậy */   /* đang bị hất bay: dáng nhảy/ngửa (bóng vẫn dưới đất) */
-  if (e.punchT > 0) { const c = clip('punch'); if (c) { const i = Math.min(c.length - 1, Math.floor((1 - e.punchT / 0.26) * c.length)); return { img: c[i][fx === 'e' ? flip : 0], px: true }; } }
-  if (ST.beam) { const c = clip('ha'); if (c) { const prog = ST.beam.fired ? 1 : Math.min(1, ST.beam.t / 0.8); const i = Math.min(c.length - 1, Math.floor(prog * (c.length - 1))); return { img: c[i][fx === 'e' ? flip : 0], px: true }; } }
+  if (e.kfly) { const c = clip('knockfly') || (cfx = 's', cre(ctx, `${pre}_knockfly_s`)); if (c) { const i = Math.floor(e.kfly.t * 12) % c.length; return { img: c[i][FL(cfx)], px: true }; } const hs = cre(ctx, `${pre}_hop`); if (hs) return { img: hs[Math.min(hs.length - 1, 2)][0], px: true }; }   /* bị hất bay: clip knockfly PixelLab (bay ngửa, tay chân quơ) */
+  if (e.kdown > 0) { const c = clip('knockdown'); if (c) { const u = 1 - e.kdown / (e.kdown0 || 1), i = Math.min(c.length - 1, Math.floor(u * c.length)); return { img: c[i][FL(cfx)], px: true }; } }   /* ngã nằm rồi chống dậy */   /* đang bị hất bay: dáng nhảy/ngửa (bóng vẫn dưới đất) */
+  { const sp = !e.kfly && !(e.kdown > 0) && ctx.rkPose ? ctx.rkPose() : null;   /* plan-38: động tác chiêu học từ trùm (clip PixelLab sk_<chiêu>; chưa có thì mượn đấm / gồng ha / nhảy) */
+    if (sp) { const c = clip(sp.clip) || (sp.fb === 'hop' || sp.fb === 'cheer' ? null : clip(sp.fb)), alt = !c ? (sp.fb === 'cheer' ? cre(ctx, `${pre}_cheer_s`) : null) || cre(ctx, `${pre}_hop`) : null;
+      if (c) { const i = Math.min(c.length - 1, Math.floor(sp.prog * c.length)); return { img: c[i][FL(cfx)], px: true }; }
+      if (alt) { const i = Math.min(alt.length - 1, Math.floor(sp.prog * alt.length)); return { img: alt[i][0], px: true }; } } }
+  { const pa = ctx.S.time - (0.26 - e.punchT); if (e.punchT > 0 && (e.pA == null || pa > e.pA + 0.03)) e.pA = pa; }   /* plan-47: mốc bắt đầu cú đấm (đấm mới / bị đặt lại punchT giữa chừng) */
+  const pImp = PUNCH_IMP[pre], pe = e.pA != null ? ctx.S.time - e.pA : 9;
+  if (pImp && pe >= 0 && pe < PUNCH_DUR) { const c = clip('punch'); if (c) { const k = pImp[fx], i = pe < PUNCH_HIT ? Math.floor(pe / PUNCH_HIT * k) : Math.min(c.length - 1, k + Math.floor((pe - PUNCH_HIT) / (PUNCH_DUR - PUNCH_HIT) * (c.length - k))); return { img: c[i][FL(cfx)], px: true }; } }   /* plan-47: đấm 8 khung PixMiniMax — lấy đà nhanh, khung trúng (bụi trắng) đúng lúc trúng đòn (hitQ 0,1 s), thu tay chậm */
+  else if (e.punchT > 0) { const c = clip('punch'); if (c) { const i = Math.min(c.length - 1, Math.floor((1 - e.punchT / 0.26) * c.length)); return { img: c[i][FL(cfx)], px: true }; } }
+  if (ST.beam) { const c = clip('ha'); if (c) { const prog = ST.beam.fired ? 1 : Math.min(1, ST.beam.t / 0.8); const i = Math.min(c.length - 1, Math.floor(prog * (c.length - 1))); return { img: c[i][FL(cfx)], px: true }; } }
+  if (ctx.air && ctx.air.on()) { const c = clip('hover') || (cfx = 's', cre(ctx, `${pre}_hover_s`));   /* sân không chiến: Rocky luôn dáng lơ lửng (dáng bổ nhào / vút lên chỉ ở sky.js qua flyposes) */ if (c) { const i = Math.floor(ctx.S.time * 8) % c.length; return { img: c[i][FL(cfx)], px: true, hover: true }; } }   /* 2026-10-14 không chiến: dáng bay (clip hover PixelLab) */
   const hopSet = e.hop > 0 && (e.sit || face === 'ds') ? cre(ctx, `${pre}_hop`) : null;
-  if (!e.moving && !e.sit && !(e.hop > 0)) { const c = clip('idle'); if (c) { const i = Math.floor(ctx.S.time * 5) % c.length; return { img: c[i][fx === 'e' ? flip : 0], px: true }; } }   /* đứng thở (Siêu Cấp có clip idle) */
+  if (!e.moving && !e.sit && !(e.hop > 0)) { const c = clip('idle'); if (c) { const i = Math.floor(ctx.S.time * 5) % c.length; return { img: c[i][FL(cfx)], px: true }; } }   /* đứng thở (Siêu Cấp có clip idle) */
   if (hopSet) return { img: hopSet[Math.max(0, Math.min(hopSet.length - 1, Math.floor((1 - e.hop / 0.45) * hopSet.length)))][0], px: true };
-  if (face !== 'side') { const ds = cre(ctx, `${pre}_${face}`); if (ds) return { img: ds[Math.min(ds.length - 1, e.sit ? 3 : fr)][0], px: true }; }
+  if (e.moving && !e.sit) { const c = clip('walk'); if (c) { const i = Math.floor(e.ft * WALK_K) % c.length; return { img: c[i][FL(cfx)], px: true }; } }   /* plan-47: đi 8 khung PixMiniMax (S/E/N, W lật) */
+  if (face !== 'side' && fx !== 'e') { const dd = fx === 'se' || fx === 'ne', ds = cre(ctx, dd ? `${pre}_d${fx}` : `${pre}_${face}`); if (ds) return { img: ds[Math.min(ds.length - 1, e.sit ? 3 : fr)][dd ? flip : 0], px: true }; }
   return { img: side[Math.min(side.length - 1, fr)][flip], px: !!side.px || k > 0 };
 }
 
@@ -978,6 +1043,7 @@ export const pet = {
     ctx.rocky = {   /* API cho menu.js (thẻ Rocky) / underwater.js (sách Heathcliff) */
       pet: () => petOf(ctx), stats: () => { const pt = petOf(ctx); return pt ? statsOf(pt) : null; }, cmdName: k => L(ctx).cmd[k] || k,
       readBook: (id, n, boss) => readBook(ctx, id, n, boss), say: txt => say(ctx, txt), openChat: () => openChat(ctx),
+      deal: (mo, dmg, kb, fx) => dealDmg(ctx, mo, dmg, kb, fx),   /* plan-38: rockycore.js gây sát thương dưới tên Rocky (chia XP / kết liễu như đòn của Rocky) */
       /* anh 2026-10-12: đòn bạn tập cơ bắp trúng cả Rocky — spar.js gọi pos() để xét vùng đánh, hitBy() để trừ máu + hất lùi (không xuyên vật cứng) */
       ent: () => ST.ent,   /* 2026-10-12 tối anh: road.js dời Rocky ra khi kẹt trong khối viền đèo */
       pos: () => { const e = ST.ent, pt = petOf(ctx); return e && pt && e.state !== 'home' && !(pt.koT > 0) && !(e.ghost > 0) ? { x: e.x, y: e.y } : null; },
@@ -987,7 +1053,7 @@ export const pet = {
       haReady: () => { const pt = petOf(ctx), e = ST.ent; return !!(pt && e && LV.tierOf(pt, 'ha') > 0 && !(pt.koT > 0) && !(ST.haCd > 0) && !ST.beam && !ST.cine && !e.kfly && !(e.kdown > 0) && e.state !== 'home' && pt.cmd !== 'home' && !(ctx.rkMute && ctx.rkMute())); },
       haFire: (ang, force, charge) => { const pt = petOf(ctx), e = ST.ent, tier = pt && LV.tierOf(pt, 'ha'); if (!tier || !e || (!force && (ST.haCd > 0 || ST.beam)) || e.kfly) return false; ST.beam = null; aimBeam(ctx, pt, e, ang, tier, LV.haOf(tier)); if (charge != null) ST.beam.charge = Math.max(0.3, charge); ST.haCd = 0; ctx.sfx('rocky_happy'); return true; },
       beamStop: () => { ST.beam = null; },
-      beamAim: ang => { const b = ST.beam, e = ST.ent; if (!b || b.fired || !e) return false; b.ang = ang; const f = faceOfAng(ang), c = Math.cos(ang); b.dir = f === 'ds' ? 0 : f === 'dn' ? 3 : c < 0 ? 1 : 2; e.face = f; if (Math.abs(c) > 0.05) e.dir = c < 0 ? -1 : 1; return true; },   /* xoay luồng đang tụ về phía đối phương (giằng co thẳng hàng) */
+      beamAim: ang => { const b = ST.beam, e = ST.ent; if (!b || b.fired || !e) return false; b.ang = ang; const f = faceOfAng(ang), c = Math.cos(ang); b.dir = f === 'ds' ? 0 : f === 'dn' ? 3 : c < 0 ? 1 : 2; e.face = f; e.diag = null; e.sec8 = null; if (Math.abs(c) > 0.05) e.dir = c < 0 ? -1 : 1; return true; },   /* xoay luồng đang tụ về phía đối phương (giằng co thẳng hàng) */
       beamCharge: ch => { const b = ST.beam; if (b && !b.fired) b.charge = Math.max(b.t + 0.05, ch); },
       hitBy: (raw, src, kx, ky, kb, kind) => { const e = ST.ent, pt = petOf(ctx); if (!e || !pt || pt.koT > 0) return false; rockyHurt(ctx, pt, raw, src && src.c ? src : null);
         if (!ST.ent || pt.koT > 0) return true;
@@ -1005,7 +1071,7 @@ export const pet = {
       /* plan-27 */
       rk: () => { const pt = petOf(ctx), e = ST.ent; if (!pt) return null; const st = statsOf(pt), lv = LV.levelFromXp(pt.xp || 0);
         return { lv: st.lv, xp: pt.xp, into: lv.into, need: lv.need, hp: Math.round(pt.hp), max: st.max, atk: st.atk, def: st.def, cmd: pt.cmd, ko: +(pt.koT || 0).toFixed(1), superT: +(pt.superT || 0).toFixed(1), superCd: +(pt.superCd || 0).toFixed(1), skills: { punch: LV.tierOf(pt, 'punch'), ha: LV.tierOf(pt, 'ha'), super: LV.tierOf(pt, 'super') },
-          ent: e ? { x: Math.round(e.x), y: Math.round(e.y), state: e.state, face: e.face || 'side', set: PRE[setPre(ctx, pt)], w: Math.round(pickImg(ctx, pt, e, frames(scarfFor(ctx))).img.width), h: Math.round(pickImg(ctx, pt, e, frames(scarfFor(ctx))).img.height) } : null,
+          ent: e ? { x: Math.round(e.x), y: Math.round(e.y), state: e.state, face: e.face || 'side', diag: e.diag || null, sec8: e.sec8 ?? null, set: PRE[setPre(ctx, pt)], w: Math.round(pickImg(ctx, pt, e, frames(scarfFor(ctx))).img.width), h: Math.round(pickImg(ctx, pt, e, frames(scarfFor(ctx))).img.height) } : null,
           knock: { fly: !!(e && e.kfly), z: e && e.kfly ? Math.round(e.kfly.z) : 0, down: e ? +(e.kdown || 0).toFixed(2) : 0, n: ST.knockN || 0, last: ST.knockLast || null },
           tgt: ST.tgt ? ST.tgt.id : null, beam: ST.beam ? { dir: ST.beam.dir, fired: ST.beam.fired, hits: ST.beam.hits || 0, len: ST.beam.len } : null, lastBlast: ST.lastBlast || null, jump: e && e.jump ? { ...e.jump } : null, side: sidePath(ctx), haCd: +ST.haCd.toFixed(1), cine: !!ST.cine, bubble: ST.bubble && ST.bubble.text, nest: ST.nest && { tx: ST.nest.tx, ty: ST.nest.ty }, home: homeOf(ctx), stats: { ...ST.stats, log: ST.stats.log.slice(-12) }, chat: ST.chatOpen }; },
       chat: txt => chatSend(ctx, txt), parse: txt => LV.parseCmd(txt), cmd: k => setCmd(ctx, k), openChat: () => openChat(ctx), closeChat: () => closeChat(ctx),
@@ -1017,7 +1083,7 @@ export const pet = {
       knockTest: (kx, ky, kb, kind) => { const e = ST.ent, pt = petOf(ctx); if (!e || !pt) return false; pt.koT = 0; rkKnock(ctx, pt, e, kx, ky, kb || 70, kind); return true; },   /* QA: hất Rocky không trừ máu */
       superNow: () => { const pt = petOf(ctx); return pt ? startSuper(ctx, pt) : false; }, superLeft: v => { const pt = petOf(ctx); if (pt && pt.superT > 0) pt.superT = v; },
       resetCd: () => { const pt = petOf(ctx); ST.haCd = 0; ST.punchCd = 0; if (pt) { pt.superCd = 0; pt.koT = 0; } }, koLeft: v => { const pt = petOf(ctx); if (pt) pt.koT = v; },
-      place: (x, y, face) => { if (!ST.ent) return null; ST.ent.x = x; ST.ent.y = y; ST.ent.px = x; ST.ent.py = y; ST.idleT = 0; ST.ent.sit = false; if (face) ST.ent.face = face; return true; },
+      place: (x, y, face) => { if (!ST.ent) return null; ST.ent.x = x; ST.ent.y = y; ST.ent.px = x; ST.ent.py = y; ST.idleT = 0; ST.ent.sit = false; if (face) { ST.ent.face = face; ST.ent.diag = null; ST.ent.sec8 = null; } return true; },
       book: (id, n) => readBook(ctx, id, n), canBook: (id, n) => { const pt = petOf(ctx); return pt ? LV.canBook(pt, id, n) : null; },
     };
   },
@@ -1031,6 +1097,7 @@ export const pet = {
   },
 
   update(dt, ctx) {
+    if (ST.holding && ST.ent && ctx.S.mode === 'play') { ST.holdT = (ST.holdT || 0) + dt; if (ST.holdT > 8 && Math.hypot(ST.ent.x - ctx.S.player.x, ST.ent.y - ctx.S.player.y) < 48) { ST.holdT = 0; giveLoot(ctx); } } else ST.holdT = 0;   /* plan-43 BK5: Rocky tự đưa quà sau 8 s khi đứng gần — không chiếm nhãn E suốt đường */
     const s = sv(ctx), p = ctx.S.player; if (!p || !ctx.S.map) return;
     wrapHero(ctx);
     if (ST.booms.length) { for (const q of ST.booms) q.t += dt; ST.booms = ST.booms.filter(q => q.t < 0.6); }
@@ -1069,14 +1136,15 @@ export const pet = {
     const e = ST.ent, d = Math.hypot(e.x - p.x, e.y - p.y); if (d > 30 || e.state === 'fetch' || e.state === 'dig' || e.state === 'ride') return null;   /* trên bè: E dành cho câu cá / bè, không vuốt ve */
     if (ST.tgt || ST.beam || ST.cine) return null;   /* plan-27: đang đánh nhau — E dành cho đòn của bạn */
     const n = s.pet.name;
-    if (ST.holding) return { label: t.takeFrom(n), x: e.x, y: e.y, limit: 30, priority: true, data: { take: true } };
     const hk = ctx.heldKind ? ctx.heldKind() : null, busy = hk === 'tool' || hk === 'seed' || hk === 'place';
     const fx0 = p.dir === 1 ? -1 : p.dir === 2 ? 1 : 0, fy0 = p.dir === 0 ? 1 : p.dir === 3 ? -1 : 0, front0 = d > 0.5 && ((e.x - p.x) * fx0 + (e.y - p.y) * fy0) / d > 0.6;
+    /* plan-43 K1 (anh duyệt 2026-10-16): Rocky KHÔNG giành phím E — việc với vật / người trước mặt và món đang cầm (câu cá, chặt cây, bàn mộc, Lyron, NPC) thắng; Rocky chỉ thắng khi đứng sát ngay trước mặt (priority 0.9 < 1 của việc khác), còn lại -1 (chỉ hiện khi không còn gì). Quà Rocky tự đưa sau 8 s (update) nên không bám nhãn suốt đường. */
+    if (ST.holding) return { label: t.takeFrom(n), x: e.x, y: e.y, limit: 30, priority: front0 && d < 20 ? 0.9 : -1, data: { take: true } };
     if (ctx.touchA && ctx.touchA() && !(front0 && d < 24)) return null;
-    if (s.pet.hunger < 100 && foodInBag(ctx)) return { label: t.feed(n), x: e.x, y: e.y, limit: 30, data: { feed: true }, ...(front0 && d < 24 && !busy ? { priority: 1 } : {}) };
+    if (s.pet.hunger < 100 && foodInBag(ctx)) return { label: t.feed(n), x: e.x, y: e.y, limit: 30, data: { feed: true }, priority: front0 && d < 24 && !busy ? 0.9 : -1 };
     if (ST.petCd <= 0) {
       const chop = busy && ctx.holding && (ctx.holding('axe') || ctx.holding('pickaxe') || ctx.holding('sword'));
-      const pr = front0 && d < (busy ? 14 : 24) && (!busy || chop) ? (busy ? 0.5 : 1) : busy ? -1 : 0.006;
+      const pr = front0 && d < (busy ? 14 : 24) && (!busy || chop) ? (busy ? 0.5 : 0.9) : -1;
       return { label: t.pet(n), x: e.x, y: e.y, limit: 30, data: { pet: true }, priority: pr };
     }
     return null;
@@ -1107,6 +1175,7 @@ export const pet = {
         out.push({ y: n.y - 3, f: () => ctx.g.drawImage(im, Math.round(n.x - w / 2) - cx, Math.round(n.y + 3 - h) - cy, w, h) });   /* 5 tham số: canvas __hi — shim không nhân đôi toạ độ nguồn (bài học 2026-09-25) */
       }
     }
+    if (s.pet && e) haDrawables(ctx, out, cx, cy);   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): tụ năng + luồng + nổ Rocky-ha sắp theo chiều sâu cùng Rocky */
     if (!s.pet || !e || e.state === 'mount') return out;   /* plan-31: đang chở người bay — sky.js vẽ */
     const g = ctx.g, sx = e.x - cx, sy = e.y - cy;
     if (sx < -40 || sy < -50 || sx > ctx.VW + 40 || sy > ctx.VH + 40) return out;
@@ -1114,18 +1183,21 @@ export const pet = {
     const hop = e.hop > 0 ? Math.round(Math.abs(Math.sin(e.hop * Math.PI * 4)) * 3) : (e.moving ? Math.round(Math.abs(Math.sin(e.ft * 1.6)) * 1) : 0);
     const iw = setPx ? img.width : 12, ih = setPx ? img.height : 14;   /* logicalCanvas: width/height đã là cỡ logic */
     const lunge = e.punchT > 0 ? Math.round(Math.sin((1 - e.punchT / 0.26) * Math.PI) * 3) : 0, ldx = (e.face === 'side' ? e.dir : 0) * lunge, ldy = e.face === 'ds' ? lunge : e.face === 'dn' ? -lunge : 0;
-    const x0 = Math.round(e.x - iw / 2) + ldx, y0 = Math.round(e.y - ih) + (setPx ? 1 : 0) - hop + ldy - Math.round(e.lift || 0), ghost = e.ghost > 0;   /* lift: đang nhảy qua vật (bóng vẫn nằm dưới đất) */
+    const AIR = !!(ctx.air && ctx.air.on()), AL = AIR ? ctx.air.lift() + Math.round(Math.sin(ctx.S.time * 2.6 + 1.3) * 1.2) : 0;   /* 2026-10-14 không chiến: Rocky lơ lửng + chong chóng, bóng in trên biển mây */
+    const x0 = Math.round(e.x - iw / 2) + ldx, y0 = Math.round(e.y - ih) + (setPx ? 1 : 0) - hop + ldy - Math.round(e.lift || 0) - AL, ghost = e.ghost > 0;   /* lift: đang nhảy qua vật (bóng vẫn nằm dưới đất) */
     out.push({
-      y: e.y + (e.state === 'ride' ? 0.6 : 0), f: () => {
+      y: e.y + (e.state === 'ride' ? 0.6 : 0), skill: 'rk_body', f: () => {
         const wet = e.state !== 'ride' && WATER.depth && WATER.depth(e.x, e.y);
-        if (!wet) g.fillStyle = 'rgba(0,0,0,.25)', g.beginPath(), g.ellipse(Math.round(e.x) - cx, Math.round(e.y) - cy, Math.max(5, iw * 0.3), 2, 0, 0, TAU), g.fill();
+        if (AIR) ctx.air.shadow(g, Math.round(e.x) - cx, Math.round(e.y) - cy + 1, 0.9);
+        else if (!wet) { if (SHADOW.on) shadowFor(g, e.x, e.y, Math.round(e.x) - cx, Math.round(e.y) - cy + 1, Math.max(8, Math.round(iw * 0.62)), Math.round(e.lift || 0) + hop); else g.fillStyle = 'rgba(0,0,0,.25)', g.beginPath(), g.ellipse(Math.round(e.x) - cx, Math.round(e.y) - cy, Math.max(5, iw * 0.3), 2, 0, 0, TAU), g.fill(); }   /* plan-66: ảnh bóng chung, nhỏ + nhạt khi nhảy / bị hất */
+        const kr = AIR && e.kfly && e.kfly.air ? e.kfly.ang : 0; if (kr) { g.save(); g.translate(x0 - cx + iw / 2, y0 - cy + ih / 2); g.rotate(kr); g.translate(-(x0 - cx + iw / 2), -(y0 - cy + ih / 2)); }
         if (pt.superT > 0) {   /* hào quang CHỈ trong lúc Siêu Cấp (plan-27, anh chốt) — sheet PixelLab rk_aura_t*, vẽ 1:1 sau lưng */
           const a = sheetFrame(ctx, `rk_aura_t${LV.vfxTier(Math.max(1, LV.tierOf(pt, 'super')))}`, ctx.S.time) || sheetFrame(ctx, 'rk_aura_t1', ctx.S.time);
-          if (a) { g.globalAlpha = 0.6; g.drawImage(a.img, a.loopF * a.w * a.hi, 0, a.w * a.hi, a.h * a.hi, Math.round(e.x - a.w / 2) - cx, Math.round(e.y + 3 - a.h) - cy, a.w, a.h); g.globalAlpha = 1; }
+          if (a) { g.globalAlpha = 0.6; g.drawImage(a.img, a.loopF * a.w * a.hi, 0, a.w * a.hi, a.h * a.hi, Math.round(e.x - a.w / 2) - cx + ldx, Math.round(e.y + 3 - a.h) - cy - hop + ldy - Math.round(e.lift || 0) - AL, a.w, a.h); g.globalAlpha = 1; }   /* 2026-10-15 (anh: VFX sau lưng Rocky bị lệch): bám theo thân — cộng độ cao bay (AL), nhảy (hop / lift), lao đấm (ldx / ldy) như ảnh Rocky */
         }
         waterDraw(g, e.x, e.y, Math.round(e.x) - cx, Math.round(e.y) - cy, () => {
           const darkP = !!(ctx.isDarkPath && ctx.isDarkPath()), dark = darkP || (ctx.rkEvil && ctx.rkEvil()), au = darkP && ctx.ART && ctx.ART.vfx && ctx.ART.vfx.dark_aura;   /* plan-25: Rocky Bóng Tối — hào quang tím PixelLab sau lưng; plan-30 (2026-10-13): Rocky bị trùm kéo đổi phe (rkEvil) CHỈ đổi màu, không hào quang lặp */
-          if (au && au.img) { const n = au.n || 8, f = Math.floor(ctx.S.time * (au.fps || 12)) % n, hi = au.img.__hi ? 1 : 2, w = au.w * 0.5, h = au.h * 0.5; g.globalAlpha = 0.45; g.drawImage(au.img, f * au.w * hi, 0, au.w * hi, au.h * hi, Math.round(e.x - w / 2) - cx, Math.round(e.y - h + 2) - cy, w, h); g.globalAlpha = 1; }
+          if (au && au.img) { const n = au.n || 8, f = Math.floor(ctx.S.time * (au.fps || 12)) % n, hi = au.img.__hi ? 1 : 2, w = au.w * 0.5, h = au.h * 0.5; g.globalAlpha = 0.45; g.drawImage(au.img, f * au.w * hi, 0, au.w * hi, au.h * hi, Math.round(e.x - w / 2) - cx + ldx, Math.round(e.y - h + 2) - cy - hop + ldy - Math.round(e.lift || 0) - AL, w, h); g.globalAlpha = 1; }   /* 2026-10-15: bám thân như hào quang Siêu Cấp */
           if (dark) g.filter = 'hue-rotate(230deg) saturate(1.3) brightness(0.75)';
           else if (e.hurt > 0) g.filter = 'brightness(1.6) saturate(0.6)';
           if (ghost) g.globalAlpha = 0.55;
@@ -1137,6 +1209,8 @@ export const pet = {
           else { g.fillRect(ex, y0 - cy + dy, 1, 2); g.fillRect(ex + 3, y0 - cy + dy, 1, 2); }
           g.globalAlpha = 1; g.filter = 'none';
         });
+        if (AIR && setPx) { const tp = ctx.air.topOf(img, 0, 0, img.width, img.height); ctx.air.copter(g, x0 - cx + tp.cx, y0 - cy + tp.top); }
+        if (kr) g.restore();
         const helm = lvOf(pt) < 5 && !(pt.superT > 0) && ctx.isUnderwater && ctx.isUnderwater() && ctx.ART   /* anh 2026-10-12: Rocky cấp 5+ lặn không cần mũ */ && ctx.ART.uiImg && ctx.ART.uiImg('bubble_helm');
         if (helm) { const hw = Math.round(Math.max(16, iw + 5)), hh = Math.round(hw * helm.height / helm.width); g.drawImage(helm, Math.round(e.x - hw / 2) - cx, Math.round(e.y - Math.min(hh, ih + 4) * 0.98) - hop - cy, hw, hh); }
         if (ST.holding) {
@@ -1149,7 +1223,7 @@ export const pet = {
     return out;
   },
 
-  // world-space effects: egg glow, the fetch sparkle, hearts / notes / dust, Rocky-ha beam
+  // world-space effects: egg glow, the fetch sparkle, hearts / notes / dust (Rocky-ha beam → drawables, 2026-10-16)
   draw(g, ctx, cx, cy) {
     const tm = ctx.S.time;
     if (ST.eggObj && ctx.S.map.objects.includes(ST.eggObj)) {
@@ -1173,24 +1247,7 @@ export const pet = {
       g.fillStyle = '#ffffff'; g.fillRect(x - 1, y - 1, 3, 3);
       g.fillStyle = '#ffe9a0'; g.fillRect(x + 4 + Math.round(Math.sin(ph * 3) * 2), y - 5, 1, 1); g.fillRect(x - 5, y + 3 + Math.round(Math.cos(ph * 4) * 2), 1, 1);
     }
-    const b = ST.beam, e = ST.ent;
-    if (b && !b.fired && e) {   /* tụ năng ở tay: quả cầu xoáy lớn dần + hạt hút vào (rk_hacharge, vfx_workbench) */
-      const pt0 = sv(ctx).pet, cs = bSheet(chargeKey(b.tier, !!(pt0 && pt0.superT > 0))) || bSheet('rk_hacharge'), ang = b.ang ?? DIR_ANG[b.dir], o = pt0 ? beamOrigin(ctx, pt0, e, ang) : { x: e.x, y: e.y - 8 };
-      if (cs) bDraw(g, cs, Math.min(cs.n - 1, Math.floor(b.t / Math.max(0.1, b.charge ?? LV.haOf(b.tier).charge) * cs.n)), o.x - cx, o.y - cy);
-    }
-    const bs = b && b.fired ? bSheet(beamKey(b.tier)) : null;
-    if (b && b.fired && e && bs) {   /* 2026-10-13: luồng mới — lõi trắng + quầng xanh nhiều lớp, mép gợn sóng, tắt dần thu hẹp; cắt theo độ dài thật, xoay theo góc */
-      const ang = b.ang ?? DIR_ANG[b.dir]; bDraw(g, bs, bFrame(bs, b.ft || 0), e.x + (b.ox ?? 0) - cx, e.y + (b.oy ?? -7) - cy, ang, b.len ?? b.range);
-    } else if (b && b.fired && e) {   /* dự phòng: sheet cũ rk_ha_t1/t4/t7 */
-      const sh = sheetFrame(ctx, `rk_ha_t${LV.haSheet(b.tier)}`, 0.42 - b.show), bl = b.len ?? b.range;   /* sheet đủ dài cho tầm bậc này; cắt tới chỗ luồng dừng (vật chắn) */
-      const ox = e.x + (b.ox ?? 0) - cx, oy = e.y + (b.oy ?? -7) - cy, ang = b.ang ?? DIR_ANG[b.dir];
-      g.save(); const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false;
-      g.translate(Math.round(ox), Math.round(oy)); g.rotate(ang);
-      if (sh) { const lw = Math.min(sh.w, Math.max(4, Math.round(bl + 2))); g.drawImage(sh.img, sh.f * sh.w * sh.hi, 0, lw * sh.hi, sh.h * sh.hi, -2, -Math.round(sh.h / 2), lw, sh.h); }   /* cắt (không co giãn) theo độ dài thực — 1:1 */
-      else { g.fillStyle = 'rgba(255,240,170,.85)'; g.fillRect(0, -Math.round(b.w / 2), bl, b.w); g.fillStyle = '#fff'; g.fillRect(0, -1, bl, 2); }
-      g.imageSmoothingEnabled = sm; g.restore();
-    }
-    { const bm = bSheet('rk_haboom'); for (const q of ST.booms) if (bm && q.t >= 0) bDraw(g, bm, bFrame(bm, q.t), q.x - cx, q.y - cy); }
+    /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): tụ năng / luồng / nổ Rocky-ha đã chuyển sang drawables (haDrawables) — bắn lên nằm sau Rocky, bắn xuống nằm trước */
     for (const p of ST.fx) {
       const k = Math.max(0, p.t / p.life), x = Math.round(p.x) - cx, y = Math.round(p.y) - cy;
       g.globalAlpha = Math.min(1, k * 1.5);
@@ -1221,7 +1278,12 @@ export const pet = {
       ug.fillText('🍖', bx, by + 1);
     }
     if ((tgtShown(pt) || pt.hp < st.max * 0.999) && e.state !== 'home' && e.state !== 'ride') {   /* thanh máu nhỏ khi đang đánh / bị thương */
-      const w = Math.round(16 * scale), x = Math.round((e.x - cx) * scale - w / 2), y = Math.round((e.y - ih - 3 - cy) * scale), k = Math.max(0, Math.min(1, pt.hp / st.max));
+      const w = Math.round(16 * scale), x = Math.round((e.x - cx) * scale - w / 2), k = Math.max(0, Math.min(1, pt.hp / st.max));
+      /* plan-45 D11: Rocky đứng sát DƯỚI người chơi → đầu Rocky ngang hông người, thanh máu (lớp UI, trên mọi thứ) vẽ đè thân người → dời xuống dưới chân Rocky. Luật lớp vẽ sprite giữ nguyên. */
+      const pl = ctx.S.player, by0 = e.y - ih - 3, bh = Math.max(4, scale) / scale + 2 / scale;
+      const onMe = pl && Math.abs(e.x - pl.x) < 7 + 8 && by0 + bh > pl.y - 22 && by0 < pl.y + 1;
+      const y = Math.round(((onMe ? e.y + 2 : by0) - cy) * scale);
+      if (typeof window !== 'undefined') window.__p45rkBar = { x: x - 1, y: y - 1, w: w + 2, h: Math.max(4, scale) + 2, shown: true, moved: !!onMe };   /* móc test */
       ug.fillStyle = '#3a1c0c'; ug.fillRect(x - 1, y - 1, w + 2, Math.max(4, scale) + 2); ug.fillStyle = '#5a2a2a'; ug.fillRect(x, y, w, Math.max(4, scale));
       ug.fillStyle = k > 0.5 ? '#7bd04a' : k > 0.25 ? '#ffd45e' : '#ff5a5a'; ug.fillRect(x, y, Math.round(w * k), Math.max(4, scale));
     }

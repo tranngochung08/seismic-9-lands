@@ -118,7 +118,7 @@ function volley(ctx, mo, p, ph) {
   const k = st(mo); mo.n = (mo.n || 0) + 1; k.vol++;
   const m = ctx.S.map, ar = m.arena || { x: 3, y: 2, w: m.w - 6, h: 30 }, minY = -1e9;   /* 2026-10-11 anh: đứng SAU LƯNG Kraken thì nó không đánh được → đòn nhắm đúng chỗ người đứng, mọi phía (chỉ tránh ô đặc của khe vực nhờ walkable) */
   const near = (r0, r1) => { for (let i = 0; i < 12; i++) { const a = Math.random() * TAU, r = r0 + Math.random() * (r1 - r0), x = p.x + Math.cos(a) * r, y = Math.max(minY, p.y + Math.sin(a) * r * 0.8); if (H.walkable(ctx, x, y)) return [x, y]; } return null; };
-  const slam = n => { const pts = [[p.x, Math.max(minY, p.y)]]; for (let i = 1; i < n; i++) { const q = near(38, 70); if (q) pts.push(q); } slamAt(mo, pts, KR.STUCK); for (const s of mo.slams) s.cx0 ??= mo.x; H.say(ctx, 'krslam', L(ctx).slam, false, 16); };
+  const slam = n => { const pts = [[p.x, Math.max(minY, p.y)]]; for (let i = 1; i < n; i++) { const q = near(38, 70); if (q) pts.push(q); } slamAt(mo, pts, KR.STUCK); if (ctx.threat) for (const [x, y] of pts) ctx.threat.add({ kind: 'slam', from: { x: mo.x, y: mo.y }, to: { x, y: y - 10 }, in: KR.WARN + KR.LASH, radius: 22 });   /* plan-34: Ki né */ for (const s of mo.slams) s.cx0 ??= mo.x; H.say(ctx, 'krslam', L(ctx).slam, false, 16); };
   const stuckN = (mo.slams || []).filter(s => s.st === 'stuck').length;
   if (ph === 1) { slam(mo.n <= 1 || stuckN >= 2 ? 1 : 2); return; }
   if (ph === 2) { if (mo.n % 3 === 0) sweep(ctx, mo, p, ar); else slam(stuckN >= 2 ? 1 : 2 + (Math.random() < 0.4 ? 1 : 0)); return; }
@@ -131,13 +131,15 @@ function volley(ctx, mo, p, ph) {
 function sweep(ctx, mo, p, ar) {
   const k = st(mo), fromL = p.x > mo.x;   /* quét từ phía xa người chơi hơn → kịp nhìn thấy */
   k.sweeps.push({ y: p.y - 2, x0: ar.x * 16, x1: (ar.x + ar.w) * 16, dir: fromL ? 1 : -1, st: 'warn', t: KR.SW_WARN, tip: 0, hit: false });
+  if (ctx.threat) { const xa = fromL ? ar.x * 16 : (ar.x + ar.w) * 16, xb = fromL ? (ar.x + ar.w) * 16 : ar.x * 16; ctx.threat.add({ kind: 'sweep', from: { x: xa, y: p.y - 8 }, to: { x: xb, y: p.y - 8 }, t0: ctx.S.time + KR.SW_WARN, speed: Math.abs(xb - xa) / KR.SW_GO, width: 14 }); }   /* plan-34: Ki né */
   H.say(ctx, 'krsweep', L(ctx).sweep, false, 12); ctx.sfx('rumble');
 }
-function grab(ctx, mo, p) { st(mo).grab = { st: 'warn', t: KR.GR_WARN, x: p.x, y: p.y, n: 0, rk: 0, dmgT: 1 }; H.say(ctx, 'krgrab', L(ctx).grab, false, 10); ctx.sfx('warn'); }
+function grab(ctx, mo, p) { st(mo).grab = { st: 'warn', t: KR.GR_WARN, x: p.x, y: p.y, n: 0, rk: 0, dmgT: 1 }; if (ctx.threat) ctx.threat.add({ kind: 'slam', from: { x: mo.x, y: mo.y }, to: { x: p.x, y: p.y - 6 }, in: KR.GR_WARN, radius: 15 }); H.say(ctx, 'krgrab', L(ctx).grab, false, 10); ctx.sfx('warn'); }
 function rocks(ctx, mo, p, ar) {
   const k = st(mo), pts = [[p.x, p.y]];
   for (let i = 0; i < 4; i++) { const x = (ar.x + 1 + Math.random() * (ar.w - 2)) * 16, y = mo.y + 40 + Math.random() * ((ar.y + ar.h) * 16 - mo.y - 60); if (H.walkable(ctx, x, y)) pts.push([x, y]); }
   pts.forEach(([x, y], i) => k.rocks.push({ x, y, t: KR.RK_WARN + i * 0.12, st: 'warn' }));
+  if (ctx.threat) pts.forEach(([x, y], i) => ctx.threat.add({ kind: 'bolt', from: { x, y: y - 80 }, to: { x, y: y - 6 }, in: KR.RK_WARN + i * 0.12, radius: 13 }));
   H.say(ctx, 'krrocks', L(ctx).rocks, false, 12); ctx.sfx('rumble'); if (ctx.quake) ctx.quake(0.2);   /* rung ngắn 1 lần lúc đá bắt đầu rơi (sự kiện) */
 }
 function tickExtras(ctx, mo, dt, p, canHit) {

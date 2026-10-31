@@ -19,9 +19,11 @@
 //  · PHA 2 "TIM BÁNH RĂNG" (ảnh PixelLab core): nhảy thời gian liên tục, bắn bánh răng cưa, vùng CHẬM THỜI GIAN (người chơi 0,6×, viền báo).
 //    Hạ → bánh răng rơi tung, kim dừng → thắng. Thưởng lần đầu: sách Rocky bậc 8 (ctx.hrBook), Ngọc Rồng, thành tựu 'dongho'; đánh lại giảm. save.sys.dongho.
 //  · Đòn mạnh hất người chơi bay (ctx.knockPlayer 'fly'); hất dừng ở vật cứng (knock.js). Mục tiêu theo THÙ HẬN (như Hắc Rocky).
+import { easyHp } from './diff.js';   /* plan-44 C2: Độ khó Dễ — máu ×0,6 */
 import { obj as defObj } from '../gfx.js';
 import { ART } from '../art.js';
 import * as LV from './petlv.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 import { bossCam, bossCamReset, bossBarBox } from './bosscam.js';
 import { beamKey, sheet as bSheet, drawAt as bDraw, frameAt as bFrame } from './beamfx.js';
 
@@ -81,7 +83,7 @@ const SK2 = { slow: { cd: 7, pri: 70 }, jump: { cd: 2.9, pri: 60 }, volley: { cd
 const AG = { rk: 10, hit: 4.5, near: 3, decay: 2.5, back: 6, hold: 4, gap: 3, restless: [9, 13], burst: 12 };
 function bossHp(ctx, k = 1) {
   const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40;
-  return Math.round((per * 60 + st * 22) * k);
+  return easyHp(Math.round((per * 60 + st * 22) * k));
 }
 const sv = ctx => { const s = ctx.S.save; s.sys ||= {}; const h = (s.sys.dongho ||= {}); h.wins ||= 0; h.tries ||= 0; return h; };
 const rk = ctx => (ctx.rocky && ctx.rocky.pet && ctx.rocky.pet()) || (((ctx.S.save.sys || {}).pet || {}).pet) || null;
@@ -156,6 +158,7 @@ const rwOn = () => !!(ST.rw && ST.rw.ph === 'rw');
 /* ---------------- sát thương ---------------- */
 function hurtPlayer(ctx, frac, from, react = 'stagger', power = 1, key = '') {
   const h = ctx.hero, p = ctx.S.player; if (!h || h.fainted) return false;
+  if (ST.won || ST.death) return false;   /* plan-43 E1: trùm đã gục (cảnh vỡ / đã thắng) → đòn còn bay không trúng người chơi nữa — trước: ngất ngay lúc thắng, mất bảng thưởng */
   if (ST.hitCd[key] > ST.t) return false;
   const ok = h.hit(Math.max(1, Math.round(h.max * frac))); if (!ok) return false;
   ST.stats.hits[key] = (ST.stats.hits[key] || 0) + 1; log('hit ' + key);
@@ -163,15 +166,18 @@ function hurtPlayer(ctx, frac, from, react = 'stagger', power = 1, key = '') {
   return true;
 }
 function hurtRocky(ctx, frac, from, kb = 50) {
+  if (ST.won || ST.death) return false;   /* plan-43 E1 */
   const pos = rkPos(ctx); if (!pos) return false; const pt = rk(ctx); if (!pt || !ctx.rocky.hitBy) return false;
   if (ST.amber && ST.amber.who === 'r') return false;   /* trong khung hổ phách: thời gian đứng yên */
   const d = Math.hypot(pos.x - from.x, pos.y - from.y) || 1, raw = Math.round(LV.maxHpOf(rkLv(ctx)) * frac * 1.1);
   ctx.rocky.hitBy(raw, boss(), (pos.x - from.x) / d, (pos.y - from.y) / d, kb); return true;
 }
+/* 2026-10-15 máu linh thú: đòn trúng chỗ linh thú đang ra trận (mọi con trong đội) → trừ máu (frac như Rocky; kind 'fly' = hất bay) */
+function ltHitAt(ctx, test, frac, from, kind) { let n = 0; for (const q of (ctx.ltPets ? ctx.ltPets() : [])) if (test(q) && ctx.ltHit(frac * 1.1, from, kind, q.id)) n++; return n > 0; }
 function areaHit(ctx, x, y, r, frac, key, react = 'stagger', pw = 1) {
   const p = ctx.S.player; let n = 0;
   if (Math.hypot(p.x - x, p.y - y) < r) n += hurtPlayer(ctx, frac, { x, y }, react, pw, key) ? 1 : 0;
-  const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - x, rp.y - y) < r) n += hurtRocky(ctx, frac, { x, y }, react === 'fly' ? 60 : 45) ? 1 : 0;
+  const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - x, rp.y - y) < r) n += hurtRocky(ctx, frac, { x, y }, react === 'fly' ? 60 : 45) ? 1 : 0; ltHitAt(ctx, q => Math.hypot(q.x - x, q.y - y) < r, frac, { x, y }, react === 'fly' ? 'fly' : 'hit');
   return n;
 }
 
@@ -231,9 +237,11 @@ function sawsTick(ctx, dt) {
     s.t += dt; s.rot += dt * 14; const nx = s.x + s.vx * dt, ny = s.y + s.vy * dt;
     if (solidAt(ctx, nx, ny)) { s.dead = true; const o = objAt(ctx, nx, ny); if (o && (o.dhPillar || o.dhEdge)) hitPillar(ctx, o, 1, 'saw'); if (ctx.vfx) ctx.vfx('rock_debris', s.x, s.y); spawnBit(ctx, s.x, s.y, 'saw', { sp: 30, life: 1.2 }); continue; }   /* dừng ở vật cứng đầu tiên */
     s.x = nx; s.y = ny;
+    if (ctx.threat) { const sp = Math.hypot(s.vx, s.vy) || 1; ctx.threat.add({ id: s, kind: 'projectile', from: { x: s.x, y: s.y - 6 }, to: { x: s.x + s.vx / sp * 70, y: s.y - 6 + s.vy / sp * 70 }, speed: sp, width: 6 }); }   /* plan-34: Ki né */
     if (Math.hypot(p.x - s.x, p.y - s.y) < 9 && hurtPlayer(ctx, s.dmg, { x: s.x - s.vx * 0.05, y: s.y - s.vy * 0.05 }, s.key === 'burst' ? 'fly' : 'stagger', 1, s.key)) { s.dead = true; ST.hitCd[s.key] = ST.t + 0.35; }
-    const rp = rkPos(ctx); if (!s.dead && rp && Math.hypot(rp.x - s.x, rp.y - s.y) < 9 && !s.hitR) { s.hitR = hurtRocky(ctx, s.dmg, s, 40); if (s.hitR) s.dead = true; }
+    const rp = rkPos(ctx); if (!s.dead && rp && Math.hypot(rp.x - s.x, rp.y - s.y) < 9 && !s.hitR) { s.hitR = hurtRocky(ctx, s.dmg, s, 40); if (s.hitR) s.dead = true; } if (!s.dead && !s.hitL && ltHitAt(ctx, q => Math.hypot(q.x - s.x, q.y - s.y) < 9, s.dmg, s, s.key === 'burst' ? 'fly' : 'hit')) { s.hitL = true; s.dead = true; }
   }
+  if (ctx.threat) for (const s of ST.saws) if (s.dead || s.t >= s.life) ctx.threat.remove(s);
   ST.saws = ST.saws.filter(s => !s.dead && s.t < s.life);
 }
 function objAt(ctx, x, y) { const tx = Math.floor(x / TS), ty = Math.floor(y / TS); for (const o of ctx.S.map.objects) { if (o.ghost || o.ruined) continue; const d = ctx.O[o.type]; if (d && tx >= o.x && tx < o.x + d.fw && ty >= o.y && ty < o.y + d.fh) return o; } return null; }
@@ -379,7 +387,7 @@ function actTick(ctx, mo, A, dt, p) {
     if (A.t < A.T * 0.7) { const tp = tgPos(ctx, ST.tgt) || p; A.a = Math.atan2(tp.y - mo.y, tp.x - mo.x); Q.dir = dirOf(tp.x - mo.x, tp.y - mo.y); const tl = ST.tele.find(q => q.follow === mo && q.type === 'cone'); if (tl) tl.a = A.a; }
     if (!A.hit && A.t >= A.T) { A.hit = true; ctx.sfx('smash'); fx('knock_erupt', mo.x + Math.cos(A.a) * 18, mo.y + Math.sin(A.a) * 12, {});
       const inCone = e => e && Math.hypot(e.x - mo.x, e.y - mo.y) < 46 && Math.abs(angDiff(Math.atan2(e.y - mo.y, e.x - mo.x), A.a)) < 0.62;
-      if (inCone(p)) hurtPlayer(ctx, DMG.slash, mo, 'stagger', 1, 'slash'); const rp = rkPos(ctx); if (inCone(rp)) hurtRocky(ctx, DMG.slash, mo, 45);
+      if (inCone(p)) hurtPlayer(ctx, DMG.slash, mo, 'stagger', 1, 'slash'); const rp = rkPos(ctx); if (inCone(rp)) hurtRocky(ctx, DMG.slash, mo, 45); ltHitAt(ctx, inCone, DMG.slash, mo, 'hit');
       pillarsNear(ctx, mo.x + Math.cos(A.a) * 22, mo.y + Math.sin(A.a) * 16, 22, 1, 'slash'); }
     if (A.t >= A.T + 0.3) mo.act = null; return;
   }
@@ -427,7 +435,7 @@ function secTick(ctx, dt) {
   for (const c of secCrosses(S)) if (!S.crossed.has(c.tt) && tt >= c.tt) { S.crossed.add(c.tt); ST.stats.secCross++; ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.15); const ex = S.x + Math.cos(c.a) * 36, ey = S.y + Math.sin(c.a) * 36; fx('knock_erupt', ex, ey + 4, {}); pillarsNear(ctx, ex, ey, 30, 2, 'cross'); }
   const p = ctx.S.player, hp = secHitAt(S, tt, p.x, p.y - 8);
   if (hp.includes('cross')) hurtPlayer(ctx, DMG.cross, { x: S.x, y: S.y }, 'fly', 1.2, 'cross'); else if (hp.includes('hand') && hurtPlayer(ctx, DMG.hand, { x: S.x, y: S.y }, 'stagger', 0.8, 'hand')) ST.hitCd.hand = ST.t + 0.8;
-  const rp = rkPos(ctx); if (rp && !(ST.rkSecCd > ST.t)) { const hr = secHitAt(S, tt, rp.x, rp.y - 8); if (hr.length && hurtRocky(ctx, hr.includes('cross') ? DMG.cross : DMG.hand, { x: S.x, y: S.y }, hr.includes('cross') ? 60 : 35)) ST.rkSecCd = ST.t + 0.8; }
+  const rp = rkPos(ctx); if (rp && !(ST.rkSecCd > ST.t)) { const hr = secHitAt(S, tt, rp.x, rp.y - 8); if (hr.length && hurtRocky(ctx, hr.includes('cross') ? DMG.cross : DMG.hand, { x: S.x, y: S.y }, hr.includes('cross') ? 60 : 35)) ST.rkSecCd = ST.t + 0.8; } if (!(ST.ltSecCd > ST.t)) { let n = 0; for (const lp of (ctx.ltPets ? ctx.ltPets() : [])) { const hl = secHitAt(S, tt, lp.x, lp.y - 8); if (hl.length && ctx.ltHit((hl.includes('cross') ? DMG.cross : DMG.hand) * 1.1, { x: S.x, y: S.y }, hl.includes('cross') ? 'fly' : 'hit', lp.id)) n++; } if (n) ST.ltSecCd = ST.t + 0.8; }
   if (tt >= SEC.dur) { ST.sec = null; if (b.act && b.act.k === 'sec') b.act = null; log('sec end'); }
 }
 
@@ -475,7 +483,7 @@ function ultTick(ctx, mo, dt) {
     if (!U.hit && u >= ULT.warn) { U.hit = true; ctx.sfx('whoosh_big'); U.struck.push({ k: U.k, t: 0 });
       const p = ctx.S.player, inS = (x, y) => { const r = Math.hypot(x - U.x, y - U.y); return r > 14 && r < ULT.R + 4 && U.dead.includes(sectorOf(U.x, U.y, x, y)); };
       if (inS(p.x, p.y - 4)) { ST.stats.sectorHit++; hurtPlayer(ctx, DMG.sector, { x: U.x, y: U.y }, 'fly', 1.1, 'sector'); } else ST.stats.sectorSafe++;
-      const rp = rkPos(ctx); if (rp && inS(rp.x, rp.y - 4)) hurtRocky(ctx, DMG.sector, { x: U.x, y: U.y }, 60);
+      const rp = rkPos(ctx); if (rp && inS(rp.x, rp.y - 4)) hurtRocky(ctx, DMG.sector, { x: U.x, y: U.y }, 60); ltHitAt(ctx, q => inS(q.x, q.y - 4), DMG.sector, { x: U.x, y: U.y }, 'fly');
       for (const h of U.dead) { const a = hourA(h) + Math.PI / 12; pillarsNear(ctx, U.x + Math.cos(a) * 80, U.y + Math.sin(a) * 80, 34, 1, 'sector'); } }
     if (U.t >= ULT.n * ULT.tick) { U.ph = 'bell'; U.t = 0; ST.banner = { txt: L(ctx).bell, t: 1.6 }; ctx.sfx('boss_win'); if (ctx.quake) ctx.quake(0.4); log('ULT bell');
       for (let h = 0; h < 12; h++) { const a = hourA(h); spawnSaw(ctx, U.x + Math.cos(a) * 16, U.y + Math.sin(a) * 16, a, 170, { key: 'burst', dmg: DMG.burst, life: 1.6, z: 8 }); } }
@@ -543,6 +551,9 @@ function p2Down(ctx, mo) {
 function deathTick(ctx, dt) { const D = ST.death; D.t += dt; if (D.t >= 1.4 && !D.won) { D.won = true; onWin(ctx, D); } if (D.t > 3) ST.death = null; }
 
 /* ---------------- thắng ---------------- */
+function bookLater(ctx, ms, n = 40) {   /* plan-43 E1/CK1: bảng thưởng (sách bậc 8) chờ tới khi người chơi rảnh (không ngất / không đang thoại / bảng khác) rồi mới mở — trước: mở đúng lúc ngất / chuyển vùng nên mất */
+  setTimeout(() => { if (!ctx.hrBook || !ctx.hrBook.open) return; const busy = ctx.S.mode !== 'play' || (ctx.hero && ctx.hero.fainted); if (busy && n > 0) { bookLater(ctx, 700, n - 1); return; } ctx.hrBook.open(); }, ms);
+}
 function onWin(ctx, mo) {
   const h = sv(ctx), first = h.wins === 0, t = L(ctx), secs = Math.round(ST.t - ST.startT);
   h.wins++; h.best = h.best ? Math.min(h.best, secs) : secs; ST.won = true; ST.tele = [];
@@ -551,7 +562,7 @@ function onWin(ctx, mo) {
   ctx.give('stone', first ? 450 : 100, mo.x, mo.y); ctx.give('soul', first ? 3 : 1, mo.x + 8, mo.y);
   const r = ((ctx.S.save.sys ||= {}).road ||= {}); r.balls ||= []; const miss = [1, 2, 3, 4, 5, 6, 7].filter(n => !r.balls.includes(n));
   if (miss.length && (first || Math.random() < 0.2)) { const n = miss[(Math.random() * miss.length) | 0]; r.balls.push(n); ctx.give('dball' + n, 1, mo.x - 10, mo.y, { beam: true }); setTimeout(() => ctx.toast(ctx.lang() === 'vi' ? `🐉 NGỌC RỒNG ${n} SAO rơi ra!` : `🐉 The ${n}-STAR DRAGON BALL dropped!`, true), 1800); }
-  if (first) { if (ctx.hrBook && ctx.hrBook.add) ctx.hrBook.add(1); h.book = 1; if (ctx.achieve) ctx.achieve('dongho'); setTimeout(() => ctx.toast(t.title, true), 3200); setTimeout(() => { if (ctx.hrBook && ctx.hrBook.open) ctx.hrBook.open(); }, 4200); }
+  if (first) { if (ctx.hrBook && ctx.hrBook.add) ctx.hrBook.add(1); h.book = 1; if (ctx.achieve) ctx.achieve('dongho'); setTimeout(() => ctx.toast(t.title, true), 3200); bookLater(ctx, 4200); }
   else setTimeout(() => ctx.toast(t.again, true), 2400);
   ctx.persist(); log('WIN ' + secs + 's first ' + first);
 }
@@ -561,21 +572,21 @@ function haFilter(ctx, ox, oy, ang, len, w, tier) {
   const b = ST.boss; if (!inDh(ctx) || !b || !rwOn()) return null;
   const dx = Math.cos(ang), dy = Math.sin(ang), tB = (b.x - ox) * dx + (b.y - 16 - oy) * dy, dB = Math.abs((b.x - ox) * dy - (b.y - 16 - oy) * dx);
   if (!(tB > 0 && tB < len + 20 && dB < 22)) return null;
-  const cut = Math.max(6, tB - 12); ST.undo.push({ x: ox, y: oy, a: ang, len: cut, t: 0, life: 0.6, tier: tier || 4 }); ST.stats.undo++;
+  const cut = Math.max(6, tB - 12); ST.undo.push({ x: ox, y: oy, a: ang, len: cut, t: 0, life: 0.6, tier: tier || 4, gy: (rkPos(ctx) || { y: oy + 9 }).y }); ST.stats.undo++;
   if (ctx.pop) ctx.pop(b.x, b.y - 46, L(ctx).undo, '#a0fff0'); ctx.sfx('whirl'); log('ha undone'); return cut;
 }
 
 /* ---------------- hình vẽ ---------------- */
 function drawBoss(g, mo, x, y) {
   const Q = ST.q; if (!Q) return; Q.flash = mo.flash || 0;
-  g.fillStyle = 'rgba(20,10,0,.35)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 12, 4, 0, 0, 7); g.fill();
+  if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, 24, Math.round(mo.lift || 0)); else { g.fillStyle = 'rgba(20,10,0,.35)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 12, 4, 0, 0, 7); g.fill(); }   /* plan-66 */
   drawM(g, Q, x, y);
 }
 function coreAt(mo) { return { x: mo.x, y: mo.y - 22 + Math.round(Math.sin(mo.bob * 2.4) * 2) }; }
 function drawP2(g, mo, x, y) {
   if (mo.hp <= 0 || ST.death) return;   /* đã hạ: ST.death tự vẽ lõi rơi (monsters còn giữ xác vài khung) */
   const c = img(IMG.core), hd = img(IMG.hand), cg = img(IMG.bitL), cy = y - 22 + Math.round(Math.sin(mo.bob * 2.4) * 2), al = mo.alpha ?? 1;
-  g.fillStyle = 'rgba(20,10,0,.3)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 10, 3, 0, 0, 7); g.fill();
+  if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, 20, Math.round(y - cy), al); else { g.fillStyle = 'rgba(20,10,0,.3)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 10, 3, 0, 0, 7); g.fill(); }   /* plan-66: lõi lơ lửng ~22 px → bóng nhỏ + nhạt */
   if (hd) { drawHand(g, hd, x, cy, mo.spin, al * 0.95, 3); drawHand(g, hd, x, cy, -mo.spin * 1.6 + 2, al * 0.95, 3); }   /* 2 kim xoáy quanh lõi (ảnh PixelLab) */
   if (c) { blitC(g, c, x, cy, al); if ((mo.flash || 0) > 0) { g.save(); g.globalCompositeOperation = 'lighter'; blitC(g, c, x, cy, 0.4); g.restore(); } }
   if (cg) for (let i = 0; i < 3; i++) { const a = mo.spin * 0.8 + i * 2.09; blitC(g, cg, x + Math.cos(a) * 20, cy + Math.sin(a) * 9, al, mo.spin * 3); }
@@ -737,7 +748,7 @@ export const dongho = {
     for (const s of ST.saws) { const im = img(IMG.saw); if (!im || s.rwHide) continue; out.push({ y: s.y, f: () => { g.save(); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(Math.round(s.x - cx - 3), Math.round(s.y - cy), 6, 2); g.restore(); blitC(g, im, s.x - cx, s.y - s.z - cy, 1, s.rot); } });   /* bánh răng bay: vị trí = bóng dưới đất (va chạm theo ô đất), vẽ cao z */ }
     for (const q of ST.bits) { if (q.rwHide) continue; const im = img(q.kind === 'saw' ? IMG.bitL : IMG.bit);   /* bánh răng văng: nhỏ đúng cỡ thật, đồng tối (v2) */ if (!im) continue; out.push({ y: q.y, f: () => { if (q.z > 1) { g.save(); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(Math.round(q.x - cx - 3), Math.round(q.y - cy), 6, 2); g.restore(); } blitC(g, im, q.x - cx, q.y - q.z - cy, Math.min(1, (q.life - q.t) / 0.4), q.rot); } }); }
     if (ST.amber) { const A = ST.amber, im = img(A.hp <= 1 ? IMG.amber2 : A.hp <= 3 ? IMG.amber1 : IMG.amber) || img(IMG.amber); if (im) out.push({ y: A.y + 1.5, f: () => blitC(g, im, A.x - cx, A.y - 14 - cy, 0.66) }); }   /* khối hổ phách trong mờ (v2): thấy người bị nhốt bên trong */   /* khung hổ phách (PixelLab, ảnh nứt theo máu) đè lên người bị nhốt */
-    for (const u of ST.undo) { const sh = bSheet(beamKey(u.tier)); if (!sh) continue; out.push({ y: 1e8, f: () => { const k = 1 - u.t / u.life; bDraw(g, sh, bFrame(sh, 0.15), u.x - cx, u.y - cy, u.a, Math.max(4, u.len * k), 0.9 * k); } }); }   /* Rocky-ha CUỘN NGƯỢC về tay Rocky (hoàn tác) */
+    for (const u of ST.undo) { const sh = bSheet(beamKey(u.tier)); if (!sh) continue; out.push({ y: u.gy != null ? u.gy + (Math.sin(u.a) < 0 ? -0.5 : 0.5) : 1e8, skill: 'dh_undo', f: () => {   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): luồng phát từ tay Rocky → khoá theo chân Rocky ∓ 0,5 */ const k = 1 - u.t / u.life; bDraw(g, sh, bFrame(sh, 0.15), u.x - cx, u.y - cy, u.a, Math.max(4, u.len * k), 0.9 * k); } }); }   /* Rocky-ha CUỘN NGƯỢC về tay Rocky (hoàn tác) */
     if (ST.shatter) { const S = ST.shatter; out.push({ y: S.y, f: () => drawCell(g, mCell(S.Q), S.x - cx, S.y - cy, S.t < 1.6 ? 1 : Math.max(0, 1 - (S.t - 1.6) / 0.6)) }); }
     if (ST.death) { const D = ST.death, c = img(IMG.core); if (c && D.t < 1.2) out.push({ y: D.y, f: () => blitC(g, c, D.x - cx, D.y - 22 + D.t * 18 - cy, 1 - D.t / 1.2) }); }
     return out;

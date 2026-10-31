@@ -1,6 +1,7 @@
 // photo.js — Photo mode (P): freeze the scene, pick a frame / sticker / filter / pose, then download or copy a PNG
 // of exactly what is on screen (pixel canvas ×scale, nearest-neighbour + the crisp overlay). See systems/API.md.
 import { keyHint, isTouchUI } from '../hud.js';   /* polish 2026-10-10: cảm ứng → Ⓐ / ☰ thay E / Esc */
+import { add as albumAdd, openAlbum, isOpen as albumOpen, close as albumClose, count as albumCount } from '../album.js';   /* plan-44 đợt D (R6): album 12 ảnh gần nhất */
 
 const STR = {
   en: {
@@ -169,7 +170,8 @@ function countShot(ctx, doneText) {
 async function download(ctx) {
   const T = L(ctx);
   try {
-    const blob = await toBlob(compose(ctx, 1)); if (!blob) throw new Error('no blob');
+    const cv = compose(ctx, 1), blob = await toBlob(cv); if (!blob) throw new Error('no blob');
+    toAlbum(ctx, cv);
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `seismic-9lands-${(ctx.S.zone && ctx.S.zone.id) || 'land'}-${stamp()}.png`;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     countShot(ctx, T.saved);
@@ -178,10 +180,22 @@ async function download(ctx) {
 async function copy(ctx) {
   const T = L(ctx);
   try {
-    const blob = await toBlob(compose(ctx, 1)); if (!blob || !navigator.clipboard || !window.ClipboardItem) throw new Error('clipboard unavailable');
+    const cv = compose(ctx, 1), blob = await toBlob(cv); toAlbum(ctx, cv);   /* vào album kể cả khi trình duyệt chặn sao chép */
+    if (!blob || !navigator.clipboard || !window.ClipboardItem) throw new Error('clipboard unavailable');
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
     countShot(ctx, T.copied);
   } catch (e) { ctx.toast(T.copyFail); }
+}
+
+/* plan-44 đợt D (R6): mỗi ảnh Tải / Sao chép → album (album.js: IndexedDB, 12 ảnh gần nhất, lỗi lưu thì bỏ qua — game vẫn chạy) */
+let LAST_SHOT = null;   /* cùng một cảnh (vị trí, dáng, khung, nhãn, màu) vừa vào album trong 60 s → Tải rồi Sao chép không thêm ảnh trùng */
+function toAlbum(ctx, cv) { try { const p = ctx.S.player, key = [ctx.S.zone && ctx.S.zone.id, Math.round(p.x), Math.round(p.y), p.dir, ST.frame, ST.sticker, ST.filter, ST.wave, ST.hideHud].join('|'), now = Date.now();
+  if (LAST_SHOT && LAST_SHOT.key === key && now - LAST_SHOT.t < 60e3) return; LAST_SHOT = { key, t: now };
+  albumAdd(cv, { zone: (ctx.S.zone && ctx.S.zone.id) || '', zname: zoneName(ctx) }).then(() => refreshAlbum(ctx)).catch(() => { }); } catch (e) { } }
+function refreshAlbum(ctx) { albumCount().then(n => { const b = ST.el && ST.el.querySelector('#ph-album'); if (b) b.textContent = (ctx.lang() === 'vi' ? '🖼 Album ảnh' : '🖼 Photo album') + ` (${n})`; }).catch(() => { }); }
+function showAlbum(ctx) {
+  if (ST.el) ST.el.hidden = true;
+  openAlbum(ctx, { onClose: () => { if (ST.open && ST.el) ST.el.hidden = false; refreshAlbum(ctx); }, onCount: () => refreshAlbum(ctx) });
 }
 
 // --- panel ----------------------------------------------------------------------
@@ -204,6 +218,7 @@ function buildPanel(ctx) {
       <button class="btn" id="ph-copy" style="margin:0;padding:9px 6px;font-size:13px">${T.copy}</button>
       <button class="btn" id="ph-close" style="margin:0;padding:9px 6px;font-size:13px;width:auto">${T.close}</button>
     </div>
+    <button class="btn" id="ph-album" style="margin:6px 0 0;padding:7px 6px;font-size:13px">${ctx.lang() === 'vi' ? '🖼 Album ảnh' : '🖼 Photo album'}</button>
     <p class="dim tiny" style="margin:6px 0 0">${isTouchUI() ? keyHint(T.hintTouch) : T.hint}</p>`;
   const el = ctx.panel('photo', html);
   // dock bottom-right, let clicks pass through to nothing else (the .ov is full-screen)
@@ -216,8 +231,9 @@ function buildPanel(ctx) {
     else if (b.id === 'ph-dl') download(ctx);
     else if (b.id === 'ph-copy') copy(ctx);
     else if (b.id === 'ph-close') close(ctx);
+    else if (b.id === 'ph-album') showAlbum(ctx);
   });
-  ST.el = el;
+  ST.el = el; refreshAlbum(ctx);
   return el;
 }
 function refreshCount(ctx) { const c = ST.el && ST.el.querySelector('#ph-count'); if (c) c.textContent = L(ctx).shots(sysSave(ctx).count || 0); }
@@ -248,7 +264,7 @@ function preview(ctx) {
 function open(ctx) {
   if (ST.open || ctx.S.mode !== 'play') return;
   ST.open = true;
-  if (!ST.closerSet) { ctx.registerCloser('photo', () => close(ctx)); ctx.onAction('photo', () => download(ctx)); ST.closerSet = true; }
+  if (!ST.closerSet) { ctx.registerCloser('photo', () => (albumOpen() ? albumClose() : close(ctx))); ctx.onAction('photo', () => { if (!albumOpen()) download(ctx); }); ST.closerSet = true; }   /* đợt D: Esc khi đang xem album = về bảng chụp */
   ctx.setMode('photo');
   const p = ctx.S.player; ST.prevSpeed = p.speedMul; p.speedMul = 0; p.moving = false;
   ST.busy = new Map(); for (const n of ctx.allNpcs()) { ST.busy.set(n, n.busy); n.busy = true; n.moving = false; }
@@ -261,6 +277,7 @@ function close(ctx) {
   ST.open = false;
   if (ST.timer) { clearInterval(ST.timer); ST.timer = null; }
   if (ST.el) ST.el.hidden = true;
+  if (albumOpen()) albumClose();
   const p = ctx.S.player; if (p) p.speedMul = ST.prevSpeed == null ? 1 : ST.prevSpeed;
   if (ST.busy) { for (const [n, b] of ST.busy) if (n) n.busy = b; ST.busy = null; }
   applyHud();
@@ -273,7 +290,8 @@ window.__photo = {
   render: () => CTX ? compose(CTX, 1).toDataURL('image/png') : null,
   set: o => { set(CTX, o || {}); return { frame: ST.frame, sticker: ST.sticker, filter: ST.filter, wave: ST.wave, hideHud: ST.hideHud }; },
   state: () => ({ open: ST.open, frame: ST.frame, sticker: ST.sticker, filter: ST.filter, wave: ST.wave, hideHud: ST.hideHud, count: CTX ? sysSave(CTX).count : 0 }),
-  download: () => CTX && download(CTX), copy: () => CTX && copy(CTX)
+  download: () => CTX && download(CTX), copy: () => CTX && copy(CTX),
+  album: () => CTX && showAlbum(CTX)   /* plan-44 đợt D */
 };
 
 export const photo = {
@@ -284,6 +302,7 @@ export const photo = {
     CTX = ctx;
     if (!ST.open) { if (code === 'KeyP' && ctx.S.mode === 'play') { open(ctx); return true; } return false; }
     if (ctx.S.mode !== 'photo') return false;
+    if (albumOpen()) { if (code === 'KeyP') { close(ctx); return true; } return false; }   /* đang xem album: phím chụp / đổi dáng tạm tắt */
     const DIR = { ArrowLeft: 1, KeyA: 1, ArrowRight: 2, KeyD: 2, ArrowUp: 3, KeyW: 3, ArrowDown: 0, KeyS: 0 };
     if (DIR[code] !== undefined) { ctx.S.player.dir = DIR[code]; return true; }
     if (code === 'KeyP') { close(ctx); return true; }

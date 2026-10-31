@@ -1,0 +1,50 @@
+[
+ {
+  "what": "char v3 import 8",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:26:54"
+ },
+ {
+  "what": "idle ['south', 'south-east', 'east', 'north-east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:33:14"
+ },
+ {
+  "what": "whip ['south', 'south-east', 'east', 'north-east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:33:52"
+ },
+ {
+  "what": "slam ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:35:26"
+ },
+ {
+  "what": "hurt ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:36:10"
+ },
+ {
+  "what": "cast ['south', 'south-east', 'east', 'north-east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:36:47"
+ },
+ {
+  "what": "defeat ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:37:33"
+ },
+ {
+  "what": "whip ['east']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "08:38:11"
+ }
+]

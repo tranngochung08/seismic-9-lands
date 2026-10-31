@@ -22,6 +22,12 @@ defObj('arena_crowd', 32, 24, 2, 1, half(g => { for (const x of [6, 26, 46]) { p
 defObj('arena_door', 24, 24, 2, 1, half(g => { px(g, 2, 8, '#3a3440', 44, 40); px(g, 8, 16, '#120e18', 32, 32); }), { solid: false });   /* (không còn dùng — anh bỏ cửa) */
 defObj('arena_sign', 16, 16, 1, 1, half(g => { px(g, 7, 14, '#4a3324', 3, 18); px(g, 1, 4, '#2a1a10', 22, 12); px(g, 2, 5, '#a07040', 20, 10); px(g, 8, 7, '#c03030', 7, 6); }));
 
+/* plan-46 C: đồ hầm v3 (ảnh PixelLab trong zones/arena/dg — tools/px-p46c-arena.py; ảnh gói 2× → cỡ logic = ½ ảnh; chân fw = phần ảnh thật). Bản vẽ code chỉ dự phòng. */
+for (const [n, w, h, fw, c] of [['dg_forge', 32, 38, 2, '#5a2a20'], ['dg_tools', 32, 22, 1, '#3a2c24'], ['dg_anvil', 32, 20, 1, '#2a2830'], ['dg_tub', 32, 21, 1, '#3a2c24'], ['dg_shelf', 32, 43, 2, '#3a2c24'],
+  ['dg_barrel', 16, 24, 1, '#4a3324'], ['dg_crate', 32, 24, 1, '#4a3324'], ['dg_sacks', 32, 21, 1, '#6a5a44'], ['dg_chest', 32, 18, 1, '#4a3324'], ['dg_pot', 16, 13, 1, '#5a3a2a'],
+  ['dg_cauldron', 32, 35, 2, '#1c1820'], ['dg_column', 32, 25, 1, '#3a3440'], ['dg_grave_a', 16, 23, 1, '#3a3440'], ['dg_grave_b', 16, 20, 1, '#3a3440'], ['dg_candles', 16, 16, 1, '#6a5a44']])
+  defObj(n, w, h, fw, 1, g => { px(g, 2, Math.max(0, h - 14), c, w - 4, Math.min(12, h)); }, n === 'dg_candles' ? { solid: false } : {});
+
 const TS = 16;
 const BREAK = { arena_pillar: 2, arena_bag: 2, arena_weights: 2, arena_dummy: 2, arena_bench: 1, arena_crowd: 2, crate: 1, crystal_p: 2, crystal_b: 2, hexpillar: 3, td_pillar: 3, td_stele: 2, gm_pillar: 3, gm_shelf: 2 };   /* plan-30 trùm 3: cột gương / kệ sách sân Gương (rift3) — ảnh hư + đổ nát PixelLab (tools/px-guong-env.py ruin) */   /* plan-30 trùm 2: cột đồng / bệ thu lôi sân Trống Đồng (rift2) — ảnh hư + đổ nát PixelLab riêng (tools/px-td-ruin.py) */   /* plan-30: cột pha lê / cột lục giác trong Khe Nứt (rift1) — ảnh hư + đổ nát PixelLab sẵn của gói m9 */   /* số cú mạnh để đổ nát (cú ≥ 1.2 tính 2) */
 const ST = { decals: [], embers: [], smokes: [], imgs: {}, t: 0, emberT: 2, walls: new Map(), wallFx: 0 };
@@ -77,7 +83,7 @@ function impact(ctx, x, y, power, kind) {   /* knock.js (văng trúng tường /
   }
   if (kind !== 'wall' && power >= 1) {   /* rơi mạnh / giáng: hố cát hoặc vết nứt đá ở chỗ chạm đất (lớp nền) */
     const t = m.ground[Math.floor(y / TS) * m.w + Math.floor(x / TS)], sand = t === 5 || t === 8;
-    ST.decals.push({ x, y: y + 2, im: sand ? 'spar/fx/crater_sand.png' : 'spar/fx/crater_stone.png', s: 0.5 + Math.min(0.3, (power - 1) * 0.4), t: 0 }); if (ST.decals.length > 12) ST.decals.shift();
+    ST.decals.push({ x, y: y + 2, im: m.dungeon ? (sand ? 'zones/arena/dg/crater_earth.png' : 'zones/arena/dg/crater_stone.png') : sand ? 'spar/fx/crater_sand.png' : 'spar/fx/crater_stone.png',   /* plan-46 C: hầm — hố / nứt PixelLab tông đá tím-xám tối */ s: 0.5 + Math.min(0.3, (power - 1) * 0.4), t: 0 }); if (ST.decals.length > 12) ST.decals.shift();
   }
   return n;
 }
@@ -118,6 +124,7 @@ export const arena = {
       const rb = c.stage >= 3 && c.fl && img(RUBBLE);
       if (rb) { const ox = (c.fl.x - c.x) * 9, oy = (c.fl.y - c.y) * 9; g.drawImage(rb, Math.round(sx + ox), Math.round(sy + oy + (c.fl.y < c.y ? -4 : 0)), 16, 16); }
     }
+    if (ctx.S.map.dungeon) return;   /* plan-46 C: vùng hầm — quầng cột lửa do lớp sáng dungeon.js lo (đĩa sáng dưới đất thừa, mép elip lộ) */
     const br = 1 + 0.05 * Math.sin(ST.t * 1.3);   /* quầng sáng ấm dưới chân cột: tĩnh, chỉ 'thở' rất chậm ±5 % */
     g.save(); g.globalCompositeOperation = 'lighter';
     for (const o of ctx.S.map.objects) {

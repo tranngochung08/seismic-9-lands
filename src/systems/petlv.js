@@ -1,4 +1,5 @@
 // petlv.js — plan-27: số liệu thuần của Rocky (không vẽ, không DOM): cấp / kinh nghiệm / chỉ số / 3 chiêu × 7 bậc / sách luyện / phân tích lệnh chat.
+// plan-38: + 6 chiêu học từ mảnh lõi trùm (CORE_SKILLS, mang 2 ô), số liệu theo bậc, gọi chiêu bằng chat (parseSkill).
 // pet.js (thực thể + AI), menu.js (thẻ Rocky), underwater.js (quầy Heathcliff) cùng dùng file này.
 
 export const LV_CAP = 50;
@@ -19,6 +20,30 @@ export const SKILLS = {
   super: { unlock: 40, icon: '⚡', vi: 'Siêu Cấp Rocky', en: 'Super Rocky' },
 };
 export const SKILL_IDS = ['punch', 'ha', 'super'];
+/* plan-38 (2026-10-15 anh duyệt): 6 chiêu học từ MẢNH LÕI TRÙM — hạ trùm → Rocky ăn mảnh lõi (rockycore.js) → mở bậc 1 (Rocky ≥ cấp 20 như Rocky-ha),
+   bậc 2–7 mua sách ở Heathcliff như 3 chiêu gốc. Mang theo tối đa EQ_MAX = 2 (pt.eq, chọn ở thẻ Rocky). Rocky TỰ dùng (rockycore.js), gọi được bằng chat. */
+export const CORE_SKILLS = {
+  clash: { core: 'hacrocky', unlock: 20, icon: '☯', el: 'dark', vi: 'Đối Chưởng', en: 'Beam Clash' },
+  quake: { core: 'trongdong', unlock: 20, icon: '🪨', el: 'earth', vi: 'Địa Chấn', en: 'Quake Stomp' },
+  mirror: { core: 'guong', unlock: 20, icon: '🪞', el: 'mirror', vi: 'Khiên Đá Bóng', en: 'Mirror Slab' },
+  magnet: { core: 'hoden', unlock: 20, icon: '🧲', el: 'void', vi: 'Đá Từ Hút', en: 'Lodestone' },
+  petrify: { core: 'dongho', unlock: 20, icon: '🗿', el: 'time', vi: 'Hoá Đá', en: 'Petrify' },
+  thunder: { core: 'bakunawa', unlock: 20, icon: '⚡', el: 'bolt', vi: 'Lôi Thạch Quyền', en: 'Thunder Fist' },
+};
+export const CORE_IDS = Object.keys(CORE_SKILLS);
+export const CORE_BOSSES = CORE_IDS.map(id => CORE_SKILLS[id].core);
+export const coreSkillOf = boss => CORE_IDS.find(id => CORE_SKILLS[id].core === boss) || null;
+export const EQ_MAX = 2;
+Object.assign(SKILLS, CORE_SKILLS);   /* SKILLS[id] dùng chung (sách, thẻ Rocky, readBook) — SKILL_IDS vẫn chỉ 3 chiêu gốc */
+export const hasCore = (p, id) => !CORE_SKILLS[id] || ((p && p.cores) || []).includes(CORE_SKILLS[id].core);
+export const equipped = p => ((p && p.eq) || []).filter(id => CORE_SKILLS[id] && hasCore(p, id)).slice(0, EQ_MAX);
+/* số liệu theo bậc t (1–8). mul = × sức đánh Rocky; cd = hồi chiêu (giây) */
+export const quakeOf = t => ({ r: 40 + 6 * (t - 1), mul: 1.4 + 0.25 * (t - 1), stun: +(0.6 + 0.1 * (t - 1)).toFixed(2), kb: 110 + 15 * (t - 1), cd: +(9 - 0.6 * (t - 1)).toFixed(1) });
+export const mirrorOf = t => ({ dur: +(1.3 + 0.1 * (t - 1)).toFixed(1), mul: 1.5 + 0.3 * (t - 1), max: t >= 4 ? 3 : 2, cd: +(12 - 0.8 * (t - 1)).toFixed(1) });
+export const magnetOf = t => ({ r: 60 + 5 * (t - 1), pull: 1.2, mul: 1.2 + 0.25 * (t - 1), cd: +(14 - (t - 1)).toFixed(1) });
+export const petrifyOf = t => ({ mob: +(1.3 + 0.12 * (t - 1)).toFixed(2), boss: +(1.6 + 0.15 * (t - 1)).toFixed(2), slow: 0.5, cd: +(15 - (t - 1)).toFixed(1) });
+export const thunderOf = t => ({ mul: 1.8 + 0.3 * (t - 1), chain: t >= 4 ? 3 : 2, cmul: 0.6, cr: 70, cd: +(7 - 0.4 * (t - 1)).toFixed(1) });
+export const clashOf = t => ({ mul: 3 + 0.5 * (t - 1), push: 1 + 0.08 * (t - 1), cd: +(8 - 0.5 * (t - 1)).toFixed(1) });
 export const TIER_MAX = 8;   /* plan-30: bậc 8 chỉ mở bằng sách thưởng trùm (Hắc Rocky) */
 export const TIER_SHOP = 7;   /* quầy Heathcliff / điều ước Rồng Thần tối đa bậc 7 */
 export const vfxTier = t => (t >= 7 ? 7 : t >= 4 ? 4 : 1);   /* VFX 3 kiểu: bậc 1–3 · 4–6 · 7 */
@@ -45,11 +70,13 @@ export const BOOK_LV = {
   ha: [0, 20, 22, 26, 30, 35, 40, 45, 45],
   super: [0, 40, 41, 42, 43, 44, 45, 45, 45],
 };
+for (const id of CORE_IDS) BOOK_LV[id] = [0, 20, 22, 26, 30, 35, 40, 45, 45];   /* plan-38 */
 export const BOOK_PRICE = {
   punch: [0, 0, 40, 90, 160, 260, 400, 600, 0],
   ha: [0, 0, 150, 250, 380, 520, 700, 950, 0],
   super: [0, 0, 400, 550, 700, 880, 1080, 1300, 0],
 };
+for (const id of CORE_IDS) BOOK_PRICE[id] = [0, 0, 180, 300, 450, 620, 820, 1100, 0];   /* plan-38 */
 export const bookNeedLv = (id, n) => BOOK_LV[id][n];
 export const bookPrice = (id, n) => BOOK_PRICE[id][n];
 
@@ -64,12 +91,14 @@ export const xpForLevel = lv => { let s = 0; for (let l = 1; l < lv; l++) s += n
 /* bậc chiêu đang có (0 = chưa mở). Bậc 1 tự có khi đủ cấp mở; sách nâng 2→7 (quầy) · 8 (sách trùm) */
 export function tierOf(p, id) {
   const lv = levelFromXp(p.xp || 0).lv, sk = (p.skills || {})[id] || 0;
+  if (!SKILLS[id] || !hasCore(p, id)) return 0;   /* plan-38: chiêu học từ trùm chỉ có khi Rocky đã ăn mảnh lõi */
   return lv >= SKILLS[id].unlock ? Math.max(1, sk) : 0;
 }
 /* có mua được sách bậc n của chiêu id không → { ok, why } */
 export function canBook(p, id, n, boss = false) {   /* boss: sách bậc 8 thưởng trùm (hacrocky.js) — quầy không bán bậc 8 */
   const lv = levelFromXp(p.xp || 0).lv, cur = tierOf(p, id);
   if (n > TIER_MAX) return { ok: false, why: 'max' };
+  if (!hasCore(p, id)) return { ok: false, why: 'core' };   /* plan-38: chưa ăn mảnh lõi trùm */
   if (n > TIER_SHOP && !boss) return { ok: false, why: cur >= n ? 'have' : 'boss' };
   if (cur !== n - 1) return { ok: false, why: cur >= n ? 'have' : 'prev' };
   if (lv < bookNeedLv(id, n)) return { ok: false, why: 'lv', lv: bookNeedLv(id, n) };
@@ -107,3 +136,20 @@ export function parseCmd(raw) {
   return null;
 }
 export const CMDS = ['protect', 'attack', 'follow', 'home'];
+/* plan-38: gọi chiêu học từ trùm bằng chat ('rocky địa chấn', 'khiên', 'hoá đá đi'…) — có / không dấu, tiếng Anh */
+const SK_WORDS = {
+  clash: ['doi chuong', 'dchuong', 'dau chuong', 'clash', 'beam clash'],
+  quake: ['dia chan', 'dchan', 'quake', 'stomp', 'dam dat', 'dap dat', 'giam dat'],
+  mirror: ['khien', 'khien da', 'khien da bong', 'khien guong', 'guong', 'mirror', 'shield', 'chan dan'],
+  magnet: ['da tu', 'da tu hut', 'hut', 'nam cham', 'magnet', 'lodestone', 'pull'],
+  petrify: ['hoa da', 'hda', 'petrify', 'stone', 'da hoa'],
+  thunder: ['loi thach', 'loi thach quyen', 'dam set', 'set', 'thunder', 'thunder fist', 'lightning'],
+};
+export function parseSkill(raw) {
+  let s = fold(raw).replace(/^(rocky|rock|rk|em|oi|hey|nay|ey)( |$)/, '').replace(/ (di|nhe|nha|nao|em|rocky|please|pls|now|ngay)$/, '').trim();
+  s = s.replace(/^(hay|mau|lam on|dung|xai|tung|ra) /, '').trim();
+  if (!s) return null;
+  for (const [k, list] of Object.entries(SK_WORDS)) if (list.includes(s)) return k;
+  for (const [k, list] of Object.entries(SK_WORDS)) if (list.some(w => w.length >= 4 && (s.startsWith(w + ' ') || s.endsWith(' ' + w) || s.includes(' ' + w + ' ')))) return k;
+  return null;
+}

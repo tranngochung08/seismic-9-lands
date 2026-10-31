@@ -1,0 +1,1 @@
+{"n": 8, "fw": 156.0, "fh": 15.0, "ax": 0.0, "ay": 7.5, "fps": 16, "origin": "origin = left-center = caster mouth/hand; cone w: 4 logic px at origin -> 12 at 156; scrolls source->target; use beam_chan_muzzle at origin, hit_chan scaled at the tip/target", "end_width_logic": 12}

@@ -1,0 +1,183 @@
+{
+ "frames": [
+  {
+   "filename": "copter-blur 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 40,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 42
+  },
+  {
+   "filename": "copter-blur 1.png",
+   "frame": {
+    "x": 40,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 40,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 42
+  },
+  {
+   "filename": "copter-blur 2.png",
+   "frame": {
+    "x": 80,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 40,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 42
+  },
+  {
+   "filename": "copter-blur 3.png",
+   "frame": {
+    "x": 0,
+    "y": 20,
+    "w": 40,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 40,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 42
+  },
+  {
+   "filename": "copter-blur 4.png",
+   "frame": {
+    "x": 40,
+    "y": 20,
+    "w": 40,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 40,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 42
+  },
+  {
+   "filename": "copter-blur 5.png",
+   "frame": {
+    "x": 80,
+    "y": 20,
+    "w": 40,
+    "h": 20
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 20
+   },
+   "sourceSize": {
+    "w": 40,
+    "h": 20
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "duration": 42
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "copter-blur.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 120,
+   "h": 40
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 20,
+   "y": 10
+  },
+  "frameTags": [
+   {
+    "name": "copter-blur",
+    "from": 0,
+    "to": 5,
+    "direction": "forward"
+   }
+  ]
+ }
+}

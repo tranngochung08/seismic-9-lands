@@ -1,0 +1,206 @@
+[
+ {
+  "what": "idle ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:53:14"
+ },
+ {
+  "what": "walk ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:53:37"
+ },
+ {
+  "what": "flex ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:54:03"
+ },
+ {
+  "what": "lasso ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:56:40"
+ },
+ {
+  "what": "pound ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:56:45"
+ },
+ {
+  "what": "punch ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:57:13"
+ },
+ {
+  "what": "hurt ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:58:14"
+ },
+ {
+  "what": "defeat ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:59:15"
+ },
+ {
+  "what": "stare ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "16:59:33"
+ },
+ {
+  "what": "idle ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "17:58:13"
+ },
+ {
+  "what": "walk ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "17:58:26"
+ },
+ {
+  "what": "flex ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "17:58:39"
+ },
+ {
+  "what": "pound ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "18:01:22"
+ },
+ {
+  "what": "punch ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "18:01:37"
+ },
+ {
+  "what": "hurt ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "18:03:27"
+ },
+ {
+  "what": "stare ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "18:04:07"
+ },
+ {
+  "what": "lasso ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "18:04:08"
+ },
+ {
+  "what": "defeat ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "18:06:03"
+ },
+ {
+  "what": "sk_summon ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:26:19"
+ },
+ {
+  "what": "sk_beam ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:26:32"
+ },
+ {
+  "what": "sk_snap ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:26:59"
+ },
+ {
+  "what": "sk_blur ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:29:16"
+ },
+ {
+  "what": "sk_whistle ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:29:20"
+ },
+ {
+  "what": "sk_mirror ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:29:40"
+ },
+ {
+  "what": "sk_upper ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:32:20"
+ },
+ {
+  "what": "sk_ora ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:33:14"
+ },
+ {
+  "what": "sk_floor ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:33:19"
+ },
+ {
+  "what": "sk_hold ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:36:03"
+ },
+ {
+  "what": "sk_conduct ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:36:09"
+ },
+ {
+  "what": "sk_blast ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:36:49"
+ },
+ {
+  "what": "sk_bite ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:38:46"
+ },
+ {
+  "what": "sk_quake ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:39:14"
+ },
+ {
+  "what": "sk_combo ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "19:40:29"
+ },
+ {
+  "what": "sk_floor2 ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "21:12:32"
+ }
+]

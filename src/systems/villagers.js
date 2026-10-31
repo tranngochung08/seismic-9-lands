@@ -131,7 +131,7 @@ export const villagers = {
     for (const [id, d] of Object.entries(s.dead)) if (d.zone === ctx.S.zone.id) placeTomb(ctx, id, d);
     if (ctx.S.zone.id === 'village') {   /* Đài Tưởng Niệm cạnh điểm vào Làng */
       const map = ctx.S.map, e = map.entries.default;
-      for (let r = 2; r < 9 && !ST.mem; r++) for (let dx = -r; dx <= r && !ST.mem; dx++) { const x = e.x + dx, y = e.y - r; if (x < 1 || y < 1) continue; if (!ctx.isSolid(map, x, y) && !ctx.isSolid(map, x + 1, y) && !ctx.hasObjectAt(map, x, y) && !ctx.hasObjectAt(map, x + 1, y) && !ctx.isSolid(map, x, y + 1)) ST.mem = ctx.place(map, 'memorial', x, y, { memorial: true }); }
+      for (let r = 2; r < 9 && !ST.mem; r++) for (let dx = -r; dx <= r && !ST.mem; dx++) { const x = e.x + dx, y = e.y - r; if (x < 1 || y < 1) continue; if ((x + 1 < e.x - 2 || x > e.x + 3) && !ctx.isSolid(map, x, y) && !ctx.isSolid(map, x + 1, y) && !ctx.hasObjectAt(map, x, y) && !ctx.hasObjectAt(map, x + 1, y) && !ctx.isSolid(map, x, y + 1)) ST.mem = ctx.place(map, 'memorial', x, y, { memorial: true }); }   /* plan-43d B2: không đặt lên đại lộ giữa (cột e.x−1..e.x+1) + chừa 1 cột bên trái (hòm Bưu Tá Mây đứng ở e.x−3 hàng e.y−1 giành E) + cột biển / người dẫn đường bên phải (e.x+2..e.x+3) → giữ phím lên từ lối vào không bị chắn */
     }
     for (const n of ctx.S.npcs) { n.hpMax = npcMax(ctx, n); n.hp = n.hpMax; n.hurtSit = false; }
     ctx.villagers = { petrify: n => { if ((ctx.S.npcs.includes(n) || (n.chief && (ctx.S.staff || []).includes(n))) && !immune(ctx, n)) { killNpc(ctx, n); return true; } return false; },   /* plan-25 B3: đòn hóa đá của phe Xealist */

@@ -7,6 +7,8 @@ export function defaultSave() {
     met: [], shards: 0, badges: [], seenGuide: false, tasks: {}, flags: {}, owned: [], outfit: null, target: null, self: null, achievements: [], music: true,
     // economy & systems (animals / vehicles / trees / rocky control)
     inv: { wood: 0, stone: 0, fish: 0, cow: 0, chicken: 0, bird: 0 }, tools: { axe: true, net: true, rod: false }, toolTier: { axe: 1 }, cards: [], sys: {},
+    diff: 'normal', diffLoss: null,   /* plan-44 C2: Độ khó 'easy' | 'normal' (save cũ thiếu → Thường); diffLoss = { k, n, w } chuỗi thua cùng 1 đối thủ (systems/diff.js) */
+    stats: null,   /* plan-44 P2: { v, sec, faints, tiles, since } — systems/stats.js tạo khi thiếu (save cũ) */
     clock: null,   /* F01: { day, season, year, hour, minute, min, today } — src/clock.js chuẩn hoá khi nạp; save cũ thiếu → Xuân · Ngày 1 · 6:00 */
     // the "Friend at Sea" storyline (normalized by story.js on load): act 1 prologue → 2 gather → 3 dive → 4 rescued
     story: { act: 1, step: 0, items: { divebell: false, trenchmap: false, greatcrystal: false }, rescued: false, attempts: 0, flashback: false, seaDone: false, keepsake: false }
@@ -56,3 +58,37 @@ export function dropBucket(s) {
 export let SAVE_OFF = false; export function saveOff() { SAVE_OFF = true; }   /* ?promo: không ghi đè save thật */
 export function writeSave(s) { if (SAVE_OFF) return; try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { } }
 export function clearSave() { try { localStorage.removeItem(KEY); } catch (e) { } }
+
+/* ---- plan-44 Q6 (2026-10-17): XUẤT / NHẬP MÃ LƯU — mang save sang máy khác (máy tính ↔ điện thoại) ----
+   Mã = 'S9Z1:' + base64(gzip(JSON)) (trình duyệt có CompressionStream) hoặc 'S9J1:' + base64(JSON UTF-8). Nhập: kiểm định dạng + các trường chính,
+   rồi ghi vào ô lưu hiện tại (writeSave) và CHẶN mọi lần ghi sau (saveOff) để game đang chạy không đè lên trước khi tải lại. Save cũ thiếu trường mới
+   vẫn chạy (loadSave trộn với defaultSave). */
+const b64e = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+const b64d = s => { const bin = atob(s.replace(/\s+/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+async function pipe(u8, Stream) { const r = new Blob([u8]).stream().pipeThrough(new Stream('gzip')); return new Uint8Array(await new Response(r).arrayBuffer()); }
+export async function exportCode(save) {
+  const raw = new TextEncoder().encode(JSON.stringify(save));
+  if (typeof CompressionStream !== 'undefined') { try { return 'S9Z1:' + b64e(await pipe(raw, CompressionStream)); } catch (e) { /* rơi xuống bản không nén */ } }
+  return 'S9J1:' + b64e(raw);
+}
+export function checkSave(s) {   /* → null nếu hợp lệ, không thì lý do (mã ngắn) */
+  if (!s || typeof s !== 'object' || Array.isArray(s)) return 'notobj';
+  if (typeof s.zone !== 'string' || !s.zone) return 'zone';
+  if (!Array.isArray(s.met)) return 'met';
+  if (!s.inv || typeof s.inv !== 'object') return 'inv';
+  if (s.badges != null && !Array.isArray(s.badges)) return 'badges';
+  return null;
+}
+export async function parseCode(text) {   /* → { ok, save, why } */
+  try {
+    let t = String(text || '').trim(); if (!t) return { ok: false, why: 'empty' };
+    let json;
+    if (t.startsWith('{')) json = t;   /* chấp nhận cả file JSON thô */
+    else if (t.startsWith('S9Z1:')) { if (typeof DecompressionStream === 'undefined') return { ok: false, why: 'nogzip' }; json = new TextDecoder().decode(await pipe(b64d(t.slice(5)), DecompressionStream)); }
+    else if (t.startsWith('S9J1:')) json = new TextDecoder().decode(b64d(t.slice(5)));
+    else return { ok: false, why: 'format' };
+    const s = JSON.parse(json), why = checkSave(s); if (why) return { ok: false, why };
+    return { ok: true, save: dropBucket({ ...defaultSave(), ...s }) };
+  } catch (e) { return { ok: false, why: 'broken' }; }
+}
+export function importSave(s) { if (SAVE_OFF) return false; try { localStorage.setItem(KEY, JSON.stringify(s)); SAVE_OFF = true; return true; } catch (e) { return false; } }

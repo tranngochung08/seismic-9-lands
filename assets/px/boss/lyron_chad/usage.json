@@ -1,0 +1,86 @@
+[
+ {
+  "what": "walk ['south', 'south-east', 'east', 'north-east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "14:42:28"
+ },
+ {
+  "what": "idle ['south', 'south-east', 'east', 'north-east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "14:42:40"
+ },
+ {
+  "what": "walk ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:05:21"
+ },
+ {
+  "what": "idle ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:06:03"
+ },
+ {
+  "what": "flex ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:06:51"
+ },
+ {
+  "what": "pound ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:09:01"
+ },
+ {
+  "what": "lasso ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:09:10"
+ },
+ {
+  "what": "punch ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:09:26"
+ },
+ {
+  "what": "hurt ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:11:46"
+ },
+ {
+  "what": "defeat ['south']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:12:00"
+ },
+ {
+  "what": "stare ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:12:44"
+ },
+ {
+  "what": "punch ['north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:19:14"
+ },
+ {
+  "what": "lasso ['north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:19:18"
+ },
+ {
+  "what": "stare ['east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "15:19:21"
+ }
+]

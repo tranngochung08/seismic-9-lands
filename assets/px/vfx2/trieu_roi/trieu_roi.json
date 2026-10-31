@@ -1,0 +1,1 @@
+{"n": 8, "fw": 96.0, "fh": 56.0, "ax": 4.0, "ay": 28.0, "fps": 16, "origin": "left = caster hand; whip swings from -55 deg to +10 deg, reach ~80 logic px", "note": "draw in front of caster when swinging down, behind when up (layer rule)"}

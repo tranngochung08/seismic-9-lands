@@ -1,0 +1,812 @@
+{
+ "damchan": {
+  "file": "linhduel/vfx/damchan.png",
+  "n": 7,
+  "w": 66,
+  "h": 38,
+  "ax": 33.0,
+  "ay": 22.0,
+  "fps": 14
+ },
+ "cotda": {
+  "file": "linhduel/vfx/cotda.png",
+  "n": 14,
+  "w": 37,
+  "h": 43,
+  "ax": 15.5,
+  "ay": 23.0,
+  "fps": 14
+ },
+ "nutdat": {
+  "file": "linhduel/vfx/nutdat.png",
+  "n": 8,
+  "w": 19,
+  "h": 23,
+  "ax": 7.0,
+  "ay": 12.0,
+  "fps": 14
+ },
+ "daidiachan": {
+  "file": "linhduel/vfx/daidiachan.png",
+  "n": 11,
+  "w": 112,
+  "h": 53,
+  "ax": 56.0,
+  "ay": 22.5,
+  "fps": 12
+ },
+ "thanball": {
+  "file": "linhduel/vfx/thanball.png",
+  "n": 8,
+  "w": 13,
+  "h": 13,
+  "ax": 6.0,
+  "ay": 6.0,
+  "fps": 12
+ },
+ "fireboom": {
+  "file": "linhduel/vfx/fireboom.png",
+  "n": 11,
+  "w": 17,
+  "h": 19,
+  "ax": 9.0,
+  "ay": 11.0,
+  "fps": 18
+ },
+ "meteorboom": {
+  "file": "linhduel/vfx/meteorboom.png",
+  "n": 11,
+  "w": 38,
+  "h": 35,
+  "ax": 19.0,
+  "ay": 16.0,
+  "fps": 12
+ },
+ "nuiluajet": {
+  "file": "linhduel/vfx/nuiluajet.png",
+  "n": 13,
+  "w": 59,
+  "h": 91,
+  "ax": 27.0,
+  "ay": 86.5,
+  "fps": 14
+ },
+ "firepuff": {
+  "file": "linhduel/vfx/firepuff.png",
+  "n": 7,
+  "w": 13,
+  "h": 15,
+  "ax": 6.5,
+  "ay": 12.0,
+  "fps": 14
+ },
+ "roar": {
+  "file": "linhduel/vfx/roar.png",
+  "n": 7,
+  "w": 40,
+  "h": 28,
+  "ax": 20.0,
+  "ay": 15.0,
+  "fps": 14
+ },
+ "hit": {
+  "file": "linhduel/vfx/hit.png",
+  "n": 5,
+  "w": 15,
+  "h": 18,
+  "ax": 7.5,
+  "ay": 9.0,
+  "fps": 16
+ },
+ "dust": {
+  "file": "linhduel/vfx/dust.png",
+  "n": 6,
+  "w": 17,
+  "h": 11,
+  "ax": 8.5,
+  "ay": 5.0,
+  "fps": 14
+ },
+ "speedlines": {
+  "file": "linhduel/vfx/speedlines.png",
+  "n": 6,
+  "w": 80,
+  "h": 32,
+  "ax": 40.0,
+  "ay": 16.0,
+  "fps": 18
+ },
+ "splash": {
+  "file": "linhduel/vfx/splash.png",
+  "n": 9,
+  "w": 28,
+  "h": 22,
+  "ax": 14.0,
+  "ay": 11.0,
+  "fps": 14
+ },
+ "crackfx": {
+  "file": "linhduel/vfx/crackfx.png",
+  "n": 8,
+  "w": 33,
+  "h": 15,
+  "ax": 16.5,
+  "ay": 7.0,
+  "fps": 12
+ },
+ "ring_chan": {
+  "file": "linhduel/vfx/ring_chan.png",
+  "n": 1,
+  "w": 24,
+  "h": 11,
+  "ax": 12.0,
+  "ay": 5.5,
+  "fps": 1
+ },
+ "ring_nham": {
+  "file": "linhduel/vfx/ring_nham.png",
+  "n": 1,
+  "w": 24,
+  "h": 11,
+  "ax": 12.0,
+  "ay": 5.5,
+  "fps": 1
+ },
+ "arrow_me": {
+  "file": "linhduel/vfx/arrow_me.png",
+  "n": 1,
+  "w": 8,
+  "h": 8,
+  "ax": 4.0,
+  "ay": 4.0,
+  "fps": 1
+ },
+ "arrow_foe": {
+  "file": "linhduel/vfx/arrow_foe.png",
+  "n": 1,
+  "w": 8,
+  "h": 8,
+  "ax": 4.0,
+  "ay": 4.0,
+  "fps": 1
+ },
+ "flyshadow": {
+  "file": "linhduel/vfx/flyshadow.png",
+  "n": 1,
+  "w": 18,
+  "h": 8,
+  "ax": 9.0,
+  "ay": 4.0,
+  "fps": 1
+ },
+ "breath_blob": {
+  "file": "linhduel/vfx/breath_blob.png",
+  "n": 6,
+  "w": 12,
+  "h": 12,
+  "ax": 6.0,
+  "ay": 6.0,
+  "fps": 16
+ },
+ "breath_head": {
+  "file": "linhduel/vfx/breath_head.png",
+  "n": 6,
+  "w": 22,
+  "h": 20,
+  "ax": 11.0,
+  "ay": 13.0,
+  "fps": 14
+ },
+ "steam": {
+  "file": "linhduel/vfx/steam.png",
+  "n": 11,
+  "w": 9,
+  "h": 22,
+  "ax": 3.5,
+  "ay": 20.0,
+  "fps": 12
+ },
+ "clash": {
+  "file": "linhduel/vfx/clash.png",
+  "n": 8,
+  "w": 28,
+  "h": 28,
+  "ax": 14.0,
+  "ay": 14.0,
+  "fps": 16
+ },
+ "clashbig": {
+  "file": "linhduel/vfx/clashbig.png",
+  "n": 8,
+  "w": 87,
+  "h": 84,
+  "ax": 43.5,
+  "ay": 34.5,
+  "fps": 16
+ },
+ "dashlines": {
+  "file": "linhduel/vfx/dashlines.png",
+  "n": 6,
+  "w": 42,
+  "h": 22,
+  "ax": 36.0,
+  "ay": 11.0,
+  "fps": 18
+ },
+ "proj_trieu": {
+  "file": "linhduel/vfx/proj_trieu.png",
+  "n": 8,
+  "w": 14,
+  "h": 14,
+  "ax": 6.5,
+  "ay": 6.5,
+  "fps": 12
+ },
+ "proj_loi": {
+  "file": "linhduel/vfx/proj_loi.png",
+  "n": 8,
+  "w": 15,
+  "h": 15,
+  "ax": 7.5,
+  "ay": 7.5,
+  "fps": 12
+ },
+ "proj_moc": {
+  "file": "linhduel/vfx/proj_moc.png",
+  "n": 8,
+  "w": 15,
+  "h": 15,
+  "ax": 7.5,
+  "ay": 7.5,
+  "fps": 12
+ },
+ "proj_phong": {
+  "file": "linhduel/vfx/proj_phong.png",
+  "n": 6,
+  "w": 14,
+  "h": 14,
+  "ax": 7.0,
+  "ay": 7.0,
+  "fps": 16
+ },
+ "hit_loi": {
+  "file": "linhduel/vfx/hit_loi.png",
+  "n": 7,
+  "w": 25,
+  "h": 18,
+  "ax": 12.0,
+  "ay": 8.0,
+  "fps": 16
+ },
+ "hit_phong": {
+  "file": "linhduel/vfx/hit_phong.png",
+  "n": 9,
+  "w": 15,
+  "h": 12,
+  "ax": 7.5,
+  "ay": 7.0,
+  "fps": 12
+ },
+ "hit_moc": {
+  "file": "linhduel/vfx/hit_moc.png",
+  "n": 9,
+  "w": 26,
+  "h": 20,
+  "ax": 13.0,
+  "ay": 13.0,
+  "fps": 14
+ },
+ "ult_loi": {
+  "file": "linhduel/vfx/ult_loi.png",
+  "n": 8,
+  "w": 64,
+  "h": 104,
+  "ax": 32.0,
+  "ay": 85.0,
+  "fps": 14
+ },
+ "ult_phong": {
+  "file": "linhduel/vfx/ult_phong.png",
+  "n": 12,
+  "w": 55,
+  "h": 70,
+  "ax": 27.5,
+  "ay": 62.0,
+  "fps": 14
+ },
+ "ult_moc": {
+  "file": "linhduel/vfx/ult_moc.png",
+  "n": 13,
+  "w": 90,
+  "h": 52,
+  "ax": 45.0,
+  "ay": 33.0,
+  "fps": 12
+ },
+ "ult_trieu": {
+  "file": "linhduel/vfx/ult_trieu.png",
+  "n": 12,
+  "w": 55,
+  "h": 70,
+  "ax": 27.5,
+  "ay": 62.0,
+  "fps": 14
+ },
+ "wave_trieu": {
+  "file": "linhduel/vfx/wave_trieu.png",
+  "n": 7,
+  "w": 66,
+  "h": 38,
+  "ax": 33.0,
+  "ay": 22.0,
+  "fps": 14
+ },
+ "wave_loi": {
+  "file": "linhduel/vfx/wave_loi.png",
+  "n": 7,
+  "w": 66,
+  "h": 38,
+  "ax": 33.0,
+  "ay": 22.0,
+  "fps": 14
+ },
+ "wave_phong": {
+  "file": "linhduel/vfx/wave_phong.png",
+  "n": 7,
+  "w": 66,
+  "h": 38,
+  "ax": 33.0,
+  "ay": 22.0,
+  "fps": 14
+ },
+ "wave_moc": {
+  "file": "linhduel/vfx/wave_moc.png",
+  "n": 7,
+  "w": 66,
+  "h": 38,
+  "ax": 33.0,
+  "ay": 22.0,
+  "fps": 14
+ },
+ "ring_trieu": {
+  "file": "linhduel/vfx/ring_trieu.png",
+  "n": 1,
+  "w": 24,
+  "h": 11,
+  "ax": 12.0,
+  "ay": 5.5,
+  "fps": 1
+ },
+ "ring_loi": {
+  "file": "linhduel/vfx/ring_loi.png",
+  "n": 1,
+  "w": 24,
+  "h": 11,
+  "ax": 12.0,
+  "ay": 5.5,
+  "fps": 1
+ },
+ "ring_phong": {
+  "file": "linhduel/vfx/ring_phong.png",
+  "n": 1,
+  "w": 24,
+  "h": 11,
+  "ax": 12.0,
+  "ay": 5.5,
+  "fps": 1
+ },
+ "ring_moc": {
+  "file": "linhduel/vfx/ring_moc.png",
+  "n": 1,
+  "w": 24,
+  "h": 11,
+  "ax": 12.0,
+  "ay": 5.5,
+  "fps": 1
+ },
+ "beam_trieu": {
+  "file": "linhduel/vfx/beam_trieu.png",
+  "n": 8,
+  "w": 16,
+  "h": 14,
+  "ax": 8.0,
+  "ay": 7.0,
+  "fps": 16
+ },
+ "beam_nham": {
+  "file": "linhduel/vfx/beam_nham.png",
+  "n": 8,
+  "w": 16,
+  "h": 14,
+  "ax": 8.0,
+  "ay": 7.0,
+  "fps": 16
+ },
+ "beam_loi": {
+  "file": "linhduel/vfx/beam_loi.png",
+  "n": 8,
+  "w": 16,
+  "h": 14,
+  "ax": 8.0,
+  "ay": 7.0,
+  "fps": 16
+ },
+ "beam_moc": {
+  "file": "linhduel/vfx/beam_moc.png",
+  "n": 8,
+  "w": 16,
+  "h": 14,
+  "ax": 8.0,
+  "ay": 7.0,
+  "fps": 16
+ },
+ "beam_chan": {
+  "file": "linhduel/vfx/beam_chan.png",
+  "n": 8,
+  "w": 16,
+  "h": 14,
+  "ax": 8.0,
+  "ay": 7.0,
+  "fps": 16
+ },
+ "beam_phong": {
+  "file": "linhduel/vfx/beam_phong.png",
+  "n": 8,
+  "w": 16,
+  "h": 14,
+  "ax": 8.0,
+  "ay": 7.0,
+  "fps": 16
+ },
+ "clash_steam": {
+  "file": "linhduel/vfx/clash_steam.png",
+  "n": 10,
+  "w": 36,
+  "h": 80,
+  "ax": 18.0,
+  "ay": 75.0,
+  "fps": 14
+ },
+ "pillar_white": {
+  "file": "linhduel/vfx/pillar_white.png",
+  "n": 13,
+  "w": 105,
+  "h": 135,
+  "ax": 52.5,
+  "ay": 113.5,
+  "fps": 14
+ },
+ "pillar_loi": {
+  "file": "linhduel/vfx/pillar_loi.png",
+  "n": 12,
+  "w": 105,
+  "h": 135,
+  "ax": 52.5,
+  "ay": 113.5,
+  "fps": 14
+ },
+ "court_circle": {
+  "file": "linhduel/vfx/court_circle.png",
+  "n": 1,
+  "w": 88,
+  "h": 56,
+  "ax": 44.0,
+  "ay": 28.0,
+  "fps": 12
+ },
+ "court_vline": {
+  "file": "linhduel/vfx/court_vline.png",
+  "n": 1,
+  "w": 16,
+  "h": 16,
+  "ax": 8.0,
+  "ay": 8.0,
+  "fps": 12
+ },
+ "court_hline": {
+  "file": "linhduel/vfx/court_hline.png",
+  "n": 1,
+  "w": 16,
+  "h": 16,
+  "ax": 8.0,
+  "ay": 8.0,
+  "fps": 1
+ },
+ "wave_wall": {
+  "file": "linhduel/vfx/wave_wall.png",
+  "n": 8,
+  "w": 48,
+  "h": 116,
+  "ax": 20.0,
+  "ay": 111.0,
+  "fps": 14
+ },
+ "swim_ripple": {
+  "file": "linhduel/vfx/swim_ripple.png",
+  "n": 7,
+  "w": 26,
+  "h": 14,
+  "ax": 13.0,
+  "ay": 7.0,
+  "fps": 12
+ },
+ "swim_bubbles": {
+  "file": "linhduel/vfx/swim_bubbles.png",
+  "n": 16,
+  "w": 16,
+  "h": 22,
+  "ax": 7.0,
+  "ay": 18.5,
+  "fps": 14
+ },
+ "beam2_nham": {
+  "file": "linhduel/vfx/beam2_nham.png",
+  "n": 1,
+  "w": 156,
+  "h": 27,
+  "ax": 0,
+  "ay": 13.5,
+  "fps": 1
+ },
+ "beam2_chan": {
+  "file": "linhduel/vfx/beam2_chan.png",
+  "n": 1,
+  "w": 156,
+  "h": 22,
+  "ax": 0,
+  "ay": 11.0,
+  "fps": 1
+ },
+ "beam2_loi": {
+  "file": "linhduel/vfx/beam2_loi.png",
+  "n": 1,
+  "w": 156,
+  "h": 29,
+  "ax": 0,
+  "ay": 14.5,
+  "fps": 1
+ },
+ "beam2_trieu": {
+  "file": "linhduel/vfx/beam2_trieu.png",
+  "n": 1,
+  "w": 156,
+  "h": 21,
+  "ax": 0,
+  "ay": 10.5,
+  "fps": 1
+ },
+ "beam2_moc": {
+  "file": "linhduel/vfx/beam2_moc.png",
+  "n": 1,
+  "w": 156,
+  "h": 21,
+  "ax": 0,
+  "ay": 10.5,
+  "fps": 1
+ },
+ "beam2_phong": {
+  "file": "linhduel/vfx/beam2_phong.png",
+  "n": 1,
+  "w": 156,
+  "h": 21,
+  "ax": 0.0,
+  "ay": 10.5,
+  "fps": 1
+ },
+ "ko_ring": {
+  "file": "linhduel/vfx/ko_ring.png",
+  "n": 9,
+  "w": 123,
+  "h": 49,
+  "ax": 61.5,
+  "ay": 24.5,
+  "fps": 21
+ },
+ "ko_burst": {
+  "file": "linhduel/vfx/ko_burst.png",
+  "n": 8,
+  "w": 102,
+  "h": 42,
+  "ax": 51.0,
+  "ay": 21.0,
+  "fps": 16
+ },
+ "hit_suong": {
+  "file": "linhduel/vfx/hit_suong.png",
+  "n": 10,
+  "w": 17,
+  "h": 22,
+  "ax": 8.5,
+  "ay": 8.0,
+  "fps": 12
+ },
+ "hit_tinh": {
+  "file": "linhduel/vfx/hit_tinh.png",
+  "n": 9,
+  "w": 16,
+  "h": 15,
+  "ax": 7.5,
+  "ay": 7.5,
+  "fps": 16
+ },
+ "hit_am": {
+  "file": "linhduel/vfx/hit_am.png",
+  "n": 9,
+  "w": 16,
+  "h": 16,
+  "ax": 8.0,
+  "ay": 8.0,
+  "fps": 16
+ },
+ "hit_quang": {
+  "file": "linhduel/vfx/hit_quang.png",
+  "n": 7,
+  "w": 18,
+  "h": 15,
+  "ax": 8.5,
+  "ay": 8.0,
+  "fps": 16
+ },
+ "proj_suong": {
+  "file": "linhduel/vfx/proj_suong.png",
+  "n": 8,
+  "w": 16,
+  "h": 16,
+  "ax": 8.0,
+  "ay": 8.0,
+  "fps": 12
+ },
+ "proj_tinh": {
+  "file": "linhduel/vfx/proj_tinh.png",
+  "n": 8,
+  "w": 16,
+  "h": 16,
+  "ax": 8.0,
+  "ay": 8.0,
+  "fps": 12
+ },
+ "wave_suong": {
+  "file": "linhduel/vfx/wave_suong.png",
+  "n": 7,
+  "w": 58,
+  "h": 25,
+  "ax": 29.0,
+  "ay": 12.5,
+  "fps": 14
+ },
+ "wave_tinh": {
+  "file": "linhduel/vfx/wave_tinh.png",
+  "n": 7,
+  "w": 58,
+  "h": 25,
+  "ax": 29.0,
+  "ay": 12.5,
+  "fps": 14
+ },
+ "wave_am": {
+  "file": "linhduel/vfx/wave_am.png",
+  "n": 7,
+  "w": 58,
+  "h": 25,
+  "ax": 29.0,
+  "ay": 12.5,
+  "fps": 14
+ },
+ "wave_quang": {
+  "file": "linhduel/vfx/wave_quang.png",
+  "n": 7,
+  "w": 58,
+  "h": 25,
+  "ax": 29.0,
+  "ay": 12.5,
+  "fps": 14
+ },
+ "ult_suong": {
+  "file": "linhduel/vfx/ult_suong.png",
+  "n": 16,
+  "w": 39,
+  "h": 41,
+  "ax": 20.5,
+  "ay": 22.0,
+  "fps": 14
+ },
+ "ult_tinh": {
+  "file": "linhduel/vfx/ult_tinh.png",
+  "n": 16,
+  "w": 39,
+  "h": 41,
+  "ax": 20.5,
+  "ay": 22.0,
+  "fps": 14
+ },
+ "ult_quang": {
+  "file": "linhduel/vfx/ult_quang.png",
+  "n": 11,
+  "w": 36,
+  "h": 61,
+  "ax": 18.0,
+  "ay": 53.0,
+  "fps": 14
+ },
+ "ult_am": {
+  "file": "linhduel/vfx/ult_am.png",
+  "n": 9,
+  "w": 84,
+  "h": 44,
+  "ax": 42.0,
+  "ay": 22.0,
+  "fps": 16
+ },
+ "beam2_suong": {
+  "file": "linhduel/vfx/beam2_suong.png",
+  "n": 1,
+  "w": 147,
+  "h": 18,
+  "ax": 0.0,
+  "ay": 9.0,
+  "fps": 1
+ },
+ "beam2_tinh": {
+  "file": "linhduel/vfx/beam2_tinh.png",
+  "n": 1,
+  "w": 156,
+  "h": 19,
+  "ax": 0.0,
+  "ay": 9.5,
+  "fps": 1
+ },
+ "beam2_am": {
+  "file": "linhduel/vfx/beam2_am.png",
+  "n": 1,
+  "w": 156,
+  "h": 22,
+  "ax": 0.0,
+  "ay": 11.0,
+  "fps": 1
+ },
+ "beam2_quang": {
+  "file": "linhduel/vfx/beam2_quang.png",
+  "n": 1,
+  "w": 156,
+  "h": 11,
+  "ax": 0.0,
+  "ay": 5.5,
+  "fps": 1
+ },
+ "ring_am": {
+  "file": "linhduel/vfx/ring_am.png",
+  "n": 1,
+  "w": 15,
+  "h": 8,
+  "ax": 7.5,
+  "ay": 4.0,
+  "fps": 1
+ },
+ "ring_quang": {
+  "file": "linhduel/vfx/ring_quang.png",
+  "n": 1,
+  "w": 17,
+  "h": 10,
+  "ax": 8.5,
+  "ay": 5.0,
+  "fps": 1
+ },
+ "ring_suong": {
+  "file": "linhduel/vfx/ring_suong.png",
+  "n": 1,
+  "w": 15,
+  "h": 7,
+  "ax": 7.5,
+  "ay": 3.5,
+  "fps": 1
+ },
+ "ring_tinh": {
+  "file": "linhduel/vfx/ring_tinh.png",
+  "n": 1,
+  "w": 15,
+  "h": 8,
+  "ax": 7.5,
+  "ay": 4.0,
+  "fps": 1
+ }
+}

@@ -3,7 +3,7 @@
 //                               Repel: throw Seismic stones (4 hits) or ram it with Rocky (2 hits).
 //   m8  Yeti            — stomps down from the ridge, punches the fence, once per raid it drops
 //                               an avalanche on three wall pieces. Repel: offer a fish, or wrestle Rocky (3).
-//   m9  Bakunawa        — the moon-eating serpent coils around a yard and swallows its lights.
+//   m9  Rắn Trăng (Moon Serpent; trước tên Bakunawa — trùng tên trùm 6) — the moon-eating serpent coils around a yard and swallows its lights.
 //                               Repel: the Leaders' ritual drum (6 beats in rhythm) or Rocky (5).
 // One raid at a time, 25 s of warning first, damage capped at 40% of a district.
 import { mkCanvas, HOOK } from '../gfx.js';
@@ -12,30 +12,30 @@ import { faceOfV, dirFrame, hasFish as fishAny, takeFish } from './animals.js';
 // ---------------------------------------------------------------- strings
 const STR = {
   en: {
-    drake: 'Fire drake', yeti: 'Yeti', naga: 'Bakunawa',
-    warn: { drake: (n, s) => `🔥 Fire drake stirs in the lava — ${n}'s district, ${s}s`, yeti: (n, s) => `❄ Something huge comes down the ridge — ${n}'s district, ${s}s`, naga: (n, s) => `🌑 The glyphs flicker — Bakunawa hunts ${n}'s lights, ${s}s` },
+    drake: 'Fire drake', yeti: 'Yeti', naga: 'Moon Serpent',
+    warn: { drake: (n, s) => `🔥 Fire drake stirs in the lava — ${n}'s district, ${s}s`, yeti: (n, s) => `❄ Something huge comes down the ridge — ${n}'s district, ${s}s`, naga: (n, s) => `🌑 The glyphs flicker — the Moon Serpent hunts ${n}'s lights, ${s}s` },
     cry: { drake: 'A roar rolls across the ash…', yeti: 'The snow hisses on the slope…', naga: 'The core hums a low, hungry note…' },
     npc: { drake: n => `${n}: "Get everyone away from the walls!"`, yeti: n => `${n}: "Hide the food — and find a fish!"`, naga: n => `${n}: "It wants our light. Wake the drum!"` },
-    hit: { drake: n => `The fire drake dives on ${n}!`, yeti: n => `The Yeti crashes into ${n}'s yard!`, naga: n => `Bakunawa coils around ${n}'s yard!` },
+    hit: { drake: n => `The fire drake dives on ${n}!`, yeti: n => `The Yeti crashes into ${n}'s yard!`, naga: n => `The Moon Serpent coils around ${n}'s yard!` },
     stone: 'Throw stone (🪨1)', noStone: 'No stones left — mine rocks with a pickaxe or sell animals at the trader 🪨', stoneHit: (k, n) => `Hit! ${k}/${n}`,
     fish: 'Offer fish (🐟)', fishNeed: 'The Yeti sniffs the air — it wants a fish 🐟 (fish at a shore with the rod)', fishOk: 'The Yeti takes the fish, grunts, and lumbers off.',
     drum: 'Beat the ritual drum', leaders: k => `The Leaders must know you (${k}/15)`,
-    drumTitle: 'Ritual drum', drumHint: 'E / Space · keep the beat', drumMiss: 'The beat slipped — start again', drumWin: 'The drum answers — Bakunawa gives the light back!',
+    drumTitle: 'Ritual drum', drumHint: 'E / Space · keep the beat', drumMiss: 'The beat slipped — start again', drumWin: 'The drum answers — the Moon Serpent gives the light back!',
     repel: m => `${m} is driven off!`, gone: m => `${m} tires of the raid and leaves.`,
     take: { drake: 'Take fire scale (🪨4)', yeti: 'Take yeti fur (🪨5)', naga: 'Take great crystal (🪨8)' },
     got: { drake: 'Fire scale! +4 🪨', yeti: 'Yeti fur! +5 🪨', naga: 'Great crystal! +8 🪨' },
     rocky: 'Rocky answers the raid!'
   },
   vi: {
-    drake: 'Hỏa Long', yeti: 'Người Tuyết', naga: 'Bakunawa',
-    warn: { drake: (n, s) => `🔥 Hỏa Long cựa mình trong dung nham — khu ${n}, ${s}s`, yeti: (n, s) => `❄ Có thứ gì to lớn đang xuống núi — khu ${n}, ${s}s`, naga: (n, s) => `🌑 Ký tự lõi nhấp nháy — Bakunawa săn đèn khu ${n}, ${s}s` },
+    drake: 'Hỏa Long', yeti: 'Người Tuyết', naga: 'Rắn Trăng',
+    warn: { drake: (n, s) => `🔥 Hỏa Long cựa mình trong dung nham — khu ${n}, ${s}s`, yeti: (n, s) => `❄ Có thứ gì to lớn đang xuống núi — khu ${n}, ${s}s`, naga: (n, s) => `🌑 Ký tự lõi nhấp nháy — Rắn Trăng săn đèn khu ${n}, ${s}s` },
     cry: { drake: 'Tiếng gầm vọng qua tro tàn…', yeti: 'Tuyết rít trên sườn núi…', naga: 'Lõi ngân lên một nốt trầm đói khát…' },
     npc: { drake: n => `${n}: "Tránh xa tường ra!"`, yeti: n => `${n}: "Giấu đồ ăn đi — và kiếm một con cá!"`, naga: n => `${n}: "Nó muốn ánh sáng của ta. Đánh trống lên!"` },
-    hit: { drake: n => `Hỏa Long lao xuống khu ${n}!`, yeti: n => `Người Tuyết đạp vào khu ${n}!`, naga: n => `Bakunawa cuộn quanh khu ${n}!` },
+    hit: { drake: n => `Hỏa Long lao xuống khu ${n}!`, yeti: n => `Người Tuyết đạp vào khu ${n}!`, naga: n => `Rắn Trăng cuộn quanh khu ${n}!` },
     stone: 'Ném đá (🪨1)', noStone: 'Hết đá rồi — đập đá bằng cuốc hoặc bán thú ở Thương nhân 🪨', stoneHit: (k, n) => `Trúng! ${k}/${n}`,
     fish: 'Cho cá (🐟)', fishNeed: 'Người Tuyết hít hà — nó muốn một con cá 🐟 (câu ở bờ nước bằng cần câu)', fishOk: 'Người Tuyết cầm cá, gầm gừ rồi bỏ đi.',
     drum: 'Gõ trống nghi lễ', leaders: k => `Các Leader phải biết bạn (${k}/15)`,
-    drumTitle: 'Trống nghi lễ', drumHint: 'E / Space · giữ nhịp', drumMiss: 'Lỡ nhịp — gõ lại từ đầu', drumWin: 'Trống vang lên — Bakunawa trả lại ánh sáng!',
+    drumTitle: 'Trống nghi lễ', drumHint: 'E / Space · giữ nhịp', drumMiss: 'Lỡ nhịp — gõ lại từ đầu', drumWin: 'Trống vang lên — Rắn Trăng trả lại ánh sáng!',
     repel: m => `${m} bị đánh lui!`, gone: m => `${m} chán rồi bỏ đi.`,
     take: { drake: 'Nhặt vảy lửa (🪨4)', yeti: 'Nhặt lông Yeti (🪨5)', naga: 'Nhặt đại tinh thể (🪨8)' },
     got: { drake: 'Vảy lửa! +4 🪨', yeti: 'Lông Yeti! +5 🪨', naga: 'Đại tinh thể! +8 🪨' },
@@ -515,7 +515,7 @@ export const raidersHigh = {
 
   update(dt, ctx) {
     for (let i = fx.length - 1; i >= 0; i--) { const q = fx[i]; q.t -= dt; if (q.t <= 0) { fx.splice(i, 1); continue; } q.x += q.vx * dt; q.y += q.vy * dt; q.vy += q.g * dt; q.vx *= q.drag; }
-    for (let i = burns.length - 1; i >= 0; i--) { burns[i].t -= dt; if (burns[i].t <= 0) burns.splice(i, 1); }
+    for (let i = burns.length - 1; i >= 0; i--) { burns[i].t -= dt; if (burns[i].t <= 0 || (ctx.rainAt && ctx.rainAt(burns[i].x, burns[i].y))) burns.splice(i, 1); }   /* 2026-10-15: Gọi Mưa của Cóc dập lửa */
     for (let i = shots.length - 1; i >= 0; i--) { shots[i].t += dt; if (shots[i].t >= shots[i].life) shots.splice(i, 1); }
     if (loot) { loot.t += dt; if (Math.random() < dt * 5) part(loot.x + rnd(-6, 6), loot.y - rnd(0, 9), 0, rnd(-14, -4), rnd(.4, .8), '#ffd45e', 1, 0, 1); } // sparkle so the trophy is easy to spot
     if (!ZKIND[ctx.S.zone && ctx.S.zone.id]) return;

@@ -1,0 +1,1 @@
+lat guong attack_north (_try_attack_north_4): PixMiniMax xoay mat c0 o huong bac 4 lan

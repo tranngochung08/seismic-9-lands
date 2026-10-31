@@ -1,0 +1,2521 @@
+{
+ "utchan": {
+  "idle": {
+   "file": "linhduel/utchan_idle.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 44,
+   "ax": 22,
+   "ay": 44,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/utchan_run.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 48,
+   "ax": 20,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/utchan_atk.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 50,
+   "ax": 26,
+   "ay": 49,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "stomp": {
+   "file": "linhduel/utchan_stomp.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 76,
+   "ax": 24,
+   "ay": 76,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "slam": {
+   "file": "linhduel/utchan_slam.png",
+   "n": 8,
+   "cw": 72,
+   "ch": 78,
+   "ax": 36,
+   "ay": 78,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/utchan_ult.png",
+   "n": 12,
+   "cw": 60,
+   "ch": 80,
+   "ax": 30,
+   "ay": 78,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/utchan_hurt.png",
+   "n": 4,
+   "cw": 44,
+   "ch": 46,
+   "ax": 22,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/utchan_faint.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 46,
+   "ax": 22,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  }
+ },
+ "thanhong": {
+  "idle": {
+   "file": "linhduel/thanhong_idle.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 46,
+   "ax": 20,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/thanhong_run.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 48,
+   "ax": 20,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/thanhong_atk.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 48,
+   "ax": 26,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "spit": {
+   "file": "linhduel/thanhong_spit.png",
+   "n": 8,
+   "cw": 60,
+   "ch": 52,
+   "ax": 30,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "dash": {
+   "file": "linhduel/thanhong_dash.png",
+   "n": 8,
+   "cw": 60,
+   "ch": 48,
+   "ax": 30,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/thanhong_ult.png",
+   "n": 12,
+   "cw": 48,
+   "ch": 58,
+   "ax": 24,
+   "ay": 58,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/thanhong_hurt.png",
+   "n": 4,
+   "cw": 48,
+   "ch": 46,
+   "ax": 24,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/thanhong_faint.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 46,
+   "ax": 26,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  }
+ },
+ "golem": {
+  "idle": {
+   "file": "linhduel/golem_idle.png",
+   "n": 8,
+   "cw": 60,
+   "ch": 60,
+   "ax": 30,
+   "ay": 60,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/golem_run.png",
+   "n": 8,
+   "cw": 64,
+   "ch": 68,
+   "ax": 32,
+   "ay": 65,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/golem_atk.png",
+   "n": 8,
+   "cw": 88,
+   "ch": 82,
+   "ax": 44,
+   "ay": 82,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "stomp": {
+   "file": "linhduel/golem_stomp.png",
+   "n": 8,
+   "cw": 72,
+   "ch": 70,
+   "ax": 36,
+   "ay": 67,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "slam": {
+   "file": "linhduel/golem_slam.png",
+   "n": 8,
+   "cw": 88,
+   "ch": 90,
+   "ax": 44,
+   "ay": 83,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/golem_ult.png",
+   "n": 12,
+   "cw": 92,
+   "ch": 108,
+   "ax": 46,
+   "ay": 101,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/golem_hurt.png",
+   "n": 4,
+   "cw": 76,
+   "ch": 66,
+   "ax": 38,
+   "ay": 65,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/golem_faint.png",
+   "n": 8,
+   "cw": 76,
+   "ch": 64,
+   "ax": 38,
+   "ay": 60,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  }
+ },
+ "rongdo": {
+  "idle": {
+   "file": "linhduel/rongdo_idle.png",
+   "n": 8,
+   "cw": 50,
+   "ch": 48,
+   "ax": 25,
+   "ay": 47,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/rongdo_run.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 54,
+   "ax": 28,
+   "ay": 52,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/rongdo_atk.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 54,
+   "ax": 28,
+   "ay": 50,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "spit": {
+   "file": "linhduel/rongdo_spit.png",
+   "n": 8,
+   "cw": 62,
+   "ch": 50,
+   "ax": 31,
+   "ay": 50,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "dash": {
+   "file": "linhduel/rongdo_dash.png",
+   "n": 8,
+   "cw": 72,
+   "ch": 50,
+   "ax": 36,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/rongdo_ult.png",
+   "n": 12,
+   "cw": 50,
+   "ch": 78,
+   "ax": 25,
+   "ay": 76,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/rongdo_hurt.png",
+   "n": 4,
+   "cw": 54,
+   "ch": 52,
+   "ax": 27,
+   "ay": 50,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/rongdo_faint.png",
+   "n": 8,
+   "cw": 70,
+   "ch": 48,
+   "ax": 35,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "fly": {
+   "file": "linhduel/rongdo_fly.png",
+   "n": 10,
+   "cw": 50,
+   "ch": 62,
+   "ax": 25,
+   "ay": 60,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "flydash": {
+   "file": "linhduel/rongdo_flydash.png",
+   "n": 4,
+   "cw": 70,
+   "ch": 62,
+   "ax": 35,
+   "ay": 60,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  }
+ },
+ "_port": {
+  "golem": "linhduel/ui/port_golem.png",
+  "rongdo": "linhduel/ui/port_rongdo.png",
+  "bachkinh": "linhduel/ui/port_bachkinh.png",
+  "loiho": "linhduel/ui/port_loiho.png",
+  "vitbao": "linhduel/ui/port_vitbao.png",
+  "diepnhan": "linhduel/ui/port_diepnhan.png",
+  "tuyetky": "linhduel/ui/port_tuyetky.png",
+  "tinhmieu": "linhduel/ui/port_tinhmieu.png",
+  "cuoitho": "linhduel/ui/port_cuoitho.png",
+  "banhbao": "linhduel/ui/port_banhbao.png",
+  "bovimach": "linhduel/ui/port_bovimach.png",
+  "culibong": "linhduel/ui/port_culibong.png",
+  "macuu": "linhduel/ui/port_macuu.png",
+  "hacgiac": "linhduel/ui/port_hacgiac.png",
+  "hoahung": "linhduel/ui/port_hoahung.png",
+  "nguuson": "linhduel/ui/port_nguuson.png"
+ },
+ "bachkinh": {
+  "idle": {
+   "file": "linhduel/bachkinh_idle.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 48,
+   "ax": 24,
+   "ay": 48,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/bachkinh_run.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 56,
+   "ax": 24,
+   "ay": 55,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/bachkinh_atk.png",
+   "n": 8,
+   "cw": 60,
+   "ch": 50,
+   "ax": 30,
+   "ay": 48,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "spout": {
+   "file": "linhduel/bachkinh_spout.png",
+   "n": 8,
+   "cw": 50,
+   "ch": 52,
+   "ax": 25,
+   "ay": 51,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "wave": {
+   "file": "linhduel/bachkinh_wave.png",
+   "n": 8,
+   "cw": 58,
+   "ch": 52,
+   "ax": 29,
+   "ay": 49,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/bachkinh_ult.png",
+   "n": 12,
+   "cw": 60,
+   "ch": 86,
+   "ax": 30,
+   "ay": 83,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/bachkinh_hurt.png",
+   "n": 4,
+   "cw": 54,
+   "ch": 56,
+   "ax": 27,
+   "ay": 55,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/bachkinh_faint.png",
+   "n": 8,
+   "cw": 64,
+   "ch": 54,
+   "ax": 32,
+   "ay": 52,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  }
+ },
+ "loiho": {
+  "idle": {
+   "file": "linhduel/loiho_idle.png",
+   "n": 8,
+   "cw": 32,
+   "ch": 32,
+   "ax": 16,
+   "ay": 31,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/loiho_run.png",
+   "n": 8,
+   "cw": 32,
+   "ch": 34,
+   "ax": 16,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/loiho_atk.png",
+   "n": 8,
+   "cw": 42,
+   "ch": 34,
+   "ax": 21,
+   "ay": 30,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "zap": {
+   "file": "linhduel/loiho_zap.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 42,
+   "ax": 20,
+   "ay": 40,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "pulse": {
+   "file": "linhduel/loiho_pulse.png",
+   "n": 8,
+   "cw": 36,
+   "ch": 42,
+   "ax": 18,
+   "ay": 40,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/loiho_ult.png",
+   "n": 12,
+   "cw": 36,
+   "ch": 36,
+   "ax": 18,
+   "ay": 36,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/loiho_hurt.png",
+   "n": 4,
+   "cw": 36,
+   "ch": 34,
+   "ax": 18,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/loiho_faint.png",
+   "n": 8,
+   "cw": 42,
+   "ch": 32,
+   "ax": 21,
+   "ay": 30,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.5
+ },
+ "vitbao": {
+  "idle": {
+   "file": "linhduel/vitbao_idle.png",
+   "n": 8,
+   "cw": 30,
+   "ch": 32,
+   "ax": 15,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/vitbao_run.png",
+   "n": 8,
+   "cw": 30,
+   "ch": 32,
+   "ax": 15,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/vitbao_atk.png",
+   "n": 8,
+   "cw": 46,
+   "ch": 32,
+   "ax": 23,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "flap": {
+   "file": "linhduel/vitbao_flap.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 36,
+   "ax": 22,
+   "ay": 33,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "dash": {
+   "file": "linhduel/vitbao_dash.png",
+   "n": 8,
+   "cw": 62,
+   "ch": 42,
+   "ax": 31,
+   "ay": 41,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/vitbao_ult.png",
+   "n": 12,
+   "cw": 36,
+   "ch": 66,
+   "ax": 18,
+   "ay": 66,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/vitbao_hurt.png",
+   "n": 4,
+   "cw": 36,
+   "ch": 34,
+   "ax": 18,
+   "ay": 33,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/vitbao_faint.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 36,
+   "ax": 22,
+   "ay": 33,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.6818
+ },
+ "diepnhan": {
+  "idle": {
+   "file": "linhduel/diepnhan_idle.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 48,
+   "ax": 26,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/diepnhan_run.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 52,
+   "ax": 26,
+   "ay": 50,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/diepnhan_atk.png",
+   "n": 8,
+   "cw": 64,
+   "ch": 50,
+   "ax": 32,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "cast": {
+   "file": "linhduel/diepnhan_cast.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 44,
+   "ax": 26,
+   "ay": 44,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "seal": {
+   "file": "linhduel/diepnhan_seal.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 64,
+   "ax": 28,
+   "ay": 62,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/diepnhan_ult.png",
+   "n": 12,
+   "cw": 66,
+   "ch": 80,
+   "ax": 33,
+   "ay": 76,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/diepnhan_hurt.png",
+   "n": 4,
+   "cw": 54,
+   "ch": 50,
+   "ax": 27,
+   "ay": 49,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/diepnhan_faint.png",
+   "n": 8,
+   "cw": 64,
+   "ch": 56,
+   "ax": 32,
+   "ay": 51,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.75
+ },
+ "banhbao": {
+  "idle": {
+   "file": "linhduel/banhbao_idle.png",
+   "n": 8,
+   "cw": 36,
+   "ch": 36,
+   "ax": 18,
+   "ay": 36,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/banhbao_run.png",
+   "n": 8,
+   "cw": 36,
+   "ch": 36,
+   "ax": 18,
+   "ay": 36,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/banhbao_atk.png",
+   "n": 8,
+   "cw": 42,
+   "ch": 34,
+   "ax": 21,
+   "ay": 33,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "beam": {
+   "file": "linhduel/banhbao_beam.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 38,
+   "ax": 22,
+   "ay": 38,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "glow": {
+   "file": "linhduel/banhbao_glow.png",
+   "n": 8,
+   "cw": 42,
+   "ch": 46,
+   "ax": 21,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/banhbao_ult.png",
+   "n": 12,
+   "cw": 44,
+   "ch": 54,
+   "ax": 22,
+   "ay": 54,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/banhbao_hurt.png",
+   "n": 4,
+   "cw": 38,
+   "ch": 36,
+   "ax": 19,
+   "ay": 35,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/banhbao_faint.png",
+   "n": 8,
+   "cw": 42,
+   "ch": 34,
+   "ax": 21,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.5556
+ },
+ "tinhmieu": {
+  "idle": {
+   "file": "linhduel/tinhmieu_idle.png",
+   "n": 8,
+   "cw": 30,
+   "ch": 34,
+   "ax": 15,
+   "ay": 33,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/tinhmieu_run.png",
+   "n": 8,
+   "cw": 34,
+   "ch": 36,
+   "ax": 17,
+   "ay": 35,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/tinhmieu_atk.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 40,
+   "ax": 22,
+   "ay": 37,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "shine": {
+   "file": "linhduel/tinhmieu_shine.png",
+   "n": 8,
+   "cw": 32,
+   "ch": 44,
+   "ax": 16,
+   "ay": 43,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "curl": {
+   "file": "linhduel/tinhmieu_curl.png",
+   "n": 8,
+   "cw": 36,
+   "ch": 44,
+   "ax": 18,
+   "ay": 42,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/tinhmieu_ult.png",
+   "n": 12,
+   "cw": 42,
+   "ch": 52,
+   "ax": 21,
+   "ay": 52,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/tinhmieu_hurt.png",
+   "n": 4,
+   "cw": 38,
+   "ch": 34,
+   "ax": 19,
+   "ay": 34,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/tinhmieu_faint.png",
+   "n": 8,
+   "cw": 38,
+   "ch": 38,
+   "ax": 19,
+   "ay": 35,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.5263
+ },
+ "cuoitho": {
+  "idle": {
+   "file": "linhduel/cuoitho_idle.png",
+   "n": 8,
+   "cw": 20,
+   "ch": 32,
+   "ax": 10,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/cuoitho_run.png",
+   "n": 8,
+   "cw": 28,
+   "ch": 34,
+   "ax": 14,
+   "ay": 34,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/cuoitho_atk.png",
+   "n": 8,
+   "cw": 26,
+   "ch": 32,
+   "ax": 13,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "shout": {
+   "file": "linhduel/cuoitho_shout.png",
+   "n": 8,
+   "cw": 34,
+   "ch": 34,
+   "ax": 17,
+   "ay": 34,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "stomp": {
+   "file": "linhduel/cuoitho_stomp.png",
+   "n": 8,
+   "cw": 26,
+   "ch": 40,
+   "ax": 13,
+   "ay": 40,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/cuoitho_ult.png",
+   "n": 12,
+   "cw": 28,
+   "ch": 42,
+   "ax": 14,
+   "ay": 42,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/cuoitho_hurt.png",
+   "n": 4,
+   "cw": 32,
+   "ch": 32,
+   "ax": 16,
+   "ay": 32,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/cuoitho_faint.png",
+   "n": 8,
+   "cw": 42,
+   "ch": 32,
+   "ax": 21,
+   "ay": 31,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.4918
+ },
+ "tuyetky": {
+  "idle": {
+   "file": "linhduel/tuyetky_idle.png",
+   "n": 8,
+   "cw": 42,
+   "ch": 46,
+   "ax": 21,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/tuyetky_run.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 50,
+   "ax": 22,
+   "ay": 49,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/tuyetky_atk.png",
+   "n": 8,
+   "cw": 62,
+   "ch": 46,
+   "ax": 31,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "blow": {
+   "file": "linhduel/tuyetky_blow.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 56,
+   "ax": 22,
+   "ay": 56,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "raise": {
+   "file": "linhduel/tuyetky_raise.png",
+   "n": 8,
+   "cw": 58,
+   "ch": 60,
+   "ax": 29,
+   "ay": 59,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/tuyetky_ult.png",
+   "n": 12,
+   "cw": 46,
+   "ch": 74,
+   "ax": 23,
+   "ay": 72,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/tuyetky_hurt.png",
+   "n": 4,
+   "cw": 52,
+   "ch": 48,
+   "ax": 26,
+   "ay": 47,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/tuyetky_faint.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 50,
+   "ax": 26,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.7333
+ },
+ "_clip_of": {
+  "bachkinh": {
+   "thuy_cham": "spout",
+   "bong_giam": "spout",
+   "song_cuon": "wave",
+   "trieu_dang": "ult"
+  },
+  "loiho": {
+   "phong_tia": "zap",
+   "loi_cau": "zap",
+   "xung_vong": "pulse",
+   "set_troi": "ult"
+  },
+  "vitbao": {
+   "luoi_gio": "flap",
+   "gio_xuoi": "flap",
+   "lao": "dash",
+   "bao_loc": "ult"
+  },
+  "diepnhan": {
+   "roi_re": "cast",
+   "hut_nhua": "cast",
+   "bao_tu": "seal",
+   "rung_troi": "ult"
+  },
+  "tuyetky": {
+   "gai_bang": "raise",
+   "hoi_lanh": "blow",
+   "guong_bang": "raise",
+   "goi_tuyet": "raise",
+   "bao_tuyet": "ult"
+  },
+  "tinhmieu": {
+   "manh_pha_le": "shine",
+   "khuc_xa": "shine",
+   "giap_tinh": "curl",
+   "mua_kim_cuong": "ult"
+  },
+  "cuoitho": {
+   "song_am": "shout",
+   "hu_vang": "shout",
+   "dap_am": "stomp",
+   "cong_huong": "ult"
+  },
+  "banhbao": {
+   "tia_sang": "beam",
+   "chop_loa": "glow",
+   "tu_lanh": "glow",
+   "chan_quang": "glow",
+   "phan_quyet": "ult"
+  },
+  "bovimach": {
+   "dich_loi": "atk",
+   "nhieu_song": "zap",
+   "ma_hoa": "zap",
+   "tuong_lua": "stomp",
+   "sap_he": "ult"
+  },
+  "culibong": {
+   "ham_bong": "atk",
+   "cau_bong": "cast",
+   "den_me": "cast",
+   "lan_bong": "curl",
+   "dem_den": "ult"
+  },
+  "hacgiac": {
+   "ham_bong": "atk",
+   "cau_bong": "cast",
+   "lan_bong": "sink",
+   "den_me": "cast",
+   "dem_den": "ult",
+   "luoi_bong": "tongue"
+  },
+  "hoahung": {
+   "phun_than": "spit",
+   "cau_no_lua": "spit",
+   "vung_nham": "stomp",
+   "lao_lua": "dash",
+   "nui_lua": "ult",
+   "om_hoa": "hug"
+  },
+  "macuu": {
+   "dich_loi": "atk",
+   "nhieu_song": "cast",
+   "tuong_lua": "cast",
+   "ma_hoa": "cast",
+   "sap_he": "ult",
+   "thu_bom": "drop"
+  },
+  "nguuson": {
+   "nut_dat": "stomp",
+   "nem_da": "throw",
+   "dam_chan": "stomp",
+   "don_tho": "stomp",
+   "dai_dia_chan": "ult",
+   "nguu_xung": "gore"
+  }
+ },
+ "bovimach": {
+  "idle": {
+   "file": "linhduel/bovimach_idle.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 42,
+   "ax": 24,
+   "ay": 40,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/bovimach_run.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 46,
+   "ax": 24,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/bovimach_atk.png",
+   "n": 8,
+   "cw": 68,
+   "ch": 66,
+   "ax": 34,
+   "ay": 59,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "zap": {
+   "file": "linhduel/bovimach_zap.png",
+   "n": 8,
+   "cw": 60,
+   "ch": 60,
+   "ax": 30,
+   "ay": 57,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "stomp": {
+   "file": "linhduel/bovimach_stomp.png",
+   "n": 8,
+   "cw": 60,
+   "ch": 62,
+   "ax": 30,
+   "ay": 59,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/bovimach_ult.png",
+   "n": 12,
+   "cw": 72,
+   "ch": 74,
+   "ax": 36,
+   "ay": 70,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/bovimach_hurt.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 48,
+   "ax": 26,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 24
+  },
+  "faint": {
+   "file": "linhduel/bovimach_faint.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 60,
+   "ax": 28,
+   "ay": 58,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.7391
+ },
+ "culibong": {
+  "idle": {
+   "file": "linhduel/culibong_idle.png",
+   "n": 8,
+   "cw": 36,
+   "ch": 38,
+   "ax": 18,
+   "ay": 37,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/culibong_run.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 40,
+   "ax": 20,
+   "ay": 38,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/culibong_atk.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 48,
+   "ax": 28,
+   "ay": 47,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "cast": {
+   "file": "linhduel/culibong_cast.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 48,
+   "ax": 28,
+   "ay": 47,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "curl": {
+   "file": "linhduel/culibong_curl.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 48,
+   "ax": 24,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/culibong_ult.png",
+   "n": 12,
+   "cw": 52,
+   "ch": 62,
+   "ax": 26,
+   "ay": 58,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/culibong_hurt.png",
+   "n": 4,
+   "cw": 48,
+   "ch": 38,
+   "ax": 24,
+   "ay": 38,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/culibong_faint.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 46,
+   "ax": 28,
+   "ay": 43,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.5926,
+  "gaze": {
+   "file": "linhduel/culibong_cast.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 48,
+   "ax": 28,
+   "ay": 47,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  }
+ },
+ "hacgiac": {
+  "idle": {
+   "file": "linhduel/hacgiac_idle.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 38,
+   "ax": 20,
+   "ay": 37,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/hacgiac_run.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 40,
+   "ax": 20,
+   "ay": 38,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/hacgiac_atk.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 48,
+   "ax": 26,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "cast": {
+   "file": "linhduel/hacgiac_cast.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 40,
+   "ax": 28,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "sink": {
+   "file": "linhduel/hacgiac_sink.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 50,
+   "ax": 26,
+   "ay": 47,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "tongue": {
+   "file": "linhduel/hacgiac_tongue.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 42,
+   "ax": 22,
+   "ay": 41,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/hacgiac_ult.png",
+   "n": 12,
+   "cw": 52,
+   "ch": 58,
+   "ax": 26,
+   "ay": 54,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/hacgiac_hurt.png",
+   "n": 4,
+   "cw": 44,
+   "ch": 38,
+   "ax": 22,
+   "ay": 38,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/hacgiac_faint.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 44,
+   "ax": 26,
+   "ay": 41,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.5926
+ },
+ "hoahung": {
+  "idle": {
+   "file": "linhduel/hoahung_idle.png",
+   "n": 8,
+   "cw": 40,
+   "ch": 46,
+   "ax": 20,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/hoahung_run.png",
+   "n": 8,
+   "cw": 44,
+   "ch": 50,
+   "ax": 22,
+   "ay": 46,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/hoahung_atk.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 48,
+   "ax": 28,
+   "ay": 48,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "spit": {
+   "file": "linhduel/hoahung_spit.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 54,
+   "ax": 24,
+   "ay": 53,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "dash": {
+   "file": "linhduel/hoahung_dash.png",
+   "n": 8,
+   "cw": 72,
+   "ch": 58,
+   "ax": 36,
+   "ay": 53,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "stomp": {
+   "file": "linhduel/hoahung_stomp.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 54,
+   "ax": 24,
+   "ay": 53,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hug": {
+   "file": "linhduel/hoahung_hug.png",
+   "n": 12,
+   "cw": 44,
+   "ch": 50,
+   "ax": 22,
+   "ay": 48,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/hoahung_ult.png",
+   "n": 12,
+   "cw": 48,
+   "ch": 70,
+   "ax": 24,
+   "ay": 68,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/hoahung_hurt.png",
+   "n": 4,
+   "cw": 44,
+   "ch": 46,
+   "ax": 22,
+   "ay": 45,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/hoahung_faint.png",
+   "n": 8,
+   "cw": 64,
+   "ch": 54,
+   "ax": 32,
+   "ay": 51,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 0.7119
+ },
+ "macuu": {
+  "_scale": 0.5,
+  "_fly": {
+   "alt": 8,
+   "bob": 1,
+   "bobT": 1.6,
+   "alt_by_clip": {
+    "atk": 6,
+    "hurt": 5.5,
+    "cast": 8,
+    "ult": 10,
+    "flymove": 7
+   },
+   "ground_clips": {
+    "faint": {
+     "drop_logic_px": {
+      "south": 4.5,
+      "east": 2.0,
+      "north": 1.5,
+      "south-east": 3.5,
+      "north-east": 4.5
+     },
+     "engine": "neo = diem cham dat; khi vao clip: alt giam tuyen tinh tu (alt - drop[huong]) ve 0 trong 0,3 s dau (clip tu roi phan drop) -> khong giat"
+    },
+    "land": {
+     "drop_logic_px": {
+      "south": 3.0,
+      "east": 1.5,
+      "north": 0.0,
+      "south-east": 3.0,
+      "north-east": 2.0
+     },
+     "engine": "neo = diem cham dat; khi vao clip: alt giam tuyen tinh tu (alt - drop[huong]) ve 0 trong 0,3 s dau (clip tu roi phan drop) -> khong giat; dung dat: lap khung 4..8 cua land (tho), cat canh lai = phat nguoc land"
+    }
+   },
+   "shadow": "engine ve linhduel/vfx/flyshadow.png tai (x, y) chan; sprite KHONG co bong",
+   "speed_hint": "bac Nho: nhanh, ne gioi; bay khong can ne duong nut dat (GROUND_MV)",
+   "note": "hover clip da tu nhun 0.5-1.5 px logic theo nhip canh; engine nhun them bob*sin(2pi t/bobT)"
+  },
+  "hover": {
+   "file": "linhduel/macuu_hover.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 40,
+   "ax": 24,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 10
+  },
+  "flymove": {
+   "file": "linhduel/macuu_flymove.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 44,
+   "ax": 28,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 14
+  },
+  "atk": {
+   "file": "linhduel/macuu_atk.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 48,
+   "ax": 24,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 14
+  },
+  "cast": {
+   "file": "linhduel/macuu_cast.png",
+   "n": 8,
+   "cw": 52,
+   "ch": 40,
+   "ax": 26,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 12
+  },
+  "ult": {
+   "file": "linhduel/macuu_ult.png",
+   "n": 12,
+   "cw": 60,
+   "ch": 42,
+   "ax": 30,
+   "ay": 40,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 12
+  },
+  "hurt": {
+   "file": "linhduel/macuu_hurt.png",
+   "n": 4,
+   "cw": 48,
+   "ch": 40,
+   "ax": 24,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 12
+  },
+  "faint": {
+   "file": "linhduel/macuu_faint.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 44,
+   "ax": 28,
+   "ay": 43,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 10,
+   "ground": true
+  },
+  "land": {
+   "file": "linhduel/macuu_land.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 38,
+   "ax": 24,
+   "ay": 37,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 8,
+   "ground": true
+  },
+  "rot": {
+   "file": "linhduel/macuu_rot.png",
+   "n": 1,
+   "cw": 48,
+   "ch": 38,
+   "ax": 24,
+   "ay": 38,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 1
+  },
+  "idle": {
+   "file": "linhduel/macuu_hover.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 40,
+   "ax": 24,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 10,
+   "_alias": "hover"
+  },
+  "fly": {
+   "file": "linhduel/macuu_hover.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 40,
+   "ax": 24,
+   "ay": 39,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 10
+  },
+  "drop": {
+   "file": "linhduel/macuu_drop.png",
+   "n": 8,
+   "cw": 48,
+   "ch": 46,
+   "ax": 24,
+   "ay": 41,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ],
+   "fps": 12
+  }
+ },
+ "nguuson": {
+  "idle": {
+   "file": "linhduel/nguuson_idle.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 60,
+   "ax": 28,
+   "ay": 59,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "run": {
+   "file": "linhduel/nguuson_run.png",
+   "n": 8,
+   "cw": 56,
+   "ch": 64,
+   "ax": 28,
+   "ay": 62,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "atk": {
+   "file": "linhduel/nguuson_atk.png",
+   "n": 8,
+   "cw": 84,
+   "ch": 64,
+   "ax": 42,
+   "ay": 60,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "stomp": {
+   "file": "linhduel/nguuson_stomp.png",
+   "n": 8,
+   "cw": 60,
+   "ch": 68,
+   "ax": 30,
+   "ay": 68,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "throw": {
+   "file": "linhduel/nguuson_throw.png",
+   "n": 8,
+   "cw": 80,
+   "ch": 82,
+   "ax": 40,
+   "ay": 77,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "gore": {
+   "file": "linhduel/nguuson_gore.png",
+   "n": 8,
+   "cw": 80,
+   "ch": 80,
+   "ax": 40,
+   "ay": 76,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "ult": {
+   "file": "linhduel/nguuson_ult.png",
+   "n": 12,
+   "cw": 80,
+   "ch": 100,
+   "ax": 40,
+   "ay": 96,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "hurt": {
+   "file": "linhduel/nguuson_hurt.png",
+   "n": 4,
+   "cw": 68,
+   "ch": 66,
+   "ax": 34,
+   "ay": 65,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "faint": {
+   "file": "linhduel/nguuson_faint.png",
+   "n": 8,
+   "cw": 88,
+   "ch": 68,
+   "ax": 44,
+   "ay": 63,
+   "rows": [
+    "south",
+    "east",
+    "north",
+    "south-east",
+    "north-east"
+   ]
+  },
+  "_scale": 1.0
+ }
+}

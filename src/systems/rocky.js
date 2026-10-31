@@ -3,6 +3,7 @@
 // artists in this land, 5 stones wake the statue: you *become* Rocky for 40 s,
 // stomp through rocks and crates, and the nation's artists cheer.
 import { FPS } from '../anim.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 
 const COST = 5, DURATION = 40, REACH = 34, TRUST = 0.5;
 // breakable decor: value = stones gained when Rocky smashes it
@@ -118,7 +119,7 @@ function start(ctx, o) {
     const gr = g.createRadialGradient(Math.round(ent.x), y + art.h * 0.55, 2, Math.round(ent.x), y + art.h * 0.55, art.w * 0.85);
     gr.addColorStop(0, 'rgba(255,212,94,.28)'); gr.addColorStop(1, 'rgba(255,212,94,0)');
     g.fillStyle = gr; g.fillRect(x - art.w, y - 6, art.w * 3, art.h + 12);
-    g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(Math.round(ent.x), Math.round(ent.y) + 1, art.w * 0.4, art.w * 0.16, 0, 0, 7); g.fill();
+    if (SHADOW.on) shadowFor(g, ent.x, ent.y, Math.round(ent.x), Math.round(ent.y) + 1, Math.round(art.w * 0.8), 0); else { g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(Math.round(ent.x), Math.round(ent.y) + 1, art.w * 0.4, art.w * 0.16, 0, 0, 7); g.fill(); }   /* plan-66 */
     g.drawImage(art.img, x, y, art.w, art.h);
     g.restore();
   };

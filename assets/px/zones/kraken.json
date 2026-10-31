@@ -1,3 +1,10 @@
 {
- "inherit": "u4"
+ "inherit": "u4",
+ "objects": {
+  "cage": {
+   "file": "zones/trench/obj/cage_t8.png",
+   "ox": 0,
+   "oy": 0
+  }
+ }
 }

@@ -30,9 +30,11 @@
 //    ~16 px, nhánh lớn, quầng sáng tròn r≈40 ở chân, tia chính sáng 0,15 s → tắt 1 khung → sáng lại → tắt dần; vẽ 1:1 + 1 lớp cộng sáng 'lighter'): tia dẫn dò xuống
 //    0,2 s → tia chính trắng-xanh có nhánh (đòn trúng đúng lúc này) → tắt dần + vòng tia lửa/bụi ở chân; vết sém td_scorch trên sàn mờ dần 4 s (drawGround).
 //    Lóe trắng ≤ 0,1 s chỉ cho Dùi Sấm / bậc cuối màn mở đầu, tối đa 1 lần / 1,5 s (tuyệt chiêu nhiều sét → không lóe).
+import { easyHp } from './diff.js';   /* plan-44 C2: Độ khó Dễ — máu ×0,6 */
 import { obj as defObj } from '../gfx.js';
 import { ART } from '../art.js';
 import * as LV from './petlv.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 import { bossCam, bossCamReset, bossBarBox } from './bosscam.js';
 import { musicClock, musicHiccup } from '../audio.js';
 
@@ -76,7 +78,7 @@ const DMG = { wave: 0.08, bird: 0.06, slam: 0.09, ult: 0.1, strike: 0.08, lhSwin
 const CD = { waves: 9, birds: 13, mute: 21, slam: 3.6, ult: 38 };
 function bossHp(ctx) {
   const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40;
-  return Math.round(per * 160 + st * 60);
+  return easyHp(Math.round(per * 160 + st * 60));
 }
 const sv = ctx => { const s = ctx.S.save; s.sys ||= {}; const h = (s.sys.trongdong ||= {}); h.wins ||= 0; h.tries ||= 0; return h; };
 const rk = ctx => (ctx.rocky && ctx.rocky.pet && ctx.rocky.pet()) || (((ctx.S.save.sys || {}).pet || {}).pet) || null;
@@ -176,6 +178,8 @@ function hurtPlayer(ctx, frac, from, react = 'stagger', power = 1, key = '') {
 const rkPos = ctx => (ctx.rocky && ctx.rocky.pos && ctx.rocky.pos()) || null;
 const rkEnt = ctx => (ctx.rocky && ctx.rocky.ent && ctx.rocky.ent()) || null;
 const rkAway = ctx => { const pt = rk(ctx); return !pt || (pt.koT || 0) > 0 || !rkEnt(ctx); };
+/* 2026-10-15 máu linh thú: đòn trúng chỗ linh thú đang ra trận (mọi con trong đội) → trừ máu (frac như Rocky; kind 'fly' = hất bay) */
+function ltHitAt(ctx, test, frac, from, kind) { let n = 0; for (const q of (ctx.ltPets ? ctx.ltPets() : [])) if (test(q) && ctx.ltHit(frac * 1.1, from, kind, q.id)) n++; return n > 0; }
 function hurtRocky(ctx, frac, from, kb = 50) {
   const pos = rkPos(ctx); if (!pos) return; const pt = rk(ctx); if (!pt || !ctx.rocky.hitBy) return;
   const d = Math.hypot(pos.x - from.x, pos.y - from.y) || 1, raw = Math.round(LV.maxHpOf(rkLv(ctx)) * frac * 1.2);
@@ -206,9 +210,9 @@ function introDrum(mo) { const it = INTRO - mo.intro; if (it >= I_FALL) return n
 function drawDrumAt(g, k, x, y, alpha = 1) { const im = drumStep(k); if (!im) return; const w = im.naturalWidth / 2, h = im.naturalHeight / 2; g.save(); g.imageSmoothingEnabled = false; g.globalAlpha = alpha; g.drawImage(im, Math.round(x - w / 2), Math.round(y - h / 2), w, h); g.restore(); }
 function drawBoss(g, mo, x, y) {
   const fr = Math.floor(ST.t * 6) % 8, im = DRUM(fr) || DRUM(0), hv = hover(mo);
-  if (mo.intro > 0) { const D = introDrum(mo); if (D) { const k = (D.k + 1) / 5; g.fillStyle = `rgba(10,6,0,${(0.12 + 0.3 * k).toFixed(2)})`; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 8 + 22 * k, (8 + 22 * k) * 0.32, 0, 0, 7); g.fill(); drawDrumAt(g, D.k, x, D.y - mo.y + y); return; } }   /* đang rơi: bóng lớn dần */
+  if (mo.intro > 0) { const D = introDrum(mo); if (D) { const k = (D.k + 1) / 5; if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, 60, Math.max(0, mo.y - D.y), 1.1); else { g.fillStyle = `rgba(10,6,0,${(0.12 + 0.3 * k).toFixed(2)})`; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 8 + 22 * k, (8 + 22 * k) * 0.32, 0, 0, 7); g.fill(); } drawDrumAt(g, D.k, x, D.y - mo.y + y); return; } }   /* đang rơi: bóng lớn dần */
   g.save();
-  const sw = 26 + Math.max(0, 10 - hv / 3); g.fillStyle = 'rgba(10,6,0,.42)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), sw, sw * 0.32, 0, 0, 7); g.fill();   /* bóng dưới đất (to dần khi trống hạ thấp) */
+  const sw = 26 + Math.max(0, 10 - hv / 3); if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, 60, hv, 1.1); else { g.fillStyle = 'rgba(10,6,0,.42)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), sw, sw * 0.32, 0, 0, 7); g.fill(); }   /* plan-66: trống lơ lửng / bay lên chiêu cuối → bóng nhỏ + nhạt theo độ cao */   /* bóng dưới đất (to dần khi trống hạ thấp) */
   if (mo.flash > 0) g.filter = 'brightness(1.9)'; else if (mo.vuln > 0) g.filter = 'brightness(1.3) saturate(1.3)'; else if (ST.act && ST.act.k === 'mute' && ST.act.ph === 'tele') g.filter = 'brightness(0.6) saturate(0.7)'; else if (mo.pulse > 0) g.filter = 'brightness(1.4)';
   const py = mo.pulse > 0.08 ? 1 : 0;   /* trống tự gõ: mặt trống sáng + dội xuống 1 px đúng phách (chỉ lúc ra đòn) */
   if (im) blit(g, im, x - 32, y - 58 - hv + py); else { g.fillStyle = '#8a6a2a'; g.fillRect(Math.round(x - 26), Math.round(y - 50 - hv), 52, 36); }
@@ -339,7 +343,7 @@ function wavesTick(ctx, dt) {
     w.t += dt; w.r += 112 * dt; if (w.r > 250) { w.done = true; continue; }
     const test = (q, kind) => { const d = Math.hypot(q.x - w.x, q.y - w.y); if (Math.abs(d - w.r) > 7) return false; const a = Math.atan2(q.y - w.y, q.x - w.x); return Math.abs(angD(a, w.a)) > w.gw / 2; };
     if (!w.hitP && test(p)) { w.hitP = true; hurtPlayer(ctx, DMG.wave, { x: w.x, y: w.y }, 'stagger', 0.7, 'wave'); }
-    if (!w.hitR && rp && test(rp)) { w.hitR = true; hurtRocky(ctx, DMG.wave, { x: w.x, y: w.y }, 40); }
+    if (!w.hitR && rp && test(rp)) { w.hitR = true; hurtRocky(ctx, DMG.wave, { x: w.x, y: w.y }, 40); } if (!w.hitL && ltHitAt(ctx, q => test(q), DMG.wave, { x: w.x, y: w.y }, 'hit')) w.hitL = true;
     void I;
   }
   ST.waves = ST.waves.filter(w => !w.done);
@@ -355,7 +359,7 @@ function startBirds(ctx, mo, p, bi) {
 }
 function birdsTick(ctx, dt) {
   const A = ST.act, mo = ST.boss, p = ctx.S.player, rp = rkPos(ctx);
-  if (A && A.k === 'birds' && A.ph === 'tele') { A.t -= dt; if (A.t <= 0) { A.ph = 'fly'; const n = mo && mo.phase === 2 ? 8 : 6; for (let i = 0; i < n; i++) ST.birds.push({ x: mo.x, y: mo.y - 40, delay: i * 0.2, st: 'out', i: 0, pts: A.pts, hitP: false, hitR: false, vx: 1, t: 0 }); ctx.sfx('whoosh_big'); lhPlay('strike'); } }
+  if (A && A.k === 'birds' && A.ph === 'tele') { A.t -= dt; if (A.t <= 0) { A.ph = 'fly'; const n = mo && mo.phase === 2 ? 8 : 6; for (let i = 0; i < n; i++) ST.birds.push({ x: mo.x, y: mo.y - 40, delay: i * 0.2, st: 'out', i: 0, pts: A.pts, hitP: false, hitR: false, vx: 1, t: 0, k0: mo.y, dn: A.pts[0].y >= mo.y - 40 }); ctx.sfx('whoosh_big'); lhPlay('strike'); } }
   for (const b of ST.birds) {
     if (b.gone) continue; b.t += dt; if (b.delay > 0) { b.delay -= dt; continue; }
     const sp = 140 * dt; let tgt;
@@ -364,10 +368,12 @@ function birdsTick(ctx, dt) {
     if (d <= sp) { b.x = tgt.x; b.y = tgt.y; if (b.st === 'out') b.st = 'loop'; else if (b.st === 'loop') { b.i++; if (b.i >= b.pts.length) b.st = 'home'; } else b.gone = true; }
     else { b.x += dx / d * sp; b.y += dy / d * sp; if (Math.abs(dx) > 0.5) b.vx = dx; }
     if (b.st === 'loop') {
+      if (ctx.threat && !b.hitP) { const l = Math.hypot(dx, dy) || 1; ctx.threat.add({ id: b, kind: 'projectile', from: { x: b.x, y: b.y }, to: { x: b.x + dx / l * 60, y: b.y + dy / l * 60 }, speed: 140, width: 10 }); }   /* plan-34: Ki né */
       if (!b.hitP && Math.hypot(p.x - b.x, p.y - 6 - b.y) < 10) { b.hitP = hurtPlayer(ctx, DMG.bird, { x: b.x - (b.vx > 0 ? 6 : -6), y: b.y + 6 }, 'stagger', 0.7, 'bird'); }
-      if (!b.hitR && rp && Math.hypot(rp.x - b.x, rp.y - 6 - b.y) < 10) { b.hitR = true; hurtRocky(ctx, DMG.bird, b, 30); }
+      if (!b.hitR && rp && Math.hypot(rp.x - b.x, rp.y - 6 - b.y) < 10) { b.hitR = true; hurtRocky(ctx, DMG.bird, b, 30); } if (!b.hitL && ltHitAt(ctx, q => Math.hypot(q.x - b.x, q.y - 6 - b.y) < 10, DMG.bird, b, 'hit')) b.hitL = true;
     }
   }
+  if (ctx.threat) for (const b of ST.birds) if (b.gone || b.st !== 'loop' || b.hitP) ctx.threat.remove(b);
   ST.birds = ST.birds.filter(b => !b.gone);
 }
 
@@ -378,6 +384,7 @@ function startSlam(ctx, mo, p, bi) {
   if (mo.phase === 2 && sp > 15) { const k = Math.min(40, sp * 1.2) / sp, I = interior(ctx); spots.push({ x: Math.max(I.x0, Math.min(I.x1, p.x + v.x * k)), y: Math.max(I.y0, Math.min(I.y1 + 16, p.y + v.y * k)) }); }   /* pha 2: thêm 1 vòng ở chỗ người đang chạy tới */
   ST.act = { k: 'slam', b1: bi + 2, spots, done: false };
   for (const s of spots) ST.tele.push({ type: 'c', x: s.x, y: s.y, r: 20, t: 2 * BEAT, T0: 2 * BEAT, col: '#8fd0ff' });
+  if (ctx.threat) for (const s of spots) ctx.threat.add({ kind: 'bolt', from: { x: s.x, y: s.y - 80 }, to: { x: s.x, y: s.y - 6 }, in: 2 * BEAT, radius: 24 });   /* plan-34: Ki né */
   ctx.sfx('spar_charge'); log('slam');
   lhPlay('call', Math.max(0, 2 * BEAT + 0.3 - 7 / LH_FPS.call));   /* giơ dùi gọi sét suốt lúc báo trước, hạ xuống sau khi sét giáng */
   for (const s of spots) ST.skyQ.push({ b: bi + 2, x: s.x, y: s.y, flash: true });   /* tia dẫn thả trước 0,2 s */
@@ -385,7 +392,7 @@ function startSlam(ctx, mo, p, bi) {
 function bolt(ctx, x, y, r, frac, key) {
   if (!skyNear(x, y)) sky(x, y, { now: true, flash: key === 'slam' }); ctx.sfx('thunder'); if (ctx.quake) ctx.quake(0.12);   /* sét từ trời: tia dẫn đã được thả trước 0,2 s (preTick) — đòn trúng đúng lúc tia chính chạm đất */
   const p = ctx.S.player; if (Math.hypot(p.x - x, p.y - y) < r + 4) hurtPlayer(ctx, frac, { x, y: y - 2 }, 'fly', 0.9, key);
-  const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - x, rp.y - y) < r + 4) hurtRocky(ctx, frac, { x, y }, 50);
+  const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - x, rp.y - y) < r + 4) hurtRocky(ctx, frac, { x, y }, 50); ltHitAt(ctx, q => Math.hypot(q.x - x, q.y - y) < r + 4, frac, { x, y }, 'fly');
   if (ctx.arenaImpact) ctx.arenaImpact(x, y, 1.3, 'land');   /* sét đánh trúng cột đồng / bệ đá → nứt rồi đổ (vật cản không nhốt ai) */
 }
 
@@ -427,7 +434,7 @@ function ultBeat(ctx, mo, bi) {
   const p = ctx.S.player, rp = rkPos(ctx), arcW = 1.6;
   const inLit = q => { const d = Math.hypot(q.x - U.cx, q.y - U.cy); if (d < STAR_R || d > R_IMP) return false; const k = Math.min(11, Math.max(0, Math.floor((d - STAR_R) / ((R_IMP - STAR_R) / 12)))); const a = Math.atan2(q.y - U.cy, q.x - U.cx), base = U.lit[k] + U.ang[k]; return Math.abs(angD(a, base)) < arcW / 2 || Math.abs(angD(a, base + Math.PI)) < arcW / 2; };
   if (inLit(p)) hurtPlayer(ctx, DMG.ult, { x: U.cx, y: U.cy }, 'fly', 1, 'ult');   /* 2026-10-13: tuyệt chiêu = đòn nặng → hất bay người chơi (như Rocky) */
-  if (rp && inLit(rp)) hurtRocky(ctx, DMG.ult, { x: U.cx, y: U.cy }, 60);   /* lực ≥ 50 → Rocky bay (pet.js rkKnock) */
+  if (rp && inLit(rp)) hurtRocky(ctx, DMG.ult, { x: U.cx, y: U.cy }, 60); ltHitAt(ctx, inLit, DMG.ult, { x: U.cx, y: U.cy }, 'fly');   /* lực ≥ 50 → Rocky bay (pet.js rkKnock) */
   if (ST.preB !== bi) for (const q of ultSpots(U, bi, 0)) sky(q.x, q.y, { now: true });   /* thường đã thả trước 0,2 s ở preTick (ultPre) */
   ctx.sfx('thunder'); ctx.sfx('b'); if (ctx.quake) ctx.quake(0.1); glowPulse(U.cx, U.cy);
   /* ngoài mặt trống: sét nhắm người (vòng báo 1 phách) */
@@ -436,7 +443,7 @@ function ultBeat(ctx, mo, bi) {
 }
 function outerAim(ctx) {
   const U = ST.ult, out = [], p = ctx.S.player; if (!U) return out;
-  if (Math.hypot(p.x - U.cx, p.y - U.cy) > R_IMP - 6) { out.push({ x: p.x, y: p.y, b: 1 }); ST.tele.push({ type: 'c', x: p.x, y: p.y, r: 18, t: BEAT, T0: BEAT, col: '#8fd0ff' }); }
+  if (Math.hypot(p.x - U.cx, p.y - U.cy) > R_IMP - 6) { out.push({ x: p.x, y: p.y, b: 1 }); ST.tele.push({ type: 'c', x: p.x, y: p.y, r: 18, t: BEAT, T0: BEAT, col: '#8fd0ff' }); if (ctx.threat) ctx.threat.add({ kind: 'bolt', from: { x: p.x, y: p.y - 80 }, to: { x: p.x, y: p.y - 6 }, in: BEAT, radius: 22 }); }
   return out;
 }
 /* vị trí 6 tia sét của tuyệt chiêu ở phách bi; ahead = đoán trước bao nhiêu giây (vòng đang quay) */
@@ -498,12 +505,12 @@ function drawBurst(g, B, cx, cy) {
   const x = Math.round(B.x - cx), y = Math.round(B.y - cy);
   if (B.t < B_SHAKE) {   /* trống nứt, rung (chỉ trong 0,9 s) */
     const im = DRUM(Math.floor(B.t * 10) % 8) || DRUM(0), j = Math.floor(B.t * 30) % 2 ? 1 : -1, a = B.t > 0.45 ? 2 : 1; if (!im) return;
-    g.save(); g.fillStyle = 'rgba(10,6,0,.42)'; g.beginPath(); g.ellipse(x, y, 30, 10, 0, 0, 7); g.fill(); if (Math.floor(B.t * 12) % 4 === 0) g.filter = 'brightness(1.6)'; blit(g, im, x - 32 + j * a, y - 72); g.restore(); return;
+    g.save(); if (SHADOW.on) shadowAt(g, x, y, 60, 0, 1.1); else { g.fillStyle = 'rgba(10,6,0,.42)'; g.beginPath(); g.ellipse(x, y, 30, 10, 0, 0, 7); g.fill(); } if (Math.floor(B.t * 12) % 4 === 0) g.filter = 'brightness(1.6)'; blit(g, im, x - 32 + j * a, y - 72); g.restore(); return;
   }
   const k = burstWreckK(B); if (k < 0) return; const im = wreckImg(k); if (!im) return;   /* vỏ trống rỗng nằm nghiêng (ảnh hư hỏng PixelLab) */
   const w = im.naturalWidth / 2, h = im.naturalHeight / 2; g.save(); g.imageSmoothingEnabled = false; g.drawImage(im, Math.round(x - w / 2), Math.round(y + 6 - h), w, h); g.restore();
 }
-function lhHp(ctx) { const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40; return Math.round(per * 34 + st * 20); }   /* mô phỏng áp sát không né: ~20 s → chơi thật (né đòn) ~35–45 s */
+function lhHp(ctx) { const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40; return easyHp(Math.round(per * 34 + st * 20)); }   /* mô phỏng áp sát không né: ~20 s → chơi thật (né đòn) ~35–45 s */
 function spawnLh(ctx) {
   const Lh = ST.lh, hp = lhHp(ctx), t = L(ctx);
   const cfg = { key: 'lachau', vi: STR.vi.lhName, en: STR.en.lhName, hp, dmg: 0, armor: 0, sp: 54, xp: 0, w: 16, h: 28, noXpTag: true, lhBoss: true,   /* không đặt boss: true — thanh máu đã vẽ ở drawUI (tránh thanh máu đôi của monsters) */
@@ -513,7 +520,7 @@ function spawnLh(ctx) {
   Object.assign(mo, { angry: true, warned: true, cd: { swing: 0.5, call: 1.4, birds: 4.5, dash: 0 }, act: null, recent: [], stuckT: 0 });
   ST.lhMo = mo; Lh.self = false; Lh.clip = 'idle'; Lh.t = 0; ST.lhStart = ST.t; ST.banner = { txt: t.lhFight, t: 2.2 }; ctx.sfx('roar_big'); log('lh spawn hp ' + hp);
 }
-function drawLhMo(g, mo, x, y) { const Lh = ST.lh; if (!Lh) return; Lh.flash = mo.flash || 0; g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 7, 2.5, 0, 0, 7); g.fill(); drawLH(g, Lh, x, y); }
+function drawLhMo(g, mo, x, y) { const Lh = ST.lh; if (!Lh) return; Lh.flash = mo.flash || 0; if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, 14, Math.round(Lh.z || 0)); else { g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(Math.round(x), Math.round(y), 7, 2.5, 0, 0, 7); g.fill(); } drawLH(g, Lh, x, y); }
 function lhClip(clip) { const Lh = ST.lh; if (Lh.clip !== clip) { Lh.clip = clip; Lh.t = 0; } }
 function lhMove(ctx, mo, dx, dy, sp, dt) {   /* đi có va chạm; kẹt quá 0,8 s → đi xuyên (không bao giờ đứng kẹt) */
   const d = Math.hypot(dx, dy) || 1, s = sp * dt, nx = mo.x + dx / d * s, ny = mo.y + dy / d * s, q = clampIn(ctx, nx, ny);
@@ -539,7 +546,7 @@ function lhAi(ctx, mo, dt, p, dp, canHit) {
 function lhStart(ctx, mo, k) {
   const p = ctx.S.player, Lh = ST.lh, rp = rkPos(ctx), t = L(ctx), mad = mo.hp < mo.max * 0.5; Lh.dir = faceOf(p.x - mo.x, p.y - mo.y);
   if (k === 'swing') { const T = mad ? 0.55 : 0.65; mo.act = { k, t: 0, T }; ST.tele.push({ type: 'c', x: mo.x, y: mo.y, r: 30, t: T, T0: T, col: '#ffb060' }); lhClip('idle'); ctx.sfx('spar_charge'); }   /* vòng báo QUANH hắn → trúng mọi phía */
-  else if (k === 'call') { const spots = [{ x: p.x, y: p.y }]; if (rp && !rkAway(ctx)) spots.push({ x: rp.x, y: rp.y }); mo.act = { k, t: 0, T: 1.0, spots }; for (const s of spots) ST.tele.push({ type: 'c', x: s.x, y: s.y, r: 18, t: 1.0, T0: 1.0, col: '#8fd0ff' }); lhPlay('call', 0.5); ctx.sfx('spar_charge'); if (ctx.pop) ctx.pop(mo.x, mo.y - 34, t.lhCall, '#8fd0ff'); }
+  else if (k === 'call') { const spots = [{ x: p.x, y: p.y }]; if (rp && !rkAway(ctx)) spots.push({ x: rp.x, y: rp.y }); mo.act = { k, t: 0, T: 1.0, spots }; for (const s of spots) ST.tele.push({ type: 'c', x: s.x, y: s.y, r: 18, t: 1.0, T0: 1.0, col: '#8fd0ff' }); if (ctx.threat) for (const s of spots) ctx.threat.add({ kind: 'bolt', from: { x: s.x, y: s.y - 80 }, to: { x: s.x, y: s.y - 6 }, in: 1.0, radius: 22 }); lhPlay('call', 0.5); ctx.sfx('spar_charge'); if (ctx.pop) ctx.pop(mo.x, mo.y - 34, t.lhCall, '#8fd0ff'); }
   else if (k === 'birds') { mo.act = { k, t: 0, T: 0.7 }; lhPlay('call', 0.1); ctx.sfx('warn'); if (ctx.pop) ctx.pop(mo.x, mo.y - 34, t.lhBirds, '#ffb040'); }
   else if (k === 'dash') { const d = dist(mo, p) || 1, s = Math.random() < 0.5 ? 1 : -1; let best = null;   /* lướt ngang / lùi 54 px tới chỗ trống */
     for (const [ax, ay] of [[-(p.y - mo.y) / d * s, (p.x - mo.x) / d * s], [(p.y - mo.y) / d * s, -(p.x - mo.x) / d * s], [(mo.x - p.x) / d, (mo.y - p.y) / d]]) { const q = clampIn(ctx, mo.x + ax * 54, mo.y + ay * 54); if (!solidAt(ctx, q.x, q.y) && !solidAt(ctx, (q.x + mo.x) / 2, (q.y + mo.y) / 2)) { best = q; break; } }
@@ -553,7 +560,7 @@ function lhAct(ctx, mo, A, dt, p) {
     if (!A.sw && A.t >= A.T - LH_LEAD()) { A.sw = true; lhPlay('strike'); }   /* dùi chạm đất đúng lúc vòng báo đầy */
     if (!A.hit && A.t >= A.T) { A.hit = true; ctx.sfx('smash'); fx('td_spark', mo.x + (p.x - mo.x) * 0.3, mo.y - 8); if (ctx.quake) ctx.quake(0.1);
       if (dist(mo, p) < 32) hurtPlayer(ctx, DMG.lhSwing, { x: mo.x, y: mo.y }, 'fly', 0.9, 'lh_swing');   /* 2026-10-13: đòn mạnh hất người bay như Rocky (Rocky cũng bay ở lực 50) */
-      const rp = rkPos(ctx); if (rp && dist(mo, rp) < 32) hurtRocky(ctx, DMG.lhSwing, mo, 50); }
+      const rp = rkPos(ctx); if (rp && dist(mo, rp) < 32) hurtRocky(ctx, DMG.lhSwing, mo, 50); ltHitAt(ctx, q => dist(mo, q) < 32, DMG.lhSwing, mo, 'fly'); }
     if (A.t >= A.T + 0.35) { mo.act = null; mo.cd.swing = mad ? 1.2 : 1.6; }
     return;
   }
@@ -565,7 +572,7 @@ function lhAct(ctx, mo, A, dt, p) {
   }
   if (A.k === 'birds') {
     if (!A.out && A.t >= 0.4) { A.out = true; ctx.sfx('whoosh_big'); const n = mad ? 3 : 2;
-      for (let i = 0; i < n + 1; i++) { const a = -Math.PI / 2 + (i - n / 2) * 0.7; ST.hbirds.push({ x: mo.x, y: mo.y - 20, vx: Math.cos(a) * 60, vy: Math.sin(a) * 60, t: 0, life: 3.2, rk: i === n && !!rkPos(ctx) }); } }
+      for (let i = 0; i < n + 1; i++) { const a = -Math.PI / 2 + (i - n / 2) * 0.7; ST.hbirds.push({ x: mo.x, y: mo.y - 20, vx: Math.cos(a) * 60, vy: Math.sin(a) * 60, t: 0, life: 3.2, rk: i === n && !!rkPos(ctx), k0: mo.y }); } }
     if (A.t >= A.T) { mo.act = null; mo.cd.birds = mad ? 7 : 9; }
     return;
   }
@@ -577,10 +584,11 @@ function hbirdsTick(ctx, dt) {
   for (const b of ST.hbirds) {
     b.t += dt; if (b.t > b.life) { b.gone = true; continue; }
     const tg = b.rk && rp ? rp : p, dx = tg.x - b.x, dy = tg.y - 8 - b.y, want = Math.atan2(dy, dx), cur = Math.atan2(b.vy, b.vx), da = Math.max(-2.6 * dt, Math.min(2.6 * dt, angD(want, cur))), sp = 82;
-    b.vx = Math.cos(cur + da) * sp; b.vy = Math.sin(cur + da) * sp; b.x += b.vx * dt; b.y += b.vy * dt;
+    b.vx = Math.cos(cur + da) * sp; b.vy = Math.sin(cur + da) * sp; b.x += b.vx * dt; b.y += b.vy * dt; if (ctx.threat && !b.rk && b.t > 0.1) ctx.threat.add({ id: b, kind: 'projectile', from: { x: b.x, y: b.y + 2 }, to: { x: b.x + b.vx / sp * 60, y: b.y + 2 + b.vy / sp * 60 }, speed: sp, width: 9 });
     if (b.t > 0.3 && Math.hypot(p.x - b.x, p.y - 8 - b.y) < 9) { b.gone = true; fx('td_spark', b.x, b.y); hurtPlayer(ctx, DMG.lhBird, { x: b.x - b.vx * 0.1, y: b.y }, 'stagger', 0.6, 'lh_bird'); }
-    else if (b.t > 0.3 && rp && Math.hypot(rp.x - b.x, rp.y - 8 - b.y) < 9) { b.gone = true; fx('td_spark', b.x, b.y); hurtRocky(ctx, DMG.lhBird, b, 30); }
+    else if (b.t > 0.3 && rp && Math.hypot(rp.x - b.x, rp.y - 8 - b.y) < 9) { b.gone = true; fx('td_spark', b.x, b.y); hurtRocky(ctx, DMG.lhBird, b, 30); } if (!b.gone && b.t > 0.3 && ltHitAt(ctx, q => Math.hypot(q.x - b.x, q.y - 8 - b.y) < 9, DMG.lhBird, b, 'hit')) { b.gone = true; fx('td_spark', b.x, b.y); }
   }
+  if (ctx.threat) for (const b of ST.hbirds) if (b.gone) ctx.threat.remove(b);
   ST.hbirds = ST.hbirds.filter(b => !b.gone);
 }
 /* Lạc Hầu hết máu: quỵ xuống → tan thành đàn chim Lạc; trống nhỏ rơi xuống đất (cảnh) → thắng */
@@ -743,17 +751,17 @@ export const trongdong = {
     for (const f of ST.fx) out.push({ y: f.top ? 1e9 : f.y + 6, f: () => { const fr = Math.min(f.s.n - 1, Math.floor(f.t * (f.s.fps || 12))); drawSheet(g, f.s, fr, f.x - cx, f.y - cy, f.alpha);
       if (f.sky && f.t >= SKY_HIT && f.t < SKY_HIT + 0.35) { g.save(); g.globalCompositeOperation = 'lighter'; drawSheet(g, f.s, fr, f.x - cx, f.y - cy, 0.45); g.restore(); }   /* tia chính CHÓI: cộng sáng thêm 1 lớp (chỉ lúc tia chính sáng) */
     } });
-    for (const b of ST.birds) { if (b.delay > 0) continue; out.push({ y: b.y + 30, f: () => { const im = BIRD(Math.floor(b.t * 10) % 4); if (im) blit(g, im, b.x - cx - 12, b.y - cy - 12, b.vx < 0); else { g.fillStyle = '#ff7a20'; g.fillRect(Math.round(b.x - cx) - 4, Math.round(b.y - cy) - 2, 8, 4); } } }); }
+    for (const b of ST.birds) { if (b.delay > 0) continue; out.push({ y: b.st === 'out' && b.k0 != null ? (b.dn ? Math.max(b.y + 30, b.k0 + 0.5) : Math.min(b.y + 30, b.k0 - 0.5)) : b.y + 30, skill: 'td_bird', f: () => {   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): lúc lao ra từ trống — lao xuống vẽ trước trống, lao lên vẽ sau */ const im = BIRD(Math.floor(b.t * 10) % 4); if (im) blit(g, im, b.x - cx - 12, b.y - cy - 12, b.vx < 0); else { g.fillStyle = '#ff7a20'; g.fillRect(Math.round(b.x - cx) - 4, Math.round(b.y - cy) - 2, 8, 4); } } }); }
     const Lh = ST.lh;
     if (Lh && Lh.self && !Lh.hidden) out.push({ y: Lh.y, f: () => {   /* Lạc Hầu lúc văng ra / lúc chết (ngoài 2 lúc đó do monsters vẽ qua drawFn) */
-      const k = Math.max(0.3, 1 - (Lh.z || 0) / 60); g.fillStyle = `rgba(0,0,0,${(0.28 * k).toFixed(2)})`; g.beginPath(); g.ellipse(Math.round(Lh.x - cx), Math.round(Lh.y - cy), 7 * k, 2.5 * k, 0, 0, 7); g.fill();
+      const k = Math.max(0.3, 1 - (Lh.z || 0) / 60); if (SHADOW.on) shadowFor(g, Lh.x, Lh.y, Math.round(Lh.x - cx), Math.round(Lh.y - cy), 14, Lh.z || 0); else { g.fillStyle = `rgba(0,0,0,${(0.28 * k).toFixed(2)})`; g.beginPath(); g.ellipse(Math.round(Lh.x - cx), Math.round(Lh.y - cy), 7 * k, 2.5 * k, 0, 0, 7); g.fill(); }
       drawLH(g, Lh, Lh.x - cx, Lh.y - cy - (Lh.z || 0));
     } });
     if (ST.boss && ST.boss.vuln > 0) { const mo = ST.boss, sc = lhSil(); ST.sil = !!sc; if (sc) out.push({ y: mo.y + 0.5, f: () => { g.save(); g.globalAlpha = 0.7; g.drawImage(sc, 0, 0, sc.width, sc.height, Math.round(mo.x - cx - sc.width / 4), Math.round(mo.y - cy - 13 - sc.height / 2 + 1), sc.width / 2, sc.height / 2); g.restore(); } }); }   /* trống LỘ: bóng TĨNH của kẻ ngồi bên trong (gợi ý pha 2) */
     if (ST.burst) { const B = ST.burst; out.push({ y: B.y, f: () => drawBurst(g, B, cx, cy) }); }
     if (ST.lid) { const O = ST.lid, im = img('boss/trongdong/drum_lid.png'); if (im) out.push({ y: O.gy, f: () => { g.save(); g.globalAlpha = Math.max(0, Math.min(1, (3.5 - O.t) / 0.8)); blit(g, im, O.x - cx - im.naturalWidth / 4, O.gy - cy - O.z - im.naturalHeight / 4); g.restore(); } }); }   /* nắp trống bật ra */
     if (ST.loot) { const T = ST.loot, im = img('boss/trongdong/drum_s32.png'); if (im) out.push({ y: T.y, f: () => blit(g, im, T.x - cx - im.naturalWidth / 4, T.y - cy - im.naturalHeight / 2 + 2 - T.z) }); }   /* trống đồng nhỏ rơi lại (chiến lợi phẩm — cảnh) */
-    for (const b of ST.hbirds) out.push({ y: b.y + 30, f: () => { const im = BIRD(Math.floor(b.t * 10) % 4); g.save(); g.globalAlpha = Math.min(1, (b.life - b.t) / 0.4); if (im) blit(g, im, b.x - cx - 12, b.y - cy - 12, b.vx < 0); g.restore(); } });
+    for (const b of ST.hbirds) out.push({ y: b.t < 0.5 && b.k0 != null ? (b.vy < 0 ? Math.min(b.y + 30, b.k0 - 0.5) : Math.max(b.y + 30, b.k0 + 0.5)) : b.y + 30, skill: 'td_hbird', f: () => {   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): chim lửa vừa phóng từ Lạc Hầu: bay lên nằm sau, bay xuống nằm trước */ const im = BIRD(Math.floor(b.t * 10) % 4); g.save(); g.globalAlpha = Math.min(1, (b.life - b.t) / 0.4); if (im) blit(g, im, b.x - cx - 12, b.y - cy - 12, b.vx < 0); g.restore(); } });
     for (const b of ST.flock) { const a = Math.max(0, Math.min(1, (2.4 - b.t) / 0.6)); if (a <= 0) continue; out.push({ y: 1e9, f: () => { const im = BIRD(Math.floor(b.t * 10) % 4); if (!im) return; g.save(); g.globalAlpha = a; blit(g, im, b.x - cx - 12, b.y - cy - 12, b.vx < 0); g.restore(); } }); }   /* Lạc Hầu tan thành đàn chim Lạc (ảnh chim PixelLab) */
     if (ST.mute) { const e = rkEnt(ctx); if (e) out.push({ y: e.y + 0.7, f: () => { const im = img('ui/trongdong/mute.png'), pt = rk(ctx), h = pt && pt.superT > 0 ? 34 : 24; if (im) blit(g, im, e.x - cx - 8, e.y - cy - h - 14); } }); }   /* icon TĨNH trên đầu Rocky */
     return out;

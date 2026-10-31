@@ -19,7 +19,7 @@ let cv, g, logoCv, raf = 0, t0 = 0, mouse = { x: 0, y: 0 }, imgs = {}, sheet = n
 const BASE = 'assets/px/';
 function img(path) { const i = new Image(); i.src = BASE + path; return i; }
 const ok = i => i && i.complete && i.naturalWidth > 0;
-const FIX = { lighthouse: 'zones/sea/obj/lighthouse_s7.png', house: 'zones/sea/obj/house_y_t8.png', palm: 'zones/m1/obj/palm_s7.png', boat: 'zones/m1/obj/boat_t8.png', pet: 'zones/village/misc/out/rockypet_3.png' };
+const FIX = { lighthouse: 'zones/sea/obj/lighthouse_s7.png', house: 'zones/sea/obj/house_y_t8.png', palm: 'zones/m1/obj/palm_s7.png', boat: 'zones/m1/obj/boat_t8.png', pet: 'zones/village/misc/out/rockypet_3.png', islet: 'ui/title/islet.png' };   /* plan-45 D1: islet = mỏm đá PixelLab dưới hải đăng (thay bầu dục vẽ code) */
 
 export function initTitle(d) {
   deps = d; cv = $('#tbg'); g = cv.getContext('2d'); logoCv = $('#t-logo');
@@ -100,10 +100,14 @@ function frame(now) {
   // mặt trời / trăng
   const sunX = VW * 0.72 - px * 0.3, sunY = hor - 34 - py * 0.3; g.fillStyle = P.sun; g.globalAlpha = 0.9; g.beginPath(); g.arc(sunX, sunY, 9, 0, 7); g.fill(); g.globalAlpha = 0.25; g.beginPath(); g.arc(sunX, sunY, 16 + Math.sin(t) * 1.5, 0, 7); g.fill(); g.globalAlpha = 1;
   if (P.k > 0.6) { g.fillStyle = '#ffffff'; for (let i = 0; i < 40; i++) { const sx = (i * 97) % VW, sy = (i * 53) % (hor - 20); if (Math.sin(t * 2 + i) > 0.3) g.fillRect(sx, sy, 1, 1); } }
-  // mây (3 tầng)
+  // mây (3 tầng) — plan-45 D1: mây không bao giờ bay qua khung chữ SEISMIC / 9 LANDS / dòng phụ (KEEP, đo từ DOM): tầng nào trùng dải chữ thì dời hẳn lên trên (hoặc xuống dưới) dải đó
+  keepOut(now); CL45.length = 0;
   for (let i = 0; i < 7; i++) {
     const im = imgs['cloud_' + (i % 3)], sp = 3 + (i % 3) * 3, layer = 0.3 + (i % 3) * 0.3;
-    const x = ((i * 137 + t * sp - px * layer * 2) % (VW + 80) + VW + 80) % (VW + 80) - 80, y = 8 + (i * 31) % Math.max(20, hor - 60) - py * layer;
+    const x = ((i * 137 + t * sp - px * layer * 2) % (VW + 80) + VW + 80) % (VW + 80) - 80; let y = 8 + (i * 31) % Math.max(20, hor - 60) - py * layer;
+    const cw = ok(im) ? im.naturalWidth / 2 : 34, ch = ok(im) ? im.naturalHeight / 2 : 14;
+    if (KEEP && y + ch > KEEP.y0 - 3 && y < KEEP.y1 + 3) { const up = KEEP.y0 - ch - 4 - (i % 3) * 7; y = up >= 1 ? up : KEEP.y1 + 4 + (i % 3) * 7; }
+    CL45.push({ x, y, w: cw, h: ch });
     g.globalAlpha = 0.85; if (!drawHi(im, x, y)) { g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(x, y, 34, 8); g.fillRect(x + 6, y - 5, 18, 6); } g.globalAlpha = 1;
   }
   // đảo xa (lặp bằng lật gương)
@@ -120,7 +124,7 @@ function frame(now) {
   const dark = g.createLinearGradient(0, hor, 0, VH); dark.addColorStop(0, 'rgba(0,0,0,0)'); dark.addColorStop(1, P.seaD); g.fillStyle = dark; g.globalAlpha = 0.55; g.fillRect(0, hor, VW, VH - hor); g.globalAlpha = 1;
   // hải đăng trên mỏm đá bên phải, đèn quét
   const lx = VW - 70 - px * 1.4, ly = hor + 10 - py * 0.6;
-  g.fillStyle = '#3a3040'; g.beginPath(); g.ellipse(lx + 16, ly + 6, 30, 7, 0, 0, 7); g.fill();
+  drawHi(imgs.islet, lx - 13, ly - 13);   /* plan-45 D1: mỏm đá PixelLab (64×24 logic) — bỏ bầu dục đen vẽ code; ảnh chưa nạp thì không vẽ gì */
   if (!drawHi(imgs.lighthouse, lx, ly - 62)) { g.fillStyle = '#e8e0d0'; g.fillRect(lx + 10, ly - 44, 12, 48); g.fillStyle = '#c33'; g.fillRect(lx + 10, ly - 30, 12, 6); }
   const beam = (Math.sin(t * 0.9) + 1) / 2; g.fillStyle = `rgba(255,240,170,${0.12 + beam * 0.25})`; g.beginPath(); g.moveTo(lx + 16, ly - 56); g.lineTo(lx + 16 - 70 - beam * 60, ly - 30); g.lineTo(lx + 16 - 40 - beam * 60, ly - 8); g.fill();
   // bến gỗ bên trái
@@ -142,6 +146,18 @@ function frame(now) {
   const vig = g.createRadialGradient(VW / 2, VH / 2, VH * 0.5, VW / 2, VH / 2, VH); vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.55)'); g.fillStyle = vig; g.fillRect(0, 0, VW, VH);
   drawLogo(t); tickCredits(now);
 }
+/* plan-45 D1: dải cấm mây = khung #t-logo + #t-tag (toạ độ logic của nền), đo lại mỗi 0,5 s (bố cục đổi khi xoay / đổi cỡ) */
+let KEEP = null, keepAt = -1e9; const CL45 = [];
+function keepOut(now) {
+  if (now - keepAt < 500) return; keepAt = now;
+  const a = $('#t-logo'), b = $('#t-tag'); if (!a || !a.offsetWidth) { KEEP = null; return; }
+  const r = a.getBoundingClientRect(), r2 = b && b.offsetWidth ? b.getBoundingClientRect() : r;
+  KEEP = { x0: Math.min(r.left, r2.left) / Z, x1: Math.max(r.right, r2.right) / Z, y0: Math.min(r.top, r2.top) / Z, y1: Math.max(r.bottom, r2.bottom) / Z };
+}
+if (typeof window !== 'undefined') window.__title45 = {   /* móc test */
+  hits: () => KEEP ? CL45.filter(c => c.x < KEEP.x1 && c.x + c.w > KEEP.x0 && c.y < KEEP.y1 && c.y + c.h > KEEP.y0).length : -1,
+  islet: () => ok(imgs.islet), ellipse: false, keep: () => KEEP, clouds: () => CL45.slice(),
+};
 function drawLogo(t) {
   const W = 360, H = 120, c = logoCv; if (c.width !== W) { c.width = W; c.height = H; }
   const lg = c.getContext('2d'); lg.clearRect(0, 0, W, H); lg.imageSmoothingEnabled = false;

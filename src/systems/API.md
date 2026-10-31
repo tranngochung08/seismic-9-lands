@@ -69,7 +69,10 @@ Every object placed inside a nation district carries `o.plot` (index into `S.map
 - Never block the core loop: no `alert/confirm`, no `while(true)`.
 - Tests: the site runs at `http://127.0.0.1:8765/`. Headless driver: `node "<scratchpad>/cdp.js" scenario.json` with `CDP_PORT=<unique port>` env var (see prompt). Debug URL: `?auto&zone=m7`; `window.__S` is the state; `window.__CTX` is the ctx.
 
-## Story — "Friend at Sea" (src/story.js; systems story_sea.js / story_land.js / trench.js)
+## Story — "Friend at Sea" (src/story.js; systems story_sea.js / story_land.js / krstory.js)
+
+> **2026-10-15:** the story zone `trench` (systems/trench.js) was REMOVED (anh: Lyron là phản diện chính). Act 3 now happens in the underwater chain: pier whirl → u1…u4 → **Kraken's Lair** (`kraken`), where `world.js buildKraken` places the bubble cage (`m.cage`). `systems/krstory.js` (always): cage guarded while the Kraken lives; after the Kraken falls (`ctx.uwGateOpen('kraken')`), E at the cage with all three items → the Great Crystal breaks it → Lyron swims over → dialog → `story.rescued = true`, `act = 4`, achievement `rescue`, `ctx.finale`. Missing items → hint, come back later (the Kraken does not respawn). Divebell = breath drains ×0.5 underwater; Great Crystal = bigger lamp in the dark u4; Trench Map = a static arrow toward each layer's whirl. Old saves standing in `trench` are moved to the sea pier (`story.js normalizeStory`). Xealist's Fortress no longer frees Lyron. Lines below about `trench` are historical.
+
 Lyron (founder of Seismic, **not** a roster member) pulls the new player onto his raft in the prologue, guides the crossing, and is taken by the Kraken in sight of the pier. The player gathers three things across the lands and dives into the **Kraken Trench** (zone `trench`) to bring him back.
 - `ctx.story()` → `S.save.story = { act, step, items:{divebell,trenchmap,greatcrystal}, rescued, attempts, flashback, seaDone, keepsake, guideStoryTold }`. Edit fields directly, then `ctx.persist()`. `ctx.storyAct(n)` sets the act and persists.
   Acts: **1** prologue at sea with Lyron (only on a save that starts at sea) · **2** gather the three things (HUD line drawn by the core: `Save Lyron: 🔔· 🗺· 🔮·`) · **3** all three in hand → dive at the pier · **4** rescued. `story.js#normalizeStory` runs at load: an old save that is already ashore jumps to act 2 with `flashback=true` (the Old Seismologist tells the tale — core handles that dialog).
@@ -112,3 +115,12 @@ Lyron (founder of Seismic, **not** a roster member) pulls the new player onto hi
 - (A5 sửa lỗi) **Nguồn hạt trong game thật:** market.js bán `seed_<crop>` đúng mùa hiện tại (`tags` có mùa hoặc `any`) 2 đá/hạt ở mục 'Hạt giống theo mùa' (`SEED_PRICE`, `seedsOfSeason`); gather.js cắt cỏ ('hay') rơi 10 % một `seed_<crop>` đúng mùa (`dropCropSeed`).
 - (A5) raiders_low.js import `guardedByScarecrow` từ farm.js: mảnh rào trong bán kính 6 ô quanh bù nhìn không bị chọn làm mục tiêu; thú phá lọt vào tầm bù nhìn → bỏ chạy.
 - (A5) gather.js `pruneCd`: cooldown save cũ lưu theo `Date.now()` (> 1e11) được quy đổi sang ms game giữ phần còn lại (đặt `clockRef` ngay đầu `onZoneEnter`).
+
+## Ki — đòn có báo trước cho nhào lộn né (plan-34, `src/systems/ki.js`, chạy mọi vùng)
+`ctx.threat.add({ id?, kind, from:{x,y}, to:{x,y}, in | at | speed+t0, width? | radius?, dur? })` → id. Gọi NGAY lúc đòn bắt đầu báo trước.
+- Toạ độ thế giới; điểm người chơi so sánh = (p.x, p.y − 6) → nếu đòn của bạn đo theo CHÂN (p.x, p.y) thì trừ 6 vào y của from/to.
+- `in`: số giây tới lúc chạm (dùng đồng hồ riêng của trùm cũng được) · `at`: ctx.S.time lúc chạm · đạn bay: `speed` (px/s) + from = vị trí đạn hiện tại → tự tính lúc tới người chơi (gọi lại mỗi khung với cùng `id`, gỡ bằng `ctx.threat.remove(id)` khi đạn mất).
+- Đường (tia, lao, quét): `width` = 2 × (nửa bề rộng trúng − 6). Vòng (sét, đập, thiên thạch): `radius` = bán kính trúng (tâm `to`). `dur`: đòn kéo dài (tia bắn 0,4 s…).
+- Chỉ đòn CÓ BÁO TRƯỚC mới khai báo (đòn bất ngờ / cận chiến quanh trùm: không). Mỗi id chỉ né 1 lần; tự hết hạn sau lúc chạm + dur + 0,6 s.
+- `ctx.kiStrikeMul()` (monsters.strike đọc), `ctx.ki.{get, auto, toggleAuto, busy, iframes}`. Test: `window.__ki` (state, set, fire, mode, log, clearCd).
+- (v2) Mặc định người chơi TỰ BẤM (Shift lộn · K / chuột phải lướt · nút Lộn / Lướt điện thoại); khai báo vẫn cần cho chế độ Tự động và để tính NÉ HOÀN HẢO. Hệ bay: đặt `ctx.skyKiSpin` / `ctx.airKiSpin = true` và xoay người + chong chóng theo `ent.kiSpin.ang` khi có → ki.js không xoay cả hình bay. Bị hất: knock.js gọi `ctx.kiAbort()`.

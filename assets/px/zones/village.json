@@ -166,6 +166,16 @@
    "file": "zones/village/obj/exit_sign_lock_t8.png",
    "ox": 0,
    "oy": 0
+  },
+  "exit_sign_dn": {
+   "file": "zones/village/obj/exit_sign_dn_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "exit_sign_up": {
+   "file": "zones/village/obj/exit_sign_up_t8.png",
+   "ox": 0,
+   "oy": 0
   }
  },
  "rocky": {
@@ -279,16 +289,16 @@
     },
     "attack": {
      "file": "chars/c0_act_attack.png",
-     "n": 5,
-     "ch": 24,
-     "cw": 32,
+     "n": 7,
+     "ch": 32,
+     "cw": 40,
      "impact": 3
     },
     "idle": {
      "file": "chars/c0_act_idle.png",
-     "n": 4,
-     "ch": 24,
-     "cw": 32
+     "n": 8,
+     "cw": 12,
+     "ch": 20
     },
     "pick": {
      "file": "chars/c0_act_pick.png",
@@ -328,6 +338,58 @@
     },
     "hover": {
      "file": "chars/c0_act_hover.png",
+     "n": 6,
+     "ch": 24,
+     "cw": 32
+    },
+    "dive": {
+     "file": "flyposes/c0_dive.png",
+     "n": 12,
+     "ch": 32,
+     "cw": 32,
+     "fps": 10
+    },
+    "climb": {
+     "file": "flyposes/c0_climb.png",
+     "n": 12,
+     "ch": 32,
+     "cw": 32,
+     "fps": 10
+    },
+    "roll": {
+     "file": "chars/c0_act_roll.png",
+     "n": 8,
+     "ch": 24,
+     "cw": 32
+    },
+    "dash": {
+     "file": "chars/c0_act_dash.png",
+     "n": 4,
+     "ch": 24,
+     "cw": 32
+    },
+    "attack2": {
+     "file": "chars/c0_act_attack2.png",
+     "n": 7,
+     "impact": 3,
+     "cw": 44,
+     "ch": 32
+    },
+    "attack3": {
+     "file": "chars/c0_act_attack3.png",
+     "n": 7,
+     "impact": 5,
+     "cw": 48,
+     "ch": 52
+    },
+    "walk": {
+     "file": "chars/c0_act_walk.png",
+     "n": 8,
+     "cw": 12,
+     "ch": 20
+    },
+    "throw": {
+     "file": "chars/c0_act_throw.png",
      "n": 6,
      "ch": 24,
      "cw": 32
@@ -997,28 +1059,34 @@
    "zones/village/creatures/rockybig_ha_n_3.png"
   ],
   "rockypet_punch_e": [
-   "zones/village/creatures/rockypet_punch_e_0.png",
-   "zones/village/creatures/rockypet_punch_e_1.png",
-   "zones/village/creatures/rockypet_punch_e_2.png",
-   "zones/village/creatures/rockypet_punch_e_3.png",
-   "zones/village/creatures/rockypet_punch_e_4.png",
-   "zones/village/creatures/rockypet_punch_e_5.png"
+   "zones/village/creatures/rockypet_p47_punch_e_0.png",
+   "zones/village/creatures/rockypet_p47_punch_e_1.png",
+   "zones/village/creatures/rockypet_p47_punch_e_2.png",
+   "zones/village/creatures/rockypet_p47_punch_e_3.png",
+   "zones/village/creatures/rockypet_p47_punch_e_4.png",
+   "zones/village/creatures/rockypet_p47_punch_e_5.png",
+   "zones/village/creatures/rockypet_p47_punch_e_6.png",
+   "zones/village/creatures/rockypet_p47_punch_e_7.png"
   ],
   "rockypet_punch_n": [
-   "zones/village/creatures/rockypet_punch_n_0.png",
-   "zones/village/creatures/rockypet_punch_n_1.png",
-   "zones/village/creatures/rockypet_punch_n_2.png",
-   "zones/village/creatures/rockypet_punch_n_3.png",
-   "zones/village/creatures/rockypet_punch_n_4.png",
-   "zones/village/creatures/rockypet_punch_n_5.png"
+   "zones/village/creatures/rockypet_p47_punch_n_0.png",
+   "zones/village/creatures/rockypet_p47_punch_n_1.png",
+   "zones/village/creatures/rockypet_p47_punch_n_2.png",
+   "zones/village/creatures/rockypet_p47_punch_n_3.png",
+   "zones/village/creatures/rockypet_p47_punch_n_4.png",
+   "zones/village/creatures/rockypet_p47_punch_n_5.png",
+   "zones/village/creatures/rockypet_p47_punch_n_6.png",
+   "zones/village/creatures/rockypet_p47_punch_n_7.png"
   ],
   "rockypet_punch_s": [
-   "zones/village/creatures/rockypet_punch_s_0.png",
-   "zones/village/creatures/rockypet_punch_s_1.png",
-   "zones/village/creatures/rockypet_punch_s_2.png",
-   "zones/village/creatures/rockypet_punch_s_3.png",
-   "zones/village/creatures/rockypet_punch_s_4.png",
-   "zones/village/creatures/rockypet_punch_s_5.png"
+   "zones/village/creatures/rockypet_p47_punch_s_0.png",
+   "zones/village/creatures/rockypet_p47_punch_s_1.png",
+   "zones/village/creatures/rockypet_p47_punch_s_2.png",
+   "zones/village/creatures/rockypet_p47_punch_s_3.png",
+   "zones/village/creatures/rockypet_p47_punch_s_4.png",
+   "zones/village/creatures/rockypet_p47_punch_s_5.png",
+   "zones/village/creatures/rockypet_p47_punch_s_6.png",
+   "zones/village/creatures/rockypet_p47_punch_s_7.png"
   ],
   "rockysup": [
    "zones/village/creatures/rockysup_0.png",
@@ -1035,7 +1103,8 @@
   "rockysup_dn": [
    "zones/village/creatures/rockysup_dn_0.png",
    "zones/village/creatures/rockysup_dn_1.png",
-   "zones/village/creatures/rockysup_dn_2.png"
+   "zones/village/creatures/rockysup_dn_2.png",
+   "zones/village/creatures/rockysup_dn_3.png"
   ],
   "rockysup_hop": [
    "zones/village/creatures/rockysup_hop_0.png"
@@ -1096,13 +1165,21 @@
   ],
   "rockysup_idle_s": [
    "zones/village/creatures/rockysup_idle_s_0.png",
-   "zones/village/creatures/rockysup_idle_s_1.png"
+   "zones/village/creatures/rockysup_idle_s_1.png",
+   "zones/village/creatures/rockysup_idle_s_2.png",
+   "zones/village/creatures/rockysup_idle_s_3.png",
+   "zones/village/creatures/rockysup_idle_s_4.png",
+   "zones/village/creatures/rockysup_idle_s_5.png"
   ],
   "rockysup_idle_n": [
    "zones/village/creatures/rockysup_idle_n_0.png",
    "zones/village/creatures/rockysup_idle_n_1.png",
    "zones/village/creatures/rockysup_idle_n_2.png",
-   "zones/village/creatures/rockysup_idle_n_3.png"
+   "zones/village/creatures/rockysup_idle_n_3.png",
+   "zones/village/creatures/rockysup_idle_n_4.png",
+   "zones/village/creatures/rockysup_idle_n_5.png",
+   "zones/village/creatures/rockysup_idle_n_6.png",
+   "zones/village/creatures/rockysup_idle_n_7.png"
   ],
   "rockysup_transform_s": [
    "zones/village/creatures/rockysup_transform_s_0.png",
@@ -1188,7 +1265,8 @@
   "hrsup_dn": [
    "zones/village/creatures/hrsup_dn_0.png",
    "zones/village/creatures/hrsup_dn_1.png",
-   "zones/village/creatures/hrsup_dn_2.png"
+   "zones/village/creatures/hrsup_dn_2.png",
+   "zones/village/creatures/hrsup_dn_3.png"
   ],
   "hrsup_ds": [
    "zones/village/creatures/hrsup_ds_0.png",
@@ -1229,11 +1307,21 @@
    "zones/village/creatures/hrsup_idle_n_0.png",
    "zones/village/creatures/hrsup_idle_n_1.png",
    "zones/village/creatures/hrsup_idle_n_2.png",
-   "zones/village/creatures/hrsup_idle_n_3.png"
+   "zones/village/creatures/hrsup_idle_n_3.png",
+   "zones/village/creatures/hrsup_idle_n_4.png",
+   "zones/village/creatures/hrsup_idle_n_5.png",
+   "zones/village/creatures/hrsup_idle_n_6.png",
+   "zones/village/creatures/hrsup_idle_n_7.png"
   ],
   "hrsup_idle_s": [
    "zones/village/creatures/hrsup_idle_s_0.png",
-   "zones/village/creatures/hrsup_idle_s_1.png"
+   "zones/village/creatures/hrsup_idle_s_1.png",
+   "zones/village/creatures/hrsup_idle_s_2.png",
+   "zones/village/creatures/hrsup_idle_s_3.png",
+   "zones/village/creatures/hrsup_idle_s_4.png",
+   "zones/village/creatures/hrsup_idle_s_5.png",
+   "zones/village/creatures/hrsup_idle_s_6.png",
+   "zones/village/creatures/hrsup_idle_s_7.png"
   ],
   "hrsup_punch_e": [
    "zones/village/creatures/hrsup_punch_e_0.png",
@@ -1278,7 +1366,8 @@
   "hrsup2_dn": [
    "zones/village/creatures/hrsup2_dn_0.png",
    "zones/village/creatures/hrsup2_dn_1.png",
-   "zones/village/creatures/hrsup2_dn_2.png"
+   "zones/village/creatures/hrsup2_dn_2.png",
+   "zones/village/creatures/hrsup2_dn_3.png"
   ],
   "hrsup2_ds": [
    "zones/village/creatures/hrsup2_ds_0.png",
@@ -1319,11 +1408,21 @@
    "zones/village/creatures/hrsup2_idle_n_0.png",
    "zones/village/creatures/hrsup2_idle_n_1.png",
    "zones/village/creatures/hrsup2_idle_n_2.png",
-   "zones/village/creatures/hrsup2_idle_n_3.png"
+   "zones/village/creatures/hrsup2_idle_n_3.png",
+   "zones/village/creatures/hrsup2_idle_n_4.png",
+   "zones/village/creatures/hrsup2_idle_n_5.png",
+   "zones/village/creatures/hrsup2_idle_n_6.png",
+   "zones/village/creatures/hrsup2_idle_n_7.png"
   ],
   "hrsup2_idle_s": [
    "zones/village/creatures/hrsup2_idle_s_0.png",
-   "zones/village/creatures/hrsup2_idle_s_1.png"
+   "zones/village/creatures/hrsup2_idle_s_1.png",
+   "zones/village/creatures/hrsup2_idle_s_2.png",
+   "zones/village/creatures/hrsup2_idle_s_3.png",
+   "zones/village/creatures/hrsup2_idle_s_4.png",
+   "zones/village/creatures/hrsup2_idle_s_5.png",
+   "zones/village/creatures/hrsup2_idle_s_6.png",
+   "zones/village/creatures/hrsup2_idle_s_7.png"
   ],
   "hrsup2_punch_e": [
    "zones/village/creatures/hrsup2_punch_e_0.png",
@@ -1631,6 +1730,763 @@
    "zones/village/creatures/copter2_s_4.png",
    "zones/village/creatures/copter2_s_5.png",
    "zones/village/creatures/copter2_s_6.png"
+  ],
+  "rtt_hover_s": [
+   "zones/village/creatures/rtt_hover_s_0.png",
+   "zones/village/creatures/rtt_hover_s_1.png",
+   "zones/village/creatures/rtt_hover_s_2.png",
+   "zones/village/creatures/rtt_hover_s_3.png",
+   "zones/village/creatures/rtt_hover_s_4.png",
+   "zones/village/creatures/rtt_hover_s_5.png"
+  ],
+  "rtt_hover_e": [
+   "zones/village/creatures/rtt_hover_e_0.png",
+   "zones/village/creatures/rtt_hover_e_1.png",
+   "zones/village/creatures/rtt_hover_e_2.png",
+   "zones/village/creatures/rtt_hover_e_3.png",
+   "zones/village/creatures/rtt_hover_e_4.png",
+   "zones/village/creatures/rtt_hover_e_5.png"
+  ],
+  "rtt_hover_n": [
+   "zones/village/creatures/rtt_hover_n_0.png",
+   "zones/village/creatures/rtt_hover_n_1.png",
+   "zones/village/creatures/rtt_hover_n_2.png",
+   "zones/village/creatures/rtt_hover_n_3.png",
+   "zones/village/creatures/rtt_hover_n_4.png",
+   "zones/village/creatures/rtt_hover_n_5.png"
+  ],
+  "rtt_punch_s": [
+   "zones/village/creatures/rtt_punch_s_0.png",
+   "zones/village/creatures/rtt_punch_s_1.png",
+   "zones/village/creatures/rtt_punch_s_2.png",
+   "zones/village/creatures/rtt_punch_s_3.png",
+   "zones/village/creatures/rtt_punch_s_4.png",
+   "zones/village/creatures/rtt_punch_s_5.png"
+  ],
+  "rtt_punch_e": [
+   "zones/village/creatures/rtt_punch_e_0.png",
+   "zones/village/creatures/rtt_punch_e_1.png",
+   "zones/village/creatures/rtt_punch_e_2.png",
+   "zones/village/creatures/rtt_punch_e_3.png",
+   "zones/village/creatures/rtt_punch_e_4.png",
+   "zones/village/creatures/rtt_punch_e_5.png"
+  ],
+  "rtt_punch_n": [
+   "zones/village/creatures/rtt_punch_n_0.png",
+   "zones/village/creatures/rtt_punch_n_1.png",
+   "zones/village/creatures/rtt_punch_n_2.png",
+   "zones/village/creatures/rtt_punch_n_3.png",
+   "zones/village/creatures/rtt_punch_n_4.png",
+   "zones/village/creatures/rtt_punch_n_5.png"
+  ],
+  "rtt_ha_s": [
+   "zones/village/creatures/rtt_ha_s_0.png",
+   "zones/village/creatures/rtt_ha_s_1.png",
+   "zones/village/creatures/rtt_ha_s_2.png",
+   "zones/village/creatures/rtt_ha_s_3.png",
+   "zones/village/creatures/rtt_ha_s_4.png",
+   "zones/village/creatures/rtt_ha_s_5.png"
+  ],
+  "rtt_ha_e": [
+   "zones/village/creatures/rtt_ha_e_0.png",
+   "zones/village/creatures/rtt_ha_e_1.png",
+   "zones/village/creatures/rtt_ha_e_2.png",
+   "zones/village/creatures/rtt_ha_e_3.png",
+   "zones/village/creatures/rtt_ha_e_4.png",
+   "zones/village/creatures/rtt_ha_e_5.png"
+  ],
+  "rtt_ha_n": [
+   "zones/village/creatures/rtt_ha_n_0.png",
+   "zones/village/creatures/rtt_ha_n_1.png",
+   "zones/village/creatures/rtt_ha_n_2.png",
+   "zones/village/creatures/rtt_ha_n_3.png",
+   "zones/village/creatures/rtt_ha_n_4.png",
+   "zones/village/creatures/rtt_ha_n_5.png"
+  ],
+  "rtt_knockdown_s": [
+   "zones/village/creatures/rtt_knockdown_s_0.png",
+   "zones/village/creatures/rtt_knockdown_s_1.png",
+   "zones/village/creatures/rtt_knockdown_s_2.png",
+   "zones/village/creatures/rtt_knockdown_s_3.png",
+   "zones/village/creatures/rtt_knockdown_s_4.png",
+   "zones/village/creatures/rtt_knockdown_s_5.png",
+   "zones/village/creatures/rtt_knockdown_s_6.png",
+   "zones/village/creatures/rtt_knockdown_s_7.png"
+  ],
+  "rtt_transform_s": [
+   "zones/village/creatures/rtt_transform_s_0.png",
+   "zones/village/creatures/rtt_transform_s_1.png",
+   "zones/village/creatures/rtt_transform_s_2.png",
+   "zones/village/creatures/rtt_transform_s_3.png",
+   "zones/village/creatures/rtt_transform_s_4.png",
+   "zones/village/creatures/rtt_transform_s_5.png",
+   "zones/village/creatures/rtt_transform_s_6.png",
+   "zones/village/creatures/rtt_transform_s_7.png"
+  ],
+  "rockybig_dive_s": [
+   "flyposes/rockybig_dive_s_0.png",
+   "flyposes/rockybig_dive_s_1.png",
+   "flyposes/rockybig_dive_s_2.png",
+   "flyposes/rockybig_dive_s_3.png",
+   "flyposes/rockybig_dive_s_4.png",
+   "flyposes/rockybig_dive_s_5.png",
+   "flyposes/rockybig_dive_s_6.png",
+   "flyposes/rockybig_dive_s_7.png",
+   "flyposes/rockybig_dive_s_8.png",
+   "flyposes/rockybig_dive_s_9.png",
+   "flyposes/rockybig_dive_s_10.png",
+   "flyposes/rockybig_dive_s_11.png"
+  ],
+  "rockybig_dive_e": [
+   "flyposes/rockybig_dive_e_0.png",
+   "flyposes/rockybig_dive_e_1.png",
+   "flyposes/rockybig_dive_e_2.png",
+   "flyposes/rockybig_dive_e_3.png",
+   "flyposes/rockybig_dive_e_4.png",
+   "flyposes/rockybig_dive_e_5.png",
+   "flyposes/rockybig_dive_e_6.png",
+   "flyposes/rockybig_dive_e_7.png",
+   "flyposes/rockybig_dive_e_8.png",
+   "flyposes/rockybig_dive_e_9.png",
+   "flyposes/rockybig_dive_e_10.png",
+   "flyposes/rockybig_dive_e_11.png"
+  ],
+  "rockybig_dive_n": [
+   "flyposes/rockybig_dive_n_0.png",
+   "flyposes/rockybig_dive_n_1.png",
+   "flyposes/rockybig_dive_n_2.png",
+   "flyposes/rockybig_dive_n_3.png",
+   "flyposes/rockybig_dive_n_4.png",
+   "flyposes/rockybig_dive_n_5.png",
+   "flyposes/rockybig_dive_n_6.png",
+   "flyposes/rockybig_dive_n_7.png",
+   "flyposes/rockybig_dive_n_8.png",
+   "flyposes/rockybig_dive_n_9.png",
+   "flyposes/rockybig_dive_n_10.png",
+   "flyposes/rockybig_dive_n_11.png"
+  ],
+  "rockybig_climb_s": [
+   "flyposes/rockybig_climb_s_0.png",
+   "flyposes/rockybig_climb_s_1.png",
+   "flyposes/rockybig_climb_s_2.png",
+   "flyposes/rockybig_climb_s_3.png",
+   "flyposes/rockybig_climb_s_4.png",
+   "flyposes/rockybig_climb_s_5.png",
+   "flyposes/rockybig_climb_s_6.png",
+   "flyposes/rockybig_climb_s_7.png",
+   "flyposes/rockybig_climb_s_8.png",
+   "flyposes/rockybig_climb_s_9.png",
+   "flyposes/rockybig_climb_s_10.png",
+   "flyposes/rockybig_climb_s_11.png"
+  ],
+  "rockybig_climb_e": [
+   "flyposes/rockybig_climb_e_0.png",
+   "flyposes/rockybig_climb_e_1.png",
+   "flyposes/rockybig_climb_e_2.png",
+   "flyposes/rockybig_climb_e_3.png",
+   "flyposes/rockybig_climb_e_4.png",
+   "flyposes/rockybig_climb_e_5.png",
+   "flyposes/rockybig_climb_e_6.png",
+   "flyposes/rockybig_climb_e_7.png",
+   "flyposes/rockybig_climb_e_8.png",
+   "flyposes/rockybig_climb_e_9.png",
+   "flyposes/rockybig_climb_e_10.png",
+   "flyposes/rockybig_climb_e_11.png"
+  ],
+  "rockybig_climb_n": [
+   "flyposes/rockybig_climb_n_0.png",
+   "flyposes/rockybig_climb_n_1.png",
+   "flyposes/rockybig_climb_n_2.png",
+   "flyposes/rockybig_climb_n_3.png",
+   "flyposes/rockybig_climb_n_4.png",
+   "flyposes/rockybig_climb_n_5.png",
+   "flyposes/rockybig_climb_n_6.png",
+   "flyposes/rockybig_climb_n_7.png",
+   "flyposes/rockybig_climb_n_8.png",
+   "flyposes/rockybig_climb_n_9.png",
+   "flyposes/rockybig_climb_n_10.png",
+   "flyposes/rockybig_climb_n_11.png"
+  ],
+  "rockysup_dive_s": [
+   "flyposes/rockysup_dive_s_0.png",
+   "flyposes/rockysup_dive_s_1.png",
+   "flyposes/rockysup_dive_s_2.png",
+   "flyposes/rockysup_dive_s_3.png",
+   "flyposes/rockysup_dive_s_4.png",
+   "flyposes/rockysup_dive_s_5.png",
+   "flyposes/rockysup_dive_s_6.png",
+   "flyposes/rockysup_dive_s_7.png",
+   "flyposes/rockysup_dive_s_8.png",
+   "flyposes/rockysup_dive_s_9.png",
+   "flyposes/rockysup_dive_s_10.png",
+   "flyposes/rockysup_dive_s_11.png"
+  ],
+  "rockysup_dive_e": [
+   "flyposes/rockysup_dive_e_0.png",
+   "flyposes/rockysup_dive_e_1.png",
+   "flyposes/rockysup_dive_e_2.png",
+   "flyposes/rockysup_dive_e_3.png",
+   "flyposes/rockysup_dive_e_4.png",
+   "flyposes/rockysup_dive_e_5.png",
+   "flyposes/rockysup_dive_e_6.png",
+   "flyposes/rockysup_dive_e_7.png",
+   "flyposes/rockysup_dive_e_8.png",
+   "flyposes/rockysup_dive_e_9.png",
+   "flyposes/rockysup_dive_e_10.png",
+   "flyposes/rockysup_dive_e_11.png"
+  ],
+  "rockysup_dive_n": [
+   "flyposes/rockysup_dive_n_0.png",
+   "flyposes/rockysup_dive_n_1.png",
+   "flyposes/rockysup_dive_n_2.png",
+   "flyposes/rockysup_dive_n_3.png",
+   "flyposes/rockysup_dive_n_4.png",
+   "flyposes/rockysup_dive_n_5.png",
+   "flyposes/rockysup_dive_n_6.png",
+   "flyposes/rockysup_dive_n_7.png",
+   "flyposes/rockysup_dive_n_8.png",
+   "flyposes/rockysup_dive_n_9.png",
+   "flyposes/rockysup_dive_n_10.png",
+   "flyposes/rockysup_dive_n_11.png"
+  ],
+  "rockysup_climb_s": [
+   "zones/village/creatures/rockysup_climb_s_0.png",
+   "zones/village/creatures/rockysup_climb_s_1.png",
+   "zones/village/creatures/rockysup_climb_s_2.png",
+   "zones/village/creatures/rockysup_climb_s_3.png",
+   "zones/village/creatures/rockysup_climb_s_4.png",
+   "zones/village/creatures/rockysup_climb_s_5.png",
+   "zones/village/creatures/rockysup_climb_s_6.png",
+   "zones/village/creatures/rockysup_climb_s_7.png"
+  ],
+  "rockysup_climb_e": [
+   "flyposes/rockysup_climb_e_0.png",
+   "flyposes/rockysup_climb_e_1.png"
+  ],
+  "rockysup_climb_n": [
+   "zones/village/creatures/rockysup_climb_n_0.png",
+   "zones/village/creatures/rockysup_climb_n_1.png",
+   "zones/village/creatures/rockysup_climb_n_2.png",
+   "zones/village/creatures/rockysup_climb_n_3.png",
+   "zones/village/creatures/rockysup_climb_n_4.png",
+   "zones/village/creatures/rockysup_climb_n_5.png",
+   "zones/village/creatures/rockysup_climb_n_6.png",
+   "zones/village/creatures/rockysup_climb_n_7.png"
+  ],
+  "rockybig_sk_quake_s": [
+   "zones/village/creatures/rockybig_sk_quake_s_0.png",
+   "zones/village/creatures/rockybig_sk_quake_s_1.png",
+   "zones/village/creatures/rockybig_sk_quake_s_2.png",
+   "zones/village/creatures/rockybig_sk_quake_s_3.png",
+   "zones/village/creatures/rockybig_sk_quake_s_4.png",
+   "zones/village/creatures/rockybig_sk_quake_s_5.png",
+   "zones/village/creatures/rockybig_sk_quake_s_6.png",
+   "zones/village/creatures/rockybig_sk_quake_s_7.png"
+  ],
+  "rockybig_sk_quake_e": [
+   "zones/village/creatures/rockybig_sk_quake_e_0.png",
+   "zones/village/creatures/rockybig_sk_quake_e_1.png",
+   "zones/village/creatures/rockybig_sk_quake_e_2.png",
+   "zones/village/creatures/rockybig_sk_quake_e_3.png",
+   "zones/village/creatures/rockybig_sk_quake_e_4.png",
+   "zones/village/creatures/rockybig_sk_quake_e_5.png",
+   "zones/village/creatures/rockybig_sk_quake_e_6.png",
+   "zones/village/creatures/rockybig_sk_quake_e_7.png"
+  ],
+  "rockybig_sk_quake_n": [
+   "zones/village/creatures/rockybig_sk_quake_n_0.png",
+   "zones/village/creatures/rockybig_sk_quake_n_1.png",
+   "zones/village/creatures/rockybig_sk_quake_n_2.png",
+   "zones/village/creatures/rockybig_sk_quake_n_3.png",
+   "zones/village/creatures/rockybig_sk_quake_n_4.png"
+  ],
+  "rockybig_sk_mirror_s": [
+   "zones/village/creatures/rockybig_sk_mirror_s_0.png",
+   "zones/village/creatures/rockybig_sk_mirror_s_1.png",
+   "zones/village/creatures/rockybig_sk_mirror_s_2.png",
+   "zones/village/creatures/rockybig_sk_mirror_s_3.png",
+   "zones/village/creatures/rockybig_sk_mirror_s_4.png",
+   "zones/village/creatures/rockybig_sk_mirror_s_5.png",
+   "zones/village/creatures/rockybig_sk_mirror_s_6.png",
+   "zones/village/creatures/rockybig_sk_mirror_s_7.png"
+  ],
+  "rockybig_sk_mirror_e": [
+   "zones/village/creatures/rockybig_sk_mirror_e_0.png",
+   "zones/village/creatures/rockybig_sk_mirror_e_1.png",
+   "zones/village/creatures/rockybig_sk_mirror_e_2.png",
+   "zones/village/creatures/rockybig_sk_mirror_e_3.png",
+   "zones/village/creatures/rockybig_sk_mirror_e_4.png",
+   "zones/village/creatures/rockybig_sk_mirror_e_5.png",
+   "zones/village/creatures/rockybig_sk_mirror_e_6.png",
+   "zones/village/creatures/rockybig_sk_mirror_e_7.png"
+  ],
+  "rockybig_sk_mirror_n": [
+   "zones/village/creatures/rockybig_sk_mirror_n_0.png",
+   "zones/village/creatures/rockybig_sk_mirror_n_1.png",
+   "zones/village/creatures/rockybig_sk_mirror_n_2.png",
+   "zones/village/creatures/rockybig_sk_mirror_n_3.png",
+   "zones/village/creatures/rockybig_sk_mirror_n_4.png",
+   "zones/village/creatures/rockybig_sk_mirror_n_5.png",
+   "zones/village/creatures/rockybig_sk_mirror_n_6.png"
+  ],
+  "rockybig_sk_magnet_s": [
+   "zones/village/creatures/rockybig_sk_magnet_s_0.png",
+   "zones/village/creatures/rockybig_sk_magnet_s_1.png",
+   "zones/village/creatures/rockybig_sk_magnet_s_2.png",
+   "zones/village/creatures/rockybig_sk_magnet_s_3.png",
+   "zones/village/creatures/rockybig_sk_magnet_s_4.png",
+   "zones/village/creatures/rockybig_sk_magnet_s_5.png"
+  ],
+  "rockybig_sk_magnet_e": [
+   "zones/village/creatures/rockybig_sk_magnet_e_0.png",
+   "zones/village/creatures/rockybig_sk_magnet_e_1.png",
+   "zones/village/creatures/rockybig_sk_magnet_e_2.png",
+   "zones/village/creatures/rockybig_sk_magnet_e_3.png",
+   "zones/village/creatures/rockybig_sk_magnet_e_4.png",
+   "zones/village/creatures/rockybig_sk_magnet_e_5.png"
+  ],
+  "rockybig_sk_magnet_n": [
+   "zones/village/creatures/rockybig_sk_magnet_n_0.png",
+   "zones/village/creatures/rockybig_sk_magnet_n_1.png",
+   "zones/village/creatures/rockybig_sk_magnet_n_2.png",
+   "zones/village/creatures/rockybig_sk_magnet_n_3.png",
+   "zones/village/creatures/rockybig_sk_magnet_n_4.png",
+   "zones/village/creatures/rockybig_sk_magnet_n_5.png"
+  ],
+  "rockybig_sk_petrify_s": [
+   "zones/village/creatures/rockybig_sk_petrify_s_0.png",
+   "zones/village/creatures/rockybig_sk_petrify_s_1.png",
+   "zones/village/creatures/rockybig_sk_petrify_s_2.png",
+   "zones/village/creatures/rockybig_sk_petrify_s_3.png",
+   "zones/village/creatures/rockybig_sk_petrify_s_4.png",
+   "zones/village/creatures/rockybig_sk_petrify_s_5.png"
+  ],
+  "rockybig_sk_petrify_e": [
+   "zones/village/creatures/rockybig_sk_petrify_e_0.png",
+   "zones/village/creatures/rockybig_sk_petrify_e_1.png",
+   "zones/village/creatures/rockybig_sk_petrify_e_2.png",
+   "zones/village/creatures/rockybig_sk_petrify_e_3.png",
+   "zones/village/creatures/rockybig_sk_petrify_e_4.png",
+   "zones/village/creatures/rockybig_sk_petrify_e_5.png"
+  ],
+  "rockybig_sk_petrify_n": [
+   "zones/village/creatures/rockybig_sk_petrify_n_0.png",
+   "zones/village/creatures/rockybig_sk_petrify_n_1.png",
+   "zones/village/creatures/rockybig_sk_petrify_n_2.png",
+   "zones/village/creatures/rockybig_sk_petrify_n_3.png",
+   "zones/village/creatures/rockybig_sk_petrify_n_4.png",
+   "zones/village/creatures/rockybig_sk_petrify_n_5.png"
+  ],
+  "rockybig_sk_thunder_s": [
+   "zones/village/creatures/rockybig_sk_thunder_s_0.png",
+   "zones/village/creatures/rockybig_sk_thunder_s_1.png",
+   "zones/village/creatures/rockybig_sk_thunder_s_2.png",
+   "zones/village/creatures/rockybig_sk_thunder_s_3.png",
+   "zones/village/creatures/rockybig_sk_thunder_s_4.png",
+   "zones/village/creatures/rockybig_sk_thunder_s_5.png",
+   "zones/village/creatures/rockybig_sk_thunder_s_6.png",
+   "zones/village/creatures/rockybig_sk_thunder_s_7.png"
+  ],
+  "rockybig_sk_thunder_e": [
+   "zones/village/creatures/rockybig_sk_thunder_e_0.png",
+   "zones/village/creatures/rockybig_sk_thunder_e_1.png",
+   "zones/village/creatures/rockybig_sk_thunder_e_2.png",
+   "zones/village/creatures/rockybig_sk_thunder_e_3.png",
+   "zones/village/creatures/rockybig_sk_thunder_e_4.png",
+   "zones/village/creatures/rockybig_sk_thunder_e_5.png",
+   "zones/village/creatures/rockybig_sk_thunder_e_6.png",
+   "zones/village/creatures/rockybig_sk_thunder_e_7.png"
+  ],
+  "rockybig_sk_thunder_n": [
+   "zones/village/creatures/rockybig_sk_thunder_n_0.png",
+   "zones/village/creatures/rockybig_sk_thunder_n_1.png",
+   "zones/village/creatures/rockybig_sk_thunder_n_2.png",
+   "zones/village/creatures/rockybig_sk_thunder_n_3.png",
+   "zones/village/creatures/rockybig_sk_thunder_n_4.png",
+   "zones/village/creatures/rockybig_sk_thunder_n_5.png",
+   "zones/village/creatures/rockybig_sk_thunder_n_6.png",
+   "zones/village/creatures/rockybig_sk_thunder_n_7.png"
+  ],
+  "rockybig_sk_eat_s": [
+   "zones/village/creatures/rockybig_sk_eat_s_0.png",
+   "zones/village/creatures/rockybig_sk_eat_s_1.png",
+   "zones/village/creatures/rockybig_sk_eat_s_2.png",
+   "zones/village/creatures/rockybig_sk_eat_s_3.png",
+   "zones/village/creatures/rockybig_sk_eat_s_4.png",
+   "zones/village/creatures/rockybig_sk_eat_s_5.png"
+  ],
+  "rockysup_sk_quake_s": [
+   "zones/village/creatures/rockysup_sk_quake_s_0.png",
+   "zones/village/creatures/rockysup_sk_quake_s_1.png",
+   "zones/village/creatures/rockysup_sk_quake_s_2.png",
+   "zones/village/creatures/rockysup_sk_quake_s_3.png",
+   "zones/village/creatures/rockysup_sk_quake_s_4.png",
+   "zones/village/creatures/rockysup_sk_quake_s_5.png",
+   "zones/village/creatures/rockysup_sk_quake_s_6.png",
+   "zones/village/creatures/rockysup_sk_quake_s_7.png"
+  ],
+  "rockysup_sk_quake_e": [
+   "zones/village/creatures/rockysup_sk_quake_e_0.png",
+   "zones/village/creatures/rockysup_sk_quake_e_1.png",
+   "zones/village/creatures/rockysup_sk_quake_e_2.png",
+   "zones/village/creatures/rockysup_sk_quake_e_3.png",
+   "zones/village/creatures/rockysup_sk_quake_e_4.png",
+   "zones/village/creatures/rockysup_sk_quake_e_5.png",
+   "zones/village/creatures/rockysup_sk_quake_e_6.png",
+   "zones/village/creatures/rockysup_sk_quake_e_7.png"
+  ],
+  "rockysup_sk_quake_n": [
+   "zones/village/creatures/rockysup_sk_quake_n_0.png",
+   "zones/village/creatures/rockysup_sk_quake_n_1.png",
+   "zones/village/creatures/rockysup_sk_quake_n_2.png",
+   "zones/village/creatures/rockysup_sk_quake_n_3.png",
+   "zones/village/creatures/rockysup_sk_quake_n_4.png",
+   "zones/village/creatures/rockysup_sk_quake_n_5.png",
+   "zones/village/creatures/rockysup_sk_quake_n_6.png",
+   "zones/village/creatures/rockysup_sk_quake_n_7.png"
+  ],
+  "rockysup_sk_mirror_s": [
+   "zones/village/creatures/rockysup_sk_mirror_s_0.png",
+   "zones/village/creatures/rockysup_sk_mirror_s_1.png",
+   "zones/village/creatures/rockysup_sk_mirror_s_2.png",
+   "zones/village/creatures/rockysup_sk_mirror_s_3.png",
+   "zones/village/creatures/rockysup_sk_mirror_s_4.png",
+   "zones/village/creatures/rockysup_sk_mirror_s_5.png",
+   "zones/village/creatures/rockysup_sk_mirror_s_6.png",
+   "zones/village/creatures/rockysup_sk_mirror_s_7.png"
+  ],
+  "rockysup_sk_mirror_e": [
+   "zones/village/creatures/rockysup_sk_mirror_e_0.png",
+   "zones/village/creatures/rockysup_sk_mirror_e_1.png",
+   "zones/village/creatures/rockysup_sk_mirror_e_2.png",
+   "zones/village/creatures/rockysup_sk_mirror_e_3.png",
+   "zones/village/creatures/rockysup_sk_mirror_e_4.png",
+   "zones/village/creatures/rockysup_sk_mirror_e_5.png",
+   "zones/village/creatures/rockysup_sk_mirror_e_6.png",
+   "zones/village/creatures/rockysup_sk_mirror_e_7.png"
+  ],
+  "rockysup_sk_magnet_s": [
+   "zones/village/creatures/rockysup_sk_magnet_s_0.png",
+   "zones/village/creatures/rockysup_sk_magnet_s_1.png",
+   "zones/village/creatures/rockysup_sk_magnet_s_2.png",
+   "zones/village/creatures/rockysup_sk_magnet_s_3.png",
+   "zones/village/creatures/rockysup_sk_magnet_s_4.png",
+   "zones/village/creatures/rockysup_sk_magnet_s_5.png"
+  ],
+  "rockysup_sk_magnet_e": [
+   "zones/village/creatures/rockysup_sk_magnet_e_0.png",
+   "zones/village/creatures/rockysup_sk_magnet_e_1.png",
+   "zones/village/creatures/rockysup_sk_magnet_e_2.png",
+   "zones/village/creatures/rockysup_sk_magnet_e_3.png",
+   "zones/village/creatures/rockysup_sk_magnet_e_4.png",
+   "zones/village/creatures/rockysup_sk_magnet_e_5.png"
+  ],
+  "rockysup_sk_magnet_n": [
+   "zones/village/creatures/rockysup_sk_magnet_n_0.png",
+   "zones/village/creatures/rockysup_sk_magnet_n_1.png",
+   "zones/village/creatures/rockysup_sk_magnet_n_2.png",
+   "zones/village/creatures/rockysup_sk_magnet_n_3.png",
+   "zones/village/creatures/rockysup_sk_magnet_n_4.png",
+   "zones/village/creatures/rockysup_sk_magnet_n_5.png"
+  ],
+  "rockysup_sk_petrify_s": [
+   "zones/village/creatures/rockysup_sk_petrify_s_0.png",
+   "zones/village/creatures/rockysup_sk_petrify_s_1.png",
+   "zones/village/creatures/rockysup_sk_petrify_s_2.png",
+   "zones/village/creatures/rockysup_sk_petrify_s_3.png",
+   "zones/village/creatures/rockysup_sk_petrify_s_4.png",
+   "zones/village/creatures/rockysup_sk_petrify_s_5.png"
+  ],
+  "rockysup_sk_petrify_e": [
+   "zones/village/creatures/rockysup_sk_petrify_e_0.png",
+   "zones/village/creatures/rockysup_sk_petrify_e_1.png",
+   "zones/village/creatures/rockysup_sk_petrify_e_2.png",
+   "zones/village/creatures/rockysup_sk_petrify_e_3.png",
+   "zones/village/creatures/rockysup_sk_petrify_e_4.png"
+  ],
+  "rockysup_sk_petrify_n": [
+   "zones/village/creatures/rockysup_sk_petrify_n_0.png",
+   "zones/village/creatures/rockysup_sk_petrify_n_1.png",
+   "zones/village/creatures/rockysup_sk_petrify_n_2.png",
+   "zones/village/creatures/rockysup_sk_petrify_n_3.png",
+   "zones/village/creatures/rockysup_sk_petrify_n_4.png",
+   "zones/village/creatures/rockysup_sk_petrify_n_5.png"
+  ],
+  "rockysup_sk_thunder_s": [
+   "zones/village/creatures/rockysup_sk_thunder_s_0.png",
+   "zones/village/creatures/rockysup_sk_thunder_s_1.png",
+   "zones/village/creatures/rockysup_sk_thunder_s_2.png",
+   "zones/village/creatures/rockysup_sk_thunder_s_3.png",
+   "zones/village/creatures/rockysup_sk_thunder_s_4.png",
+   "zones/village/creatures/rockysup_sk_thunder_s_5.png",
+   "zones/village/creatures/rockysup_sk_thunder_s_6.png",
+   "zones/village/creatures/rockysup_sk_thunder_s_7.png"
+  ],
+  "rockysup_sk_thunder_e": [
+   "zones/village/creatures/rockysup_sk_thunder_e_0.png",
+   "zones/village/creatures/rockysup_sk_thunder_e_1.png",
+   "zones/village/creatures/rockysup_sk_thunder_e_2.png",
+   "zones/village/creatures/rockysup_sk_thunder_e_3.png",
+   "zones/village/creatures/rockysup_sk_thunder_e_4.png",
+   "zones/village/creatures/rockysup_sk_thunder_e_5.png"
+  ],
+  "rockysup_sk_thunder_n": [
+   "zones/village/creatures/rockysup_sk_thunder_n_0.png",
+   "zones/village/creatures/rockysup_sk_thunder_n_1.png",
+   "zones/village/creatures/rockysup_sk_thunder_n_2.png",
+   "zones/village/creatures/rockysup_sk_thunder_n_3.png",
+   "zones/village/creatures/rockysup_sk_thunder_n_4.png",
+   "zones/village/creatures/rockysup_sk_thunder_n_5.png"
+  ],
+  "rockysup_sk_eat_s": [
+   "zones/village/creatures/rockysup_sk_eat_s_0.png",
+   "zones/village/creatures/rockysup_sk_eat_s_1.png",
+   "zones/village/creatures/rockysup_sk_eat_s_2.png",
+   "zones/village/creatures/rockysup_sk_eat_s_3.png",
+   "zones/village/creatures/rockysup_sk_eat_s_4.png",
+   "zones/village/creatures/rockysup_sk_eat_s_5.png"
+  ],
+  "rockypet_walk_s": [
+   "zones/village/creatures/rockypet_p47_walk_s_0.png",
+   "zones/village/creatures/rockypet_p47_walk_s_1.png",
+   "zones/village/creatures/rockypet_p47_walk_s_2.png",
+   "zones/village/creatures/rockypet_p47_walk_s_3.png",
+   "zones/village/creatures/rockypet_p47_walk_s_4.png",
+   "zones/village/creatures/rockypet_p47_walk_s_5.png",
+   "zones/village/creatures/rockypet_p47_walk_s_6.png",
+   "zones/village/creatures/rockypet_p47_walk_s_7.png"
+  ],
+  "rockypet_walk_e": [
+   "zones/village/creatures/rockypet_p47_walk_e_0.png",
+   "zones/village/creatures/rockypet_p47_walk_e_1.png",
+   "zones/village/creatures/rockypet_p47_walk_e_2.png",
+   "zones/village/creatures/rockypet_p47_walk_e_3.png",
+   "zones/village/creatures/rockypet_p47_walk_e_4.png",
+   "zones/village/creatures/rockypet_p47_walk_e_5.png",
+   "zones/village/creatures/rockypet_p47_walk_e_6.png",
+   "zones/village/creatures/rockypet_p47_walk_e_7.png"
+  ],
+  "rockypet_walk_n": [
+   "zones/village/creatures/rockypet_p47_walk_n_0.png",
+   "zones/village/creatures/rockypet_p47_walk_n_1.png",
+   "zones/village/creatures/rockypet_p47_walk_n_2.png",
+   "zones/village/creatures/rockypet_p47_walk_n_3.png",
+   "zones/village/creatures/rockypet_p47_walk_n_4.png",
+   "zones/village/creatures/rockypet_p47_walk_n_5.png",
+   "zones/village/creatures/rockypet_p47_walk_n_6.png",
+   "zones/village/creatures/rockypet_p47_walk_n_7.png"
+  ],
+  "rockypet_idle_s": [
+   "zones/village/creatures/rockypet_p47_idle_s_0.png",
+   "zones/village/creatures/rockypet_p47_idle_s_1.png",
+   "zones/village/creatures/rockypet_p47_idle_s_2.png",
+   "zones/village/creatures/rockypet_p47_idle_s_3.png",
+   "zones/village/creatures/rockypet_p47_idle_s_4.png",
+   "zones/village/creatures/rockypet_p47_idle_s_5.png",
+   "zones/village/creatures/rockypet_p47_idle_s_6.png",
+   "zones/village/creatures/rockypet_p47_idle_s_7.png"
+  ],
+  "rockypet_idle_e": [
+   "zones/village/creatures/rockypet_p47_idle_e_0.png",
+   "zones/village/creatures/rockypet_p47_idle_e_1.png",
+   "zones/village/creatures/rockypet_p47_idle_e_2.png",
+   "zones/village/creatures/rockypet_p47_idle_e_3.png",
+   "zones/village/creatures/rockypet_p47_idle_e_4.png",
+   "zones/village/creatures/rockypet_p47_idle_e_5.png",
+   "zones/village/creatures/rockypet_p47_idle_e_6.png",
+   "zones/village/creatures/rockypet_p47_idle_e_7.png"
+  ],
+  "rockypet_idle_n": [
+   "zones/village/creatures/rockypet_p47_idle_n_0.png",
+   "zones/village/creatures/rockypet_p47_idle_n_1.png",
+   "zones/village/creatures/rockypet_p47_idle_n_2.png",
+   "zones/village/creatures/rockypet_p47_idle_n_3.png",
+   "zones/village/creatures/rockypet_p47_idle_n_4.png",
+   "zones/village/creatures/rockypet_p47_idle_n_5.png",
+   "zones/village/creatures/rockypet_p47_idle_n_6.png",
+   "zones/village/creatures/rockypet_p47_idle_n_7.png"
+  ],
+  "rockysup_idle_ne": [
+   "zones/village/creatures/rockysup_idle_ne_0.png",
+   "zones/village/creatures/rockysup_idle_ne_1.png",
+   "zones/village/creatures/rockysup_idle_ne_2.png",
+   "zones/village/creatures/rockysup_idle_ne_3.png",
+   "zones/village/creatures/rockysup_idle_ne_4.png",
+   "zones/village/creatures/rockysup_idle_ne_5.png",
+   "zones/village/creatures/rockysup_idle_ne_6.png",
+   "zones/village/creatures/rockysup_idle_ne_7.png"
+  ],
+  "rockysup_punch_ne": [
+   "zones/village/creatures/rockysup_punch_ne_0.png",
+   "zones/village/creatures/rockysup_punch_ne_1.png",
+   "zones/village/creatures/rockysup_punch_ne_2.png",
+   "zones/village/creatures/rockysup_punch_ne_3.png",
+   "zones/village/creatures/rockysup_punch_ne_4.png",
+   "zones/village/creatures/rockysup_punch_ne_5.png"
+  ],
+  "rockysup_dne": [
+   "zones/village/creatures/rockysup_dne_0.png",
+   "zones/village/creatures/rockysup_dne_1.png",
+   "zones/village/creatures/rockysup_dne_2.png",
+   "zones/village/creatures/rockysup_dne_3.png"
+  ],
+  "rockysup_idle_se": [
+   "zones/village/creatures/rockysup_idle_se_0.png",
+   "zones/village/creatures/rockysup_idle_se_1.png"
+  ],
+  "rockysup_dse": [
+   "zones/village/creatures/rockysup_dse_0.png",
+   "zones/village/creatures/rockysup_dse_1.png",
+   "zones/village/creatures/rockysup_dse_2.png",
+   "zones/village/creatures/rockysup_dse_3.png"
+  ],
+  "rockysup_punch_se": [
+   "zones/village/creatures/rockysup_punch_se_0.png",
+   "zones/village/creatures/rockysup_punch_se_1.png",
+   "zones/village/creatures/rockysup_punch_se_2.png",
+   "zones/village/creatures/rockysup_punch_se_3.png",
+   "zones/village/creatures/rockysup_punch_se_4.png",
+   "zones/village/creatures/rockysup_punch_se_5.png"
+  ],
+  "rockysup_ha_se": [
+   "zones/village/creatures/rockysup_ha_se_0.png",
+   "zones/village/creatures/rockysup_ha_se_1.png",
+   "zones/village/creatures/rockysup_ha_se_2.png",
+   "zones/village/creatures/rockysup_ha_se_3.png",
+   "zones/village/creatures/rockysup_ha_se_4.png",
+   "zones/village/creatures/rockysup_ha_se_5.png"
+  ],
+  "hrsup_idle_ne": [
+   "zones/village/creatures/hrsup_idle_ne_0.png",
+   "zones/village/creatures/hrsup_idle_ne_1.png",
+   "zones/village/creatures/hrsup_idle_ne_2.png",
+   "zones/village/creatures/hrsup_idle_ne_3.png",
+   "zones/village/creatures/hrsup_idle_ne_4.png",
+   "zones/village/creatures/hrsup_idle_ne_5.png",
+   "zones/village/creatures/hrsup_idle_ne_6.png",
+   "zones/village/creatures/hrsup_idle_ne_7.png"
+  ],
+  "hrsup_punch_ne": [
+   "zones/village/creatures/hrsup_punch_ne_0.png",
+   "zones/village/creatures/hrsup_punch_ne_1.png",
+   "zones/village/creatures/hrsup_punch_ne_2.png",
+   "zones/village/creatures/hrsup_punch_ne_3.png",
+   "zones/village/creatures/hrsup_punch_ne_4.png",
+   "zones/village/creatures/hrsup_punch_ne_5.png"
+  ],
+  "hrsup_ha_ne": [
+   "zones/village/creatures/hrsup_ha_ne_0.png",
+   "zones/village/creatures/hrsup_ha_ne_1.png",
+   "zones/village/creatures/hrsup_ha_ne_2.png",
+   "zones/village/creatures/hrsup_ha_ne_3.png",
+   "zones/village/creatures/hrsup_ha_ne_4.png",
+   "zones/village/creatures/hrsup_ha_ne_5.png"
+  ],
+  "hrsup_dne": [
+   "zones/village/creatures/hrsup_dne_0.png",
+   "zones/village/creatures/hrsup_dne_1.png",
+   "zones/village/creatures/hrsup_dne_2.png",
+   "zones/village/creatures/hrsup_dne_3.png"
+  ],
+  "hrsup_idle_se": [
+   "zones/village/creatures/hrsup_idle_se_0.png",
+   "zones/village/creatures/hrsup_idle_se_1.png"
+  ],
+  "hrsup_dse": [
+   "zones/village/creatures/hrsup_dse_0.png",
+   "zones/village/creatures/hrsup_dse_1.png",
+   "zones/village/creatures/hrsup_dse_2.png",
+   "zones/village/creatures/hrsup_dse_3.png"
+  ],
+  "hrsup_punch_se": [
+   "zones/village/creatures/hrsup_punch_se_0.png",
+   "zones/village/creatures/hrsup_punch_se_1.png",
+   "zones/village/creatures/hrsup_punch_se_2.png",
+   "zones/village/creatures/hrsup_punch_se_3.png",
+   "zones/village/creatures/hrsup_punch_se_4.png",
+   "zones/village/creatures/hrsup_punch_se_5.png"
+  ],
+  "hrsup_ha_se": [
+   "zones/village/creatures/hrsup_ha_se_0.png",
+   "zones/village/creatures/hrsup_ha_se_1.png",
+   "zones/village/creatures/hrsup_ha_se_2.png",
+   "zones/village/creatures/hrsup_ha_se_3.png",
+   "zones/village/creatures/hrsup_ha_se_4.png",
+   "zones/village/creatures/hrsup_ha_se_5.png"
+  ],
+  "hrsup2_idle_ne": [
+   "zones/village/creatures/hrsup2_idle_ne_0.png",
+   "zones/village/creatures/hrsup2_idle_ne_1.png",
+   "zones/village/creatures/hrsup2_idle_ne_2.png",
+   "zones/village/creatures/hrsup2_idle_ne_3.png",
+   "zones/village/creatures/hrsup2_idle_ne_4.png",
+   "zones/village/creatures/hrsup2_idle_ne_5.png",
+   "zones/village/creatures/hrsup2_idle_ne_6.png",
+   "zones/village/creatures/hrsup2_idle_ne_7.png"
+  ],
+  "hrsup2_punch_ne": [
+   "zones/village/creatures/hrsup2_punch_ne_0.png",
+   "zones/village/creatures/hrsup2_punch_ne_1.png",
+   "zones/village/creatures/hrsup2_punch_ne_2.png",
+   "zones/village/creatures/hrsup2_punch_ne_3.png",
+   "zones/village/creatures/hrsup2_punch_ne_4.png",
+   "zones/village/creatures/hrsup2_punch_ne_5.png"
+  ],
+  "hrsup2_ha_ne": [
+   "zones/village/creatures/hrsup2_ha_ne_0.png",
+   "zones/village/creatures/hrsup2_ha_ne_1.png",
+   "zones/village/creatures/hrsup2_ha_ne_2.png",
+   "zones/village/creatures/hrsup2_ha_ne_3.png",
+   "zones/village/creatures/hrsup2_ha_ne_4.png",
+   "zones/village/creatures/hrsup2_ha_ne_5.png"
+  ],
+  "hrsup2_dne": [
+   "zones/village/creatures/hrsup2_dne_0.png",
+   "zones/village/creatures/hrsup2_dne_1.png",
+   "zones/village/creatures/hrsup2_dne_2.png",
+   "zones/village/creatures/hrsup2_dne_3.png"
+  ],
+  "hrsup2_idle_se": [
+   "zones/village/creatures/hrsup2_idle_se_0.png",
+   "zones/village/creatures/hrsup2_idle_se_1.png"
+  ],
+  "hrsup2_dse": [
+   "zones/village/creatures/hrsup2_dse_0.png",
+   "zones/village/creatures/hrsup2_dse_1.png",
+   "zones/village/creatures/hrsup2_dse_2.png",
+   "zones/village/creatures/hrsup2_dse_3.png"
+  ],
+  "hrsup2_punch_se": [
+   "zones/village/creatures/hrsup2_punch_se_0.png",
+   "zones/village/creatures/hrsup2_punch_se_1.png",
+   "zones/village/creatures/hrsup2_punch_se_2.png",
+   "zones/village/creatures/hrsup2_punch_se_3.png",
+   "zones/village/creatures/hrsup2_punch_se_4.png",
+   "zones/village/creatures/hrsup2_punch_se_5.png"
+  ],
+  "hrsup2_ha_se": [
+   "zones/village/creatures/hrsup2_ha_se_0.png",
+   "zones/village/creatures/hrsup2_ha_se_1.png",
+   "zones/village/creatures/hrsup2_ha_se_2.png",
+   "zones/village/creatures/hrsup2_ha_se_3.png",
+   "zones/village/creatures/hrsup2_ha_se_4.png",
+   "zones/village/creatures/hrsup2_ha_se_5.png"
+  ],
+  "rockysup_hover_ne": [
+   "zones/village/creatures/rockysup_hover_ne_0.png",
+   "zones/village/creatures/rockysup_hover_ne_1.png",
+   "zones/village/creatures/rockysup_hover_ne_2.png",
+   "zones/village/creatures/rockysup_hover_ne_3.png",
+   "zones/village/creatures/rockysup_hover_ne_4.png",
+   "zones/village/creatures/rockysup_hover_ne_5.png"
+  ],
+  "rockysup_hover_se": [
+   "zones/village/creatures/rockysup_hover_se_0.png",
+   "zones/village/creatures/rockysup_hover_se_1.png",
+   "zones/village/creatures/rockysup_hover_se_2.png",
+   "zones/village/creatures/rockysup_hover_se_3.png",
+   "zones/village/creatures/rockysup_hover_se_4.png",
+   "zones/village/creatures/rockysup_hover_se_5.png"
   ]
  },
  "connect": {
@@ -1670,14 +2526,14 @@
   "boat_3_0": "zones/village/rem/boat_north.png",
   "boat_3_1": "zones/village/rem/boat_north.png",
   "boat_park": "zones/village/rem/boat_park.png",
-  "jeep_0_0": "zones/village/rem/jeep_south.png",
-  "jeep_0_1": "zones/village/rem/jeep_south.png",
-  "jeep_1_0": "zones/village/rem/jeep_west.png",
-  "jeep_1_1": "zones/village/rem/jeep_west.png",
-  "jeep_2_0": "zones/village/rem/jeep_east.png",
-  "jeep_2_1": "zones/village/rem/jeep_east.png",
-  "jeep_3_0": "zones/village/rem/jeep_north.png",
-  "jeep_3_1": "zones/village/rem/jeep_north.png",
+  "jeep_0_0": "zones/village/rem/jeep2/jeep_south.png",
+  "jeep_0_1": "zones/village/rem/jeep2/jeep_south.png",
+  "jeep_1_0": "zones/village/rem/jeep2/jeep_west.png",
+  "jeep_1_1": "zones/village/rem/jeep2/jeep_west.png",
+  "jeep_2_0": "zones/village/rem/jeep2/jeep_east.png",
+  "jeep_2_1": "zones/village/rem/jeep2/jeep_east.png",
+  "jeep_3_0": "zones/village/rem/jeep2/jeep_north.png",
+  "jeep_3_1": "zones/village/rem/jeep2/jeep_north.png",
   "cart_0_0": "zones/village/rem/cart_south.png",
   "cart_0_1": "zones/village/rem/cart_south.png",
   "cart_1_0": "zones/village/rem/cart_west.png",
@@ -1705,15 +2561,15 @@
   "plank_story": "zones/village/rem/plank_story.png",
   "raft_story": "zones/village/misc/out/raft.png",
   "sail_story_0": "zones/village/misc/out/sail_2_0.png",
-  "jeept_0_0": "zones/village/rem/jeep_south.png",
-  "jeept_1_0": "zones/village/rem/jeep_west.png",
-  "jeept_2_0": "zones/village/rem/jeep_east.png",
-  "jeept_3_0": "zones/village/rem/jeep_north.png",
+  "jeept_0_0": "zones/village/rem/jeep2/jeep_south.png",
+  "jeept_1_0": "zones/village/rem/jeep2/jeep_west.png",
+  "jeept_2_0": "zones/village/rem/jeep2/jeep_east.png",
+  "jeept_3_0": "zones/village/rem/jeep2/jeep_north.png",
   "sail_story_1": "zones/village/misc/out/sail_2_1.png",
-  "jeept_0_1": "zones/village/rem/jeep_south.png",
-  "jeept_1_1": "zones/village/rem/jeep_west.png",
-  "jeept_2_1": "zones/village/rem/jeep_east.png",
-  "jeept_3_1": "zones/village/rem/jeep_north.png",
+  "jeept_0_1": "zones/village/rem/jeep2/jeep_south.png",
+  "jeept_1_1": "zones/village/rem/jeep2/jeep_west.png",
+  "jeept_2_1": "zones/village/rem/jeep2/jeep_east.png",
+  "jeept_3_1": "zones/village/rem/jeep2/jeep_north.png",
   "stump": "zones/village/rem/stump.png",
   "carry_bucket1": "zones/village/carry/bucket1.png",
   "carry_bucket2": "zones/village/carry/bucket2.png",

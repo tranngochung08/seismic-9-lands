@@ -6,6 +6,7 @@
 //  · Phe Xealist (story.path === 'xealist'): không trùm, không quái (monsters.js SP.xfort.noDark) — Xealist đứng trước ngai như NPC thân thiện; nói chuyện = hội thoại ngắn
 //    (xealist.js chưa có cửa hàng để mở).
 import { obj as defObj } from '../gfx.js';
+import { xBlit, xFrame } from './monsters.js';   /* plan-45 5B2: tượng = khung cuối clip PixelLab 'petrify' của Xealist trùm (2,3×, vẽ 1:1) */
 
 const TS = 16;
 const px = (g, x, y, c, w = 1, h = 1) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
@@ -19,16 +20,18 @@ const L = ctx => (vi(ctx) ? {
   talk: 'Nói chuyện với Xealist',
   xeaPages: ['Pháo đài này là của chúng ta. Ở đây không ai đụng được tới cậu.', 'Lyron vẫn là đá dưới vực kia. Muốn hối hận thì còn kịp — nhưng tôi biết cậu sẽ không.', 'Ngồi nghỉ đi. Pha lê hồng giữ cho nước ở đây ấm.'],
   stone: 'Xealist hóa đá chính mình! Pháo đài rung chuyển…',
-  lyron: ['…Cậu? Cậu thật sự xuống tới tận đây?', 'Xealist hóa đá rồi — lớp đá trên người tôi cũng vỡ theo. Tôi cử động được rồi!', 'Về thôi. Bến cảng chắc đang chờ hai đứa mình.'],
+  lyron: ['…Cậu? Cậu thật sự xuống tới tận đây?', 'Xealist hóa đá rồi — lớp đá trên người tôi cũng vỡ theo. Tôi cử động được rồi! Đúng lúc ghê, nhỉ?', 'Về thôi. Bến cảng chắc đang chờ hai đứa mình.'],
   epi: ['Lại là cậu! Tôi đã về nhà từ lâu, nhưng vẫn lo Xealist còn ở đây.', 'Giờ hắn chỉ còn là một bức tượng đá. Biển Seismic yên rồi. Cảm ơn cậu, lần nữa.'],
+    notHere: 'Xealist hóa đá! Nhưng Lyron không ở đây — lồng giữ cậu ấy nằm trong Hang Ổ Kraken (cần Chuông Lặn, Bản Đồ Vực, Đại Pha Lê để phá).',   /* 2026-10-15: lồng Lyron dời vào Hang Ổ (krstory.js) */
   endTitle: 'Lyron đã về nhà', endBody: 'Bạn đã vượt Vực Kraken, phá Pháo Đài Xealist và giải thoát Lyron khỏi lớp đá.\nĐêm nay bến cảng thắp đèn. Cảm ơn bạn, người bạn của mình.',
   statue: 'Tượng đá Xealist',
 } : {
   talk: 'Talk to Xealist',
   xeaPages: ['This fortress is ours. Nobody can touch you here.', 'Lyron is still stone down in the trench. There is time to regret it — but I know you will not.', 'Rest a while. The pink crystals keep the water warm.'],
   stone: 'Xealist turns himself to stone! The fortress shakes…',
-  lyron: ['…You? You really came all the way down here?', 'Xealist is stone now — and the stone on me cracked with him. I can move!', "Let's go home. The harbor must be waiting for us."],
+  lyron: ['…You? You really came all the way down here?', 'Xealist is stone now — and the stone on me cracked with him. I can move! Perfect timing, huh?', "Let's go home. The harbor must be waiting for us."],
   epi: ['You again! I have been home for a while, but I worried Xealist was still down here.', 'Now he is just a stone statue. The Seismic sea is calm. Thank you — again.'],
+    notHere: "Xealist is stone! But Lyron isn't here — his cage is in the Kraken's Lair (break it with the Diving Bell, Trench Map and Great Crystal).",
   endTitle: 'Lyron is home', endBody: "You crossed the Kraken's Lair, broke Xealist's Fortress and freed Lyron from the stone.\nThe harbor is lit tonight. Thank you, friend.",
   statue: 'Xealist statue',
 });
@@ -36,7 +39,7 @@ const ST = { npc: null, statue: null, sheet: null, busy: false, placed: true };
 const isXea = ctx => ((ctx.story && ctx.story()) || {}).path === 'xealist';
 const fsv = ctx => { const s = ctx.S.save; s.sys ||= {}; return (s.sys.fortress ||= {}); };
 function sheet(ctx) { if (!ST.sheet && ctx.charSheetOf) { try { ST.sheet = ctx.charSheetOf({ hero: 'xealist' }); } catch (e) { ST.sheet = null; } } return ST.sheet; }
-const xeaMember = ctx => ({ n: 'Xealist', k: 'Xealist', id: 'xealist', friend: true, title: { vi: 'Chủ pháo đài', en: 'Master of the fortress' }, ro: [] });
+const xeaMember = ctx => ({ n: 'Xealist', k: 'Xealist', id: 'xealist', friend: true, a: 'assets/px/ui/port_xealist.png', title: { vi: 'Chủ pháo đài', en: 'Master of the fortress' }, ro: [] });
 
 function placeNpc(ctx) {   /* phe Xealist: Xealist đứng trước ngai */
   const m = ctx.S.map, th = m.throne || { x: 31, y: 4 };
@@ -51,13 +54,14 @@ function talk(ctx) {
 }
 function win(ctx, mo) {   /* trùm cuối bị hạ: hóa đá → rung 1 lần → Lyron thoát đá → màn kết (hoặc đoạn kết ngắn nếu đã cứu ở Vực Kraken cũ) */
   const t = L(ctx), st = ctx.story ? ctx.story() : null, already = !!(st && st.rescued), f = fsv(ctx);
-  f.won = true; f.statue = { x: Math.round(mo.x), y: Math.round(mo.y), face: mo.face || 0 }; ST.statue = f.statue; ctx.persist();
+  f.won = true; f.statue = { x: Math.round(mo.x), y: Math.round(mo.y), face: mo.face || 0 }; ST.statue = { ...f.statue, t: 0 }; ctx.persist();
   ctx.sfx('petrify'); if (ctx.vfx) ctx.vfx('petrify', mo.x, mo.y + 2, 0, true);
   ctx.toast(t.stone, true);
   setTimeout(() => { if (ctx.quake) ctx.quake(0.6); ctx.sfx('rumble'); }, 700);   /* rung MỘT lần (sự kiện), không lặp */
   setTimeout(() => {
     if (ctx.S.zone.id !== 'xfort') return;
     if (ctx.S.mode !== 'play') ctx.setMode('play');
+    if (!already) { ctx.toast(t.notHere, true); return; }   /* 2026-10-15: Lyron bị nhốt trong lồng ở Hang Ổ Kraken (krstory.js), không ở pháo đài — hạ Xealist không còn giải thoát cậu ấy */
     ctx.setMode('dialog'); ctx.sfx('unstone');
     ctx.openDialog({ m: ctx.FRIEND, pages: already ? t.epi : t.lyron, onClose: () => {
       ctx.setMode('play');
@@ -73,6 +77,7 @@ export const fortress = {
   onZoneEnter(ctx) {
     ST.npc = null; ST.statue = null; ST.sheet = null;
     if (!ctx.S.zone || ctx.S.zone.id !== 'xfort') return;
+    ctx.S.zone.tint = 'rgba(150,120,190,.045)';   /* plan-45 ND2: sân Pháo Đài sáng hơn ~20 % — lớp phủ tối .22 đổi thành lớp sáng tím nhạt .045 (nâng sàn đá đen) */
     const f = fsv(ctx); if (f.won && f.statue && !isXea(ctx)) ST.statue = f.statue;
     ST.placed = !isXea(ctx);   /* NPC đặt ở update đầu tiên (main.js dựng lại S.staff SAU onZoneEnter — như Heathcliff) */
     const prev = ctx.onBossDown;   /* underwater.js vừa gắn (mở cổng / lưu gates.xfort) — bọc thêm màn thắng */
@@ -81,6 +86,7 @@ export const fortress = {
   },
   onZoneLeave(ctx) { ST.npc = null; ST.statue = null; ST.placed = true; },
   update(dt, ctx) {
+    if (ST.statue && ST.statue.t != null) ST.statue.t += dt;   /* clip hóa đá chạy 1 lần rồi đứng ở khung cuối */
     if (!ST.placed && ctx.S.map && ctx.S.zone && ctx.S.zone.id === 'xfort') { ST.placed = true; try { placeNpc(ctx); } catch (e) { console.error('fortress npc', e); } }
   },
   near(ctx) {
@@ -90,8 +96,8 @@ export const fortress = {
   },
   interact(ctx, cand) { if (cand && cand.data && cand.data.xea && ctx.S.mode === 'play') talk(ctx); },
   drawables(ctx, cx, cy) {   /* tượng đá Xealist (sau khi hạ): sheet PixelLab của hắn, xám, đứng im */
-    const s = ST.statue, sh = s && sheet(ctx); if (!s || !sh) return [];
+    const s = ST.statue; if (!s) return []; const sh = sheet(ctx);
     const g = ctx.g, x = Math.round(s.x - cx), y = Math.round(s.y - cy), row = [0, 2, 1, 3][s.face || 0];
-    return [{ y: s.y, f: () => { g.save(); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, y + 1, 11, 3, 0, 0, Math.PI * 2); g.fill(); g.filter = 'grayscale(1) brightness(0.75) contrast(1.2)'; g.drawImage(sh, 0, row * 20, 16, 20, x - 16, y - 38, 32, 40); g.restore(); } }];
+    return [{ y: s.y, f: () => { g.save(); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, y + 1, 14, 3.5, 0, 0, Math.PI * 2); g.fill(); if (!xBlit(g, 'petrify', xFrame('petrify', s.t == null ? 99 : s.t, false), 'south', x, y) && sh) { g.filter = 'grayscale(1) brightness(0.75) contrast(1.2)'; g.drawImage(sh, 0, row * 20, 16, 20, x - 8, y - 19, 16, 20); } g.restore(); } }];   /* dự phòng: sheet NPC 1:1 tô xám */
   },
 };

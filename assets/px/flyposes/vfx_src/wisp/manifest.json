@@ -1,0 +1,70 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "fly_wisp",
+ "fps": 12,
+ "frame_ms": 83,
+ "frames": 8,
+ "loop": true,
+ "canvas": {
+  "w": 93,
+  "h": 31
+ },
+ "anchor": {
+  "kind": "origin",
+  "x": 93,
+  "y": 18
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 89,
+    "h": 25
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -90,
+    "y": -15
+   }
+  },
+  {
+   "name": "part-smoke_trail",
+   "title": "the smoke trail part",
+   "part": "smoke_trail",
+   "depth": "behind",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 89,
+    "h": 25
+   },
+   "sheets": [
+    {
+     "file": "part-smoke_trail.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -90,
+    "y": -15
+   }
+  }
+ ]
+}

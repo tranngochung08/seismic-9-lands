@@ -1,0 +1,457 @@
+{
+ "bgOff": 192,
+ "wallSolid": [
+  [
+   3,
+   7
+  ],
+  [
+   3,
+   8
+  ],
+  [
+   3,
+   9
+  ],
+  [
+   3,
+   14
+  ],
+  [
+   3,
+   15
+  ],
+  [
+   3,
+   22
+  ],
+  [
+   3,
+   23
+  ],
+  [
+   14,
+   26
+  ],
+  [
+   28,
+   4
+  ],
+  [
+   28,
+   9
+  ],
+  [
+   28,
+   10
+  ],
+  [
+   28,
+   17
+  ],
+  [
+   28,
+   18
+  ],
+  [
+   28,
+   26
+  ]
+ ],
+ "objects": {
+  "dg_anvil": {
+   "file": "zones/arena/dg/dg_anvil.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "dg_barrel": {
+   "file": "zones/arena/dg/dg_barrel.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_candles": {
+   "file": "zones/arena/dg/dg_candles.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_cauldron": {
+   "file": "zones/arena/dg/dg_cauldron.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_chest": {
+   "file": "zones/arena/dg/dg_chest.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "dg_column": {
+   "file": "zones/arena/dg/dg_column.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "dg_crate": {
+   "file": "zones/arena/dg/dg_crate.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "dg_forge": {
+   "file": "zones/arena/dg/dg_forge_0.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_grave_a": {
+   "file": "zones/arena/dg/dg_grave_a.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_grave_b": {
+   "file": "zones/arena/dg/dg_grave_b.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_pot": {
+   "file": "zones/arena/dg/dg_pot.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_sacks": {
+   "file": "zones/arena/dg/dg_sacks.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "dg_shelf": {
+   "file": "zones/arena/dg/dg_shelf.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "dg_tools": {
+   "file": "zones/arena/dg/dg_tools.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "dg_tub": {
+   "file": "zones/arena/dg/dg_tub.png",
+   "ox": -8,
+   "oy": 0
+  },
+  "arena_pillar": {
+   "file": "zones/arena/dg/arena_pillar.png",
+   "ox": -8,
+   "oy": 0
+  }
+ },
+ "loops": {
+  "dg_forge": [
+   "zones/arena/dg/dg_forge_0.png",
+   "zones/arena/dg/dg_forge_1.png",
+   "zones/arena/dg/dg_forge_2.png",
+   "zones/arena/dg/dg_forge_3.png",
+   "zones/arena/dg/dg_forge_4.png",
+   "zones/arena/dg/dg_forge_5.png"
+  ]
+ },
+ "ruins": {
+  "zones/arena/dg/arena_pillar.png": {
+   "dmg": "zones/arena/dg/ruin/arena_pillar_dmg.png",
+   "ruin": "zones/arena/dg/ruin/arena_pillar_ruin.png"
+  },
+  "zones/arena/dg/arena_bag.png": {
+   "dmg": "zones/arena/dg/ruin/arena_bag_dmg.png",
+   "ruin": "zones/arena/dg/ruin/arena_bag_ruin.png"
+  },
+  "zones/arena/dg/arena_weights.png": {
+   "dmg": "zones/arena/dg/ruin/arena_weights_dmg.png",
+   "ruin": "zones/arena/dg/ruin/arena_weights_ruin.png"
+  },
+  "zones/arena/dg/arena_dummy.png": {
+   "dmg": "zones/arena/dg/ruin/arena_dummy_dmg.png",
+   "ruin": "zones/arena/dg/ruin/arena_dummy_ruin.png"
+  },
+  "zones/arena/dg/arena_bench.png": {
+   "dmg": "zones/arena/dg/ruin/arena_bench_dmg.png",
+   "ruin": "zones/arena/dg/ruin/arena_bench_ruin.png"
+  },
+  "zones/arena/dg/arena_crowd.png": {
+   "dmg": "zones/arena/dg/ruin/arena_crowd_dmg.png",
+   "ruin": "zones/arena/dg/ruin/arena_crowd_ruin.png"
+  }
+ },
+ "lava": {
+  "x": 88.0,
+  "y": 390.0,
+  "w": 84.0,
+  "h": 62.0,
+  "n": 4,
+  "solid": [
+   [
+    4,
+    23
+   ],
+   [
+    5,
+    23
+   ],
+   [
+    6,
+    23
+   ],
+   [
+    3,
+    24
+   ],
+   [
+    4,
+    24
+   ],
+   [
+    5,
+    24
+   ],
+   [
+    6,
+    24
+   ],
+   [
+    7,
+    24
+   ],
+   [
+    4,
+    25
+   ],
+   [
+    5,
+    25
+   ],
+   [
+    6,
+    25
+   ]
+  ]
+ },
+ "objs": [
+  [
+   "dg_forge",
+   4,
+   4
+  ],
+  [
+   "dg_tools",
+   7,
+   4
+  ],
+  [
+   "dg_anvil",
+   6,
+   6
+  ],
+  [
+   "dg_tub",
+   3,
+   6
+  ],
+  [
+   "dg_shelf",
+   3,
+   9
+  ],
+  [
+   "dg_barrel",
+   5,
+   9
+  ],
+  [
+   "dg_crate",
+   3,
+   10
+  ],
+  [
+   "dg_sacks",
+   3,
+   11
+  ],
+  [
+   "dg_chest",
+   4,
+   11
+  ],
+  [
+   "dg_pot",
+   3,
+   12
+  ],
+  [
+   "arena_bag",
+   5,
+   14
+  ],
+  [
+   "arena_bag",
+   5,
+   17
+  ],
+  [
+   "arena_weights",
+   3,
+   19
+  ],
+  [
+   "arena_bench",
+   9,
+   25
+  ],
+  [
+   "arena_bench",
+   26,
+   20
+  ],
+  [
+   "arena_dummy",
+   27,
+   9
+  ],
+  [
+   "arena_dummy",
+   27,
+   13
+  ],
+  [
+   "arena_crowd",
+   23,
+   4
+  ],
+  [
+   "arena_crowd",
+   8,
+   4
+  ],
+  [
+   "dg_cauldron",
+   26,
+   6
+  ],
+  [
+   "dg_column",
+   27,
+   17
+  ],
+  [
+   "dg_grave_a",
+   23,
+   23
+  ],
+  [
+   "dg_grave_b",
+   25,
+   22
+  ],
+  [
+   "dg_grave_a",
+   27,
+   23
+  ],
+  [
+   "dg_candles",
+   25,
+   24
+  ]
+ ],
+ "sizes": {
+  "dg_anvil": [
+   [
+    64,
+    40
+   ]
+  ],
+  "dg_barrel": [
+   [
+    32,
+    47
+   ]
+  ],
+  "dg_candles": [
+   [
+    32,
+    31
+   ]
+  ],
+  "dg_cauldron": [
+   [
+    64,
+    70
+   ]
+  ],
+  "dg_chest": [
+   [
+    64,
+    35
+   ]
+  ],
+  "dg_column": [
+   [
+    64,
+    49
+   ]
+  ],
+  "dg_crate": [
+   [
+    64,
+    47
+   ]
+  ],
+  "dg_forge": [
+   [
+    64,
+    75
+   ]
+  ],
+  "dg_grave_a": [
+   [
+    32,
+    45
+   ]
+  ],
+  "dg_grave_b": [
+   [
+    32,
+    40
+   ]
+  ],
+  "dg_pot": [
+   [
+    32,
+    25
+   ]
+  ],
+  "dg_sacks": [
+   [
+    64,
+    41
+   ]
+  ],
+  "dg_shelf": [
+   [
+    64,
+    85
+   ]
+  ],
+  "dg_tools": [
+   [
+    64,
+    43
+   ]
+  ],
+  "dg_tub": [
+   [
+    64,
+    41
+   ]
+  ],
+  "arena_pillar": [
+   [
+    64,
+    64
+   ]
+  ]
+ }
+}

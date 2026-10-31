@@ -386,6 +386,15 @@ img,canvas{image-rendering:pixelated}
 #hotbar .hb-bag{width:44px;height:44px;margin-left:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:8px solid transparent;border-image:url(assets/px/ui/hotbar/slot.png) 8 fill / 8px;image-rendering:pixelated;box-sizing:border-box}
 #hotbar .hb-bag img{width:32px;height:32px;margin:-6px;image-rendering:pixelated;pointer-events:none}
 #hotbar .hb-bag.hb-catch{animation:hbCatch .6s steps(6)}
+/* 2026-10-15 anh: ô Ấn Linh (gọi / thu đội linh thú) cạnh ô Rocky — hotbar.js ltHTML; vòng máu đội quanh quả cầu, đếm giây khi cả đội nghỉ */
+#hotbar .hb-lt{margin-left:4px;cursor:pointer}
+#hotbar .hb-lt img.lt-pe{position:absolute;left:5px;top:5px;width:18px;height:18px;margin:0}
+#hotbar .hb-lt .lt-hp{position:absolute;left:-4px;top:-4px;width:36px;height:36px;border-radius:50%;pointer-events:none;-webkit-mask:radial-gradient(circle,transparent 15px,#000 16px,#000 18px,transparent 18.5px);mask:radial-gradient(circle,transparent 15px,#000 16px,#000 18px,transparent 18.5px)}
+#hotbar .hb-lt .lt-cd{position:absolute;left:-6px;right:-6px;top:5px;text-align:center;font:20px/1 VT323,monospace;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022;pointer-events:none}
+#hotbar .hb-lt .lt-n{position:absolute;right:-7px;top:-9px;font:14px/1 VT323,monospace;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022;pointer-events:none}
+#hotbar .hb-lt .lt-l{position:absolute;left:-8px;right:-8px;bottom:-9px;text-align:center;font:14px/1 VT323,monospace;font-style:normal;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022;pointer-events:none}
+#hotbar .hb-lt.st-rest .lt-l,#hotbar .hb-lt.dim .lt-l{color:#a39d94}
+#hotbar .hb-lt.dim img{filter:grayscale(1);opacity:.5}
 @media (max-width:640px){#hotbar .hb-bag{width:30px;height:30px;border-width:5px;border-image-width:5px} #hotbar .hb-bag img{width:22px;height:22px;margin:-4px}}
 
 /* plan-25: bảng chọn phe */
@@ -588,3 +597,145 @@ body.fainted #faint-ui{position:fixed;left:0;top:0;width:0;height:0;z-index:9;po
 #faint-ui button img{width:100%;height:100%;image-rendering:pixelated}
 #faint-ui button i{position:absolute;right:1px;bottom:-1px;font:13px VT323,monospace;font-style:normal;color:#352022}
 #faint-ui button:disabled{filter:grayscale(1);opacity:.5}
+/* plan-34 (anh 2026-10-14): thanh Ki XANH LÁ đứng cạnh thanh máu — khung kiv.png (khung máu PixelLab đổi màu), 7 vạch chia mờ, loé ngắn khi đầy 1 nấc / tiêu */
+#herobar .hb-kv{position:relative;width:32px;height:160px;background:url(assets/px/ui/hud/kiv.png) no-repeat 0 0/100% 100%;image-rendering:pixelated;pointer-events:auto}
+#herobar .hb-kslot{position:absolute;left:31%;right:31%;top:13%;bottom:4%;overflow:hidden}
+#herobar .hb-kslot .kf{position:absolute;left:0;right:0;bottom:0;display:block;height:0;background:#3fcf5e;box-shadow:inset 2px 0 0 #9dffb0,inset -2px 0 0 #1e8a3a}
+#herobar .hb-kslot .kt{position:absolute;left:0;right:0;height:1px;background:rgba(20,12,10,.55);pointer-events:none}
+#herobar .hb-kv.glow .kf{background:#8dffa6;box-shadow:inset 2px 0 0 #fff,inset -2px 0 0 #3fcf5e,0 0 6px #8dffa6}
+#herobar .hb-num{right:82px}
+@media (pointer:coarse){#herobar .hb-kv{height:96px;width:22px}}
+/* plan-34 v2 (anh tự bấm): nút Lộn / Lướt điện thoại — icon PixelLab ui/ki/*.png, vòng hồi chiêu quét tròn (--cd), xám khi thiếu Ki */
+#touch .kib{width:50px!important;height:50px!important;padding:0;display:flex;align-items:center;justify-content:center;border:none!important;border-radius:50%!important;background:url(assets/px/ui/mslots/ring.png) no-repeat center/100% 100%!important;image-rendering:pixelated;box-sizing:border-box}
+#touch .kib img{width:28px;height:28px;image-rendering:pixelated;pointer-events:none;margin-top:-4px;position:relative;z-index:1}
+#touch .kib i{position:absolute;left:0;right:0;bottom:-7px;font:15px/1 VT323,monospace;color:#fff6c8;font-style:normal;text-align:center;pointer-events:none;z-index:2;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022}
+#touch .kib s{position:absolute;inset:5px;border-radius:50%;pointer-events:none;z-index:1;background:conic-gradient(rgba(20,12,10,.6) calc(var(--cd,0) * 360deg),transparent 0)}
+#touch .kib.low img{filter:grayscale(1);opacity:.5}
+#touch .kib[hidden]{display:none}
+/* ===== 2026-10-15 (tác nhân HUD, anh: "bố trí lại bố cục thanh bay và máu Ki hợp lí hơn") =====
+   Điện thoại: chip trạng thái (Rocky, quái dưới kia…) về cột THÔNG TIN trái-trên ngay dưới tên vùng / nhiệm vụ (hud.js đặt top theo đáy .hud-tl)
+   → cột phải chỉ còn đồng hồ · nút · Cấp + máu/Ki · cần độ cao (sky.js placeWidget bám ngay dưới cụm máu). Trước: chip Rocky rộng thò vào giữa màn, đẩy cần độ cao xuống.
+   Ngang: Cấp + máu/Ki sang trái đồng hồ (dưới hàng ☰📷), cần độ cao mép phải dưới đồng hồ — trước cần đè thẳng lên thanh máu. Ki luôn cùng chiều cao máu. */
+@media (pointer:coarse){
+  #px-status{left:10px;right:auto;top:84px;flex-direction:column;align-items:flex-start;justify-content:flex-start;flex-wrap:nowrap;max-width:min(240px,calc(100% - 180px));max-height:none;overflow:visible}
+  #px-status .ps{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+}
+@media (pointer:coarse) and (orientation:landscape) and (max-height:500px){
+  #herobar{top:134px;right:10px}   /* 2026-10-15 v2 (anh: cụm máu lơ lửng 'kì kì'): MỘT khối bám mép phải ngay dưới đồng hồ, thẳng hàng mép phải đồng hồ */
+  body.altw-on #herobar{right:72px}   /* đang có cần độ cao (sky.js bật lớp): máu/Ki bên trái, cần độ cao bên phải — cùng đỉnh, cùng đáy */
+  #herobar .hb-hp,#herobar .hb-kv{width:30px;height:clamp(40px,calc(var(--vvh,100vh) - 300px),90px)}
+  #herobar .hb-xp{width:8px;height:clamp(34px,calc(var(--vvh,100vh) - 306px),84px)}
+  #px-status .ps{font-size:14px}
+  #px-notes{top:120px;bottom:auto;left:6px}   /* thông báo: dưới chip trạng thái cột trái (hud.js), không còn nằm giữa màn đè người / trùm */
+  #px-notes .pn{max-width:min(255px,calc(50vw - 60px));font-size:16px}   /* hẹp bằng cột tên vùng: không lấn sang nhãn / thanh máu trùm giữa trên */
+}
+@media (pointer:coarse) and (orientation:portrait) and (max-width:640px){
+  .hud-tl{max-width:calc(100% - 166px)}   /* tên vùng dài (Cổng Trời · Ngô Công Lôi Thần) xuống dòng thay vì lấn dưới đồng hồ */
+}
+/* ===== plan-44 đợt A (2026-10-17) ===== */
+/* D3: Việc kế tiếp — 1 dòng nhỏ dưới tên vùng */
+#h-next{margin-top:3px;width:max-content;max-width:min(460px,calc(100vw - 240px));font-size:17px;line-height:1.1;color:#fff6c8;background:rgba(13,11,20,.66);border-radius:4px;padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#h-next[hidden]{display:none}
+#h-next .nx-k{color:#ffd45e}
+#h-next .nx-sub{color:#9fe3ff}
+#h-next .pxi{width:16px;height:16px;vertical-align:-3px}
+@media (pointer:coarse){#h-next{font-size:14px;max-width:calc(100vw - 180px)}}
+/* Q4 + M1: thông báo dài xuống dòng, có ×; điện thoại tối đa 2 dòng (chạm để mở hết) */
+#px-notes .pn{display:flex!important;white-space:normal;overflow:visible;text-overflow:clip;max-width:min(420px,calc(100vw - 24px));line-height:1.08;pointer-events:auto;align-items:flex-start}
+@media (pointer:coarse) and (orientation:portrait){#px-notes .pn{max-width:calc(100vw - 172px)}}
+@media (pointer:coarse) and (orientation:landscape){#px-notes .pn{max-width:min(300px,calc(50vw - 60px))}}
+#px-notes .pn .pn-t{flex:1 1 auto;min-width:0;display:block}
+#px-notes .pn .pn-t .pxi{display:inline-block;vertical-align:-3px}
+#px-notes .pn-x{flex:none;margin:-2px -4px 0 4px;width:20px;height:20px;padding:0;border:none;background:rgba(59,36,18,.18);color:#3b2412;font:bold 16px/18px var(--font,monospace);border-radius:3px;cursor:pointer;pointer-events:auto}
+@media (pointer:coarse){
+  #px-notes .pn:not(.open) .pn-t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #px-notes .pn-x{width:24px;height:24px;font-size:18px;line-height:22px}
+}
+/* Q1: hỏi trước khi ngủ — hộp nhỏ giữa dưới, không che cảnh */
+#p44-sleep,.p44box{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);z-index:30;border:7px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 7px;color:#3b2412;font-family:var(--font);font-size:19px;padding:2px 8px;text-align:center;max-width:calc(100vw - 24px)}
+#p44-sleep[hidden],#p44-ask[hidden],#p44-guest[hidden],#h-card[hidden],#d-acts[hidden]{display:none}
+#p44-sleep .sq,.p44box .sq{margin:2px 0 4px}
+.p44box[hidden]{display:none}
+.hc-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.hc-btns .btn{font-size:17px;padding:3px 10px;width:auto!important;margin:0!important;flex:0 0 auto}
+/* Q7 + X1: nút trong khung thoại */
+#d-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+#d-acts .dact{font-size:15px;padding:1px 10px;min-height:0;width:auto!important;margin:0!important;flex:0 0 auto}
+/* R1: thẻ nghệ sĩ trên Bia Vinh Danh */
+#hall .panel{position:relative}
+#h-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100% - 20px));z-index:3;border:12px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 12px;color:#3b2412;padding:4px 6px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+#h-card .hc-top{display:flex;gap:10px;align-items:center}
+#h-card .hc-top .av{width:48px;height:48px;image-rendering:pixelated}
+#h-card .hc-st{margin-top:4px;font-size:16px}
+#h-card .good{color:#2e7d32} #h-card .badt{color:#b3261e}
+#h-list .hrow[data-id]{cursor:pointer}
+/* Q8: hỏi đi xem vùng chưa mở (màn tiêu đề) + chip 'đang đi xem' */
+.p44ov{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+.p44ov .panel{max-width:min(420px,calc(100vw - 24px));text-align:center;font-size:18px}
+#p44-guest{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:9;border:6px solid transparent;border-image:url(assets/px/ui/hud/box.png) 6 fill / 6px;color:#3b2412;font-family:var(--font);font-size:15px;padding:0 6px;pointer-events:none;max-width:calc(100vw - 260px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (pointer:coarse) and (max-width:640px){#p44-guest{top:auto;bottom:6px;max-width:calc(100vw - 20px)}}
+/* D4: bản đồ Vùng này */
+#m-tabs{display:flex;gap:6px;margin:2px 0 8px}
+#m-tabs .btn{font-size:17px;padding:2px 12px}
+#map .mapwrap[hidden],#m-zone[hidden],#m-tabs[hidden]{display:none!important}
+#m-zone{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;min-height:0;overflow:auto}
+#m-zcv{width:min(520px,100%);height:auto;image-rendering:auto;border:2px solid var(--line);background:#0d0b14}
+#m-zleg{flex:1;min-width:160px;display:flex;flex-direction:column;gap:3px;font-size:16px}
+#m-zleg .zl{display:flex;gap:6px;align-items:center}
+#m-zleg .zi{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+#m-zleg .zi img{width:20px;height:20px;image-rendering:pixelated}
+#m-zleg .zi i{width:10px;height:10px;border-radius:50%;border:2px solid #1c1a24}
+@media (max-width:640px){#m-zone{flex-direction:column;align-items:center} #m-zleg{width:100%}}
+@media (pointer:coarse) and (max-width:640px){#p44-sleep,.p44box{font-size:16px;bottom:150px} .hc-btns .btn{font-size:15px;padding:2px 8px}}
+.p44-earn{color:#ffd45e}
+/* ===== plan-44 đợt D ===== */
+/* R6: album ảnh (src/album.js) */
+.al-ov .al-panel{width:min(560px,calc(100vw - 20px));max-height:calc(100vh - 24px);overflow-y:auto;overflow-x:hidden;padding:12px;box-sizing:border-box}
+.al-head{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px;padding-right:34px;min-height:36px}
+.al-head h2{margin:0;font-size:18px}
+.al-head .btn{width:auto;margin:0;padding:5px 10px;font-size:14px;flex:none}
+.al-head .dim{flex:1;text-align:center;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.al-note{margin:0 0 6px}
+.al-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+@media (max-width:480px){.al-grid{grid-template-columns:repeat(2,1fr)}}
+.al-cell{display:flex;flex-direction:column;gap:2px;padding:4px;margin:0;border:2px solid var(--line);border-radius:8px;background:#0d0b14;cursor:pointer;color:inherit;font:inherit;min-height:44px;min-width:0;width:auto}
+.al-cell img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:4px;image-rendering:auto;background:#000}
+.al-cell i{font-style:normal;font-size:13px;line-height:1.1;color:#cfc6b8;text-align:left}
+.al-empty{font-size:16px;margin:12px 4px}
+.al-big{display:block;max-width:100%;max-height:calc(100vh - 170px);margin:4px auto 8px;border-radius:6px;background:#000;image-rendering:pixelated}
+.al-acts{display:flex;gap:6px}
+.al-acts .btn{margin:0;padding:10px 6px;font-size:15px;min-height:44px}
+.al-acts .al-del.arm{background:#8a2a2a;color:#fff}
+/* M2: nút Đổi đồ nhanh cạnh A (điện thoại, src/mslots.js) */
+#mslots .ms-sw{position:absolute;width:46px;height:46px;pointer-events:auto;touch-action:none;-webkit-touch-callout:none;box-sizing:border-box;border-radius:50%;background:url(assets/px/ui/mslots/ring.png) no-repeat center/100% 100%;image-rendering:pixelated;display:flex;align-items:center;justify-content:center}
+#mslots .ms-sw:active{transform:translateY(2px)}
+#mslots .ms-sw img{width:26px;height:26px;margin-top:-5px;image-rendering:pixelated;pointer-events:none}
+#mslots .ms-sw img.ms-sw-cur{position:absolute;left:-4px;top:-4px;width:18px;height:18px;margin:0;padding:1px;border-radius:50%;background:rgba(26,22,38,.85);border:1px solid #6b3416;opacity:.9}
+#mslots .ms-sw .ms-v{position:absolute;left:-4px;right:-4px;bottom:-6px;text-align:center;font:15px/1 VT323,monospace;font-style:normal;color:#fff6c8;text-shadow:1px 1px 0 #352022,-1px 0 0 #352022,0 -1px 0 #352022,1px 0 0 #352022;pointer-events:none}
+#mslots .ms-sw .ms-sw-tip{position:absolute;bottom:52px;left:50%;transform:translateX(-50%);white-space:nowrap;font:16px/1 VT323,monospace;font-weight:normal;color:#fff6c8;background:rgba(26,22,38,.88);border:1px solid #6b3416;border-radius:4px;padding:2px 6px;pointer-events:none}
+#mslots .ms-sw .ms-sw-tip[hidden]{display:none}
+/* D4: chạm bản đồ Vùng này để tự đi */
+#m-zcv.zwalkable{cursor:crosshair}
+#m-zleg .zwalk{margin-top:4px;font-size:15px}
+#m-zleg .zwalk.zbad{color:#ff9a9a}
+
+/* ===== plan-45 Đợt 5A (2026-10-18, tác nhân A) ===== */
+/* D1: dòng phím tắt màn tiêu đề — to, sáng, dễ đọc (trước .tiny 11 px xám) */
+#t-ctl{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);margin:0;padding:2px 10px;font-size:15px;line-height:1.25;color:#efe3cc;text-shadow:1px 1px 0 #000;background:rgba(13,11,20,.55);border-radius:6px;z-index:11;pointer-events:none}   /* plan-45 D1 v2: 1 dòng ở MÉP TRÊN màn (trời), không còn xuống 3 dòng đè cầu tàu / thuyền */
+/* BD2: ban đêm (từ 19:00) mặt đồng hồ HUD = ảnh trăng PixelLab (hud.js bật lớp .night) */
+#px-clock.night{background-image:url(assets/px/ui/hud/clock_night.png)}
+/* D12: đang đánh trùm (hud.js bật body.p45-boss) → ẩn máy đo địa chấn (trước nổi giữa mép trái, che sân) */
+body.p45-boss #seis{display:none!important}
+/* D12: điện thoại dọc — tên vùng luôn 1 dòng (dài thì …); cột HUD phải gọn lại: đồng hồ 112×65, 3 nút 36 px, 💬 dưới 📷, máu/Ki dưới 💬 */
+@media (pointer:coarse) and (orientation:portrait) and (max-width:640px){
+  .hud-tl{max-width:calc(100% - 136px)}
+  #h-zone{display:inline-block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top;font-size:18px!important}
+  #px-clock{top:44px;width:112px;height:65px}
+  #px-clock .pc-date{left:50px;right:9px;top:12px;font-size:13px;line-height:1}
+  #px-clock .pc-time{left:50px;right:9px;top:34px;font-size:18px}
+  #btn-menu,#btn-photo,#btn-rot{top:114px!important;width:36px!important;height:36px!important}
+  #btn-menu{right:10px!important} #btn-photo{right:50px!important} #btn-rot{right:90px!important}
+  #btn-menu img,#btn-photo img,#btn-rot img{width:32px;height:32px}
+  #herobar{top:200px}
+  body.p45-boss #h-zone{font-size:16px!important}   /* tên trùm dài (Cổng Trời · Ngô Công Lôi Thần) vừa 1 dòng */
+}

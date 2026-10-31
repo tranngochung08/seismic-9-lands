@@ -10,10 +10,15 @@
    · Mỗi trời: màu / mây theo vùng dưới, vật mốc PixelLab riêng, quái trời phân bậc theo vùng (trời Làng yếu nhất → trời M9 mạnh nhất),
      khe mây nhìn xuống = ẢNH THU NHỎ của chính bản đồ vùng dưới. Trời M9: Cổng Trời (Bakunawa, đang khoá).
    Hệ chạy ở MỌI vùng (always): cất cánh / chỗ đáp / đổi save cũ (sách Bay → 2 chong chóng). */
+import { easyHp } from './diff.js';   /* plan-44 C2: Độ khó Dễ — máu ×0,6 */
+import { drawSkyGate, drawSkyGateFront, playGateEnter, skyGateState, skyGateEntering } from './skygate.js';   /* 2026-10-14 cổng trời xoáy sương (tác nhân cổng) */
+import { drawFlyPose, drawSpeedFx, drawCopterBlur } from './flyposes.js';   /* 2026-10-14 dáng bay bổ nhào / vút lên (tác nhân dáng bay) */
+import { CG, cgX, cgIn, cgBase, cgPreload, cgDrawables, cgDrawFront, cgFogNS, cgDrawUI } from './skycloudgate.js';   /* 2026-10-16 plan-41 CỔNG MÂY */
 import { ART, enterZone as artEnterZone, mapBuilt as artMapBuilt } from '../art.js';
 import { tiles as TILES } from '../gfx.js';
 import { drawBody } from '../entities.js';
 import * as LV from './petlv.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 import { SKYMON, skyMonInit, EXTRA } from './skymon.js';
 import { ZONES, ROADS } from '../world.js';
 import { planRoster, rosterInfo, ROSTER_LIFE } from './monsters.js';
@@ -34,7 +39,7 @@ const themeOf = s => { if (THEME[s]) return THEME[s]; const b = BELOW_OF(s); if 
 const MID_LIFT = 26, TALL_H = 28, ALT_SW = 0.4, LIFT = [14, 32], FLY_SPD = 1.45, BOOST = 2, BOOST_MUL = 1.7, FALL_HP = 0.10;
 /* chủ đề từng trời: màu nền biển mây, màu phủ mây, hệ số sức quái (k), xoay màu quái (hue), mây gần dày hơn (fog) */
 export const THEME = {
-  sky: { col: '#b1e0f9', tint: null, k: 0.22, hue: 100 },
+  sky: { col: '#b1e0f9', tint: null, k: 0.12, hue: 100 },   /* plan-50 §D (anh duyệt): 0,22 → 0,12 — quái trời trên Làng trước gấp 4 Nhầy Mầm */
   sky_m1: { col: '#8bedda', tint: 'rgba(120,220,220,.18)', k: 0.3, hue: 100 },
   sky_m2: { col: '#fedcb3', tint: 'rgba(255,150,70,.30)', k: 0.38, hue: 100 },
   sky_m3: { col: '#a0b997', tint: 'rgba(120,190,110,.22)', k: 0.46, hue: 0 },
@@ -44,15 +49,15 @@ export const THEME = {
   sky_m7: { col: '#fad3d0', tint: 'rgba(200,60,40,.30)', k: 0.8, hue: -35 },
   sky_m8: { col: '#c2ebfa', tint: 'rgba(200,225,255,.22)', k: 0.9, hue: -35 },
   sky_m9: { col: '#baadfe', tint: 'rgba(60,40,110,.38)', k: 1.0, hue: -35, fog: 1 },
-  sky_sea: { col: '#a8d8f0', tint: null, k: 0.22, hue: 100 },
+  sky_sea: { col: '#a8d8f0', tint: null, k: 0.12, hue: 100 },
 };
 const STR = {
-  vi: { alt: ['Thấp', 'Cao'], chip: a => `🚁 ${a}`, help: 'Bay tự do · mép Bắc / Nam sang trời vùng kề · chấm đỏ = quái dưới đất (L / 🔭 ghim — cần ống nhòm) · Z / 🪨 thả đá · 🚁 / X hạ xuống', batLow: n => `🔋 Chong chóng sắp mỏi — còn ${n} s (Trạm Mây ☁ nạp đầy · lông chim nạp ½)`, batOut: 'Chong chóng mỏi rồi — tự hạ xuống', batTired: 'Chong chóng còn mỏi — nghỉ dưới đất chút (hoặc mang lông chim)', feather: '🪶 Dùng 1 lông chim nạp chong chóng (+½ pin)', station: '☁ Trạm Mây — nạp đầy chong chóng!', bat: (m, s2) => `🔋 Pin chong chóng ${m}:${String(s2).padStart(2, '0')}`, stationTag: 'Trạm Mây',
+  vi: { alt: ['Thấp', 'Cao'], chip: a => `🚁 ${a}`, help: 'Bay tự do · qua CỔNG MÂY giữa mép Bắc / Nam sang trời vùng kề · chấm đỏ = quái dưới đất (L / 🔭 ghim — cần ống nhòm) · Z / 🪨 thả đá · 🚁 / X hạ xuống', batLow: n => `🔋 Chong chóng sắp mỏi — còn ${n} s (lông chim nạp ½)`, batOut: 'Chong chóng mỏi rồi — tự hạ xuống', batTired: 'Chong chóng còn mỏi — nghỉ dưới đất chút (hoặc mang lông chim)', feather: '🪶 Dùng 1 lông chim nạp chong chóng (+½ pin)', bat: (m, s2) => `🔋 Pin chong chóng ${m}:${String(s2).padStart(2, '0')}`,
     postTag: 'Bưu Tá Mây', postTitle: '📮 Bưu Tá Mây', postOffer: (z, m, r) => `Gửi gấp một bưu kiện tới <b>${z}</b>. Hạn ${m} phút — đi bộ qua đèo không kịp, BAY đường trời mới kịp! Thưởng ${r} 🪨 + 1 danh tiếng.`, postTake: 'Nhận bưu kiện', postClose: 'Để sau', postBusy: (z, t) => `Đang giao bưu kiện tới ${z} — còn ${t}. Mang tới hòm thư Bưu Tá Mây ở đó.`, postCancel: 'Bỏ đơn', postDone: (r, rep) => `📦 Giao xong! +${r} 🪨 · danh tiếng Bưu Tá ${rep}`, postFail: z => `📦 Hết giờ — bưu kiện tới ${z} bị trễ (mất đơn)`, postNone: 'Chưa có vùng nào khác mở để gửi', postHud: (z, t) => `📦 Bưu kiện → ${z} · ${t}`, postRep: n => `Danh tiếng Bưu Tá: ${n}`,
     evMeteor: '🌠 MƯA SAO BĂNG! Bay chặn sao trước khi chạm đất để bắt Mảnh Sao', gotStar: n => `🌠 Bắt được Mảnh Sao! (${n})`, evStorm: '⛈ Có MÂY BÃO trên trời này — mang Chai thu sét (Heathcliff) bay vào giữ ~2 s', zap: 'Sét đánh! Cần CHAI THU SÉT (quầy Heathcliff) mới thu được sét', charging: s2 => `⚡ Đang thu sét… ${s2}`, gotBolt: '⚡ Sét đóng chai!', evFlock: '🕊 Đàn chim di cư bay ngang — bay CÙNG đàn ~3 s để nhận lông quý', evWhale: '🐋 Cá Voi Mây đi ngang — bay cạnh nó ~3 s', gotFlock: '🪶 Đàn chim tặng 1 Lông quý!', gotWhale: '🐋 Cá Voi Mây để lại 2 Sợi mây!', book: n => `📖 Sách Bầu Trời: trang mới (${n}/4)`, chipMeteor: '🌠 Mưa sao băng', chipStorm: '⛈ Mây bão gần đây',
     gateTag: 'Cổng Trời', gateNeed: miss => `🔒 Cổng Trời còn KHOÁ — cần: ${miss.join(' · ')}`, gateOpened: '🌈 CỔNG TRỜI ĐÃ MỞ! Sân Bakunawa trên mây đang chờ… (trận trùm 6 sắp có)', gatePrep: '🐉 Sân Bakunawa đang được dựng trên mây — trận trùm 6 sắp có. Quay lại sau nhé!', gateHint: '🌈 Phía Bắc trời M9 có CỔNG TRỜI', needBadge9: 'huy hiệu M9', needBoss: n => `hạ ${n} trùm còn lại`,
     tiers: ['Đất', 'Trung', 'Trời'], tierChip: n => `🚁 Tầng: ${n}`, midUp: '🚁 Bay tầng TRUNG — bay qua rào / bụi / nước, không qua nhà / cây cao · Z ném đá chéo xuống · Rocky bắn / bổ nhào · X lên trời · ⇧X (giữ 🚁) hạ', midSlash: 'Đang bay tầng Trung — hạ xuống (⇧X) để chém, hoặc Z ném đá', onGround: 'Đang ở mặt đất', btnMid: 'Trung', btnUp: 'Lên', btnDown: 'Hạ',
-    needBinoc: 'Cần ỐNG NHÒM (quầy Heathcliff) để ghim dấu sáng', noMark: 'Bay sát một dấu (chấm đỏ = quái · cam = Ngọc Rồng · vàng = đồ hiếm) rồi bấm L', pinned: (a, z) => `📍 Đã ghim: ${a} (${z}) — hạ cánh xuống đó sẽ có mũi tên chỉ đường`, reached: a => `📍 Đã tới chỗ ghim: ${a}`, scout: (n, r) => `Dưới kia: ${n} quái${r ? ` · ${r} ⭐hiếm` : ''}`, noStone2: 'Hết đá Seismic để thả', dropped: z => `🪨 Đá Seismic rơi xuống ${z} — quái đứng ở chỗ đá rơi sẽ trúng đòn khi bạn xuống (5 phút)`, tiles: n => `${n} ô`, edge: 'Mép trời — dưới đất không có lối sang đây', lockB: n => `Cần huy hiệu M${n} mới bay sang được (như lối dưới đất)`, lockR: n => `Phải qua cổng đèo ${n} dưới đất trước (thắng bạn tập)`,
+    needBinoc: 'Cần ỐNG NHÒM (quầy Heathcliff) để ghim dấu sáng', noMark: 'Bay sát một dấu (chấm đỏ = quái · cam = Ngọc Rồng · vàng = đồ hiếm) rồi bấm L', pinned: (a, z) => `📍 Đã ghim: ${a} (${z}) — hạ cánh xuống đó sẽ có mũi tên chỉ đường`, reached: a => `📍 Đã tới chỗ ghim: ${a}`, scout: (n, r) => `Dưới kia: ${n} quái${r ? ` · ${r} ⭐hiếm` : ''}`, noStone2: 'Hết đá Seismic để thả', dropped: z => `🪨 Đá Seismic rơi xuống ${z} — quái đứng ở chỗ đá rơi sẽ trúng đòn khi bạn xuống (5 phút)`, tiles: n => `${n} ô`, edge: 'Mép trời — dưới đất không có lối sang đây', lockB: n => `Cần huy hiệu M${n} mới bay sang được (như lối dưới đất)`, lockR: n => `Phải qua cổng đèo ${n} dưới đất trước (thắng bạn tập)`, edgeGate: z => `Tường sương — muốn sang ${z} hãy bay qua CỔNG MÂY ở giữa mép`, lockBs: n => `Cần huy hiệu M${n}`, lockRs: n => `Cần qua cổng đèo ${n}`,
     noCopter: 'Cần CHONG CHÓNG TRE — mua ở quầy Heathcliff (chân cầu tàu Biển)', notHere: 'Chỉ bay được NGOÀI TRỜI (Biển, Làng, M1–M9, đèo) — trong nhà / hang / khe trùm / dưới biển sâu không có trời',
     busy: 'Đang bận (xe / bè / bơi) — xuống trước rồi mới bay', rkStay1: 'Chỉ có 1 chong chóng — Rocky ở lại dưới đất (mua thêm 1 cái ở Heathcliff)',
     rkStay2: 'Rocky đang nghỉ / ở ổ — Rocky ở lại dưới đất', up: v => `🚁 Bay lên ${v}!`, down: v => `🚁 Hạ xuống ${v}`, skip: 'E / A: bỏ qua',
@@ -60,12 +65,12 @@ const STR = {
     shrine: 'Đền Gió: "Gió đưa ai có chong chóng tre lên mọi khoảng trời."', map: 'Bản Đồ Mây', mapTip: 'Bay sang khoảng trời của vùng đã mở', locked: 'chưa mở',
     useUp: 'Bay lên', useDown: 'Hạ xuống', noStone: 'Hết đá Seismic để ném', diff: a => `Khác tầng! Quái đang ở tầng ${a} — Space đổi tầng`,
     dodge: 'Né!', hooked: 'Bị móc kéo xuống tầng thấp!', windUp: 'Luồng gió lên — tăng tốc!', conv: '📘→🚁 Sách Bay cũ đổi thành 2 CHONG CHÓNG TRE (luật bay mới)' },
-  en: { alt: ['Low', 'High'], chip: a => `🚁 ${a}`, help: 'Free flight · North / South edge → next sky · red dots = monsters below (L / 🔭 pins — needs binoculars) · Z / 🪨 drop a stone · X / 🚁 land', batLow: n => `🔋 Copter getting tired — ${n} s left (Cloud Station ☁ refills · a feather gives ½)`, batOut: 'The copter is worn out — landing', batTired: 'The copter is still tired — rest on the ground a bit (or carry a feather)', feather: '🪶 Used 1 feather to recharge the copter (+½)', station: '☁ Cloud Station — copter fully charged!', bat: (m, s2) => `🔋 Copter ${m}:${String(s2).padStart(2, '0')}`, stationTag: 'Cloud Station',
+  en: { alt: ['Low', 'High'], chip: a => `🚁 ${a}`, help: 'Free flight · fly through the CLOUD GATE (middle of the North / South edge) → next sky · red dots = monsters below (L / 🔭 pins — needs binoculars) · Z / 🪨 drop a stone · X / 🚁 land', batLow: n => `🔋 Copter getting tired — ${n} s left (a feather gives ½)`, batOut: 'The copter is worn out — landing', batTired: 'The copter is still tired — rest on the ground a bit (or carry a feather)', feather: '🪶 Used 1 feather to recharge the copter (+½)', bat: (m, s2) => `🔋 Copter ${m}:${String(s2).padStart(2, '0')}`,
     postTag: 'Cloud Courier', postTitle: '📮 Cloud Courier', postOffer: (z, m, r) => `Rush a parcel to <b>${z}</b>. ${m} minutes — walking over the passes is too slow, FLY the sky road! Reward ${r} 🪨 + 1 reputation.`, postTake: 'Take parcel', postClose: 'Later', postBusy: (z, t) => `Delivering to ${z} — ${t} left. Bring it to the Cloud Courier box there.`, postCancel: 'Drop job', postDone: (r, rep) => `📦 Delivered! +${r} 🪨 · courier reputation ${rep}`, postFail: z => `📦 Time's up — the parcel to ${z} was late (job lost)`, postNone: 'No other land is open yet', postHud: (z, t) => `📦 Parcel → ${z} · ${t}`, postRep: n => `Courier reputation: ${n}`,
     evMeteor: '🌠 METEOR SHOWER! Fly into the falling stars before they land to catch Star Shards', gotStar: n => `🌠 Caught a Star Shard! (${n})`, evStorm: '⛈ STORM CLOUDS in this sky — bring a Lightning jar (Heathcliff) and hold inside ~2 s', zap: 'Zapped! You need a LIGHTNING JAR (Heathcliff) to bottle it', charging: s2 => `⚡ Bottling lightning… ${s2}`, gotBolt: '⚡ Lightning bottled!', evFlock: '🕊 A migrating flock passes — fly WITH it ~3 s for a rare feather', evWhale: '🐋 A Cloud Whale drifts by — fly beside it ~3 s', gotFlock: '🪶 The flock left you a Rainbow feather!', gotWhale: '🐋 The Cloud Whale left 2 Cloud silk!', book: n => `📖 Sky Book: new page (${n}/4)`, chipMeteor: '🌠 Meteor shower', chipStorm: '⛈ Storm cloud nearby',
     gateTag: 'Sky Gate', gateNeed: miss => `🔒 The Sky Gate is SEALED — needs: ${miss.join(' · ')}`, gateOpened: '🌈 THE SKY GATE IS OPEN! Bakunawa’s arena above the clouds awaits… (boss 6 fight coming soon)', gatePrep: '🐉 Bakunawa’s arena is being built above the clouds — boss 6 coming soon. Come back later!', gateHint: '🌈 The SKY GATE stands at the north of the M9 sky', needBadge9: 'the M9 badge', needBoss: n => `defeat the ${n} remaining bosses`,
     tiers: ['Ground', 'Mid', 'Sky'], tierChip: n => `🚁 Tier: ${n}`, midUp: '🚁 MID tier — over fences / bushes / water, not houses / tall trees · Z throws stones down · Rocky shoots / dives · X to the sky · ⇧X (hold 🚁) down', midSlash: 'Flying at mid tier — go down (⇧X) to slash, or Z to throw', onGround: 'You are on the ground', btnMid: 'Mid', btnUp: 'Up', btnDown: 'Down',
-    needBinoc: 'You need BINOCULARS (Heathcliff) to pin a mark', noMark: 'Fly right over a mark (red = monsters · orange = Dragon Ball · gold = rare item) and press L', pinned: (a, z) => `📍 Pinned: ${a} (${z}) — land there and an arrow shows the way`, reached: a => `📍 Reached the pin: ${a}`, scout: (n, r) => `Below: ${n} monsters${r ? ` · ${r} ⭐rare` : ''}`, noStone2: 'No Seismic stones left to drop', dropped: z => `🪨 A Seismic stone fell on ${z} — monsters standing there get hit when you land (5 min)`, tiles: n => `${n} tiles`, edge: 'Edge of the sky — no path this way on the ground', lockB: n => `Needs the M${n} badge to fly over (same as the ground path)`, lockR: n => `Clear pass gate ${n} on the ground first (beat the sparring partner)`,
+    needBinoc: 'You need BINOCULARS (Heathcliff) to pin a mark', noMark: 'Fly right over a mark (red = monsters · orange = Dragon Ball · gold = rare item) and press L', pinned: (a, z) => `📍 Pinned: ${a} (${z}) — land there and an arrow shows the way`, reached: a => `📍 Reached the pin: ${a}`, scout: (n, r) => `Below: ${n} monsters${r ? ` · ${r} ⭐rare` : ''}`, noStone2: 'No Seismic stones left to drop', dropped: z => `🪨 A Seismic stone fell on ${z} — monsters standing there get hit when you land (5 min)`, tiles: n => `${n} tiles`, edge: 'Edge of the sky — no path this way on the ground', lockB: n => `Needs the M${n} badge to fly over (same as the ground path)`, lockR: n => `Clear pass gate ${n} on the ground first (beat the sparring partner)`, edgeGate: z => `Wall of mist — to reach ${z}, fly through the CLOUD GATE in the middle of this edge`, lockBs: n => `Needs the M${n} badge`, lockRs: n => `Clear pass gate ${n} first`,
     noCopter: 'Needs a BAMBOO COPTER — buy one from Heathcliff (foot of the Sea pier)', notHere: 'You can only fly OUTDOORS (Sea, Village, M1–M9, passes) — indoors / caves / rifts / the deep sea have no sky',
     busy: 'Busy (vehicle / raft / swimming) — get off first', rkStay1: 'Only 1 copter — Rocky stays on the ground (buy one more from Heathcliff)',
     rkStay2: 'Rocky is resting / at the nest — Rocky stays on the ground', up: v => `🚁 Up to ${v}!`, down: v => `🚁 Down to ${v}`, skip: 'E / A: skip',
@@ -83,7 +88,7 @@ const inSky = ctx => !!(ctx.S.map && ctx.S.map.sky);
 const zid = ctx => (ctx.S.zone && ctx.S.zone.id) || '';
 const copters = ctx => (ctx.S.save.inv && ctx.S.save.inv.copter) || 0;
 const altNow = () => (ST.fly ? (ST.fly.z >= 0.5 ? 1 : 0) : 0);
-const liftNow = () => (ST.fly ? (ST.fly.mid ? MID_LIFT : LIFT[0] + (LIFT[1] - LIFT[0]) * ST.fly.z) : 0);
+const liftNow = () => (ST.fly ? (ST.fly.mid ? Math.min(30, 4 + AL.h * 0.22) : LIFT[0] + (LIFT[1] - LIFT[0]) * Math.max(0, Math.min(1, (AL.h - 700) / 500))) : 0);   /* 2026-10-14: theo ĐỘ CAO liền mạch */
 const isMid = () => !!(ST.fly && ST.fly.mid);
 const log = s => { ST.log.push(s); if (ST.log.length > 40) ST.log.shift(); };
 const zname = (ctx, z) => { const Z = ZONES[z]; return Z ? (ctx.lang() === 'vi' ? Z.name.vi : Z.name.en) : z; };
@@ -97,23 +102,36 @@ const dirKey = d => (d === 0 ? 's' : d === 3 ? 'n' : 'e');
 /* chong chóng = LỚP RIÊNG nhỏ gọn đặt trên ĐỈNH đầu (không che tóc mái / mắt): điểm neo = hàng điểm ảnh cao nhất của chính khung đang vẽ (quét 1 lần, nhớ đệm) */
 function copterFrame(t, fps) { const c = cre('copter2_s') || cre('copter_s'); if (!c) return null; const f = c[Math.floor(t * fps) % c.length]; return f ? f[0] : null; }
 const COPB = new WeakMap();
+/* plan-37: đọc pixel qua canvas nháp (willReadFrequently) — getImageData thẳng trên ảnh sprite làm Chrome đọc ngược GPU và có thể hạ canvas đó xuống CPU (mọi lần vẽ sau phải tải lại) */
+let RDC = null;
+function readPx(img, sx, sy, sw, sh, W, H) { if (!RDC) RDC = document.createElement('canvas'); if (RDC.width < W) RDC.width = W; if (RDC.height < H) RDC.height = H; const x = RDC.getContext('2d', { willReadFrequently: true }); x.clearRect(0, 0, W, H); x.drawImage(img, sx, sy, sw, sh, 0, 0, W, H); return x.getImageData(0, 0, W, H).data; }
 function copBottom(im) {   /* hàng đáy (logic) của núm chong chóng trong ảnh */
   let v = COPB.get(im); if (v != null) return v; v = im.height;
-  try { const hi = im.__hi || 1, w = Math.round(im.width * hi), h = Math.round(im.height * hi), d = im.getContext('2d').getImageData(0, 0, w, h).data; for (let y = h - 1; y >= 0; y--) { let any = false; for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40) { any = true; break; } if (any) { v = (y + 1) / hi; break; } } } catch (e) { }
+  try { const hi = im.__hi || 1, w = Math.round(im.width * hi), h = Math.round(im.height * hi), d = readPx(im, 0, 0, im.width, im.height, w, h); for (let y = h - 1; y >= 0; y--) { let any = false; for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40) { any = true; break; } if (any) { v = (y + 1) / hi; break; } } } catch (e) { }
   COPB.set(im, v); return v;
 }
-function drawCopter(g, hx, hy, t, fps, alpha = 1) {   /* hx, hy = đỉnh đầu (màn hình): đáy núm chong chóng chạm tóc */
+export function drawCopter(g, hx, hy, t, fps, alpha = 1) {   /* hx, hy = đỉnh đầu (màn hình): đáy núm chong chóng chạm tóc */
   const im = copterFrame(t, fps); if (!im) return;
   if (alpha < 1) g.globalAlpha = alpha; g.drawImage(im, Math.round(hx - im.width / 2), Math.round(hy - copBottom(im) + 1)); g.globalAlpha = 1;
 }
 const TOPC = new Map();
-function topOf(img, sx, sy, sw, sh) {   /* {top, cx} (logic, tính trong ô) của phần thân cao nhất trong ô sx,sy,sw,sh */
-  const key = (img.__tid || (img.__tid = Math.random().toString(36).slice(2))) + ':' + sx + ':' + sy; let v = TOPC.get(key); if (v) return v; v = { top: 2, cx: sw / 2 };
-  try { const hi = img.__hi || 1, X = Math.round(sx * hi), Y = Math.round(sy * hi), W = Math.round(sw * hi), H = Math.round(sh * hi), d = img.getContext('2d').getImageData(X, Y, W, H).data;
+/* plan-37: đọc pixel = đọc ngược GPU (chặn luồng, ~10 ms / lần trên máy yếu) → khung MỚI cùng cỡ với khung đã đo: tạm dùng số của khung trước,
+   gom đo bù lúc rảnh (requestIdleCallback); khung đầu tiên của một cỡ vẫn đo ngay. */
+const TOPSZ = new Map(), TOPQ = new Map(); let topArm = false;
+function topIdle() { topArm = false; for (const [k, q] of TOPQ) { const v = topCompute(q.img, q.sx, q.sy, q.sw, q.sh); TOPC.set(k, v); TOPSZ.set(q.sw + 'x' + q.sh, v); } TOPQ.clear(); }
+export function topOf(img, sx, sy, sw, sh) {   /* {top, cx} (logic, tính trong ô) của phần thân cao nhất trong ô sx,sy,sw,sh */
+  const key = (img.__tid || (img.__tid = Math.random().toString(36).slice(2))) + ':' + sx + ':' + sy; let v = TOPC.get(key); if (v) return v;
+  const guess = TOPSZ.get(sw + 'x' + sh);
+  if (guess && typeof requestIdleCallback !== 'undefined') { if (!TOPQ.has(key)) TOPQ.set(key, { img, sx, sy, sw, sh }); if (!topArm) { topArm = true; requestIdleCallback(topIdle, { timeout: 400 }); } return guess; }
+  v = topCompute(img, sx, sy, sw, sh); TOPC.set(key, v); TOPSZ.set(sw + 'x' + sh, v); return v;
+}
+function topCompute(img, sx, sy, sw, sh) {
+  let v = { top: 2, cx: sw / 2 };
+  try { const hi = img.__hi || 1, X = Math.round(sx * hi), Y = Math.round(sy * hi), W = Math.round(sw * hi), H = Math.round(sh * hi), d = readPx(img, sx, sy, sw, sh, W, H);
     for (let y = 0; y < H; y++) { let a = -1, b = -1; for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 60) { if (a < 0) a = x; b = x; }
       if (a >= 0) { let a2 = a, b2 = b; for (let yy = y; yy < Math.min(H, y + Math.round(3 * hi)); yy++) for (let x = 0; x < W; x++) if (d[(yy * W + x) * 4 + 3] > 60) { a2 = Math.min(a2, x); b2 = Math.max(b2, x); } v = { top: y / hi, cx: (a2 + b2 + 1) / 2 / hi }; break; } }
   } catch (e) { }
-  TOPC.set(key, v); return v;
+  return v;
 }
 function rkPre(ctx) { const pt = petOf(ctx); if (!pt) return 'rockypet'; if (pt.superT > 0 && cre('rockysup_hover_s')) return 'rockysup'; return LV.levelFromXp(pt.xp || 0).lv >= 5 ? 'rockybig' : 'rockypet'; }
 function rkFrames(ctx, clip, dir) {
@@ -121,44 +139,59 @@ function rkFrames(ctx, clip, dir) {
   return cre(`${pre}_${clip}_${k}`) || (clip === 'cheer' ? cre(`${pre}_cheer_s`) : null) || cre(`${pre}_hover_${k}`) || cre(`${pre}_idle_${k}`) || cre(pre + (k === 's' ? '_ds' : k === 'n' ? '_dn' : '')) || cre(pre) || cre('rockypet');
 }
 /* người chơi: clip 'hover' (chân đung đưa) nếu thân có; không thì dáng đứng gốc. Trả điểm neo đỉnh đầu (màn hình) để đặt chong chóng */
-function drawPlayer(g, p, x, y, clip, t) {
-  const acts = p.sheet && p.sheet.actions, a = clip === 'hover' && acts && acts.hover, d = p.dir & 3;
-  if (a) { const ch = a.ch || 20, cw = a.cw || 16, f = Math.floor(t * 7) % a.n, X = Math.round(x) - (cw >> 1), Y = Math.round(y) - 18 - (ch - 20);
+export function drawPlayer(g, p, x, y, clip, t) {
+  const acts = p.sheet && p.sheet.actions, act = p.action && acts && acts[p.action.name], pose = !act && clip === 'hover' && ST.ctx && ST.ctx.alt ? ST.ctx.alt.pose() : 'hover', d = p.dir & 3;
+  if (pose !== 'hover') { const r = drawFlyPose(g, 'player', pose, d, t, x, y, { sheet: p.sheet }); if (r) return r; }   /* bổ nhào / vút lên: flyposes.js (đỉnh đầu + góc chong chóng theo bảng) */
+  const a = act || (clip === 'hover' && acts && acts.hover);   /* 2026-10-14 không chiến: đang chém / động tác → vẽ clip động tác (kiếm hiện giữa trời) */
+  if (a) { const ch = a.ch || 20, cw = a.cw || 16, f = act ? Math.min(a.n - 1, Math.floor(p.action.t * (a.fps || 12))) : Math.floor(t * 7) % a.n, X = Math.round(x) - (cw >> 1), Y = Math.round(y) - 18 - (ch - 20);
     g.drawImage(a.img, f * cw, d * ch, cw, ch, X, Y, cw, ch); const tp = topOf(a.img, f * cw, d * ch, cw, ch); return { hx: X + tp.cx, hy: Y + tp.top }; }
   const sk = p.sheet && p.sheet.skin;
   if (sk) { const X = Math.round(x) - Math.floor(sk.cw / 2), Y = Math.round(y) + 2 - sk.ch; g.drawImage(sk.img, 0, d * sk.ch, sk.cw, sk.ch, X, Y, sk.cw, sk.ch); const tp = topOf(sk.img, 0, d * sk.ch, sk.cw, sk.ch); return { hx: X + tp.cx, hy: Y + tp.top }; }
   const X = Math.round(x) - 8, Y = Math.round(y) - 18; g.drawImage(p.sheet, 0, d * 20, 16, 20, X, Y, 16, 20); const tp = topOf(p.sheet, 0, d * 20, 16, 20); return { hx: X + tp.cx, hy: Y + tp.top };
 }
+export function copterAt(g, hd, t, fps, alpha = 1) {   /* chong chóng ở đỉnh đầu; dáng nghiêng (|góc| > 20°) → XOAY quanh đỉnh đầu, không phóng to */
+  if (!hd) return; const ang = hd.ang || 0; if (Math.abs(ang) > 20) { g.save(); g.translate(hd.hx, hd.hy); g.rotate(ang * Math.PI / 180); drawCopter(g, 0, 0, t, fps, alpha); g.restore(); } else drawCopter(g, hd.hx, hd.hy, t, fps, alpha);
+}
 function shadowH(g, x, y, h) {   /* h = độ cao 0 (sát đất) … 1 (rất cao): bóng ở cao TO + MỜ, sát đất NHỎ + ĐẬM */
   h = Math.max(0, Math.min(1, h)); const sz = 0.75 + h * 0.9, a = 1.25 - h * 0.85;
+  if (SHADOW.on) { shadowAt(g, x, y + 1, 16, h * 90); return; }   /* plan-66: ảnh bóng chung — cao thì nhỏ + nhạt */
   for (const [m, al] of [[1.35, 0.08], [1.0, 0.1], [0.62, 0.13]]) { g.fillStyle = `rgba(20,30,70,${(al * a).toFixed(3)})`; g.beginPath(); g.ellipse(x, y + 1, 9 * sz * m, 3 * sz * m, 0, 0, TAU); g.fill(); }
 }
-function shadow(g, x, y, k) { for (const [m, al] of [[1.35, 0.08], [1.0, 0.1], [0.62, 0.12]]) { g.fillStyle = `rgba(20,30,70,${(al * (0.4 + k * 0.7)).toFixed(3)})`; g.beginPath(); g.ellipse(x, y + 1, (8 * k + 3) * m, (2.6 * k + 1.2) * m, 0, 0, TAU); g.fill(); } }
+function shadow(g, x, y, k) { if (SHADOW.on) { shadowAt(g, x, y + 1, Math.max(4, Math.round(14 * k + 2)), 0, 0.45 + 0.55 * k); return; } for (const [m, al] of [[1.35, 0.08], [1.0, 0.1], [0.62, 0.12]]) { g.fillStyle = `rgba(20,30,70,${(al * (0.4 + k * 0.7)).toFixed(3)})`; g.beginPath(); g.ellipse(x, y + 1, (8 * k + 3) * m, (2.6 * k + 1.2) * m, 0, 0, TAU); g.fill(); } }
 function drawRocky(g, ctx, x, y, dir, clip, t, cop, copFps, copA = 1) {   /* x, y = chân Rocky (màn hình); cop: chong chóng trên đỉnh đầu theo khung */
+  if (clip === 'dive' || clip === 'climb') { const r = drawFlyPose(g, rkPre(ctx), clip, dir, t, x, y); if (r) { if (cop) copterAt(g, r, t, copFps, copA); return 22; } clip = 'hover'; }   /* Rocky bổ nhào / vút lên (flyposes.js) */
   const set = rkFrames(ctx, clip, dir); if (!set) return 0;
   const fr = set[Math.floor(t * 8) % set.length], fl = dir === 1 ? 1 : 0, im = fr[fl], X = Math.round(x - im.width / 2), Y = Math.round(y - im.height);
   g.drawImage(im, X, Y); if (cop) { const tp = topOf(fr[0], 0, 0, im.width, im.height), cxp = fl ? im.width - tp.cx : tp.cx; drawCopter(g, X + cxp, Y + tp.top, t, copFps, copA); } return im.height;
 }
 
 /* ---------------- trạng thái bay (trên trời) ---------------- */
+/* bóng theo ĐỘ CAO: nhỏ + mờ dần, lệch theo hướng nắng (trên-trái → bóng xuống-phải), mất hẳn trên 150 m */
+function altShadow(g, x, y, k0) { const h = AL.h; if (h > 150 || inSky(ST.ctx)) return; const u = h / 150, k = k0 * (1 - u * 0.85); if (k <= 0.05) return; const dx = Math.round(h * 0.07), dy = Math.round(h * 0.035); g.save(); g.globalAlpha = 1 - u * 0.9; shadow(g, x + dx, y + dy, k); g.restore(); }
 function drawHover(g, ent) {
   const ctx = ST.ctx, f = ST.fly; if (!ctx || !f) return;
   const t = ctx.S.time, x = Math.round(ent.x), y = Math.round(ent.y), lift = Math.round(liftNow()), bob = Math.round(Math.sin(t * 3) * 1.5), cut = ST.cut, zc = cut && cut.z ? cut.z : 0;
-  shadow(g, x, y, 1 - f.z * 0.45);
+  ent.sortUp = AL.h >= 30 ? 1e5 : Math.round(AL.h * 4);   /* ≥ 30 m: trên mọi vật mặt đất; thấp hơn: nâng thứ tự vẽ theo độ cao (~4 px / m) */
+  if (!ent.sortUp || ent.sortUp < 1e5) altShadow(g, x, y, 1);   /* bay cao: bóng vẽ ở lớp nền (drawGround) */
   const rk = ST.rk; if (rk && rk.with && rk.y <= y) drawRkHover(g, ctx, t);
   const py = y - lift + bob + zc, dir = ent.dir & 3, trail = ART.vfx && ART.vfx.sky_trail;
   if (trail && trail.img && ent.moving) { const hi = trail.img.__hi ? 1 : 2, fi = Math.floor(t * (trail.fps || 12)) % trail.n, inp = ctx.input || {};
     const vx = (inp.right ? 1 : 0) - (inp.left ? 1 : 0) || (dir === 2 ? 1 : dir === 1 ? -1 : 0), vy = (inp.down ? 1 : 0) - (inp.up ? 1 : 0) || (dir === 0 ? 1 : dir === 3 ? -1 : 0);
     g.save(); g.globalAlpha = 0.7; g.translate(x, py - 8); g.rotate(Math.atan2(vy, vx)); g.drawImage(trail.img, fi * trail.w * hi, 0, trail.w * hi, trail.h * hi, -trail.w + 6, -Math.round(trail.h / 2), trail.w, trail.h); g.restore(); }
+  const pk = ctx.alt ? ctx.alt.pose() : 'hover', sk = Math.min(1, Math.max(0, (Math.abs(AL.v) - 110) / 140)); if (pk !== 'hover') drawSpeedFx(g, pk, x, py - 10, t, 0.35 + 0.65 * sk, 'back');   /* VFX tốc độ (flyposes.js) — chỉ khi đang lao nhanh */
+  const sp = ent.kiSpin; if (sp) { g.save(); g.translate(x, py - 10); g.rotate(sp.ang || 0); g.translate(-x, -(py - 10)); }   /* ki.js lộn nhào né đòn: chỉ xoay NGƯỜI + chong chóng (Rocky không xoay) */
   const hd = drawPlayer(g, ent, x, py, 'hover', t);
-  drawCopter(g, hd.hx, hd.hy, t, cut ? cut.fps || 18 : 18);
+  copterAt(g, hd, t, cut ? cut.fps || 18 : Math.abs(AL.v) > 110 ? 34 : 18);   /* bay nhanh: chong chóng quay nhanh hơn */
+  if (sp) g.restore();
+  if (pk !== 'hover') { drawCopterBlur(g, hd.hx, hd.hy - 9, t, 0.5 + 0.5 * sk); drawSpeedFx(g, pk, x, py - 10, t, 0.35 + 0.65 * sk, 'front'); }
   if (rk && rk.with && rk.y > y) drawRkHover(g, ctx, t);
-  ent.labelUp = Math.max(0, lift + 10 - zc);
+  ent.labelUp = Math.max(0, lift + 14 - zc);   /* tên ở trên chong chóng */
 }
 function drawRkHover(g, ctx, t) {
   const rk = ST.rk, cut = ST.cut, x = Math.round(rk.x + (ST.lunge ? ST.lunge.dx : 0)), y = Math.round(rk.y + (ST.lunge ? ST.lunge.dy : 0)), lift = Math.round(liftNow() + 2), zc = cut && cut.z ? cut.z : 0;
-  shadow(g, x, y, 0.8 - (ST.fly ? ST.fly.z * 0.35 : 0));
-  drawRocky(g, ctx, x, y - lift + Math.round(Math.sin(t * 3 + 1.3) * 1.5) + zc, rk.dir, rk.cheer > 0 ? 'cheer' : 'hover', t, true, cut ? cut.fps || 18 : 18);
+  if (AL.h < 30) altShadow(g, x, y, 0.8);
+  const fl = rk.fl, ry = y - lift + Math.round(Math.sin(t * 3 + 1.3) * 1.5) + zc; if (fl) { g.save(); g.translate(x, ry - 8); g.rotate(fl.ang); g.translate(-x, -(ry - 8)); }
+  const pz = ctx.alt ? ctx.alt.pose() : 'hover';   /* Rocky bổ nhào / vút lên cùng người */ drawRocky(g, ctx, x, ry, rk.dir, fl ? 'hover' : rk.cheer > 0 ? 'cheer' : pz, t, true, cut ? cut.fps || 18 : Math.abs(AL.v) > 110 ? 34 : 18); if (fl) g.restore();   /* Rocky cũng bổ nhào / vút lên theo */
 }
 function startFly(ctx, alt = 0, x, y) {
   const p = ctx.S.player; if (x != null) { p.x = x; p.y = y; }
@@ -168,7 +201,7 @@ function startFly(ctx, alt = 0, x, y) {
   log('fly');
 }
 function stopFly(ctx) {
-  const p = ctx.S.player; ST.fly = null; ST.lunge = null; p.labelUp = 0; if (p.custom === drawHover || p.custom === drawCut) p.custom = null; p.ghost = false; p.speedMul = 1; p.passable = null; p.boxW = 10; p.boxH = 6;
+  const p = ctx.S.player; ST.fly = null; ST.lunge = null; p.labelUp = 0; p.sortUp = 0; if (p.custom === drawHover || p.custom === drawCut) p.custom = null; p.ghost = false; p.speedMul = 1; p.passable = null; p.boxW = 10; p.boxH = 6;
 }
 function switchAlt(ctx) {
   const f = ST.fly; if (!f || f.hook > 0 || ST.cut) return false;
@@ -336,9 +369,10 @@ function drawCutOverlay(g, ctx, cx, cy) {
     for (const [oy, sp, s] of [[0.32, 1, 0], [0.42, 0.8, 30]]) g.drawImage(gull.img, fr * gull.cw, 2 * gull.ch, gull.cw, gull.ch, Math.round(-40 + u * (VW + 80) * sp + s), Math.round(VH * oy), gull.cw, gull.ch); }
   if ((C.haze > 0.05 || C.zA > 0) && ctx.S.player.custom === drawCut) { g.save(); g.translate(-cx, -cy); drawCut(g, ctx.S.player); g.restore(); }   /* người + Rocky vẽ lại TRÊN lớp sương (mặt đất mờ dần, nhân vật vẫn rõ) — mây vẫn lướt qua trước mặt */
   if (C.clouds > 0) { const dir = C.up ? -1 : 1, col = mixHex(th.col, 'w', 0.6), sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;   /* xuyên qua biển sương: khối sương mềm lướt qua màn */
-    for (let i = 0; i < 8; i++) { const im = fogTint(i % 4, col); if (!im) continue; const w = im.width * 1.6, h = im.height * 1.6, x = ((i * 137) % (VW + 120)) - 140, sp = 0.7 + (i % 3) * 0.35;
+    const PXC = ['sky-cl-wall', 'sky-cl-big-a', 'sky-cl-band', 'sky-cl-big-b', 'sky-cl-wall', 'sky-cl-mid', 'sky-cl-big-a', 'sky-cl-band'], pxOk = pxReady(); if (pxOk) g.imageSmoothingEnabled = false;   /* 2026-10-15: mây PIXEL */
+    for (let i = 0; i < (pxOk ? 12 : 8); i++) { const im = pxOk ? pxCloudTint(PXC[i % 8], col, 0.2) : fogTint(i % 4, col); if (!im) continue; const w = pxOk ? im.width : im.width * 1.6, h = pxOk ? im.height : im.height * 1.6, x = Math.round(((i * 137) % (VW + 120)) - (pxOk ? 60 : 140)), sp = 0.7 + (i % 3) * 0.35;
       const y = dir > 0 ? -h + ((C.clouds * VH * 1.6 * sp + i * 53) % (VH + h * 2)) : VH - ((C.clouds * VH * 1.6 * sp + i * 53) % (VH + h * 2));
-      g.globalAlpha = Math.min(0.95, 0.5 + C.clouds); g.drawImage(im, x, y, w, h); } g.globalAlpha = 1; g.imageSmoothingEnabled = sm; }
+      g.globalAlpha = Math.min(0.95, 0.5 + C.clouds); g.drawImage(im, x, Math.round(y), w, h); } g.globalAlpha = 1; g.imageSmoothingEnabled = sm; }
   if (C.white > 0) { g.fillStyle = '#f4fbff'; g.globalAlpha = Math.min(1, C.white); g.fillRect(0, 0, VW, VH); g.globalAlpha = 1; }
 }
 function tinted(im, th) {   /* mây PixelLab phủ màu chủ đề trời (tạo 1 lần) */
@@ -350,7 +384,7 @@ function tinted(im, th) {   /* mây PixelLab phủ màu chủ đề trời (tạ
 
 /* ---------------- rơi (bị đánh rơi khỏi trời) ---------------- */
 function fall(ctx, why) {
-  if (!inSky(ctx) || (ST.cut && ST.cut.kind === 'down')) return false;
+  if (!inSky(ctx) || (ST.cut && ST.cut.kind === 'down')) return false; if (knockV(ctx, -AL.h, { slam: true })) { log('fall→slam ' + why); return true; }
   ST.cut = { kind: 'down', t: 0.3, fps: 30, z: 0, to: BELOW_OF(zid(ctx)), from: zid(ctx), rk: !!(ST.rk && ST.rk.with), fell: true };
   ctx.setMode('copter'); ctx.sfx('whoosh'); ctx.toast(L(ctx).knocked, true); log('fall ' + why); return true;
 }
@@ -375,6 +409,7 @@ function rockyTick(ctx, dt) {
   const rk = ST.rk, p = ctx.S.player; if (!rk || !rk.with) return;
   if (rk.cheer > 0) rk.cheer -= dt;
   const inp = ctx.input || {}, side = (p.dir & 3) === 1 ? 1 : -1, tx = p.x + side * 20, ty = p.y + 4;
+  if (rk.fl) { const F = rk.fl; F.t += dt; const k = Math.exp(-2.6 * dt); F.vx *= k; F.vy *= k; const m = ctx.S.map, nx = rk.x + F.vx * dt, ny = rk.y + F.vy * dt; if (nx > 12 && ny > 12 && nx < m.w * TS - 12 && ny < m.h * TS - 12) { rk.x = nx; rk.y = ny; } F.ang += F.spin * dt * Math.min(1, Math.hypot(F.vx, F.vy) / 160); if (F.t > 0.9) { rk.fl = null; } else return; }   /* 2026-10-14 không chiến: Rocky bị đòn mạnh → lộn nhào văng ngang rồi giữ thăng bằng */
   rk.x += (tx - rk.x) * Math.min(1, dt * 5); rk.y += (ty - rk.y) * Math.min(1, dt * 5); rk.dir = p.dir & 3; void inp;
   const pt = petOf(ctx); if (!pt || !ctx.monsters) return;
   if (ST.punchCd > 0) ST.punchCd -= dt; if (ST.haCd > 0) ST.haCd -= dt;
@@ -382,7 +417,7 @@ function rockyTick(ctx, dt) {
   if (pt.cmd !== 'protect' && pt.cmd !== 'attack') return;
   const now = ctx.S.time; let best = null, bd = 1e9;
   for (const mo of ctx.monsters.list()) {
-    if ((inSky(ctx) ? !mo.c.sky : !!mo.c.sky) || mo.hp <= 0) continue; const d = Math.hypot(mo.x - rk.x, mo.y - rk.y);
+    if ((inSky(ctx) ? !(mo.c.sky || mo.c.fly) : !!mo.c.sky) || mo.hp <= 0) continue;   /* 2026-10-14: trùm bay đuổi theo (c.fly) cũng là mục tiêu trên trời */ const d = Math.hypot(mo.x - rk.x, mo.y - rk.y);
     if (pt.cmd === 'protect' && !(now - (ST.threat.get(mo) ?? -99) < 6 || d < 40)) continue;
     if (d < (pt.cmd === 'attack' ? 150 : 170) && d < bd) { bd = d; best = mo; }
   }
@@ -439,7 +474,7 @@ function monCfg(ctx, key) {   /* cấu hình quái theo trời: sức × k, tên
   return (ST.monCfg[id] = { ...c, hp: Math.max(40, Math.round(c.hp * k)), dmg: Math.max(4, Math.round(c.dmg * (0.3 + 0.7 * k))), xp: Math.max(6, Math.round(c.xp * k)), armor: Math.round((c.armor || 0) * k),
     vi: c.vi + suf.vi, en: suf.en + c.en, sheet: recolorSheet(c.sheet, th.hue), tier: k, aiKey: key }); void vi;
 }
-function spawnSky(ctx, key, x, y) { const c = SKYMON[key] && monCfg(ctx, key); if (!c || !ctx.monsters) return null; const mo = ctx.monsters.add(c, x, y); mo.alt = c.alt0 ?? 0; mo.home = { x, y }; return mo; }
+function spawnSky(ctx, key, x, y) { const c = SKYMON[key] && monCfg(ctx, key); if (!c || !ctx.monsters) return null; const mo = ctx.monsters.add(c, x, y); mo.hp = mo.max = easyHp(mo.max); mo.alt = c.alt0 ?? 0; mo.home = { x, y }; return mo; }
 function popOf(ctx) {
   const k = (themeOf(zid(ctx))).k, big = ctx.S.map.w >= 70;
   return big ? [['thunder', 3], ['jelly', 3], ['hawk', 2], ['pirate', 1], ['whale', 1]] : [['thunder', 2], ['jelly', 2], ['hawk', 1], ['pirate', k >= 0.45 ? 1 : 0], ['whale', k >= 0.6 ? 1 : 0]];
@@ -505,12 +540,45 @@ function wangMasked(ctx) {   /* lớp Wang 0 của gói trời này: bỏ phần
   return (WMASK[z] = { L0: out, layers: pk.layers, cls });
 }
 const FOGC = {};
-function mixHex(hex, to, k) { const n = parseInt(hex.slice(1), 16), r = n >> 16, g2 = (n >> 8) & 255, b = n & 255, t = to === 'w' ? 255 : 0; return `rgb(${Math.round(r + (t - r) * k)},${Math.round(g2 + (t - g2) * k)},${Math.round(b + (t - b) * k)})`; }
-function fogTint(i, col) {   /* khối sương mềm (zones/sky/fog — mờ Gauss) tô màu theo trời; tạo 1 lần */
+export function mixHex(hex, to, k) { const n = parseInt(hex.slice(1), 16), r = n >> 16, g2 = (n >> 8) & 255, b = n & 255, t = to === 'w' ? 255 : 0; return `rgb(${Math.round(r + (t - r) * k)},${Math.round(g2 + (t - g2) * k)},${Math.round(b + (t - b) * k)})`; }
+export function fogTint(i, col) {   /* khối sương mềm (zones/sky/fog — mờ Gauss) tô màu theo trời; tạo 1 lần */
   const key = i + '|' + col; if (FOGC[key]) return FOGC[key]; const im = skyImg('fog_' + i); if (!im) return null;
   const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height); return (FOGC[key] = c);
 }
-function fogLayer(g, ctx, th, tone, alpha, n, f, drift, sc, seed, cx, cy, t) {
+/* ===== 2026-10-15 anh ('nền trời nặng thì đổi sang VFX mây pixel'): MÂY PIXEL PixelLab (vfx_workbench, assets/px/zones/sky/pxcloud) thay khối sương mờ Gauss.
+   Mỗi lớp fogLayer = 1 TẤM 760×560 (logic, 1×) DỰNG SẴN 1 lần từ ~vài chục mây pixel rải theo seed (liền mép để cuộn), tô theo màu trời; mỗi khung chỉ cắt đúng phần
+   trong màn ra vẽ (≤ 4 lượt / lớp, làm mượt TẮT, không phóng to). Ảnh chưa tải xong → tạm dùng sương mềm cũ. ===== */
+const PXN = ['sky-cl-big-a', 'sky-cl-big-b', 'sky-cl-band', 'sky-cl-mid', 'sky-cl-small', 'sky-cl-wall'], PXI = {}, PXT = {}, PXK = {}, PXB = {};
+export function pxCloud(n) { if (typeof document === 'undefined') return null; let im = PXI[n]; if (!im) { im = PXI[n] = new Image(); im.src = 'assets/px/zones/sky/pxcloud/' + n + '.png'; } return im.complete && im.naturalWidth ? im : null; }
+export function pxCloudTint(n, col, k) {   /* mây pixel tô màu trời (source-atop, giữ nguyên hình điểm ảnh) — tạo 1 lần; có bitmap thì trả bitmap */
+  const key = n + '|' + col + '|' + k; if (PXB[key]) return PXB[key]; if (PXK[key]) return PXK[key]; const im = pxCloud(n); if (!im) return null; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(im, 0, 0);
+  if (k > 0) { x.globalCompositeOperation = 'source-atop'; x.globalAlpha = k; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height); } PXK[key] = c; if (typeof createImageBitmap === 'function') createImageBitmap(c).then(b => { PXB[key] = b; }).catch(() => { }); return c;
+}
+const pxReady = () => PXN.every(n => pxCloud(n));
+export function toBmp(o) { if (o && !o.bmpReq && typeof createImageBitmap === 'function') { o.bmpReq = true; createImageBitmap(o.c).then(b => { o.bmp = b; }).catch(() => { }); } return o; }   /* tấm dựng sẵn → ImageBitmap (ảnh GPU bất biến): vẽ lại mỗi khung không phải chép canvas */
+function pxRng(seed) { let s = (seed * 2654435761) >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+function pxTile(th, tone, n, sc, seed) {   /* tấm mây 760×560 liền mép: lớp tối = cụm to + dải (mây sâu), lớp sáng = trộn đủ cỡ */
+  const key = tone + '|' + th.col + '|' + n + '|' + sc + '|' + seed; if (PXT[key]) return PXT[key]; if (!pxReady()) return null;
+  const FW = 760, FH = 560, c = document.createElement('canvas'); c.width = FW; c.height = FH; const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  const dark = tone === 'dark', col = dark ? mixHex(th.col, 'k', 0.16) : mixHex(th.col, 'w', 0.55), k = dark ? 0.45 : 0.2, R = pxRng(seed * 97 + n * 7 + 3);
+  const kinds = dark ? ['sky-cl-big-a', 'sky-cl-big-b', 'sky-cl-band', 'sky-cl-wall'] : ['sky-cl-big-a', 'sky-cl-big-b', 'sky-cl-band', 'sky-cl-mid', 'sky-cl-mid', 'sky-cl-small', 'sky-cl-small'];
+  const N = Math.round(n * (dark ? 5 : 7) * (sc / 1.5));   /* mật độ theo số khối sương cũ (n) và cỡ (sc): đủ dày thành biển mây */
+  for (let i = 0; i < N; i++) { const nm = kinds[Math.floor(R() * kinds.length)], im = pxCloudTint(nm, col, k); if (!im) continue; const px = Math.floor(R() * FW), py = Math.floor(R() * FH), flip = R() < 0.5;
+    for (const ox of [0, -FW, FW]) for (const oy of [0, -FH, FH]) { const X = px + ox, Y = py + oy; if (X + im.width < 0 || X > FW || Y + im.height < 0 || Y > FH) continue; if (flip) { x.save(); x.translate(X + im.width, Y); x.scale(-1, 1); x.drawImage(im, 0, 0); x.restore(); } else x.drawImage(im, X, Y); } }
+  PXT[key] = toBmp({ c, w: FW, h: FH }); return PXT[key];
+}
+function blitWrap(g, T, ox, oy, VW, VH) {   /* vẽ tấm lặp phủ màn — chỉ cắt đúng phần trong màn (không tô thừa ngoài màn) */
+  for (let ty = oy - T.h; ty < VH; ty += T.h) for (let tx = ox - T.w; tx < VW; tx += T.w) { const x0 = Math.max(0, tx), y0 = Math.max(0, ty), x1 = Math.min(VW, tx + T.w), y1 = Math.min(VH, ty + T.h); if (x1 <= x0 || y1 <= y0) continue;
+    g.drawImage(T.bmp || T.c, Math.round(x0 - tx), Math.round(y0 - ty), Math.round(x1 - x0), Math.round(y1 - y0), Math.round(x0), Math.round(y0), Math.round(x1 - x0), Math.round(y1 - y0)); }
+}
+export function fogLayer(g, ctx, th, tone, alpha, n, f, drift, sc, seed, cx, cy, t) {
+  if (ctx.gfxLow && ctx.gfxLow()) { n = Math.ceil(n / 2); alpha = Math.min(1, alpha * 1.25); }   /* plan-37: bậc đồ hoạ nhẹ → nửa số mây (đậm hơn chút cho đủ dày) */
+  const T = pxTile(th, tone, n, sc, seed); if (!T) return fogLayerSoft(g, ctx, th, tone, alpha, n, f, drift, sc, seed, cx, cy, t);
+  const VW = ctx.VW, VH = ctx.VH, sm = g.imageSmoothingEnabled, a0 = g.globalAlpha; g.imageSmoothingEnabled = false; g.globalAlpha = Math.min(1, alpha * 1.15);   /* mây pixel đặc hơn sương → bù nhẹ độ đậm cho giống độ dày cũ */
+  const ox = ((Math.round(-cx * f + t * drift)) % T.w + T.w) % T.w, oy = ((Math.round(-cy * f)) % T.h + T.h) % T.h; blitWrap(g, T, ox, oy, VW, VH);
+  g.globalAlpha = a0; g.imageSmoothingEnabled = sm;
+}
+function fogLayerSoft(g, ctx, th, tone, alpha, n, f, drift, sc, seed, cx, cy, t) {   /* bản sương mềm cũ — chỉ dùng khi ảnh mây pixel chưa tải xong */
   const col = tone === 'dark' ? mixHex(th.col, 'k', 0.32) : mixHex(th.col, 'w', 0.68), VW = ctx.VW, VH = ctx.VH, FW = 760, FH = 560, sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true; g.globalAlpha = alpha;
   for (let i = 0; i < n; i++) { const im = fogTint((i + seed) % 4, col); if (!im) continue; const w = im.width * sc, h = im.height * sc, hx = ((i + seed) * 977) % FW, hy = ((i + seed) * 613 + i * 131) % FH;
     const x = ((hx - cx * f + t * drift * (1 + (i % 3) * 0.3)) % FW + FW) % FW - w * 0.6, y = ((hy - cy * f) % FH + FH) % FH - h * 0.6;
@@ -535,10 +603,11 @@ function fogOver(g, cxp, cyp, w, h, th, a) {   /* 1 khối sương mềm đặt 
   const im = fogTint(2, mixHex(th.col, 'w', 0.55)); if (!im) return; const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true; g.globalAlpha = a; g.drawImage(im, cxp - w / 2, cyp - h / 2, w, h); g.globalAlpha = 1; g.imageSmoothingEnabled = sm;
 }
 function drawSkyGround(g, ctx, cx, cy) {   /* nhìn xuyên xuống bản đồ THẬT của vùng dưới (cùng toạ độ, mờ nhẹ vì rất xa) qua biển sương mềm nhiều lớp */
+  if (BELOW_OF(zid(ctx))) return farGround(g, ctx, cx, cy, BELOW_OF(zid(ctx)), Math.max(AL.h, 625));   /* 2026-10-14: liền với dải Trên cao (khảm thế giới thu nhỏ liên tục) */
   const VW = ctx.VW, VH = ctx.VH, t = ctx.S.time, th = themeOf(zid(ctx));
   g.fillStyle = th.col; g.fillRect(0, 0, VW, VH);
   const land = blurLand(landImage(ctx, BELOW_OF(zid(ctx))));
-  if (land) { const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false; g.drawImage(land, Math.round(-cx), Math.round(-cy)); g.imageSmoothingEnabled = sm;
+  if (land) { const sm = g.imageSmoothingEnabled, [lx, ly] = landToScr(ctx, cx, cy, 4)(0, 0); g.imageSmoothingEnabled = false; g.drawImage(land, Math.round(lx), Math.round(ly), Math.round(land.width / 4), Math.round(land.height / 4)); g.imageSmoothingEnabled = sm;   /* đất rất xa: ¼ (liền bậc với dải Trên cao) */
     g.fillStyle = mixHex(th.col, 'w', 0.25); g.globalAlpha = 0.5; g.fillRect(0, 0, VW, VH); g.globalAlpha = 1; }   /* lớp không khí theo màu trời */
   /* BIỂN SƯƠNG MÂY mềm (mẫu Romestead anh gửi): khối sương mờ Gauss, 3 lớp trôi lệch nhau — lớp sâu tối, lớp trên sáng; đất lộ ra ở chỗ sương mỏng */
   fogLayer(g, ctx, th, 'dark', 0.34, 9, 1, 2, 1.35, 3, cx, cy, t);
@@ -574,11 +643,12 @@ function migrate(ctx) {
 /* ---------------- nút điện thoại ---------------- */
 function flyWhy(ctx) {   /* '' = bấm được; còn lại = lý do (nút mờ) */
   const t = L(ctx), p = ctx.S.player, z = zid(ctx);
-  if (ST.cut) return ' '; if (inSky(ctx)) return '';
+  if (ST.cut) return ' '; if (inSky(ctx) || (ctx.air && ctx.air.on())) return '';
   if (!copters(ctx)) return t.noCopter; if (!LAND.test(z) || !SKY_OF(z)) return t.notHere; if (p.custom || ctx.S.swimming) return t.busy; if (batOf(ctx) < 15 && !((ctx.S.save.inv || {}).feather || (ctx.S.save.inv || {}).tfeather)) return t.batTired; return '';
 }
 function pressFly(ctx) {   /* NÚT RIÊNG (X · 🚁): cất / hạ cánh — E / A không bao giờ làm việc này */
   if (ctx.S.mode === 'copter') { skipCut(ctx); return; } if (ctx.S.mode !== 'play') return;
+  if (perfectRecovery(ctx)) return; toggleFly(ctx); return;
   const why = flyWhy(ctx); if (why && why.trim()) { ctx.toast(why); ctx.sfx('fail'); return; } if (!why) useCopter(ctx);
 }
 function copIcon() { const it = ART.man && ART.man.ui && ART.man.ui.items; return it && it.copter ? 'assets/px/' + it.copter : ''; }
@@ -601,10 +671,15 @@ function btns(ctx) {
   return ST.btns;
 }
 function placeBtns(ctx) {
-  const B = btns(ctx); if (!B) return; const play = ctx.S.mode === 'play' || ctx.S.mode === 'copter', show = play && (inSky(ctx) || isMid() || copters(ctx) > 0), why = flyWhy(ctx), t = L(ctx);
-  if (B.desk) { B.desk.hidden = !show; B.desk.classList.toggle('off', !!why && !ST.cut); B.desk.title = why.trim(); B.desk.querySelector('b').textContent = ST.cut ? t.skip : inSky(ctx) ? t.useDown : isMid() ? `${t.btnMid} · X ${t.btnUp} / ⇧X ${t.btnDown}` : t.useUp;
+  const B = btns(ctx); if (!B) return; const play = ctx.S.mode === 'play' || ctx.S.mode === 'copter', AIRON = !!(ctx.air && ctx.air.on()), show = play && (inSky(ctx) || isMid() || copters(ctx) > 0 || AIRON), why = flyWhy(ctx), t = L(ctx);
+  if (B.desk) { B.desk.hidden = !show; B.desk.classList.toggle('off', !!why && !ST.cut); B.desk.title = why.trim(); B.desk.querySelector('b').textContent = ST.cut ? t.skip : (flyingNow(ctx) && AL.tgt > 0) ? t.useDown : flyingNow(ctx) ? t.useUp : isMid() ? `${t.btnMid} · X ${t.btnUp} / ⇧X ${t.btnDown}` : t.useUp;
     const hb = document.getElementById('hotbar'), r = hb && hb.getBoundingClientRect(), bw = B.desk.offsetWidth || 150, bh = B.desk.offsetHeight || 44;
-    if (r && r.width) { let x = r.right + 8; if (x + bw > window.innerWidth - 70) x = r.left - bw - 8; B.desk.style.left = Math.round(x) + 'px'; B.desk.style.top = Math.round(r.top + (r.height - bh) / 2) + 'px'; }
+    if (r && r.width) {   /* 2026-10-15: thanh công cụ thêm ô Ấn Linh (rộng hơn) → thử bên phải thanh, bên trái, rồi ngay TRÊN mép phải / trái thanh; chọn chỗ đầu tiên không đè thanh máu (+ số máu), máy đo địa chấn, chip trạng thái */
+      const vis = e => !e.hidden && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden';
+      const taken = [...document.querySelectorAll('#herobar, #herobar .hb-num, #seis, #px-status, #btn-chat, #lt-orb')].filter(vis).map(e => e.getBoundingClientRect()).filter(q => q.width);
+      const ok = (x, y) => x >= 8 && y >= 8 && x + bw <= window.innerWidth - 8 && !taken.some(q => x < q.right + 6 && x + bw > q.left - 6 && y < q.bottom + 4 && y + bh > q.top - 4);
+      const yc = r.top + (r.height - bh) / 2, cand = [[r.right + 8, yc], [r.left - bw - 8, yc], [r.right - bw, r.top - bh - 6], [r.left, r.top - bh - 6]], at = cand.find(([x, y]) => ok(x, y)) || cand[2];
+      B.desk.style.left = Math.round(at[0]) + 'px'; B.desk.style.top = Math.round(at[1]) + 'px'; }
     else { B.desk.style.left = (window.innerWidth - bw - 90) + 'px'; B.desk.style.top = (window.innerHeight - bh - 16) + 'px'; } }
   if (!B.fly) return;
   B.fly.hidden = !show; B.fly.classList.toggle('off', !!why && !ST.cut); B.thr.hidden = !(ctx.S.mode === 'play' && (inSky(ctx) || isMid()) && !ST.cut); B.alt.hidden = B.thr.hidden || !binoc(ctx) || !inSky(ctx);   /* plan-32 A: 🔭 ghim (có ống nhòm) · 🪨 thả đá */
@@ -648,14 +723,15 @@ function dot(g, x, y, r, fill, ring) { g.fillStyle = fill; g.beginPath(); g.arc(
 function pinMark(g, x, y) { g.fillStyle = 'rgba(220,60,50,.9)'; g.beginPath(); g.arc(x + 0.5, y - 5.5, 3, Math.PI, 0); g.lineTo(x + 0.5, y + 0.5); g.closePath(); g.fill(); g.fillStyle = '#fff'; g.fillRect(x, y - 6, 1, 1); }
 function drawScout(g, ctx, cx, cy) {
   const p = ctx.S.player, below = BELOW_OF(zid(ctx)), pin = sv(ctx).pin; let near = null, nd = 30;
-  for (const s2 of ST.scout) { const sx = Math.round(s2.x - cx), sy = Math.round(s2.y - cy); if (sx < -10 || sx > ctx.VW + 10 || sy < -10 || sy > ctx.VH + 10) continue;
-    if (s2.kind === 'mon') { dot(g, sx, sy, 2.5, 'rgba(255,120,110,.6)', s2.strong ? 'rgba(255,214,90,.95)' : 'rgba(120,30,30,.55)');
+  const L4 = landToScr(ctx, cx, cy, 1 / farK(Math.max(AL.h, 625))), fa = Math.max(0.25, 1 - Math.max(0, AL.h - 650) / 500); g.save(); g.globalAlpha = fa;   /* chấm trinh sát mờ dần khi lên cao (đỡ lốm đốm) */
+  for (const s2 of ST.scout) { const [sx0, sy0] = L4(s2.x, s2.y), sx = Math.round(sx0), sy = Math.round(sy0); if (sx < -10 || sx > ctx.VW + 10 || sy < -10 || sy > ctx.VH + 10) continue;
+    if (s2.kind === 'mon') { dot(g, sx, sy, 1.6, 'rgba(255,120,110,.45)', s2.strong ? 'rgba(255,214,90,.8)' : 'rgba(120,30,30,.4)');   /* chấm quái nhỏ + nhạt (anh: lốm đốm đỏ dày quá) */
       if (s2.n > 1) { g.font = '6px VT323, monospace'; g.fillStyle = 'rgba(255,240,230,.85)'; g.fillText(String(s2.n), sx + 3, sy - 2); } }
     else if (s2.kind === 'ball') dot(g, sx, sy, 2.5, 'rgba(255,150,40,.85)', 'rgba(255,220,110,.95)');
     else dot(g, sx, sy, 2, 'rgba(255,225,120,.8)', 'rgba(120,80,20,.6)');
     const d = Math.hypot(s2.x - p.x, s2.y - p.y); if (d < nd) { nd = d; near = s2; } }
-  if (pin && pin.zone === below) pinMark(g, Math.round(pin.x - cx), Math.round(pin.y - cy));
-  if (near) label(g, near.label, Math.round(near.x - cx), Math.round(near.y - cy) - 5);
+  if (pin && pin.zone === below) { const [qx, qy] = L4(pin.x, pin.y); pinMark(g, Math.round(qx), Math.round(qy)); }
+  g.restore(); if (near) label(g, near.label, Math.round(near.x - cx), Math.round(near.y - cy) - 5);
 }
 function pressPin(ctx) {
   if (!inSky(ctx) || ST.cut) return; const t = L(ctx), p = ctx.S.player; if (!binoc(ctx)) { ctx.toast(t.needBinoc); ctx.sfx('fail'); return; }
@@ -703,31 +779,23 @@ function drawPinGround(g, ctx, cx, cy) {   /* dưới đất: 📍 tĩnh ở ch�
   label(g, L(ctx).tiles(Math.round(Math.hypot(pin.x - p.x, pin.y - p.y) / TS)), ax, ay - 8);
 }
 
-/* ---------------- plan-32 B: PIN CHONG CHÓNG + TRẠM MÂY + BƯU TÁ MÂY ----------------
+/* ---------------- plan-32 B: PIN CHONG CHÓNG + BƯU TÁ MÂY (plan-43 C3, anh chốt 2026-10-16: BỎ Trạm Mây — bay vô hạn INF_FLY; ảnh station giữ trong gói, không dùng) ----------------
    Pin: bay được BAT_MAX giây; dưới đất tự nghỉ đầy sau ~2 phút. Còn 20 % mà có lông chim (feather / tfeather) → tự dùng 1 cái +½. Hết → tự hạ xuống (đúng chỗ dưới bóng).
-   Trạm Mây (1 cái mỗi trời, ảnh PixelLab, đứng yên): bay qua → nạp đầy.
    Bưu Tá Mây: hòm thư ở Làng + M1–M9 (cạnh lối vào). Nhận đơn → bưu kiện gửi gấp tới vùng khác đã mở, hạn giờ theo số chặng (đi bộ qua đèo không kịp) → mang tới hòm thư bên đó. */
 const BAT_MAX = 180, BAT_REST = 120, POST_LANDS = ['village', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9'];
+const INF_FLY = true;
 const batOf = ctx => { const s = sv(ctx); if (s.bat == null) s.bat = BAT_MAX; return s.bat; };
-function stationOf(m) { return { x: Math.round(m.w * 0.64) * TS + 8, y: Math.round(m.h * 0.38) * TS + 8 }; }
 function useFeather(ctx) { const inv = ctx.S.save.inv || {}, id = (inv.feather || 0) > 0 ? 'feather' : (inv.tfeather || 0) > 0 ? 'tfeather' : (inv.rarefeather || 0) > 0 ? 'rarefeather' : null; if (!id) return false;
   ctx.bag.remove(id, 1); const s = sv(ctx); s.bat = Math.min(BAT_MAX, batOf(ctx) + BAT_MAX / 2); ctx.toast(L(ctx).feather); ctx.sfx('pickup'); log('feather'); return true; }
 function batTick(ctx, dt) {
   const s = sv(ctx); batOf(ctx);
+  if (INF_FLY) { s.bat = BAT_MAX; return; }   /* 2026-10-14 anh: bay vô hạn (để sau đánh trùm biết bay giữa trời, không cần sàn) */
   const mid = isMid() && !inSky(ctx); if (!inSky(ctx) && !mid) { if (!ST.cut) s.bat = Math.min(BAT_MAX, s.bat + dt * BAT_MAX / BAT_REST); return; }
   if (ST.cut || ctx.S.mode !== 'play' || ST.batFree) return;
-  const st = stationOf(ctx.S.map), p = ctx.S.player;
-  if (!mid && Math.hypot(p.x - st.x, p.y - st.y) < 24) { if (s.bat < BAT_MAX - 1) { s.bat = BAT_MAX; ctx.toast(L(ctx).station); ctx.sfx('pickup'); log('station'); if (ctx.vfx) ctx.vfx('item_pickup_pop', st.x, st.y - 16, 0, true); } return; }
   const b0 = s.bat; s.bat = Math.max(0, s.bat - dt * (mid ? 0.4 : 1));
   if (s.bat < BAT_MAX * 0.2 && b0 >= BAT_MAX * 0.2) useFeather(ctx);
   for (const w of [30, 10]) if (b0 > w && s.bat <= w) { ctx.toast(L(ctx).batLow(w), true); ctx.sfx('fail'); }
   if (s.bat <= 0) { ctx.toast(L(ctx).batOut, true); log('bat out'); if (mid) startMidDown(ctx); else startDown(ctx); }
-}
-function drawStation(ctx, cx, cy, out) {
-  const im = mkImg('station'), st = stationOf(ctx.S.map), g = ctx.g; if (!im) return; const w = im.width / 2, h = im.height / 2;
-  if (Math.abs(st.x - cx - ctx.VW / 2) > ctx.VW || Math.abs(st.y - cy - ctx.VH / 2) > ctx.VH) return;
-  out.push({ y: st.y + 4, f: () => { g.drawImage(im, Math.round(st.x - w / 2 - cx), Math.round(st.y - h + 6 - cy), w, h); fogOver(g, st.x - cx, st.y + 6 - cy, w * 1.4, h * 0.5, themeOf(zid(ctx)), 0.45);
-    if (Math.hypot(ctx.S.player.x - st.x, ctx.S.player.y - st.y) < 60) label(g, '☁ ' + L(ctx).stationTag, st.x - cx, st.y - h + 2 - cy); } });
 }
 /* --- Bưu Tá Mây --- */
 const postSv = ctx => (sv(ctx).post ||= { job: null, rep: 0, done: 0 });
@@ -780,7 +848,7 @@ const isNight = ctx => (ctx.darkness ? ctx.darkness() : 0) > 0.2;
 function evEnter(ctx) {
   EV.met = null; EV.storms = []; EV.pass = null; EV.passT = 15; EV.metT = 60; if (!inSky(ctx) || EV.off) return; const z = zid(ctx), m = ctx.S.map;   /* EV.off: móc test tắt sự kiện tự phát */
   if (isNight(ctx) && Math.random() < 0.5) evStart(ctx, 'meteor');
-  if (Math.random() < (/^sky_m[289]$/.test(z) ? 0.7 : 0.15)) evStart(ctx, 'storm');
+  /* 2026-10-14 anh: 'bỏ mây sét đen' — không sinh sự kiện mây bão nữa (evStart('storm') chỉ còn cho test) */
   void m;
 }
 function evStart(ctx, k) {
@@ -839,16 +907,15 @@ function evDraw(g, ctx, cx, cy) {   /* sao băng: lớp trên cùng (rơi từ t
 
 /* ---------------- plan-32 E: CỔNG TRỜI (trời M9, phía Bắc) — mở khi có huy hiệu M9 + hạ đủ 5 trùm; CHƯA làm trận Bakunawa ---------------- */
 const BOSSES = ['hacrocky', 'trongdong', 'guong', 'hoden', 'dongho'];
-const gatePos = m => ({ x: (m.w >> 1) * TS + 8, y: 9 * TS + 8 });
+export const gatePos = m => ({ x: (m.w >> 1) * TS + 8, y: 9 * TS + 8 });
 function gateMiss(ctx) { const s = ctx.S.save, t = L(ctx), miss = []; if (!(s.badges || []).includes(9)) miss.push(t.needBadge9); const left = BOSSES.filter(b => !(s.achievements || []).includes(b)).length; if (left) miss.push(t.needBoss(left)); return miss; }
 function gateTick(ctx) {
   if (zid(ctx) !== 'sky_m9' || ST.cut) return; const s = sv(ctx), p = ctx.S.player, gp = gatePos(ctx.S.map);
   if (!s.gateOpen && Math.hypot(p.x - gp.x, p.y - gp.y) < 60 && !gateMiss(ctx).length) { s.gateOpen = true; ctx.persist && ctx.persist(); ctx.toast(L(ctx).gateOpened, true); ctx.sfx('levelup'); if (ctx.quake) ctx.quake(0.3); ST.gateFlash = 0.6; if (ctx.vfx) ctx.vfx('item_pickup_pop', gp.x, gp.y - 20, 0, true); log('gate open'); }
 }
-function drawGate(ctx, cx, cy, out) {
-  if (zid(ctx) !== 'sky_m9') return; const g = ctx.g, gp = gatePos(ctx.S.map), open = !!sv(ctx).gateOpen, im = open ? mkImg('gate_open') : scImg('assets/px/zones/sky/obj/sky_gate_t8.png'); if (!im) return;
-  if (Math.abs(gp.x - cx - ctx.VW / 2) > ctx.VW || Math.abs(gp.y - cy - ctx.VH / 2) > ctx.VH) return; const w = im.width / 2, h = im.height / 2;
-  out.push({ y: gp.y + 4, f: () => { if (ST.gateFlash > 0) { ST.gateFlash -= 1 / 60; g.filter = 'brightness(1.8)'; } g.drawImage(im, Math.round(gp.x - w / 2 - cx), Math.round(gp.y - h + 8 - cy), w, h); g.filter = 'none'; fogOver(g, gp.x - cx, gp.y + 8 - cy, w * 1.5, h * 0.5, themeOf(zid(ctx)), 0.4); } });
+function drawGate(ctx, cx, cy, out) {   /* cổng trời M9: xoáy sương PixelLab (skygate.js) — lớp sau mọi thứ + lớp trước lúc vào cổng */
+  if (zid(ctx) !== 'sky_m9') return; const g = ctx.g, gp = gatePos(ctx.S.map), p = ctx.S.player, o = { x: gp.x, y: gp.y, cx, cy, state: skyGateState(ctx), t: ctx.S.time, near: Math.hypot(p.x - gp.x, p.y - gp.y) < 90 };
+  out.push({ y: -1e6, f: () => drawSkyGate(g, ctx, o) }, { y: 1e6, f: () => drawSkyGateFront(g, ctx, o) });
 }
 
 /* ---------------- 2026-10-13 khuya (anh): TẦNG TRUNG — bay thấp ngay trên map đất (không đổi vùng) ----------------
@@ -859,14 +926,14 @@ function drawGate(ctx, cx, cy, out) {
      Rocky bay cạnh: Rocky-ha chéo xuống + đấm bổ nhào (×0,8). Pin chong chóng hao 0,4× so với trời. Hạ xuống: rơi thẳng đứng ngắn (trôi tới ô đáp được nếu đang trên vật). */
 let SHIFT = false;
 if (typeof window !== 'undefined') { addEventListener('keydown', e => { if (e.key === 'Shift') SHIFT = true; }); addEventListener('keyup', e => { if (e.key === 'Shift') SHIFT = false; }); addEventListener('blur', () => { SHIFT = false; }); }
-const tierNow = ctx => (inSky(ctx) ? 2 : isMid() ? 1 : 0);
+const tierNow = ctx => (inSky(ctx) || (ctx.air && ctx.air.on()) ? 2 : isMid() ? 1 : 0);   /* 2026-10-14: sân không chiến = tầng Trời */
 function buildTall(ctx) {
   const m = ctx.S.map, tall = new Uint8Array(m.w * m.h);
   for (const o of m.objects) { const d = ctx.O[o.type]; if (!d || o.ghost) continue; const h = o.artImg ? o.artImg.height / (ART.hi || 1) : d.h; if (!(h >= TALL_H)) continue;
     for (let y = o.y; y < o.y + (d.fh || 1); y++) for (let x = o.x; x < o.x + (d.fw || 1); x++) if (x >= 0 && y >= 0 && x < m.w && y < m.h) tall[y * m.w + x] = 1; }
   ST.tall = { m, tall };
 }
-const midPassable = (m, tx, ty) => tx >= 1 && ty >= 1 && tx < m.w - 1 && ty < m.h - 1 && !(ST.tall && ST.tall.m === m && ST.tall.tall[ty * m.w + tx]);
+const midPassable = (m, tx, ty) => tx >= 1 && ty >= 0 && tx < m.w - 1 && ty < m.h && !(ST.tall && ST.tall.m === m && ST.tall.tall[ty * m.w + tx]);
 function startMid(ctx) {
   const p = ctx.S.player; buildTall(ctx);
   ST.fly = { alt: 0, z: 0, sw: 0, boost: 0, hook: 0, mid: true }; p.custom = drawHover; p.ghost = true; p.speedMul = 1.25; p.boxW = 10; p.boxH = 6; p.passable = midPassable;
@@ -943,37 +1010,322 @@ function drawMidAim(g, ctx, cx, cy) {   /* vòng ngắm TĨNH dưới đất + �
 /* điều khiển chung 3 tầng */
 function pressUp(ctx) {
   if (ctx.S.mode === 'copter') { skipCut(ctx); return; } if (ctx.S.mode !== 'play') return;
+  if (perfectRecovery(ctx)) return; toggleFly(ctx); return;   /* 2026-10-14 độ cao liền mạch: X = cất / hạ (mục tiêu 20 m / 0 m) */
+  if (ctx.air && ctx.air.on()) { ctx.air.descend(); return; }   /* 2026-10-14 sân không chiến: nút 🚁 = hạ xuống tầng Trung vùng dưới */
   if (inSky(ctx)) { pressFly(ctx); return; }   /* ở Trời: X = hạ như cũ */
   if (isMid()) { useCopter(ctx); return; }
   startMidUp(ctx);
 }
 function pressDown(ctx) {
   if (ctx.S.mode === 'copter') { skipCut(ctx); return; } if (ctx.S.mode !== 'play') return;
+  if (perfectRecovery(ctx)) return; setAltTarget(ctx, 0, 'down'); return;
+  if (ctx.air && ctx.air.on()) { ctx.air.descend(); return; }
   if (inSky(ctx)) { startDown(ctx, true); return; }
   if (isMid()) { startMidDown(ctx); return; }
   ctx.toast(L(ctx).onGround);
 }
 
+/* ---------------- plan-41 CỔNG MÂY (anh chốt 2026-10-16): mép Bắc / Nam có vùng kề → 1 cổng mây giữa mép (cột giữa như lối đất, khe 4 ô) ---------------- */
+function gateLock(ctx, below, side) {   /* null = mở · khoá: { msg (toast như bump cũ), short (nhãn trên vòm) } — điều kiện y như edgeTick cũ (chỉ mép Bắc) */
+  if (side !== 'n') return null; const t = L(ctx), b = ctx.S.save.badges || [], mm = /^m([1-9])$/.exec(below || ''), rr = /^road([1-9])$/.exec(below || '');
+  if (mm && !b.includes(+mm[1])) return { msg: t.lockB(+mm[1]), short: t.lockBs(+mm[1]) };   /* như lối Bắc dưới đất: cần huy hiệu vùng này */
+  if (rr) { const n = +rr[1], rs = ctx.S.save.sys.road, won = rs && rs.won && rs.won['road' + n]; if (!won && !b.includes(n)) return { msg: t.lockR(n), short: t.lockRs(n) }; }   /* không bay vượt cổng đèo chưa qua */
+  return null;
+}
+function cgCode(ctx, z, side) {   /* mã ngắn trên bảng: '↑ M8' · '↓ Đèo 8' · '↓ Làng' · '↓ Biển' */
+  const vi = ctx.lang() === 'vi', mm = /^m([1-9])$/.exec(z), rr = /^road([1-9])$/.exec(z);
+  return (side === 'n' ? '↑ ' : '↓ ') + (mm ? 'M' + mm[1] : rr ? (vi ? 'Đèo ' : 'Pass ') + rr[1] : z === 'village' ? (vi ? 'Làng' : 'Village') : z === 'sea' ? (vi ? 'Biển' : 'Sea') : zname(ctx, z));
+}
+function cloudGates(ctx) {   /* [{ side, to, x, base, lock, why, need, code, name }] của trời đang ở — nhớ đệm theo vùng + huy hiệu + cổng đèo đã qua + ngôn ngữ */
+  const m = ctx.S.map, z = zid(ctx), below = BELOW_OF(z); if (!m || !m.sky || !below) return [];
+  const s0 = ctx.S.save, rs = s0.sys && s0.sys.road, key = z + '|' + (s0.badges || []).join(',') + '|' + (rs && rs.won ? Object.keys(rs.won).filter(k => rs.won[k]).join(',') : '') + '|' + ctx.lang();
+  if (ST.cg && ST.cg.key === key && ST.cg.m === m) return ST.cg.list;
+  const link = SKY_LINK(below), list = [];
+  for (const side of ['n', 's']) { const to = link[side]; if (!to || !ZONES[SKY_OF(to)]) continue; const lk = gateLock(ctx, below, side);
+    list.push({ side, to, x: cgX(m), base: cgBase(m, side), lock: !!lk, why: lk ? lk.msg : '', need: lk ? lk.short : '', code: cgCode(ctx, to, side), name: zname(ctx, to) }); }
+  ST.cg = { key, m, list }; return list;
+}
+
 /* ---------------- mép trời: sang trời của vùng kề (đúng lối dưới đất) ---------------- */
 function edgeTick(ctx) {
-  const p = ctx.S.player, m = ctx.S.map, below = BELOW_OF(zid(ctx)); if (!below || ST.cut || ctx.S.mode !== 'play') return;
+  const p = ctx.S.player, m = ctx.S.map, below = BELOW_OF(zid(ctx)); if (!below || ST.cut || ctx.S.mode !== 'play') return; if ((ST.edgeNoT || 0) > ctx.S.time) return;   /* vừa sang vùng (vd Làng-Nam ↔ Biển-Nam lật chiều): 0,8 s không bắt mép — giữ phím ‘xuống’ không bị đẩy ngược lại */
   const H = m.h * TS, side = p.y < 14 ? 'n' : p.y > H - 14 ? 's' : null; if (!side) return;
   const to = SKY_LINK(below)[side], t = L(ctx), bump = msg => { p.y = side === 'n' ? 22 : H - 22; if (ctx.S.time - (ST.edgeT || -9) > 1.5) { ST.edgeT = ctx.S.time; ctx.toast(msg); ctx.sfx('fail'); } log('bump ' + side); };
   if (!to || !ZONES[SKY_OF(to)]) { bump(t.edge); return; }
-  const b = ctx.S.save.badges || [], mm = /^m([1-9])$/.exec(below), rr = /^road([1-9])$/.exec(below);
-  if (side === 'n' && mm && !b.includes(+mm[1])) { bump(t.lockB(+mm[1])); return; }   /* như lối Bắc dưới đất: cần huy hiệu vùng này */
-  if (side === 'n' && rr) { const n = +rr[1], rs = ctx.S.save.sys.road, won = rs && rs.won && rs.won['road' + n]; if (!won && !b.includes(n)) { bump(t.lockR(n)); return; } }   /* không bay vượt cổng đèo chưa qua */
+  if (!cgIn(m, p.x)) { ST.cgBumps = (ST.cgBumps || 0) + 1; bump(t.edgeGate(zname(ctx, to))); return; }   /* plan-41: CHỈ qua CỔNG MÂY giữa mép — ngoài khe là tường sương, đẩy lùi */
+  const lk = gateLock(ctx, below, side); if (lk) { bump(lk.msg); return; }   /* cổng khoá (như lối đất): cần huy hiệu / qua cổng đèo */
   const back = SKY_LINK(to), arr = back.s === below ? 's' : 'n', rd = /^road/.test(to), tw = rd ? 32 : 80, th2 = rd ? 46 : 64;
-  const ax = Math.max(24, Math.min(tw * TS - 24, p.x - ((m.w >> 1) * TS + 8) + ((tw >> 1) * TS + 8))), ay = arr === 's' ? th2 * TS - 30 : 30;
-  ST.cut = { kind: 'down', cross: SKY_OF(to), edge: true, t: 0, fps: 18, z: 0, to: null, rk: !!(ST.rk && ST.rk.with), ax, ay, vy: side === 'n' ? -40 : 40 };
+  const off = Math.max(-CG.HW + 6, Math.min(CG.HW - 6, p.x - cgX(m))), ax = ((tw >> 1) * TS + 8) + off, ay = arr === 's' ? th2 * TS - CG.BASE_S - CG.ARR_S : CG.BASE_N + CG.ARR_N;   /* hiện ở CỔNG tương ứng bên kia (giữ độ lệch trong khe) — Làng-Nam ↔ Biển-Nam lật chiều theo SKY_LINK */
+  ST.cut = { kind: 'down', cross: SKY_OF(to), edge: true, gate: side, t: 0, fps: 18, z: 0, to: null, rk: !!(ST.rk && ST.rk.with), ax, ay, vy: side === 'n' ? -40 : 40 };
   ctx.setMode('copter'); ctx.sfx('whoosh'); log('edge ' + below + '>' + to + ' ' + Math.floor(ax / TS) + ',' + Math.floor(ay / TS));
 }
 
 /* ---------------- hệ ---------------- */
+
+/* ================= 2026-10-14 ĐỘ CAO LIỀN MẠCH (plan-33 mục 10–12, anh chốt) =================
+   Độ cao h = 0 … 1200 m, đổi MƯỢT (không còn 3 tầng nhảy cóc + cắt cảnh). Người chơi đặt ĐỘ CAO MỤC TIÊU, chong chóng tự lên / xuống tới đó rồi giữ:
+     máy tính: LĂN CHUỘT ±20 m (Shift ±100 m) khi đang bay · kéo cần độ cao bên phải màn · X = cất cánh (20 m) / hạ cánh (0 m);
+     điện thoại: CẦN GẠT độ cao dọc mép phải (kéo núm, thả là giữ; chạm đúp tên dải = tới dải đó) · nút 🚁 = cất / hạ.
+   Dải: 0 Đất · 2–120 Bay thấp (qua rào / bụi; dưới 30 m cây / nhà cao vẫn chắn) · 120–550 Trên cao (đất thu nhỏ THEO BẬC ½ → ¼, đổi bậc có sương lướt che)
+        · 550–700 Tầng mây (sương dày dần rồi tan — ĐỔI VÙNG đất ↔ trời ở 625 m ngay dưới lớp sương dày nhất, cùng toạ độ, KHÔNG cắt cảnh) · 700–1200 Trời · 1200 trần (gió đẩy lại).
+   Hạ cánh: mục tiêu 0 → xuống tới đất đúng chỗ bóng; ô không đáp được → trôi tới ô đáp gần nhất rồi đáp.
+   Chiến đấu theo phương đứng (ctx.alt.knockV): đòn hất → +m · đòn đập → −m · cú quá mạnh (hoặc đang bay thấp) → ĐẬP XUỐNG ĐẤT (rơi nhanh, xuyên mây liền mạch,
+   chạm đất bụi + choáng nằm, sát thương theo độ cao rơi; rơi xuống nước = bắn nước, không sát thương rơi; rơi trúng cây / mái = vỡ vật, đỡ bớt).
+   Sau mỗi cú: chong chóng chao 0,6 s — bấm X đúng lúc CHỚP = Bật Chong Chóng (hồi ngay + miễn đòn ngắn). Rocky bay theo có thể ĐỠ người đang rơi (hồi 60 s).
+   Cận chiến chỉ trúng khi lệch độ cao ≤ 25 m. Cột khí nóng (cát / dung nham / lửa trại) nâng lên; luồng xoáy gần mây bão kéo xuống; trong tầng mây địch mất dấu. */
+const ALT = { MAX: 1200, LOW: 120, HI2: 330, C0: 550, SW: 625, C1: 700, TALL: 30, MELEE: 25, VMAX: 250 };
+const AL = { h: 0, tgt: 0, v: 0, k: 1, kWisp: 0, fall: null, wob: 0, flashT: 0, iT: 0, rkCatchCd: 0, pops: [], enemyH: null, holdT: 0, drift: null, log: [], stats: { climbs: 0, switches: 0, slams: 0, perfect: 0, rkCatch: 0, lands: 0, thermal: 0 }, lever: null, cap: 0, inT: 0, rateLog: [], vMax: 0 };
+export const altH = () => AL.h;
+const alog = s => { AL.log.push(Math.round(((ST.ctx && ST.ctx.S.time) || 0) * 10) / 10 + ' ' + s); if (AL.log.length > 60) AL.log.shift(); };
+const BANDS = [['ground', 0], ['low', 2], ['high', ALT.LOW], ['cloud', ALT.C0], ['sky', ALT.C1]];
+export function bandOf(h) { let b = 'ground'; for (const [k, v] of BANDS) if (h >= v) b = k; return h <= 0.5 ? 'ground' : b; }
+const BNAME = { vi: { ground: 'Đất', low: 'Bay thấp', high: 'Trên cao', cloud: 'Mây', sky: 'Trời' }, en: { ground: 'Ground', low: 'Low flight', high: 'High', cloud: 'Clouds', sky: 'Sky' } };
+const BMID = { ground: 0, low: 90, high: 300, cloud: 640, sky: 900 };
+const ALTS = { vi: { slam: n => `−${n} m!`, perfect: 'BẬT CHONG CHÓNG! Hồi lại ngay', rkCatch: 'Rocky bay tới ĐỠ bạn!', drift: 'Dưới này không đáp được — trôi tới chỗ đáp gần nhất', splash: 'Rơi xuống nước!', ceil: 'Đỉnh trời — gió đẩy bạn xuống', thermal: 'Cột khí nóng nâng bạn lên', hide: 'Trong tầng mây — địch mất dấu bạn' },
+  en: { slam: n => `−${n} m!`, perfect: 'COPTER KICK! Instant recovery', rkCatch: 'Rocky flies in and CATCHES you!', drift: 'Can’t land here — drifting to the nearest landing spot', splash: 'Splash into the water!', ceil: 'Top of the sky — the wind pushes you down', thermal: 'A thermal lifts you up', hide: 'Inside the clouds — enemies lose track of you' } };
+const AT = ctx => ALTS[ctx.lang() === 'vi' ? 'vi' : 'en'];
+const flyingNow = ctx => !!ST.fly || !!(ctx.air && ctx.air.on());
+const landZone = ctx => !inSky(ctx) && !(ctx.air && ctx.air.on()) && LAND.test(zid(ctx));
+const allPass = (m, tx, ty) => tx >= 1 && ty >= 0 && tx < m.w - 1 && ty < m.h;   /* 2026-10-15 (anh: 'không bay qua được map'): bay được vào hàng ô MÉP Bắc / Nam (trước cấm → kẹt cách mép 16 px: lối Nam 1 hàng + landEdgeTick H − 14 không bao giờ chạm) */
+function takeoffWhy(ctx) { const t = L(ctx), p = ctx.S.player; if (!copters(ctx)) return t.noCopter; if (!landZone(ctx)) return t.notHere; if ((p.custom && p.custom !== drawHover) || ctx.S.swimming) return t.busy; return ''; }
+function takeoff(ctx) {
+  const rc = rkCanCome(ctx), e = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent(); if (!rc.ok && rc.why) ctx.toast(rc.why);
+  ST.rk = rc.ok && e ? { with: true, x: e.x, y: e.y, dir: 0, cheer: 0.5 } : null; ST.cut = null; startMid(ctx); AL.h = 0.6; AL.v = 8; AL.stats.climbs++;
+  const p = ctx.S.player; if (ctx.vfx) { ctx.vfx('dirt_puff', p.x - 5, p.y + 2); ctx.vfx('dirt_puff', p.x + 5, p.y + 2); } ctx.sfx('whoosh'); alog('takeoff ' + zid(ctx));
+}
+function landNow(ctx) {
+  const p = ctx.S.player, rk = ST.rk && ST.rk.with ? ST.rk : null; stopFly(ctx); p.custom = null; p.labelUp = 0; AL.h = 0; AL.v = 0; AL.tgt = 0; AL.drift = null; AL.stats.lands++;
+  if (rk) { const e = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent(); if (e) { e.x = rk.x; e.y = rk.y; e.hop = 0.45; } } ST.rk = null;
+  ctx.sfx('build'); if (ctx.vfx) { ctx.vfx('dirt_puff', p.x - 5, p.y + 2); ctx.vfx('dirt_puff', p.x + 5, p.y + 2); } alog('land ' + Math.round(p.x) + ',' + Math.round(p.y));
+}
+/* dáng bay theo vận tốc đứng: bổ nhào (dive) · vút lên (climb) · lơ lửng (hover) */
+export function altPose(ctx) { if (!flyingNow(ctx) || AL.fall) return 'hover'; return AL.v < -110 ? 'dive' : AL.v > 110 ? 'climb' : 'hover'; }
+export function setAltTarget(ctx, v, src = '') {
+  v = Math.max(0, Math.min(ALT.MAX, Math.round(v))); if (ctx.S.mode !== 'play' && ctx.S.mode !== 'faint') return false;
+  if (!flyingNow(ctx)) { if (v <= 0) { AL.tgt = 0; return false; } const why = takeoffWhy(ctx); if (why) { ctx.toast(why); ctx.sfx('fail'); return false; } takeoff(ctx); }
+  /* 2026-10-14 anh: TỐC ĐỘ lên/xuống theo tốc độ KÉO cần (lăn chuột): vuốt nhanh → bổ nhào / vút lên tới 250 m/s; kéo chậm → trôi nhẹ */
+  if (src === 'lever' || src === 'wheel') { const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000, dtI = Math.max(0.016, now - (AL.inT || 0)), dv = Math.abs(v - AL.tgt), rate = dv / dtI;
+    if (now - (AL.inT || 0) < 0.35) AL.cap = Math.max(AL.cap || 0, Math.min(ALT.VMAX, rate * (src === 'wheel' ? 0.9 : 1))); else AL.cap = Math.min(ALT.VMAX, Math.max(AL.cap || 0, src === 'wheel' ? 50 : Math.min(rate, 60)));
+    AL.inT = now; AL.rateLog.push([Math.round(ctx.S.time * 10) / 10, Math.round(rate), Math.round(AL.cap)]); if (AL.rateLog.length > 80) AL.rateLog.shift(); }
+  AL.tgt = v; AL.leverT = ctx.S.time; alog('tgt ' + v + (src ? ' ' + src : '')); return true;
+}
+function toggleFly(ctx) { if (flyingNow(ctx) && AL.tgt > 0) return setAltTarget(ctx, 0, 'X'); if (flyingNow(ctx)) return setAltTarget(ctx, Math.max(20, AL.h + 20), 'X'); return setAltTarget(ctx, 20, 'X'); }
+/* chuyển vùng ở 625 m — ngay dưới lớp sương dày nhất (cùng toạ độ, không cắt cảnh) */
+function altSwitch(ctx, to) { const p = ctx.S.player; if (!to || !ZONES[to] || typeof window === 'undefined' || !window.__enterZone || ST.leaving) return; ctx.S.altPend = { x: p.x, y: p.y, rk: !!(ST.rk && ST.rk.with), h: AL.h }; ST.leaving = true; AL.stats.switches++; alog('switch → ' + to + ' @' + Math.round(AL.h)); setTimeout(() => { try { window.__enterZone(to, 'default'); } catch (e) { console.error('alt switch', e); ST.leaving = false; } }, 0); }
+/* 2026-10-14 (anh): dải thấp / trung (2–625 m) bay ra mép Bắc / Nam của vùng ĐẤT → sang vùng đất kề (như đi qua lối), giữ độ cao, không cắt cảnh */
+function landEdgeTick(ctx) {
+  const p = ctx.S.player, m = ctx.S.map, z = zid(ctx); if (ST.leaving || (ST.edgeNoT || 0) > ctx.S.time || ctx.S.mode !== 'play') return;
+  const H = m.h * TS, side = p.y < 14 ? 'n' : p.y > H - 14 ? 's' : null; if (!side) return;
+  const to = SKY_LINK(z)[side], t = L(ctx), bump = msg => { p.y = side === 'n' ? 22 : H - 22; if (ctx.S.time - (ST.edgeT || -9) > 1.5) { ST.edgeT = ctx.S.time; ctx.toast(msg); ctx.sfx('fail'); } };
+  if (!to || !ZONES[to]) { bump(t.edge); return; }
+  const b = ctx.S.save.badges || [], mm = /^m([1-9])$/.exec(z), rr = /^road([1-9])$/.exec(z);
+  if (side === 'n' && mm && !b.includes(+mm[1])) { bump(t.lockB(+mm[1])); return; }
+  if (side === 'n' && rr) { const n = +rr[1], rs = ctx.S.save.sys.road, won = rs && rs.won && rs.won['road' + n]; if (!won && !b.includes(n)) { bump(t.lockR(n)); return; } }
+  const back = SKY_LINK(to), arr = back.s === z ? 's' : 'n', rd = /^road/.test(to), tw = rd ? 32 : 80, th2 = rd ? 46 : 64;
+  const ax = Math.max(24, Math.min(tw * TS - 24, p.x - ((m.w >> 1) * TS + 8) + ((tw >> 1) * TS + 8))), ay = arr === 's' ? th2 * TS - 30 : 30;
+  if (typeof window === 'undefined' || !window.__enterZone) return;
+  ctx.S.altPend = { x: ax, y: ay, rk: !!(ST.rk && ST.rk.with), h: AL.h }; ST.leaving = true; AL.stats.switches++; alog('land edge ' + z + ' → ' + to + ' @' + Math.round(AL.h));
+  setTimeout(() => { try { window.__enterZone(to, 'default'); } catch (e) { console.error('land edge', e); ST.leaving = false; } }, 0);
+}
+function walkHere(ctx) { const m = ctx.S.map, p = ctx.S.player; return walkAt(ctx, m, reachOf(ctx, zid(ctx), m), p.x, p.y); }
+function altTick(ctx, dt) {
+  const p = ctx.S.player, sky = inSky(ctx), arena = !!(ctx.air && ctx.air.on());
+  if (AL.rkCatchCd > 0) AL.rkCatchCd -= dt; if (AL.iT > 0) AL.iT -= dt; if (AL.kWisp > 0) AL.kWisp -= dt;
+  for (const q of AL.pops) q.t -= dt; AL.pops = AL.pops.filter(q => q.t > 0);
+  if (AL.wob > 0) { AL.wob -= dt; AL.flashT = AL.wob < 0.3 && AL.wob > 0.12 ? 1 : 0; }
+  if (arena && AL.h < 1) { AL.h = 850; AL.tgt = 850; }   /* vào sân trời Cổng Trời = giữa tầng trời */
+  if (!flyingNow(ctx)) { AL.h = 0; AL.v = 0; AL.fall = null; return; }
+  if (ST.cut || ctx.S.mode !== 'play' && ctx.S.mode !== 'faint') return;
+  /* chuyển động đứng: tiến về mục tiêu (nhanh dần khi giữ lâu, chậm lại gần đích) — hoặc RƠI khi bị đập */
+  if (AL.fall) { AL.v = Math.max(-430, AL.v - 700 * dt); }
+  else { const dv = AL.tgt - AL.h; AL.holdT = Math.abs(dv) > 2 ? AL.holdT + dt : 0; if (AL.cap > 0 && Math.abs(dv) < 2) AL.cap = Math.max(0, AL.cap - 220 * dt); else if (AL.cap > 0) AL.cap = Math.max(0, AL.cap - AL.cap * 0.12 * dt);   /* trần tốc độ do vuốt: giảm êm dần */
+    const maxV = Math.max(40 + Math.min(1, AL.holdT / 1.6) * 75, AL.cap || 0), acc = 170 + (AL.cap || 0) * 1.6, want = Math.sign(dv) * Math.min(maxV, Math.max(6, Math.abs(dv) * (2.4 + (AL.cap || 0) / 120))) * (Math.abs(dv) < 0.4 ? 0 : 1); AL.v += Math.max(-acc * dt, Math.min(acc * dt, want - AL.v)); AL.vMax = Math.max(AL.vMax || 0, Math.abs(AL.v)); }
+  /* không khí theo địa hình: cột khí nóng nâng · gần mây bão kéo xuống */
+  if (!AL.fall && !sky && !arena && AL.h > 10 && AL.h < ALT.C0) { const m = ctx.S.map, t2 = ctx.getG(m, Math.floor(p.x / TS), Math.floor(p.y / TS)), hot = t2 === ctx.T.LAVA || m.objects.some(o => o.type === 'campfire' && Math.hypot(o.x * TS + 8 - p.x, o.y * TS + 8 - p.y) < 34);   /* 2026-10-14 anh: chỉ dung nham / lửa trại (cát biển KHÔNG), chỉ khi bay > 10 m */
+    if (hot) { AL.h += 16 * dt; if (!AL.thermT || ctx.S.time - AL.thermT > 6) { AL.thermT = ctx.S.time; AL.stats.thermal++; if (AL.thermZone !== zid(ctx)) { AL.thermZone = zid(ctx); ctx.toast(AT(ctx).thermal); } } } }   /* báo 1 lần mỗi lượt vào vùng */
+  if (!AL.fall && sky && EV.storms.some(c => Math.hypot(c.x - p.x, c.y - p.y) < 90)) AL.h -= 14 * dt;
+  const h0 = AL.h; AL.h += AL.v * dt; if (!AL.fall && Math.abs(AL.tgt - AL.h) < 0.6) { AL.h = AL.tgt; AL.v = 0; }   /* tới đích: khớp đúng số (0 m = chạm đất) */
+  if (AL.h > ALT.MAX) { AL.h = ALT.MAX; AL.v = Math.min(0, AL.v); AL.tgt = Math.min(AL.tgt, ALT.MAX); if (!AL.ceilT || ctx.S.time - AL.ceilT > 4) { AL.ceilT = ctx.S.time; ctx.toast(AT(ctx).ceil); } }
+  /* Rocky đỡ người đang rơi (rơi từ > 150 m, hồi 60 s) */
+  if (AL.fall && AL.fall.from - AL.h > 150 && AL.h < 240 && AL.h > 60 && AL.rkCatchCd <= 0 && ST.rk && ST.rk.with && !(petOf(ctx) && petOf(ctx).koT > 0)) { AL.fall = null; AL.v = 0; AL.tgt = AL.h; AL.rkCatchCd = 60; AL.stats.rkCatch++; ST.rk.x = p.x + 8; ST.rk.y = p.y + 4; ST.rk.cheer = 1; ctx.toast(AT(ctx).rkCatch, true); ctx.sfx('pickup'); alog('rocky catch @' + Math.round(AL.h)); }
+  if (!sky && !arena && LAND.test(zid(ctx)) && AL.h > 2) landEdgeTick(ctx);
+  /* đổi vùng xuyên tầng mây */
+  if (!sky && !arena && LAND.test(zid(ctx)) && AL.h >= ALT.SW && h0 < ALT.SW) { altSwitch(ctx, SKY_OF(zid(ctx))); return; }
+  if (sky && AL.h < ALT.SW && h0 >= ALT.SW) { altSwitch(ctx, BELOW_OF(zid(ctx))); return; }
+  if (arena && AL.h < ALT.SW + 15 && h0 >= ALT.SW + 15 && ctx.air.descend) { ctx.air.descend(); return; }
+  /* chạm đất */
+  if (!sky && !arena && AL.h <= 0) {
+    if (AL.fall) { slamImpact(ctx); return; }
+    if (walkHere(ctx)) { landNow(ctx); return; }
+    AL.h = 1.5; AL.v = 0; if (!AL.drift) { const m = ctx.S.map, tg = nearestWalk(ctx, m, zid(ctx), p.x, p.y); AL.drift = tg; if (!AL.driftT || ctx.S.time - AL.driftT > 3) { AL.driftT = ctx.S.time; ctx.toast(AT(ctx).drift); } }
+  }
+  if (AL.drift) { const d = AL.drift, dx = d.x - p.x, dy = d.y - p.y, l = Math.hypot(dx, dy), st = 70 * dt; if (l <= st || AL.tgt > 3) { if (l <= st) { p.x = d.x; p.y = d.y; } AL.drift = null; } else { p.x += dx / l * st; p.y += dy / l * st; } }
+  /* bậc thu nhỏ mặt đất (không co giãn liên tục) */
+  const k = sky || arena ? 8 : AL.h < 60 ? 1 : 1 / farK(AL.h); AL.k = k; mosaicTick(ctx);
+  if (!sky && !arena && ST.fly && ST.fly.mid) p.passable = AL.h < ALT.TALL ? midPassable : allPass;
+  if (ST.fly && sky) { const a = AL.h > 950 ? 1 : 0; ST.fly.alt = a; ST.fly.z = a; }
+}
+/* đòn theo phương đứng (API cho trùm / quái / Lyron): dm > 0 hất lên, dm < 0 đập xuống; o.slam = đập thẳng xuống đất */
+export function knockV(ctx, dm, o = {}) {
+  if (!flyingNow(ctx) || (ctx.air && ctx.air.on() && !o.slam && false)) return false;
+  if (AL.iT > 0) return false;
+  const slam = !!o.slam || (dm < 0 && AL.h + dm <= 0);
+  if (slam && !(ctx.air && ctx.air.on())) { AL.fall = { from: AL.h, t: 0 }; AL.v = Math.min(AL.v, -120); AL.stats.slams++; ctx.sfx('knock_whoosh'); alog('SLAM from ' + Math.round(AL.h)); }
+  else { AL.h = Math.max(1, Math.min(ALT.MAX, AL.h + dm)); AL.tgt = AL.h; AL.v = dm > 0 ? 30 : -30; }
+  AL.wob = 0.6; AL.pops.push({ txt: (dm >= 0 ? '+' : '−') + Math.abs(Math.round(slam ? AL.h : dm)) + ' m', t: 1.4, up: dm >= 0 }); return true;
+}
+function perfectRecovery(ctx) { if (!(AL.wob > 0 && AL.flashT)) return false; AL.wob = 0; AL.flashT = 0; AL.iT = 0.8; if (AL.fall) { AL.fall = null; AL.v = 0; AL.tgt = AL.h; } if (ctx.hero && ctx.hero.iframes) ctx.hero.iframes(0.8); AL.stats.perfect++; ctx.toast(AT(ctx).perfect); ctx.sfx('pickup'); alog('PERFECT'); return true; }
+function slamImpact(ctx) {
+  const p = ctx.S.player, m = ctx.S.map, from = AL.fall.from; AL.fall = null; const t2 = ctx.getG(m, Math.floor(p.x / TS), Math.floor(p.y / TS)), water = t2 === ctx.T.WATER || t2 === ctx.T.DEEP || t2 === ctx.T.REEF;
+  const ob = !water ? m.objects.find(o => { const d = ctx.O[o.type]; return d && !o.ghost && !o.ruined && d.solid !== false && Math.floor(p.x / TS) >= o.x && Math.floor(p.x / TS) < o.x + d.fw && Math.floor(p.y / TS) >= o.y && Math.floor(p.y / TS) < o.y + d.fh; }) : null;
+  landNow(ctx);
+  if (water) { if (ctx.vfx) ctx.vfx('tr_splash_px', p.x, p.y) || ctx.vfx('tr_splash', p.x, p.y);   /* 2026-10-15 anh: VFX pixel, bỏ bản mềm */ ctx.toast(AT(ctx).splash); alog('splash'); return; }
+  let dmg = Math.round((ctx.hero ? ctx.hero.max : 100) * Math.min(0.35, 0.05 + from / 1200 * 0.3)); if (ob) { dmg = Math.round(dmg * 0.5); if (ctx.chase) ctx.chase.impact(p.x, p.y, 14, { pw: 6, src: { x: p.x, y: p.y - 10 } }); }   /* cây / mái đỡ bớt (vỡ vật) */
+  if (ctx.hero) { if (ctx.hero.iframes) ctx.hero.iframes(0); ctx.hero.hit(dmg); }
+  if (ctx.knockPlayer) { const k0 = ctx.knockPlayer.__prev || ctx.knockPlayer; k0({ type: 'launch', power: 0.5, dir: { x: 0, y: 1 } }); }
+  if (ctx.vfx) { ctx.vfx('ac_dustring', p.x, p.y - 1) || ctx.vfx('ac_dustsoft', p.x, p.y - 1); /* 2026-10-16: neo y < chân người → vòng bụi vẽ DƯỚI người (không che kín người chơi) */   /* 2026-10-15: vòng bụi PIXEL trước, bản mềm chỉ khi thiếu */ ctx.vfx('knock_land', p.x, p.y + 2); } if (ctx.quake) ctx.quake(0.35); ctx.sfx('smash'); alog('IMPACT from ' + Math.round(from) + ' dmg ' + dmg);
+}
+/* ---- vẽ: đất thu nhỏ theo bậc (dải Trên cao) + sương tầng mây + sương lướt khi đổi bậc ---- */
+function landToScr(ctx, cx, cy, k) { const p = ctx.S.player, ox = p.x - cx, oy = p.y - cy; return (wx, wy) => [ox + (wx - p.x) / k, oy + (wy - p.y) / k]; }
+
+/* ---- ĐẤT XA = KHẢM THẾ GIỚI (anh 2026-10-14): bản đồ vùng dưới + các vùng KỀ (Bắc / Nam theo lối đất, nối giữa cột), hai bên lặp gương cho kín;
+   thu nhỏ LIÊN TỤC (lớp xa — được làm mượt, đọc như khoảng cách khí quyển): 1× ở 60 m → ~⅛× ở 1200 m; sương xanh dày dần. Nhân vật / trùm ở độ cao mình vẫn 1:1. */
+const farK = h => (h < 60 ? 1 : 1 / (1 + (h - 60) / 165));
+const MOS = { q: [], built: new Set() };
+function thumb(ctx, z) { if (ST.landImg[z]) return ST.landImg[z]; if (!MOS.built.has(z) && !MOS.q.includes(z)) MOS.q.push(z); return null; }   /* dựng dần mỗi khung 1 vùng (tránh giật) */
+function mosaicTick(ctx) { const z = MOS.q.shift(); if (!z) return; MOS.built.add(z); try { landImage(ctx, z); } catch (e) { console.error('mosaic', e); } }
+function mosaicOf(ctx, z0) {   /* [{z, ox, oy}] — dây vùng Bắc ↔ Nam (đúng lối dưới đất), căn giữa cột */
+  const out = [], size = z => { const Z = ZONES[z]; if (!Z) return null; const m = ST.landMap[z] || (zid(ctx) === z ? ctx.S.map : null); return m ? { w: m.w * TS, h: m.h * TS } : (/^road/.test(z) ? { w: 32 * TS, h: 46 * TS } : { w: 80 * TS, h: 64 * TS }); };
+  const s0 = size(z0); if (!s0) return out; out.push({ z: z0, ox: 0, oy: 0, w: s0.w, h: s0.h });
+  for (const dir of ['n', 's']) { let cur = z0, cy = 0, cs = s0; for (let i = 0; i < 4; i++) { const nx = SKY_LINK(cur)[dir]; if (!nx || out.some(o => o.z === nx)) break; const ns = size(nx); if (!ns) break; cy = dir === 'n' ? cy - ns.h : cy + cs.h; out.push({ z: nx, ox: (s0.w - ns.w) / 2, oy: cy, w: ns.w, h: ns.h }); cur = nx; cs = ns; } }
+  return out;
+}
+let FARC = null, WM = null; if (typeof window !== 'undefined') import('./worldmosaic.js').then(m => { WM = m; }).catch(() => { WM = null; });   /* nạp động: tránh vòng import (worldmosaic dùng fogTint của sky.js) */
+function farGround(g, ctx, cx, cy, z0, h) {
+  const VW = ctx.VW, VH = ctx.VH, p = ctx.S.player, k = farK(h), th = themeOf(SKY_OF(z0) || 'sky'), sm = g.imageSmoothingEnabled;
+  const top = mixHex(th.col, 'k', Math.min(0.5, h / 2400)), bot = mixHex(th.col, 'w', 0.25), gr = g.createLinearGradient(0, 0, 0, VH); gr.addColorStop(0, top); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, VW, VH);   /* trời sẫm dần theo độ cao */
+  const fq = k < 0.22 ? 1 / 3 : k < 0.55 ? 0.5 : 1;   /* 2026-10-14 (anh: đất xa như nhiễu lấm tấm): đất xa vẽ ở độ phân giải thấp rồi phóng mượt = phong cảnh mờ mềm, không lốm đốm */
+  let G2 = g, OW = VW, OH = VH; if (fq < 1 && typeof document !== 'undefined') { OW = Math.ceil(VW * fq) + 2; OH = Math.ceil(VH * fq) + 2; if (!FARC || FARC.width !== OW || FARC.height !== OH) { FARC = document.createElement('canvas'); FARC.width = OW; FARC.height = OH; } G2 = FARC.getContext('2d'); G2.setTransform(1, 0, 0, 1, 0, 0); G2.clearRect(0, 0, OW, OH); G2.imageSmoothingEnabled = true; G2.imageSmoothingQuality = 'high'; }
+  const kq = k * fq, ox0 = (p.x - cx) * fq, oy0 = (p.y - cy) * fq, zx = ox0 - p.x * kq, zy = oy0 - p.y * kq, fx = G2 !== g ? zx - Math.floor(zx) : 0, fy = G2 !== g ? zy - Math.floor(zy) : 0, pad = G2 !== g ? 1 : 0, ox = ox0 - fx + pad, oy = oy0 - fy + pad; g.imageSmoothingEnabled = k < 0.999;   /* góc vùng giữa rơi đúng điểm ảnh nguyên trên ảnh thấp; phần lẻ bù khi phóng → đất trượt mượt, không rung theo bậc */
+  let wmOk = false; if (WM && WM.drawMosaic) { try { wmOk = !!WM.drawMosaic(G2, ctx, { centerZone: z0, camWorldX: p.x, camWorldY: p.y, scale: kq, VW: OW, VH: OH, haze: 0, anchorX: ox, anchorY: oy, time: ctx.S.time }); } catch (e) { console.error('worldmosaic', e); WM = null; } }   /* toàn cảnh ghép đúng vị trí thật (worldmosaic.js) — không có thì khảm cũ */
+  if (!wmOk) for (const t2 of mosaicOf(ctx, z0)) { const im = thumb(ctx, t2.z); if (!im) continue; const W = t2.w * kq, Hh = t2.h * kq, y = oy + (t2.oy - p.y) * kq;
+    if (y > OH || y + Hh < 0) continue;
+    for (let i = -3; i <= 3; i++) { const x = ox + (t2.ox + i * t2.w - p.x) * kq; if (x > OW || x + W < 0) continue;   /* hai bên: lặp gương cho liền đất */
+      if (i % 2) { G2.save(); G2.translate(Math.round(x + W), Math.round(y)); G2.scale(-1, 1); G2.drawImage(im, 0, 0, W, Hh); G2.restore(); } else G2.drawImage(im, Math.round(x), Math.round(y), W, Hh); } }
+  if (G2 !== g) { g.imageSmoothingEnabled = true; g.drawImage(FARC, 0, 0, OW, OH, (fx - 1) / fq, (fy - 1) / fq, OW / fq, OH / fq); }
+  g.imageSmoothingEnabled = sm;
+  const haze = Math.min(0.6, Math.max(0, (h - 60) / 900)); if (haze > 0) { g.fillStyle = mixHex(th.col, 'w', 0.35); g.globalAlpha = haze; g.fillRect(0, 0, VW, VH); g.globalAlpha = 1; }   /* không khí xanh dày dần */
+  if (h > 480) { const a = Math.min(1, (h - 480) / 220); fogLayer(g, ctx, th, 'dark', 0.3 * a, 9, 1, 2, 1.35, 3, cx, cy, ctx.S.time); fogLayer(g, ctx, th, 'light', 0.7 * a, 13, 1, 4, 1.5, 7, cx, cy, ctx.S.time); fogLayer(g, ctx, th, 'light', 0.38 * a, 6, 1.12, 7, 1.7, 21, cx, cy, ctx.S.time); }   /* biển mây BÊN DƯỚI (có khe nhìn xuống khảm đất) */
+}
+function drawHighGround(g, ctx, cx, cy) { return farGround(g, ctx, cx, cy, zid(ctx), AL.h);
+}
+function drawHighGroundOld(g, ctx, cx, cy) {
+  const k = AL.k, VW = ctx.VW, VH = ctx.VH, th = themeOf(SKY_OF(zid(ctx)) || 'sky'), land = k >= 4 ? blurLand(landImage(ctx, zid(ctx))) : landImage(ctx, zid(ctx));
+  g.fillStyle = th.col; g.fillRect(0, 0, VW, VH);
+  if (land) { const [x, y] = landToScr(ctx, cx, cy, k)(0, 0), sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false; g.drawImage(land, Math.round(x), Math.round(y), Math.round(land.width / k), Math.round(land.height / k)); g.imageSmoothingEnabled = sm; }
+  const haze = Math.min(0.55, 0.12 + (AL.h - ALT.LOW) / (ALT.C0 - ALT.LOW) * 0.43); g.fillStyle = mixHex(th.col, 'w', 0.3); g.globalAlpha = haze; g.fillRect(0, 0, VW, VH); g.globalAlpha = 1;   /* lớp không khí dày dần theo độ cao */
+  fogLayer(g, ctx, th, 'light', 0.25 + haze * 0.4, 6, 0.35, 3, 1.4, 5, cx, cy, ctx.S.time);   /* sương mỏng trôi rất xa bên dưới */
+}
+function skyEdgeFog(g, ctx, cx, cy) {   /* mép trời KHÔNG có lối (Đông / Tây, hoặc Bắc / Nam bị khoá / không vùng kề): tường sương dày dần ra ngoài, không vạch cứng */
+  const m = ctx.S.map, VW = ctx.VW, VH = ctx.VH, W = m.w * TS, Hh = m.h * TS, th = themeOf(zid(ctx)), col = mixHex(th.col, 'k', 0.18), link = SKY_LINK(BELOW_OF(zid(ctx))), D = 150, sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;
+  const side = (x0, y0, x1, y1, ang) => { const gr = g.createLinearGradient(x0 - cx, y0 - cy, x1 - cx, y1 - cy); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, col); g.fillStyle = gr; g.globalAlpha = 0.95; void ang; };
+  const fill = (x, y, w, h) => { g.fillRect(Math.round(x - cx), Math.round(y - cy), Math.round(w), Math.round(h)); };
+  if (cx < D) { side(D, 0, -20, 0); fill(-VW, cy - 10, D + VW, VH + 20); }
+  if (cx + VW > W - D) { side(W - D, 0, W + 20, 0); fill(W - D, cy - 10, D + VW, VH + 20); }
+  if (cy < D) cgFogNS(g, 'n', m, link.n && ZONES[SKY_OF(link.n)] ? cgX(m) : null, cx, cy, VW, VH, col);   /* plan-41: mép Bắc / Nam = tường sương như Đông / Tây, chừa khe CỔNG MÂY */
+  if (cy + VH > Hh - D) cgFogNS(g, 's', m, link.s && ZONES[SKY_OF(link.s)] ? cgX(m) : null, cx, cy, VW, VH, col);
+  g.globalAlpha = 1; g.imageSmoothingEnabled = sm;
+}
+function drawAltFog(g, ctx, cx, cy) {   /* TẦNG MÂY: sương dày ở VIỀN màn + vài dải mỏng lướt qua phía trước; GIỮA màn (người, Rocky, tên) luôn rõ */
+  if (!flyingNow(ctx)) return; const h = AL.h, VW = ctx.VW, VH = ctx.VH, th = themeOf(inSky(ctx) ? zid(ctx) : (SKY_OF(zid(ctx)) || 'sky')), t = ctx.S.time;
+  const a = Math.max(0, 1 - Math.abs(h - ALT.SW) / 90); if (a <= 0.01) return;
+  const col = mixHex(th.col, 'w', 0.78), X = VW / 2, Y = VH / 2 - 10, R = Math.min(VW, VH) * 0.42;
+  const gr = g.createRadialGradient(X, Y, R * 0.55, X, Y, R * 1.6); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, col); g.save(); g.globalAlpha = Math.min(0.95, a); g.fillStyle = gr; g.fillRect(0, 0, VW, VH); g.restore();
+  const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;
+  const PXA = ['sky-cl-big-a', 'sky-cl-band', 'sky-cl-wall', 'sky-cl-big-b', 'sky-cl-band', 'sky-cl-mid', 'sky-cl-big-a'], pxOk = pxReady(); if (pxOk) g.imageSmoothingEnabled = false;   /* 2026-10-15: mây PIXEL lướt qua (cỡ thật, không phóng) */
+  for (let i = 0; i < (pxOk ? 7 : 5); i++) { const im = pxOk ? pxCloudTint(PXA[i], col, 0.25) : fogTint(i % 4, col); if (!im) continue; const w = pxOk ? im.width : im.width * 1.5, hh = pxOk ? im.height : im.height * 1.2, sp = 26 + i * 9, x = Math.round(((t * sp + i * 173) % (VW + w * 2)) - w * 1.5), y = Math.round((i * 61) % VH - hh * 0.3), near = Math.abs(x + w / 2 - X) < VW * 0.25;
+    g.globalAlpha = a * (near ? 0.22 : 0.62); g.drawImage(im, x, y, w, hh); }   /* dải mây lướt qua — đi ngang giữa màn thì rất mỏng */
+  g.globalAlpha = 1; g.imageSmoothingEnabled = sm;
+}
+/* ---- cần gạt độ cao + thước đo (DOM, mép phải) ---- */
+/* 2026-10-14 (anh): thang KHÔNG tuyến tính — nửa dưới cần gạt (48 %) = 0–60 m (bay thấp ngắm dân làng, đẹp nhất), phần trên nén 60–1200 m; có NẤC bấm được, kéo hít nhẹ vào nấc */
+const LV_LOW = 60, LV_U = 0.48, LV_TICKS = [0, 5, 10, 20, 30, 45, 60, 120, 300, 625, 900, 1200];
+const hToU = h => h <= LV_LOW ? LV_U * Math.max(0, h) / LV_LOW : LV_U + (1 - LV_U) * Math.log(Math.min(ALT.MAX, h) / LV_LOW) / Math.log(ALT.MAX / LV_LOW);
+const uToH = u => u <= LV_U ? Math.max(0, u) / LV_U * LV_LOW : LV_LOW * Math.pow(ALT.MAX / LV_LOW, Math.min(1, (u - LV_U) / (1 - LV_U)));
+function snapH(u) { let best = null, bd = 0.035; for (const k of LV_TICKS) { const d = Math.abs(hToU(k) - u); if (d < bd) { bd = d; best = k; } } if (best != null) return best; const h = uToH(u); return h < LV_LOW ? Math.round(h) : Math.round(h / 10) * 10; }
+function altWidget(ctx) {
+  if (AL.lever || typeof document === 'undefined') return AL.lever;
+  const st = document.createElement('style'); st.textContent = `#altw{position:fixed;right:4px;z-index:8;width:44px;user-select:none;touch-action:none;font:13px VT323,monospace;color:#fff6c8}
+#altw[hidden]{display:none} #altw .aw-tr{position:absolute;right:6px;top:0;bottom:0;width:9px;border-radius:5px;background:linear-gradient(#cfe6ff,#9fb6e8 30%,#6f8ec9 52%,#d9d0b0 85%,#7da35a);box-shadow:0 0 0 2px #3a2a4a,0 2px 0 3px rgba(0,0,0,.35);cursor:ns-resize}
+#altw.L .aw-tr{right:auto;left:6px} #altw.L .aw-b{right:auto;left:24px;transform:translateY(-50%)} #altw.L .aw-cur{right:auto;left:2px} #altw.L .aw-tgt{right:auto;left:-2px} #altw.L .aw-en{right:auto;left:0} #altw.L .aw-n{right:auto;left:30px}
+#altw .aw-b{display:none!important} #altw .aw-b.x{position:absolute;right:22px;transform:translateY(-50%);padding:0 3px;border-radius:3px;background:rgba(20,14,30,.72);white-space:nowrap;cursor:pointer;font-size:12px}
+#altw .aw-cur{position:absolute;right:2px;width:20px;height:4px;transform:translateY(-50%);background:#fff;box-shadow:0 0 0 1px #3a2a4a}
+#altw .aw-tgt{position:absolute;right:-2px;width:28px;height:14px;transform:translateY(-50%);border-radius:7px;background:#ffd45e;box-shadow:0 0 0 2px #6b3416;cursor:grab}
+#altw .aw-en{position:absolute;right:0;width:24px;height:3px;transform:translateY(-50%);background:#ff4a3a}
+#altw .aw-k{position:absolute;right:16px;width:26px;height:14px;transform:translateY(-50%);cursor:pointer} #altw .aw-k::after{content:'';position:absolute;right:0;top:6px;width:7px;height:2px;background:#fff6c8;box-shadow:0 0 0 1px #3a2a4a} #altw .aw-k.big::after{width:11px} #altw .aw-k span{position:absolute;right:14px;top:-1px;font-size:11px;color:#fff6c8;text-shadow:1px 1px 0 #000;white-space:nowrap;transition:opacity .25s} #altw.quiet .aw-k span{opacity:0}
+#altw.L .aw-k{right:auto;left:16px} #altw.L .aw-k::after{right:auto;left:0} #altw.L .aw-k span{right:auto;left:14px}
+#altw .aw-n{position:absolute;right:26px;transform:translateY(-50%);white-space:nowrap;background:rgba(20,14,30,.72);padding:0 4px;border-radius:3px;pointer-events:none} #altw .aw-b{transition:opacity .25s} #altw.quiet .aw-b{opacity:0!important;pointer-events:none}`;
+  document.head.appendChild(st);
+  const el = document.createElement('div'); el.id = 'altw'; el.hidden = true;
+  el.innerHTML = `<div class="aw-tr"></div>${LV_TICKS.map(h => `<i class="aw-k${h % 60 === 0 || h === 625 ? ' big' : ''}" data-h="${h}"><span>${h}</span></i>`).join('')}${BANDS.map(([k]) => `<b class="aw-b" data-b="${k}"></b>`).join('')}<i class="aw-en" hidden></i><i class="aw-cur"></i><i class="aw-tgt"></i><span class="aw-n"></span>`;
+  document.body.appendChild(el);
+  const yToU = cy => { const r = el.getBoundingClientRect(); return Math.max(0, Math.min(1, 1 - (cy - r.top) / r.height)); };
+  let drag = false; const go = e => { if (!ST.ctx) return; setAltTarget(ST.ctx, snapH(yToU(e.clientY)), 'lever'); };
+  el.addEventListener('pointerdown', e => { AL.dragging = true; const kt = e.target.closest('.aw-k'); if (kt && ST.ctx) { e.preventDefault(); e.stopPropagation(); setAltTarget(ST.ctx, +kt.dataset.h, 'tick'); AL.dragEnd = performance.now(); AL.dragging = false; return; }   /* bấm 1 nấc → bay tới mức đó */
+    const b = e.target.closest('.aw-b'); e.preventDefault(); e.stopPropagation(); if (b) { const now = performance.now(); if (b._t && now - b._t < 400 && ST.ctx) setAltTarget(ST.ctx, BMID[b.dataset.b], 'band'); b._t = now; if (!matchMedia('(pointer:coarse)').matches && ST.ctx) setAltTarget(ST.ctx, BMID[b.dataset.b], 'band'); return; } drag = true; try { el.setPointerCapture(e.pointerId); } catch (er) { /* bỏ */ } go(e); });
+  el.addEventListener('pointermove', e => { if (drag) { e.preventDefault(); go(e); } });
+  el.addEventListener('pointerup', () => { drag = false; AL.dragging = false; AL.dragEnd = performance.now(); }); el.addEventListener('pointercancel', () => { drag = false; AL.dragging = false; });
+  el.addEventListener('wheel', e => { e.preventDefault(); if (ST.ctx) setAltTarget(ST.ctx, AL.tgt + (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 100 : 20), 'wheel'); }, { passive: false });
+  return (AL.lever = el);
+}
+const PWG = { t: 0 };
+function placeWidget(ctx) {
+  const el = altWidget(ctx); if (!el) return; const play = ctx.S.mode === 'play' || ctx.S.mode === 'faint', show = play && (flyingNow(ctx) || (copters(ctx) > 0 && landZone(ctx)));
+  if (PWG.on !== show) { PWG.on = show; document.body.classList.toggle('altw-on', show); PWG.t = 0; }   /* 2026-10-15 v2: điện thoại ngang dời cụm máu/Ki sang trái nhường chỗ cần độ cao (style.css body.altw-on) */
+  if (el.hidden !== !show) el.hidden = !show; if (!show) { PWG.t = 0; return; }
+  const now = performance.now(), VHp = window.innerHeight; let coarse, top, hgt, left, side;
+  if (PWG.t && now - PWG.t < 500 && PWG.vh === VHp) { coarse = PWG.coarse; top = PWG.top; hgt = PWG.hgt; left = PWG.left; side = PWG.side; } else {   /* plan-37: phần đo layout (matchMedia, getBoundingClientRect) 2 lần / giây — trước: mỗi khung */
+  /* 2026-10-15 (tác nhân HUD, anh: 'thanh bay và máu Ki hợp lí hơn'): cần độ cao luôn nằm SÁT cụm Cấp + máu/Ki, không đè thứ gì.
+     Điện thoại: mép PHẢI, bắt đầu ngay dưới vật thấp nhất của cột phải (đồng hồ / cụm máu / nút ☰), kéo xuống tới trên cụm nút A (tránh 🎯 / túi / ăn / nút trời).
+     Máy tính: ngay bên TRÁI thanh máu góc dưới phải, đáy ngang đáy thanh máu (nâng lên trên nút 'Bay' nếu vướng), đỉnh dưới đồng hồ + chip trạng thái.
+     Trước: điện thoại ngang cần đè lên thanh máu; máy tính cần ở mép trái giữa màn, xa thanh máu. */
+  coarse = matchMedia('(pointer:coarse)').matches; const IW = window.innerWidth, GW = 44, FOOT = coarse ? 4 : 30;   /* FOOT: nhãn số / nấc thò ra bên trái cần (điện thoại: nhãn nấc ẩn khi không kéo → chỉ xét thân cần) */
+  const R = e => { if (!e || e.hidden || e.closest('[hidden]')) return null; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return null; const q = e.getBoundingClientRect(); return q.width && q.height ? q : null; };
+  const RI = id => R(document.getElementById(id)), hx = (q, x0, x1) => q.right > x0 && q.left < x1;
+  const hb = RI('herobar');
+  if (coarse) {
+    const land = IW > VHp; side = 'R'; left = IW - (land ? 10 : 4) - GW; top = 0;   /* ngang: mép phải cần thẳng mép phải đồng hồ (right 10) */
+    for (const id of ['px-clock', 'herobar', 'btn-menu', 'btn-photo', 'btn-rot', 'btn-chat', 'px-status']) { const q = RI(id); if (q && hx(q, left - 2, IW) && q.top < VHp * 0.6) top = Math.max(top, Math.round(q.bottom + (land ? 6 : 10))); }
+    if (!top) top = Math.round(VHp * 0.43);
+    let bot = Math.round(VHp * 0.92); const ba = RI('btn-a'); if (ba) bot = Math.min(bot, Math.round(ba.top - (land ? 8 : 14)));
+    for (const e of document.querySelectorAll('#btn-tgt, #mslots .ms-bag, #mslots .ms-eat, .sky-btn')) { const q = R(e); if (q && hx(q, left - FOOT, IW) && q.bottom > top) bot = Math.min(bot, Math.round(q.top - 12)); }   /* nút 🎯 / túi / ăn / nút trời ở cột phải → cần ngắn lại, không đè */
+    hgt = Math.max(70, Math.min(Math.round(VHp * (land ? 0.6 : 0.45)), bot - top));
+  } else if (hb && hb.left > IW * 0.5) {
+    side = 'R'; left = Math.round(hb.left - 10 - GW); let bot = Math.round(hb.bottom);
+    for (const e of document.querySelectorAll('#btn-copter, #hotbar, .sky-btn, #herobar .hb-num')) { const q = R(e); if (q && hx(q, left - FOOT, left + GW) && q.top < bot && q.bottom > bot - 200) bot = Math.min(bot, Math.round(q.top - 10)); }   /* + số máu thò sang trái thanh máu (2026-10-15) */
+    let lim = 8; for (const id of ['px-clock', 'px-status', 'px-money']) { const q = RI(id); if (q && hx(q, left - FOOT, left + GW)) lim = Math.max(lim, Math.round(q.bottom + 10)); }
+    hgt = Math.min(Math.round(VHp * 0.5), 380); top = Math.max(lim, bot - hgt); hgt = bot - top;
+    if (hgt < 120) { side = 'L'; left = 4; top = Math.round(VHp * 0.22); hgt = Math.round(VHp * 0.56); }   /* màn quá thấp: về mép trái như cũ */
+  } else { side = 'L'; left = 4; top = Math.round(VHp * 0.22); hgt = Math.round(VHp * 0.56); }
+  PWG.t = now; PWG.vh = VHp; PWG.coarse = coarse; PWG.top = top; PWG.hgt = hgt; PWG.left = left; PWG.side = side; }
+  const st = (e, k, v) => { const c = e._pw || (e._pw = {}); if (c[k] !== v) { c[k] = v; e.style[k] = v; } };   /* chỉ ghi style khi đổi */
+  el.classList.toggle('L', side === 'L'); st(el, 'right', 'auto'); st(el, 'left', left + 'px'); st(el, 'top', top + 'px'); st(el, 'height', hgt + 'px'); const yOf = h => Math.round((1 - hToU(h)) * hgt) + 'px', vi = ctx.lang() === 'vi'; for (const k of el.querySelectorAll('.aw-k')) st(k, 'top', yOf(+k.dataset.h));
+  for (const b of el.querySelectorAll('.aw-b')) { const k = b.dataset.b; const bt = BNAME[vi ? 'vi' : 'en'][k]; if (b.textContent !== bt) b.textContent = bt; st(b, 'top', yOf(BMID[k])); st(b, 'opacity', bandOf(AL.h) === k ? '1' : '.62'); }
+  st(el.querySelector('.aw-cur'), 'top', yOf(AL.h)); st(el.querySelector('.aw-tgt'), 'top', yOf(AL.tgt));
+  const en = el.querySelector('.aw-en'); if (en.hidden !== (AL.enemyH == null)) en.hidden = AL.enemyH == null; if (AL.enemyH != null) st(en, 'top', yOf(AL.enemyH));
+  const nEl = el.querySelector('.aw-n'); const nt = `${AL.v > 4 ? '▲' : AL.v < -4 ? '▼' : ''}${Math.round(AL.h)} m`; if (nEl.textContent !== nt) nEl.textContent = nt; st(nEl, 'top', yOf(AL.h));   /* số độ cao DUY NHẤT: cạnh vạch hiện tại */
+  el.classList.toggle('quiet', coarse ? !(AL.dragging || performance.now() - (AL.dragEnd || -1e9) < 900) : !(AL.leverT > ctx.S.time - 1.8));   /* điện thoại: tên dải CHỈ hiện lúc đang kéo cần */   /* tên dải chỉ hiện khi đang kéo / vừa đổi mục tiêu */
+}
+if (typeof window !== 'undefined') {
+  window.__altWheel = () => !!(ST.ctx && flyingNow(ST.ctx) && ST.ctx.S.mode === 'play');   /* hotbar.js: đang bay thì lăn chuột = độ cao */
+  addEventListener('wheel', e => { const c = ST.ctx; if (!c || !window.__altWheel() || (e.target && e.target.closest && e.target.closest('#altw'))) return; const cv = document.getElementById('c'), uc = document.getElementById('ui'); if (e.target !== cv && e.target !== uc && e.target !== document.body && !(e.target && e.target.id === 'hotbar')) return; setAltTarget(c, AL.tgt + (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 100 : 20), 'wheel'); }, { passive: true });
+}
+
+const ALTSYS = new Set(['sky', 'aircombat', 'bakunawa', 'knock']);   /* dải Trên cao: chỉ vẽ thứ đang BAY (đất ở xa bên dưới, thu nhỏ) */
 export const sky = {
   id: 'sky', always: true,
   onZoneEnter(ctx) {
-    ST.ctx = ctx; ST.leaving = false; ST.marks = []; ST.shots = []; ST.lunge = null; ST.threat = new Map(); ST.spawnT = 20; ST.monCfg = {}; ST.mini = null; ST.holes = null;
+    ST.ctx = ctx; ST.cg = null; cgPreload(); ST.edgeNoT = ctx.S.time + 0.8; ctx.skyKiSpin = true;   /* báo ki.js: drawHover tự xoay theo ent.kiSpin */ ST.leaving = false; ST.marks = []; ST.shots = []; ST.lunge = null; ST.threat = new Map(); ST.spawnT = 20; ST.monCfg = {}; ST.mini = null; ST.holes = null;
     const z = zid(ctx), pend = ST.pending, p = ctx.S.player; ST.pending = null;
     if (!pend) { if (ST.fly) stopFly(ctx); ST.cut = null; ctx.S.camDY = 0; if (!inSky(ctx)) ST.rk = null; }
     ctx.skyMount = () => { const rk = ST.rk; if (!rk || !(inSky(ctx) || ST.cut || isMid())) return null; if (!rk.with) return inSky(ctx) ? { x: -9999, y: -9999, face: 'ds', dir: 1 } : null;
@@ -981,21 +1333,29 @@ export const sky = {
     ST.craters = inSky(ctx) ? [] : cratersOf(ctx, z); ST.falls = []; ST.scout = []; ST.post = inSky(ctx) ? null : postSpot(ctx);
     ctx.skyRoster = zz => { if (ST.landing !== zz) return null; ST.landing = null; const r = (ctx.S.save.sys.skyRoster || {})[zz]; if (!r || (Date.now() - r.at) / 1000 > ROSTER_LIFE) return null; log('roster use ' + zz + ' ' + r.list.length); return r.list; };
     ctx.skyFly = { read: () => ({ ok: false, why: L(ctx).conv }), learned: () => copters(ctx) > 0, use: () => useCopter(ctx) };
-    ctx.playerAir = () => isMid() && !inSky(ctx);   /* monsters.js: quái đất không cận chiến trúng người đang bay tầng Trung */
-    ctx.skyMelee = mo => { if (isMid() && mo && mo.c && !mo.c.sky && !mo.c.fly) { if (ctx.S.time - (ST.slashT || -9) > 2) { ST.slashT = ctx.S.time; ctx.toast(L(ctx).midSlash); } ST.slashBlocked = (ST.slashBlocked || 0) + 1; return false; } if (!mo || !mo.c || !mo.c.sky) return true; if ((mo.alt ?? 0) === altNow()) return true; if (ctx.S.time - (ST.diffT || -9) > 2) { ST.diffT = ctx.S.time; ctx.toast(L(ctx).diff(L(ctx).alt[mo.alt ?? 0])); } return false; };
+    ctx.playerAir = () => isMid() && !inSky(ctx) && AL.h > 2;   /* monsters.js: quái đất không cận chiến trúng người đang bay tầng Trung */
+    ctx.skyMelee = mo => { if (isMid() && AL.h > ALT.MELEE && mo && mo.c && !mo.c.sky && !mo.c.fly) { if (ctx.S.time - (ST.slashT || -9) > 2) { ST.slashT = ctx.S.time; ctx.toast(L(ctx).midSlash); } ST.slashBlocked = (ST.slashBlocked || 0) + 1; return false; } if (!mo || !mo.c || !mo.c.sky) return true; if ((mo.alt ?? 0) === altNow()) return true; if (ctx.S.time - (ST.diffT || -9) > 2) { ST.diffT = ctx.S.time; ctx.toast(L(ctx).diff(L(ctx).alt[mo.alt ?? 0])); } return false; };
     { const prev = ctx.onMonsterDown; ctx.onMonsterDown = (mo, xp) => { if (prev) prev(mo, xp); const ex = mo && mo.c && mo.c.sky && EXTRA[mo.c.key.split('@')[0]];
       if (ex) for (const [id, n] of ex) ctx.give(id, n, mo.x + (Math.random() - 0.5) * 12, mo.y); if (mo && mo.c && mo.c.sky) { ST.kills = (ST.kills || 0) + 1; log('kill ' + mo.c.key); } }; }
     migrate(ctx);
+    ctx.skyCut = () => (ST.cut ? ST.cut.kind : null); ctx.skyRk = () => ST.rk;   /* 2026-10-14 aircombat: cảnh cất/hạ cánh đang chạy · Rocky bay (giả) của trời */
+    ctx.skyRkFling = (vx, vy, pw = 1) => { const rk = ST.rk; if (!rk || !rk.with || rk.fl) return false; rk.fl = { vx: vx * 210 * pw, vy: vy * 170 * pw, t: 0, ang: 0, spin: (vx >= 0 ? 1 : -1) * Math.PI * 2.6 }; return true; };
+    ctx.alt = { vz: () => AL.v, fast: () => flyingNow(ctx) && Math.abs(AL.v) > 110, pose: () => altPose(ctx), h: () => AL.h, tgt: () => AL.tgt, set: (v, src) => setAltTarget(ctx, v, src), toggle: () => toggleFly(ctx), knockV: (dm, o) => knockV(ctx, dm, o), band: () => bandOf(AL.h), enemy: h => { AL.enemyH = h; }, hidden: () => flyingNow(ctx) && AL.h > ALT.C0 + 20 && AL.h < ALT.C1 - 10, falling: () => !!AL.fall, rate: () => ({ cap: Math.round(AL.cap || 0), vMax: Math.round(AL.vMax || 0), log: AL.rateLog.slice(-40) }), resetVMax: () => { AL.vMax = 0; }, perfect: () => perfectRecovery(ctx), noCatch: v => { AL.rkCatchCd = v ? 999 : 0; }, st: () => ({ h: +AL.h.toFixed(1), tgt: AL.tgt, v: +AL.v.toFixed(1), k: AL.k, band: bandOf(AL.h), fall: !!AL.fall, wob: +AL.wob.toFixed(2), flash: AL.flashT, enemyH: AL.enemyH, stats: { ...AL.stats }, log: AL.log.slice(-20), zone: zid(ctx), drift: !!AL.drift }) };
+    ctx.altView = () => (landZone(ctx) && ST.fly && AL.h >= 60 ? { k: AL.k, ground: (g, cx, cy) => drawHighGround(g, ctx, cx, cy), sys: id => ALTSYS.has(id) } : null);   /* main.js: dải Trên cao vẽ đất thu nhỏ theo bậc */
+    { const ap2 = ctx.S.altPend; if (ap2) { ctx.S.altPend = null; const m0 = ctx.S.map; p.x = Math.max(24, Math.min(m0.w * TS - 24, ap2.x)); p.y = Math.max(24, Math.min(m0.h * TS - 24, ap2.y)); AL.h = ap2.h; const pt0 = petOf(ctx);   /* đổi vùng xuyên tầng mây: cùng toạ độ, KHÔNG cắt cảnh */
+      ST.rk = ap2.rk && pt0 ? { with: true, x: p.x - 18, y: p.y + 2, dir: 0, cheer: 0 } : null; ST.cut = null; if (inSky(ctx)) startFly(ctx, AL.h > 950 ? 1 : 0, p.x, p.y); else if (LAND.test(z)) startMid(ctx); ctx.setMode('play'); ST.justAlt = true; alog('arrive ' + z + ' @' + Math.round(AL.h)); } else if (AL.h > 0.5 && LAND.test(z) && !inSky(ctx)) { const pt0 = petOf(ctx); ST.rk = pt0 && copters(ctx) >= 2 && !(pt0.koT > 0) && pt0.cmd !== 'home' ? { with: true, x: p.x - 18, y: p.y + 2, dir: 0, cheer: 0 } : null; startMid(ctx); alog('gate in flight ' + z); } else if (!inSky(ctx) && !(ctx.S.map && ctx.S.map.air)) { AL.h = 0; AL.tgt = 0; AL.v = 0; AL.fall = null; } }
+    { const ap = ctx.S.airPend; if (ap && !inSky(ctx) && ap.arrive) { ctx.S.airPend = null; const m = ctx.S.map, gp = gatePos(m), x = Math.max(40, Math.min(m.w * TS - 40, gp.x + (ap.dx || 0) * 140)), y = Math.max(40, Math.min(m.h * TS - 40, gp.y + 70 + (ap.dy || 0) * 90));   /* 2026-10-14: hạ từ sân trời → tầng Trung ngay dưới Cổng Trời */
+      p.x = x; p.y = y; const pt = petOf(ctx); ST.rk = pt && copters(ctx) >= 2 && !(pt.koT > 0) && pt.cmd !== 'home' ? { with: true, x: x - 18, y: y + 2, dir: 0, cheer: 0 } : null; ST.cut = null; startMid(ctx); AL.h = Math.max(AL.h, 600); AL.tgt = Math.min(AL.tgt || 120, 600); log('air arrive mid ' + zid(ctx)); } }
     if (inSky(ctx)) {
       sv(ctx).visited = true; ST.graceT = ctx.S.time + 5; const below = BELOW_OF(z);
       void below; ST.holes = null;
       let at = { x: p.x, y: p.y };
       if (pend && (pend.kind === 'arrive' || pend.kind === 'cross')) { at = pend.x != null ? { x: pend.x, y: pend.y } : { x: ctx.S.map.w * 8, y: ctx.S.map.h * 8 };
         at.x = Math.max(24, Math.min(ctx.S.map.w * TS - 24, at.x)); at.y = Math.max(24, Math.min(ctx.S.map.h * TS - 24, at.y)); }
-      startFly(ctx, 0, at.x, at.y); scoutBuild(ctx); evEnter(ctx); if (z === 'sky_m9') setTimeout(() => ctx.toast(L(ctx).gateHint), 1800);
+      const flyWas = !!ST.fly; if (!ST.fly) startFly(ctx, 0, at.x, at.y); else if (pend && pend.kind === 'cross') { p.x = at.x; p.y = at.y; } if (!ST.justAlt && !flyWas) { AL.h = 850; AL.tgt = 850; } ST.justAlt = false;   /* vào thẳng trời (điểm lưu / mép trời) = giữa tầng trời */ scoutBuild(ctx); evEnter(ctx); if (z === 'sky_m9') setTimeout(() => ctx.toast(L(ctx).gateHint), 1800);
       if (!ST.rk) { const pt = petOf(ctx); ST.rk = pt ? { with: copters(ctx) >= 2 && !(pt.koT > 0) && pt.cmd !== 'home', x: at.x - 18, y: at.y + 2, dir: 0, cheer: 0 } : null; }
       if (ST.rk && ST.rk.with) { ST.rk.x = at.x - 18; ST.rk.y = at.y + 2; }
-      if (pend && (pend.kind === 'arrive' || pend.kind === 'cross')) { ST.cut = pend.edge ? { kind: 'arrive', edge: true, t: 0, fps: 18, z: 0, white: 0.85, clouds: 1 } : { kind: 'arrive', t: 0, fps: 26, z: 70, white: 1, clouds: 1 }; p.custom = drawHover; ctx.setMode('copter'); ctx.registerCloser('copter', () => skipCut(ctx)); ctx.onAction('copter', () => skipCut(ctx)); }
+      if (pend && (pend.kind === 'arrive' || pend.kind === 'cross') && (!flyWas || pend.edge || (ST.cut && ST.cut.gone))) { ST.cut = pend.edge ? { kind: 'arrive', edge: true, t: 0, fps: 18, z: 0, white: 0.85, clouds: 1 } : { kind: 'arrive', t: 0, fps: 26, z: 70, white: 1, clouds: 1 }; p.custom = drawHover; ctx.setMode('copter'); ctx.registerCloser('copter', () => skipCut(ctx)); ctx.onAction('copter', () => skipCut(ctx)); }
     } else if (pend && pend.kind === 'touch') {
       const ex = pend.exact && walkAt(ctx, ctx.S.map, reachOf(ctx, z, ctx.S.map), pend.x, pend.y), s = ex ? { x: pend.x, y: pend.y } : landSpot(ctx, pend) || { x: p.x, y: p.y }; p.x = s.x; p.y = s.y; p.dir = 0; ST.lastLand = { want: { x: pend.x, y: pend.y }, got: { x: s.x, y: s.y }, exact: !!ex };
       if (pend.fell && ctx.S.save.hero) { const h = ctx.S.save.hero, mx = ctx.hero ? ctx.hero.max : 100, b = h.hp ?? mx; h.hp = Math.max(1, Math.round(b - mx * FALL_HP)); ST.lastFall = { before: Math.round(b), after: h.hp, max: mx }; ctx.toast(L(ctx).fell(zname(ctx, z)), true); }
@@ -1015,7 +1375,8 @@ export const sky = {
       mon: id => { const mo = ctx.monsters && ctx.monsters.list().find(m => m.id === id); return mo ? { x: mo.x, y: mo.y, hp: mo.hp, max: mo.max, alt: mo.alt ?? 0, st: mo.st2 || null, lift: mo.lift } : null; },
       set: (id, o) => { const mo = ctx.monsters && ctx.monsters.list().find(m => m.id === id); if (mo) Object.assign(mo, o); return !!mo; }, freeze: v => { ST.freeze = !!v; },
       flyTo: zz => flyTo(ctx, zz), map: () => openMap(ctx), near: () => sky.near(ctx), lastFall: () => ST.lastFall || null, mini: () => { const c = ST.landImg[BELOW_OF(zid(ctx))]; return c ? [c.width, c.height] : null; },
-      target: () => landTarget(ctx), up: () => pressUp(ctx), down: () => pressDown(ctx), tier: () => tierNow(ctx), mid: () => ({ on: isMid(), hits: ST.midHits || 0, slashBlocked: ST.slashBlocked || 0, aim: midAim(ctx), tall: (tx, ty) => !!(ST.tall && ST.tall.tall[ty * ctx.S.map.w + tx]) }), midThrow: () => midThrow(ctx), gate: () => ({ open: !!sv(ctx).gateOpen, miss: gateMiss(ctx), pos: gatePos(ctx.S.map) }), interact: k => sky.interact(ctx, { data: { k } }), ev: k => evStart(ctx, k), evState: () => ({ met: EV.met ? { stars: EV.met.stars.map(s => ({ x: Math.round(s.x || s.x0), y: Math.round(s.y || s.y0), tx: s.tx, ty: s.ty, t: +s.t.toFixed(2) })) } : null, storms: EV.storms.map(c => ({ x: Math.round(c.x), y: Math.round(c.y), cd: +c.cd.toFixed(1) })), pass: EV.pass ? { k: EV.pass.k, x: Math.round(EV.pass.x), y: Math.round(EV.pass.y), dir: EV.pass.dir, with: +EV.pass.with.toFixed(1), done: EV.pass.done } : null, stars: ST.stars || 0, bolts: ST.bolts || 0, zaps: ST.zaps || 0, book: sv(ctx).book || {} }), evClear: () => { EV.met = null; EV.storms = []; EV.pass = null; EV.off = true; }, evOn: () => { EV.off = false; }, bat: v => { if (v != null) sv(ctx).bat = v; return batOf(ctx); }, batFree: v => { ST.batFree = !!v; }, station: () => stationOf(ctx.S.map), post: () => ({ spot: ST.post, ...postSv(ctx), left: postLeft(postSv(ctx).job) }), postOpen: () => openPost(ctx), postSet: o => Object.assign(postSv(ctx), o), scout: () => ST.scout.map(s => ({ kind: s.kind, x: Math.round(s.x), y: Math.round(s.y), n: s.n || 1, strong: !!s.strong, label: s.label })), roster: zz => ((ctx.S.save.sys.skyRoster || {})[zz] || null), pin: () => pressPin(ctx), pinState: () => sv(ctx).pin || null, drop: () => pressDrop(ctx), craters: () => ST.craters.length, crHits: () => ST.crHits || 0, strikes: z => cratersOf(ctx, z).length, rescout: () => scoutBuild(ctx), lastLand: () => ST.lastLand || null, startFly: (alt = 0) => { if (!inSky(ctx)) return false; startFly(ctx, alt); return true; },
+      target: () => landTarget(ctx), up: () => pressUp(ctx), down: () => pressDown(ctx), tier: () => tierNow(ctx), mid: () => ({ on: isMid(), hits: ST.midHits || 0, slashBlocked: ST.slashBlocked || 0, aim: midAim(ctx), tall: (tx, ty) => !!(ST.tall && ST.tall.tall[ty * ctx.S.map.w + tx]) }), midThrow: () => midThrow(ctx), gate: () => ({ open: !!sv(ctx).gateOpen, miss: gateMiss(ctx), pos: gatePos(ctx.S.map) }), interact: k => sky.interact(ctx, { data: { k } }), ev: k => evStart(ctx, k), evState: () => ({ met: EV.met ? { stars: EV.met.stars.map(s => ({ x: Math.round(s.x || s.x0), y: Math.round(s.y || s.y0), tx: s.tx, ty: s.ty, t: +s.t.toFixed(2) })) } : null, storms: EV.storms.map(c => ({ x: Math.round(c.x), y: Math.round(c.y), cd: +c.cd.toFixed(1) })), pass: EV.pass ? { k: EV.pass.k, x: Math.round(EV.pass.x), y: Math.round(EV.pass.y), dir: EV.pass.dir, with: +EV.pass.with.toFixed(1), done: EV.pass.done } : null, stars: ST.stars || 0, bolts: ST.bolts || 0, zaps: ST.zaps || 0, book: sv(ctx).book || {} }), evClear: () => { EV.met = null; EV.storms = []; EV.pass = null; EV.off = true; }, evOn: () => { EV.off = false; }, bat: v => { if (v != null) sv(ctx).bat = v; return batOf(ctx); }, batFree: v => { ST.batFree = !!v; }, post: () => ({ spot: ST.post, ...postSv(ctx), left: postLeft(postSv(ctx).job) }), postOpen: () => openPost(ctx), postSet: o => Object.assign(postSv(ctx), o), scout: () => ST.scout.map(s => ({ kind: s.kind, x: Math.round(s.x), y: Math.round(s.y), n: s.n || 1, strong: !!s.strong, label: s.label })), roster: zz => ((ctx.S.save.sys.skyRoster || {})[zz] || null), pin: () => pressPin(ctx), pinState: () => sv(ctx).pin || null, drop: () => pressDrop(ctx), craters: () => ST.craters.length, crHits: () => ST.crHits || 0, strikes: z => cratersOf(ctx, z).length, rescout: () => scoutBuild(ctx), lastLand: () => ST.lastLand || null, startFly: (alt = 0) => { if (!inSky(ctx)) return false; startFly(ctx, alt); return true; },
+      cgates: () => cloudGates(ctx).map(q => ({ side: q.side, to: q.to, x: q.x, base: q.base, lock: q.lock, need: q.need, why: q.why, code: q.code, name: q.name })), cgBumps: () => ST.cgBumps || 0, edgeLog: () => ST.log.filter(s => /^(edge|bump)/.test(s)).slice(-12),   /* plan-41 */
     };
   },
   onZoneLeave(ctx) { ST.marks = []; ST.shots = []; if (!ST.pending) { if (ST.fly) stopFly(ctx); ST.cut = null; ctx.S.camDY = 0; } },
@@ -1023,6 +1384,7 @@ export const sky = {
     const p = ctx.S.player; if (!p || !ctx.S.map) return;
     if (ST.leaving) return;
     ST.btnT = (ST.btnT || 0) - dt; if (ST.btnT <= 0) { ST.btnT = 0.5; placeBtns(ctx); }
+    altTick(ctx, dt); placeWidget(ctx); if (ST.leaving) return;
     batTick(ctx, dt); ST.postT = (ST.postT || 0) - dt; if (ST.postT <= 0) { ST.postT = 1; postTick(ctx); }
     if (ST.cut) {
       const C = ST.cut;
@@ -1049,7 +1411,7 @@ export const sky = {
   key(code, ctx) {
     if (ctx.S.mode === 'copter') { if (code === 'KeyE' || code === 'Space' || code === 'Enter' || code === 'KeyX') { skipCut(ctx); return true; } return false; }
     if (ctx.S.mode !== 'play') return false;
-    if (code === 'KeyX' && (copters(ctx) > 0 || inSky(ctx) || isMid())) { if (SHIFT) pressDown(ctx); else pressUp(ctx); return true; }
+    if (code === 'KeyX' && (copters(ctx) > 0 || inSky(ctx) || isMid() || (ctx.air && ctx.air.on()))) { if (perfectRecovery(ctx)) return true; if (SHIFT) setAltTarget(ctx, 0, 'X'); else toggleFly(ctx); return true; }
     if (isMid() && !ST.cut && code === 'KeyZ') { midThrow(ctx); return true; }
     if (isMid() && !ST.cut && (code === 'KeyE' || code === 'Space') && ctx.monsters && ctx.monsters.list().some(mo => !mo.c.sky && !mo.c.fly && mo.hp > 0 && Math.hypot(mo.x - ctx.S.player.x, mo.y - ctx.S.player.y) < 40)) { if (ctx.S.time - (ST.slashT || -9) > 1.5) { ST.slashT = ctx.S.time; ctx.toast(L(ctx).midSlash); } ST.slashBlocked = (ST.slashBlocked || 0) + 1; return true; }   /* chém không với tới quái dưới đất */
     if (inSky(ctx) && !ST.cut) { if (code === 'KeyL') { pressPin(ctx); return true; } if (code === 'KeyZ') { pressDrop(ctx); return true; } }
@@ -1064,13 +1426,16 @@ export const sky = {
   },
   interact(ctx, cand) {
     const k = cand && cand.data && cand.data.k;
-    if (k === 'gate9') { const miss = gateMiss(ctx); if (miss.length) { ctx.toast(L(ctx).gateNeed(miss), true); ctx.sfx('fail'); } else { if (!sv(ctx).gateOpen) gateTick(ctx); ctx.toast(L(ctx).gatePrep, true); log('gate prep'); } return; }
+    if (k === 'gate9') { const miss = gateMiss(ctx); if (miss.length) { ctx.toast(L(ctx).gateNeed(miss), true); ctx.sfx('fail'); } else { if (!sv(ctx).gateOpen) gateTick(ctx); if (skyGateEntering()) return; if (ctx.enterBakunawa && petOf(ctx) && playGateEnter(ctx, () => { if (!ctx.enterBakunawa()) ctx.toast(L(ctx).gatePrep, true); }, { rk: ST.rk, lift: Math.round(liftNow()) + 12 })) { log('gate enter'); return; } if (ctx.enterBakunawa && ctx.enterBakunawa()) { log('gate enter'); return; }   /* cảnh hút vào xoáy (kéo cả Rocky đang bay cùng) */ ctx.toast(L(ctx).gatePrep, true); log('gate prep'); } return; }   /* plan-30 trùm 6: bakunawa.js mở trận */
     if (k === 'post') openPost(ctx); else if (k === 'use') useCopter(ctx); else if (k === 'map') openMap(ctx);
     else if (k === 'gate') { ctx.toast(L(ctx).gate, true); ctx.sfx('fail'); } else if (k === 'shrine') ctx.toast(L(ctx).shrine, true);
   },
   drawGround(g, ctx, cx, cy) {
-    if (inSky(ctx)) { drawSkyGround(g, ctx, cx, cy); drawScout(g, ctx, cx, cy); if (!ST.cut && ctx.S.mode === 'play' && ST.fly) drawTarget(g, ctx, cx, cy); drawFalls(g, ctx, cx, cy); }
-    else { if (ST.craters.length) drawCraters(g, ctx, cx, cy); if (isMid() && !ST.cut && ctx.S.mode === 'play') drawMidAim(g, ctx, cx, cy); }
+    if (inSky(ctx)) { drawSkyGround(g, ctx, cx, cy); drawScout(g, ctx, cx, cy); drawFalls(g, ctx, cx, cy); }
+    else { if (landZone(ctx) && ST.fly && AL.h >= 30) { const p0 = ctx.S.player; altShadow(g, Math.round(p0.x - cx), Math.round(p0.y - cy), 1); if (ST.rk && ST.rk.with) altShadow(g, Math.round(ST.rk.x - cx), Math.round(ST.rk.y - cy), 0.8); }   /* bóng người + Rocky bay cao: ở lớp nền, dưới cây / nhà */
+      if (landZone(ctx) && ST.fly && AL.h >= 30 && AL.h < 60) { g.save(); g.globalAlpha = Math.min(1, (AL.h - 30) / 30); farGround(g, ctx, cx, cy, zid(ctx), AL.h); g.restore(); }   /* 30–60 m: đất nét → đất xa (cùng đường vẽ dải cao) hoà dần, không nhảy ở 60 m */
+      if (ST.craters.length) drawCraters(g, ctx, cx, cy); if (isMid() && !ST.cut && ctx.S.mode === 'play' && AL.h < 40) drawMidAim(g, ctx, cx, cy);
+      if (isMid() && AL.tgt === 0 && AL.h < 150 && AL.h > 1) { const p = ctx.S.player, ok2 = walkHere(ctx), x = Math.round(p.x - cx), y = Math.round(p.y - cy) + 1; g.strokeStyle = ok2 ? 'rgba(110,255,140,.9)' : 'rgba(255,80,70,.9)'; g.lineWidth = 1; g.beginPath(); g.ellipse(x + 0.5, y + 0.5, 6, 3, 0, 0, TAU); g.stroke(); } }   /* vòng đáp nhỏ chỉ khi đang hạ */
     for (const k of ST.marks) {
       const col = k.tier ? '90,170,255' : '255,70,60', a = 0.35 + 0.45 * Math.min(1, 1 - Math.max(0, k.t) / (k.dur || 1));
       g.save(); g.strokeStyle = `rgba(${col},${a.toFixed(2)})`; g.fillStyle = `rgba(${col},${(a * 0.25).toFixed(2)})`; g.lineWidth = 2;
@@ -1085,7 +1450,7 @@ export const sky = {
     if (inSky(ctx)) { const up = ART.vfx && ART.vfx.sky_updraft;
       if (up && up.img) for (const u of ctx.S.map.skyUp || []) { const wx = u.x * TS + 8, wy = u.y * TS + 12; if (Math.abs(wx - cx - ctx.VW / 2) > ctx.VW || Math.abs(wy - cy - ctx.VH / 2) > ctx.VH) continue;
         out.push({ y: wy - 20, f: () => { const hi = up.img.__hi ? 1 : 2, fi = Math.floor(ctx.S.time * (up.fps || 10)) % up.n; g.globalAlpha = 0.6; g.drawImage(up.img, fi * up.w * hi, 0, up.w * hi, up.h * hi, Math.round(wx - up.w / 2 - cx), Math.round(wy - up.h + 8 - cy), up.w, up.h); g.globalAlpha = 1; } }); } }
-    if (inSky(ctx)) { drawStation(ctx, cx, cy, out); evDrawables(ctx, cx, cy, out); drawGate(ctx, cx, cy, out); } else drawPost(ctx, cx, cy, out);
+    if (inSky(ctx)) { evDrawables(ctx, cx, cy, out); drawGate(ctx, cx, cy, out); cgDrawables(cloudGates(ctx), g, cx, cy, ctx.VW, ctx.VH, out); } else if (!(ctx.altView && ctx.altView())) drawPost(ctx, cx, cy, out);   /* dải Trên cao: hòm thư dưới đất không vẽ 1× */
     for (const s of ST.shots) { const im = stoneIcon(); out.push({ y: s.y + 40, f: () => { if (im) g.drawImage(im, Math.round(s.x - 4 - cx), Math.round(s.y - 4 - cy), 8, 8); else { g.fillStyle = '#8a8a96'; g.fillRect(Math.round(s.x - 2 - cx), Math.round(s.y - 2 - cy), 4, 4); } } }); }
     return out;
   },
@@ -1096,14 +1461,23 @@ export const sky = {
         const wx = x * TS + ((yy * 37) % 60), wy = yy * TS; if (wx - cx < -60 || wx - cx > ctx.VW + 10 || wy - cy < -40 || wy - cy > ctx.VH + 10) continue;
         const fi = (Math.floor(ctx.S.time * (wd.fps || 10)) + x + yy) % wd.n; if (w.vx < 0) { g.save(); g.translate(Math.round(wx - cx) * 2 + wd.w, 0); g.scale(-1, 1); g.drawImage(wd.img, fi * wd.w * hi, 0, wd.w * hi, wd.h * hi, Math.round(wx - cx), Math.round(wy - cy), wd.w, wd.h); g.restore(); }
         else g.drawImage(wd.img, fi * wd.w * hi, 0, wd.w * hi, wd.h * hi, Math.round(wx - cx), Math.round(wy - cy), wd.w, wd.h); } g.restore(); }
+      { const gs = cloudGates(ctx); if (gs.length) { const p = ctx.S.player, lf = liftNow(), zc = ST.cut && ST.cut.z ? ST.cut.z : 0, rk = ST.rk, ents = [{ x: p.x, y: p.y, top: p.y - lf + zc - 46, bot: p.y - lf + zc + 6 }];   /* plan-41: người / Rocky lọt qua cổng → vòm che lên (chỉ trong khung của họ) */
+        if (rk && rk.with) ents.push({ x: rk.x, y: rk.y, top: rk.y - lf - 2 + zc - 44, bot: rk.y - lf - 2 + zc + 6 }); cgDrawFront(g, gs, cx, cy, ents); } }
       void th;   /* mây hoạt hình gần đã bỏ — sương mềm ở drawGround (anh: mẫu biển sương) */
     }
     if (!inSky(ctx) && !ST.cut) drawPinGround(g, ctx, cx, cy);
     if (inSky(ctx)) evDraw(g, ctx, cx, cy);
+    drawAltFog(g, ctx, cx, cy);
+    if (inSky(ctx)) skyEdgeFog(g, ctx, cx, cy);
     if (ST.cut) drawCutOverlay(g, ctx, cx, cy);
   },
-  hudLines(ctx) { const out = [], t = L(ctx), P = postSv(ctx); if (copters(ctx) > 0 || inSky(ctx)) out.push(t.tierChip(t.tiers[tierNow(ctx)])); if (P.job) out.push(t.postHud(zname(ctx, P.job.to), fmtT(postLeft(P.job)))); if (isMid() && !ST.cut) { const b1 = Math.ceil(batOf(ctx)); out.push(t.bat(Math.floor(b1 / 60), b1 % 60)); } if (!inSky(ctx) || ST.cut) return out; const b0 = Math.ceil(batOf(ctx)); out.push(t.bat(Math.floor(b0 / 60), b0 % 60));
-    const nm = ST.scout.filter(s => s.kind === 'mon').reduce((a, s) => a + s.n, 0), rr = ST.scout.filter(s => s.kind === 'ball' || s.kind === 'rare' || s.strong).length; if (nm + rr) out.push(t.scout(nm, rr)); if (EV.met) out.push(t.chipMeteor); if (EV.storms.some(c => Math.hypot(c.x - ctx.S.player.x, c.y - ctx.S.player.y) < 160)) out.push(t.chipStorm); return out; },   /* bay tự do + trinh sát */
+  drawUI(ug, ctx, cx, cy, sc) {   /* plan-41: chữ trên bảng cổng mây + nhãn tên vùng đích (font game, lớp UI) */
+    if (!inSky(ctx) || ctx.S.hideLabels) return; const gs = cloudGates(ctx); if (!gs.length) return; const C = ST.cut, p = ctx.S.player;
+    const al = C ? Math.max(0, 1 - (C.white || 0) * 1.2) * (1 - Math.min(0.8, C.clouds || 0)) : 1;
+    cgDrawUI(ug, gs, cx, cy, sc, { alpha: al, hideLabel: gt => Math.abs(p.x - gt.x) < 60 && gt.base - p.y > -14 && gt.base - p.y < 72 });   /* người sát / trong vòm: ẩn nhãn (khỏi đè tên người chơi) */
+  },
+  hudLines(ctx) { const out = [], t = L(ctx), P = postSv(ctx);  if (P.job) out.push(t.postHud(zname(ctx, P.job.to), fmtT(postLeft(P.job)))); if (!inSky(ctx) || ST.cut) return out;
+    const coarse0 = (() => { try { return matchMedia('(pointer:coarse)').matches; } catch (e) { return false; } })(); if (coarse0) return out; const nm = ST.scout.filter(s => s.kind === 'mon').reduce((a, s) => a + s.n, 0), rr = ST.scout.filter(s => s.kind === 'ball' || s.kind === 'rare' || s.strong).length; if (nm + rr) out.push(t.scout(nm, rr)); if (EV.met) out.push(t.chipMeteor); if (EV.storms.some(c => Math.hypot(c.x - ctx.S.player.x, c.y - ctx.S.player.y) < 160)) out.push(t.chipStorm); return out; },   /* bay tự do + trinh sát */
 };
 let STONE = null;
 function stoneIcon() { if (STONE) return STONE.naturalWidth ? STONE : null; const it = ART.man && ART.man.ui && ART.man.ui.items; if (!it || !it.stone) return null; STONE = new Image(); STONE.src = 'assets/px/' + it.stone; return null; }

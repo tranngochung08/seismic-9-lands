@@ -63,8 +63,9 @@ export function drawStaffTags(ug, S, cx, cy, scale) {
   const fs = Math.max(12, Math.round(scale * 4.2)); ug.save(); ug.font = `${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle';
   for (const n of S.staff) {
     const tt = TITLE[n.m.staff] || (n.m.tag ? [n.m.tag, n.m.tag] : null); if (!tt) continue;   /* plan-25: Leader khu */
-    const sx = Math.round((n.x - cx) * scale), sy = Math.round((n.y - 30 - cy) * scale), txt = tt[vi ? 0 : 1], w = Math.ceil(ug.measureText(txt).width) + 10, h = fs + 4;
-    if (sx < -100 || sy < -40 || sx > ug.canvas.width + 100 || sy > ug.canvas.height + 40) continue;
+    const sx = Math.round((n.x - cx) * scale), sy = Math.round((n.y - 30 - cy) * scale);
+    if (sx < -100 || sy < -40 || sx > ug.canvas.width + 100 || sy > ug.canvas.height + 40) continue;   /* plan-37: bỏ ngoài màn TRƯỚC khi đo chữ */
+    const txt = tt[vi ? 0 : 1], w = Math.ceil(ug.measureText(txt).width) + 10, h = fs + 4;
     ug.fillStyle = '#352022'; ug.fillRect(sx - w / 2 - 2, sy - h / 2 - 2, w + 4, h + 4); ug.fillStyle = '#7a4a2a'; ug.fillRect(sx - w / 2, sy - h / 2, w, h);
     ug.fillStyle = '#ffd45e'; ug.fillText(txt, sx, sy + 1);
   }

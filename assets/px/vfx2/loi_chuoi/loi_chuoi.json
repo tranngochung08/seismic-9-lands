@@ -1,0 +1,1 @@
+{"n": 7, "fw": 160.0, "fh": 70.0, "ax": 4.0, "ay": 42.0, "fps": 18, "origin": "left = caster hand/mouth; cone-shaped arc: 6 px thin at the hand -> 34 px at the target (148 logic px), then a branch jumps up 39 px to a 2nd point (50 % damage); cut/clip for shorter range", "target_x_logic": 152}

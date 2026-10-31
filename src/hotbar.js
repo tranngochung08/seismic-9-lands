@@ -144,31 +144,59 @@ export function render(force) {
   const hide = hidden(); el.hidden = hide; if (hide) return;
   sync();
   const s = sv(), lg = deps.CTX.lang() === 'vi' ? 'vi' : 'en';
-  const fd = pickFood(), key = JSON.stringify([hasRk(), fd, fd ? s.inv[fd] : 0, hpFull(), s.hotbar, s.hotSel, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0]);
+  const fd = pickFood(), lt = ltSlot(), key = JSON.stringify([hasRk(), ltSig(lt), fd, fd ? s.inv[fd] : 0, hpFull(), s.hotbar, s.hotSel, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0]);
   if (!force && key === sig) return; sig = key;
   const cur = held();
   el.innerHTML = `<div class="hb-tip"${tipT > 0 && cur ? '' : ' hidden'}>${cur ? itemName(cur, lg) : ''}</div><div class="hb-bar">` + s.hotbar.map((id, i) => {
     const n = id && !isTool(id) ? s.inv[id] || 0 : 0;
     return `<div class="hb-slot${i === s.hotSel ? ' on' : ''}" data-i="${i}" title="${id ? itemName(id, lg) : ''}"><i class="hb-k">${LABEL[i]}</i>${id ? iconHTML(id) : ''}${n > 1 ? `<b class="hb-n">${n}</b>` : ''}</div>`;
-  }).join('') + eatHTML(lg) + rkHTML(lg) + `<div class="hb-bag" title="${lg === 'vi' ? 'Túi đồ (B)' : 'Bag (B)'}"><img src="assets/px/ui/tab_bag.png" alt=""></div></div>`;   /* plan-24: đích bay khi đồ vào túi */
+  }).join('') + eatHTML(lg) + rkHTML(lg) + ltHTML(lg, lt) + `<div class="hb-bag" title="${lg === 'vi' ? 'Túi đồ (B)' : 'Bag (B)'}"><img src="assets/px/ui/tab_bag.png" alt=""></div></div>`;   /* plan-24: đích bay khi đồ vào túi */
 }
 const hasRk = () => !!(deps.CTX.rocky && deps.CTX.rocky.pet && deps.CTX.rocky.pet());
 function rkHTML(lg) {   /* 2026-10-12 anh: nút Rocky (phím /) mở ô lệnh — thay Enter */
   if (!hasRk()) return ''; const man = deps.ART && deps.ART.man, f = man && man.ui && man.ui.port_rocky, vi = lg === 'vi';
   return `<div class="hb-slot hb-rk" title="${vi ? 'Ra lệnh cho Rocky (phím /)' : 'Command Rocky (key /)'}">${f ? `<img src="assets/px/${f}" alt="">` : '<span class="hb-emo">🪨</span>'}<i class="hb-v">/</i></div>`;
 }
+/* ---- 2026-10-15 anh: ô ẤN LINH cạnh ô Rocky — bấm = Gọi / Thu cả đội linh thú (như phím U); chuột phải / giữ = mở thẻ Ấn Linh trong Túi đồ.
+   Chỉ máy tính (điện thoại: nút tròn cạnh nút A). Trạng thái + hàm Gọi/Thu lấy từ linhthu.js (ctx.linhthu.slot / press) — ô này chỉ vẽ. ---- */
+const ltApi = () => { const L = deps && deps.CTX.linhthu; return !mobile() && L && L.slot && L.press ? L : null; };
+const ltSlot = () => { const L = ltApi(); return L ? L.slot() : null; };
+const ltSig = o => (o ? [o.st, o.lv, o.n, o.out, o.rest, o.pet, o.hpg].join('|') : '');
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+function ltHTML(lg, o) {
+  if (!o) return ''; const vi = lg === 'vi', n = o.n;
+  const tt = !o.has ? (vi ? 'Chưa có linh thú — bắt ở ổ linh thú các vùng' : 'No spirit beasts yet — catch them at the beast dens of each region')
+    : !n ? (vi ? 'Đội linh thú đang trống — chuột phải để xếp đội trong Ấn Linh' : 'Your spirit team is empty — right-click to set it up in the Spirit Seal')
+    : o.st === 'rest' ? (vi ? `Đội linh thú đang nghỉ trong Ấn Linh · còn ${o.rest}s` : `Your spirit team is resting in the orb · ${o.rest}s left`)
+    : o.st === 'out' ? (vi ? `Thu đội linh thú về Ấn Linh (U) · ${o.out}/${n} đang ở ngoài` : `Recall your spirit team (U) · ${o.out}/${n} out`)
+    : (vi ? `Gọi đội linh thú ra (U): ${o.names.join(', ')}` : `Send out your spirit team (U): ${o.names.join(', ')}`);
+  const tip = tt + (o.has ? (vi ? ' · Chuột phải / giữ: mở Ấn Linh' : ' · Right-click / hold: open the Spirit Seal') : '');
+  const lbl = o.st === 'out' ? (vi ? 'Thu' : 'Back') : (vi ? 'Gọi' : 'Call');
+  return `<div class="hb-slot hb-lt st-${o.st}${!n ? ' dim' : ''}" title="${esc(tip)}">${n ? `<b class="lt-hp" style="background:${o.hpg}"></b>` : ''}<img class="lt-sh" src="${o.shell}" alt="">`
+    + `${o.pet && o.st === 'in' ? `<img class="lt-pe" src="${o.pet}" alt="">` : ''}${o.st === 'rest' ? `<strong class="lt-cd">${o.rest}</strong>` : ''}`
+    + `<i class="hb-v">U</i>${n ? `<b class="lt-n">${o.out}/${n}</b>` : ''}<i class="lt-l">${lbl}</i></div>`;
+}
+const openSeal = () => import('./menu.js').then(m => m.openMenu && m.openMenu('anlinh')).catch(() => { });
 function eatHTML(lg) {   /* ô Ăn: món pickFood() sẽ ăn, phím R; không có đồ ăn thì ô mờ */
   const id = pickFood(), n = id ? sv().inv[id] || 0 : 0, vi = lg === 'vi';
   const tt = id ? `${vi ? 'Ăn' : 'Eat'} ${itemName(id, lg)} (R)` : (vi ? 'Không có đồ ăn (R)' : 'No food (R)');
   return `<div class="hb-slot hb-eat${!id ? ' dim' : ''}" title="${tt}">${id ? iconHTML(id) : ''}${n > 1 ? `<b class="hb-n">${n}</b>` : ''}<i class="hb-v">R ${vi ? 'Ăn' : 'Eat'}</i></div>`;
 }
-export function tick(dt) { if (tipT > 0) { tipT -= dt; if (tipT <= 0) render(true); } render(false); }
+let rT = 0;
+export function tick(dt) { if (tipT > 0) { tipT -= dt; if (tipT <= 0) { render(true); rT = 0.1; return; } } if ((rT -= dt) > 0) return; rT = 0.1; render(false); }   /* plan-37: soát thay đổi 10 lần / giây (trước: dựng khoá JSON mỗi khung) — bấm phím / chọn ô vẫn gọi render(true) ngay */
 
 export function initHotbar(d) {
   deps = d;
   el = document.createElement('div'); el.id = 'hotbar'; el.hidden = true; document.body.appendChild(el);
+  /* ô Ấn Linh: bấm (thả trước 0,45 s) = Gọi / Thu; giữ ≥ 0,45 s hoặc chuột phải = mở thẻ Ấn Linh */
+  let ltHold = null;
+  const ltUp = e => { if (!ltHold) return; clearTimeout(ltHold.tm); const fire = !ltHold.done && e.type === 'pointerup'; ltHold = null; if (fire) { const L = ltApi(); if (L) L.press(); render(true); } };
+  el.addEventListener('pointerdown', e => { const t = e.target.closest('.hb-lt'); if (!t) return; e.preventDefault(); e.stopPropagation(); if (e.button !== 0) return;
+    ltHold = { tm: setTimeout(() => { if (ltHold) { ltHold.done = true; openSeal(); } }, 450) }; }, true);
+  addEventListener('pointerup', ltUp); addEventListener('pointercancel', ltUp);
+  el.addEventListener('contextmenu', e => { if (!e.target.closest('.hb-lt')) return; e.preventDefault(); e.stopPropagation(); if (ltHold) { clearTimeout(ltHold.tm); ltHold = null; } openSeal(); });
   el.addEventListener('pointerdown', e => { if (e.target.closest('.hb-bag')) { e.preventDefault(); e.stopPropagation(); if (deps.openBag) deps.openBag(); return; } if (e.target.closest('.hb-rk')) { e.preventDefault(); e.stopPropagation(); if (deps.CTX.rocky && deps.CTX.rocky.openChat) deps.CTX.rocky.openChat(); return; } if (e.target.closest('.hb-eat')) { e.preventDefault(); e.stopPropagation(); eatBest(); return; } const s = e.target.closest('.hb-slot'); if (!s) return; e.preventDefault(); e.stopPropagation(); select(+s.dataset.i); });
   const cv = d.canvas;
-  cv.addEventListener('wheel', e => { if (hidden()) return; e.preventDefault(); cycle(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+  cv.addEventListener('wheel', e => { if (hidden() || (window.__altWheel && window.__altWheel())) return;   /* 2026-10-14: đang bay → lăn chuột = độ cao (sky.js) */ e.preventDefault(); cycle(e.deltaY > 0 ? 1 : -1); }, { passive: false });
   cv.addEventListener('contextmenu', e => { if (hidden()) return; e.preventDefault(); eatHeld(); });
 }

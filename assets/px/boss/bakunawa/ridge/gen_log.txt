@@ -1,0 +1,70 @@
+init ok ['hump_sand.png', 'hump_snow.png', 'hump_soil.png', 'stamp_sand.png', 'stamp_sand_flat.png', 'stamp_sand_low.png', 'stamp_snow.png', 'stamp_snow_flat.png', 'stamp_snow_low.png', 'stamp_soil.png', 'stamp_soil_flat.png', 'stamp_soil_low.png']
+init ok ['hump_sand.png', 'hump_snow.png', 'hump_soil.png', 'stamp_sand.png', 'stamp_sand_flat.png', 'stamp_sand_low.png', 'stamp_snow.png', 'stamp_snow_flat.png', 'stamp_snow_low.png', 'stamp_soil.png', 'stamp_soil_flat.png', 'stamp_soil_low.png']
+gen stamp_soil_200_21.png {"usage": {"type": "usd", "usd": 0.006581062661276923}}
+gen stamp_soil_200_22.png {"usage": {"type": "usd", "usd": 0.006383460018369887}}
+balance {"credits": {"type": "usd", "usd": 8.91355554607002}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen hump_snow_180_31.png {"usage": {"type": "usd", "usd": 0.0063919252289666075}}
+gen hump_soil_180_31.png {"usage": {"type": "usd", "usd": 0.006365454435348511}}
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.88783364372606}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen stamp_soil_flat_200_21.png {"usage": {"type": "usd", "usd": 0.006739242580201891}}
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.88783364372606}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen stamp_soil_low_200_21.png {"usage": {"type": "usd", "usd": 0.007025671641031902}}
+gen hump_sand_180_31.png {"usage": {"type": "usd", "usd": 0.007084800799687704}}
+gen stamp_snow_200_21.png {"usage": {"type": "usd", "usd": 0.006776920345094469}}
+gen stamp_sand_flat_200_21.png {"usage": {"type": "usd", "usd": 0.0068339998722076415}}
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.87431748080076}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.86748348092855}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.86748348092855}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen stamp_sand_200_21.png {"usage": {"type": "usd", "usd": 0.007261902570724487}}
+gen stamp_sand_low_200_21.png {"usage": {"type": "usd", "usd": 0.007626399967405531}}
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.84611110591711}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen hump_soil_180_32.png {"usage": {"type": "usd", "usd": 0.0067285222742292615}}
+gen hump_sand_180_32.png {"usage": {"type": "usd", "usd": 0.006212051338619656}}
+gen hump_soil_180_33.png {"usage": {"type": "usd", "usd": 0.007062980810801188}}
+gen hump_sand_180_33.png {"usage": {"type": "usd", "usd": 0.0066117820739746095}}
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.82554413233686}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.82554413233686}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen stamp_sand_200_22.png {"usage": {"type": "usd", "usd": 0.009436951769722833}}
+balance {"credits": {"type": "usd", "usd": 8.90059102339037}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.80243241768236}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+init ok ['hump_sand.png', 'hump_snow.png', 'hump_soil.png', 'stamp_sand.png', 'stamp_sand_flat.png', 'stamp_sand_low.png', 'stamp_snow.png', 'stamp_snow_flat.png', 'stamp_snow_low.png', 'stamp_soil.png', 'stamp_soil_flat.png', 'stamp_soil_low.png']
+gen stamp_snow_200_22.png {"usage": {"type": "usd", "usd": 0.0060622496075100375}}
+gen stamp_soil_flat_200_23.png {"usage": {"type": "usd", "usd": 0.006129741297827827}}
+gen stamp_sand_flat_200_23.png {"usage": {"type": "usd", "usd": 0.005999663617875841}}
+gen crack_snow_51.png {"usage": {"type": "usd", "usd": 0.006391051080491808}}
+gen crack_51.png {"usage": {"type": "usd", "usd": 0.006588070180681017}}
+balance {"credits": {"type": "usd", "usd": 8.80243241768236}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.77784971207865}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+balance {"credits": {"type": "usd", "usd": 8.80243241768236}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.77784971207865}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+balance {"credits": {"type": "usd", "usd": 8.80243241768236}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.77784971207865}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen stamp_snow_flat_200_23.png {"usage": {"type": "usd", "usd": 0.006437854475445218}}
+gen tuft_41.png {"usage": {"type": "usd", "usd": 0.0067777628898620604}}
+balance {"credits": {"type": "usd", "usd": 8.80243241768236}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.75804602453266}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen stamp_soil_low_200_23.png {"usage": {"type": "usd", "usd": 0.007805247174368965}}
+balance {"credits": {"type": "usd", "usd": 8.80243241768236}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation -> {"credits": {"type": "usd", "usd": 8.75024077735829}, "subscription": {"type": "generations", "status": "active", "plan": "Tier 3: Pixel Architect", "generation
+gen crack_52.png {"usage": {"type": "usd", "usd": 0.006800050523546007}}
+gen tuft_42.png {"usage": {"type": "usd", "usd": 0.006867398394478692}}
+gen tuft_43.png {"usage": {"type": "usd", "usd": 0.006721297158135308}}
+gen crackline_61.png {"usage": {"type": "usd", "usd": 0.007801775852839152}}
+gen crackline_62.png {"usage": {"type": "usd", "usd": 0.006923224634594388}}
+init2 ok ['#2c2a30', '#4b4850', '#6c6870', '#8d8986', '#aeaaa3', '#cfcbc2']
+init3 ok
+init3 ok
+gen heave_rock_200_41.png {"usage": {"type": "usd", "usd": 0.006079050249523587}}
+gen heave_sand_200_41.png {"usage": {"type": "usd", "usd": 0.006134394725163778}}
+gen heave_dirt_200_41.png {"usage": {"type": "usd", "usd": 0.006793727503882514}}
+gen stamp_rock_flat_200_41.png {"usage": {"type": "usd", "usd": 0.007778908332188925}}
+gen heave_snow_200_41.png {"usage": {"type": "usd", "usd": 0.006819231033325195}}
+gen heave_rock_200_42.png {"usage": {"type": "usd", "usd": 0.006945684300528632}}
+gen stamp_rock_200_41.png {"usage": {"type": "usd", "usd": 0.007839216126335992}}
+gen heave_grass_200_41.png {"usage": {"type": "usd", "usd": 0.008305001073413426}}
+gen heave_sand_200_42.png {"usage": {"type": "usd", "usd": 0.007595464229583741}}
+gen heave_dirt_200_42.png {"usage": {"type": "usd", "usd": 0.006685786830054389}}
+gen heave_snow_200_42.png {"usage": {"type": "usd", "usd": 0.007032395680745443}}
+gen heave_grass_200_42.png {"usage": {"type": "usd", "usd": 0.006825279792149861}}
+gen stamp_rock_200_42.png {"usage": {"type": "usd", "usd": 0.007336343208948772}}
+gen heave_sand_200_43.png {"usage": {"type": "usd", "usd": 0.006912319474750095}}
+gen heave_grass_200_43.png {"usage": {"type": "usd", "usd": 0.006639434072706434}}
+gen heave_dirt_280_43.png {"usage": {"type": "usd", "usd": 0.006628925058576796}}
+gen heave_snow_280_43.png {"usage": {"type": "usd", "usd": 0.008459277073542278}}
+gen heave_snow_280_44.png {"usage": {"type": "usd", "usd": 0.006634234640333388}}
+gen heave_dirt_280_44.png {"usage": {"type": "usd", "usd": 0.007922076304753622}}
+gen stamp_rock_200_43.png {"usage": {"type": "usd", "usd": 0.006748861895667182}}

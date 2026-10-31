@@ -1,0 +1,26 @@
+[
+ {
+  "what": "cdive ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "10:12:48"
+ },
+ {
+  "what": "cclimb ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "10:15:14"
+ },
+ {
+  "what": "cdive ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "10:17:32"
+ },
+ {
+  "what": "cclimb ['south', 'east', 'north']",
+  "b0": 0.0,
+  "b1": 0.0,
+  "t": "10:22:12"
+ }
+]

@@ -1,18 +1,7 @@
 {
- "cw": 96,
- "ch": 90,
+ "cw": 92,
+ "ch": 106,
  "clips": {
-  "walk": {
-   "file": "boss/guong/q_walk.png",
-   "n": 8,
-   "rows": [
-    "south",
-    "south-east",
-    "east",
-    "north-east",
-    "north"
-   ]
-  },
   "idle": {
    "file": "boss/guong/q_idle.png",
    "n": 6,
@@ -24,9 +13,20 @@
     "north"
    ]
   },
+  "walk": {
+   "file": "boss/guong/q_walk.png",
+   "n": 10,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
   "control": {
    "file": "boss/guong/q_control.png",
-   "n": 7,
+   "n": 9,
    "rows": [
     "south",
     "south-east",
@@ -37,7 +37,7 @@
   },
   "cast": {
    "file": "boss/guong/q_cast.png",
-   "n": 7,
+   "n": 9,
    "rows": [
     "south",
     "south-east",
@@ -48,14 +48,14 @@
   },
   "vanish": {
    "file": "boss/guong/q_vanish.png",
-   "n": 9,
+   "n": 3,
    "rows": [
     "south"
    ]
   },
   "stun": {
    "file": "boss/guong/q_stun.png",
-   "n": 7,
+   "n": 9,
    "rows": [
     "south",
     "south-east",
@@ -66,11 +66,14 @@
   },
   "shatter": {
    "file": "boss/guong/q_shatter.png",
-   "n": 9,
+   "n": 4,
    "rows": [
     "south"
    ]
   }
  },
- "note": "ảnh 2× — vẽ ô cỡ cw/2 × ch/2 logic, chân ở đáy ô − 1 px logic"
+ "bodyH": 85,
+ "bodyW": 49,
+ "src": "plan-45 5B2 px-p45b2.py",
+ "note": "ảnh 2× — vẽ ô cỡ cw/2 × ch/2 logic (1:1 với người chơi), chân ở đáy ô − 1 px logic"
 }

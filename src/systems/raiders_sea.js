@@ -1,5 +1,5 @@
 // raiders_sea.js — the Sea of Origins fights back (tier 0 of the "higher land = scarier" raider ladder).
-//   · the Kraken — rises out of the deep trenches while you drift on the raft, far from shore. Four tentacles
+//   · Xúc Tu Biển / the Sea Grasper (trước tên Kraken — trùng tên trùm Hang Ổ; chỉ đổi tên hiển thị) — rises out of the deep trenches while you drift on the raft, far from shore. Four tentacles
 //                  surface around the raft and take turns slamming the water; a slam within a tile costs the
 //                  raft one plank of hp. Strike a tentacle (E, two hits each), throw the head a fish, outrun
 //                  it (10 tiles) or ride a current for 3 s. Kill all four → Kraken ink + 6 stones.
@@ -13,11 +13,11 @@ import { hasFish, takeFish } from './animals.js';   /* 2026-10-11 bỏ xô: cá 
 // ---------------------------------------------------------------- strings
 const STR = {
   en: {
-    stir: '🦑 The Kraken stirs…', rise: 'Tentacles break the surface around the raft!',
+    stir: '🦑 The Sea Grasper stirs…', rise: 'Tentacles break the surface around the raft!',
     strike: 'Strike', feed: 'Throw a fish 🐟', grapple: 'Grapple the ship (🪢1)',
     slam: 'The raft takes a hit!', tentDown: n => n ? `A tentacle sinks — ${n} left` : 'The last tentacle sinks!',
-    win: 'The Kraken retreats! 🦑 Kraken ink +1 · 🪨 +6', fed: 'The Kraken takes the fish and sinks away, content.',
-    fled: 'You outran the Kraken.', current: 'The current carries you out of its reach.', tired: 'The Kraken sinks back into the deep.',
+    win: 'The Sea Grasper retreats! 🦑 Kraken ink +1 · 🪨 +6', fed: 'The Sea Grasper takes the fish and sinks away, content.',
+    fled: 'You outran the Sea Grasper.', current: 'The current carries you out of its reach.', tired: 'The Sea Grasper sinks back into the deep.',
     hud: (n, s) => `🦑 ${n} tentacle${n === 1 ? '' : 's'} · ${s}s`,
     shipNear: '👻 A ghost ship pulls alongside…', boarded: n => `Ghost pirates boarded you — 🪨 −${n}!`, boardedNone: 'Ghost pirates boarded you — found nothing to take.',
     shipGone: 'The ghost ship fades into the mist.',
@@ -26,11 +26,11 @@ const STR = {
     cardLabel: 'Rare card', pearlLabel: 'Pearls ×3', stoneLabel: 'Stones ×10'
   },
   vi: {
-    stir: '🦑 Kraken đang trỗi dậy…', rise: 'Xúc tu trồi lên quanh bè!',
+    stir: '🦑 Xúc Tu Biển đang trỗi dậy…', rise: 'Xúc tu trồi lên quanh bè!',
     strike: 'Đánh', feed: 'Ném cá 🐟', grapple: 'Móc tàu (🪢1)',
     slam: 'Bè trúng đòn!', tentDown: n => n ? `Một xúc tu chìm — còn ${n}` : 'Xúc tu cuối cùng chìm!',
-    win: 'Kraken rút lui! 🦑 Mực Kraken +1 · 🪨 +6', fed: 'Kraken đớp cá rồi lặn mất, no nê.',
-    fled: 'Bạn đã bỏ xa Kraken.', current: 'Dòng chảy đưa bạn thoát khỏi tầm với của nó.', tired: 'Kraken chìm lại xuống vực sâu.',
+    win: 'Xúc Tu Biển rút lui! 🦑 Mực Kraken +1 · 🪨 +6', fed: 'Xúc Tu Biển đớp cá rồi lặn mất, no nê.',
+    fled: 'Bạn đã bỏ xa Xúc Tu Biển.', current: 'Dòng chảy đưa bạn thoát khỏi tầm với của nó.', tired: 'Xúc Tu Biển chìm lại xuống vực sâu.',
     hud: (n, s) => `🦑 ${n} xúc tu · ${s}s`,
     shipNear: '👻 Tàu ma đang áp sát…', boarded: n => `Cướp biển ma nhảy lên bè — 🪨 −${n}!`, boardedNone: 'Cướp biển ma nhảy lên bè — chẳng có gì để lấy.',
     shipGone: 'Tàu ma tan vào sương.',
@@ -283,7 +283,9 @@ function makeShip(ctx) {
   const i = (Math.random() * loop.length) | 0;
   ship = { x: loop[i].x, y: loop[i].y, wp: (i + 1) % loop.length, dir: 1, fade: 0, st: 'hidden', leaveT: 0, boardT: 0, bob: Math.random() * TAU, force: false, alertT: 0, loop };
 }
-const shipVisibleWanted = ctx => testOn() || (ship && ship.force) || ctx.darkness() > NIGHT;
+/* plan-43 H2 (anh duyệt 2026-10-16): chuỗi dạy chơi biển (story act 1, chưa seaDone) chưa xong → KHÔNG có Kraken / tàu ma NGẪU NHIÊN chen vào; story_sea.js tự gọi tàu ma (ship.force) ở bước của nó */
+const tutorialOn = ctx => { const s = ctx.story && ctx.story(); return !!(s && s.act === 1 && !s.seaDone); };
+const shipVisibleWanted = ctx => !ctx.S.lyCalm && (testOn() || (ship && ship.force) || (ctx.darkness() > NIGHT && !tutorialOn(ctx)));   /* 2026-10-15: đêm lồng đèn gặp Lyron ở cầu tàu (lyron_finale.js) — biển yên, không tàu cướp */
 function shipAppear(ctx) {                                                                  // come in from the far side of the loop
   const p = ctx.S.player; let best = 0, bd = -1;
   ship.loop.forEach((w, i) => { const d = Math.hypot(w.x - p.x, w.y - p.y); if (d > bd) { bd = d; best = i; } });
@@ -396,6 +398,8 @@ export const raidersSea = {
           const p = CTX.S.player; ship.st = 'sail'; ship.fade = 1; ship.force = true; ship.leaveT = 0; ship.boardT = 0;
           ship.x = p.x + (isWater(CTX, tileOf(p.x) + 7, tileOf(p.y)) ? 7 : -7) * TILE; ship.y = p.y; return 'ship placed';
         },
+        timer: v => { kTimer = +v; return kTimer; },   /* plan-43 H2 test: tua đồng hồ Kraken ngẫu nhiên */
+        tutorial: () => tutorialOn(CTX),
         state: () => ({
           live, kTimer: Math.round(kTimer), onRaft: onRaft(CTX), farOut: farOut(CTX), sea: CTX.S.sea ? { hp: CTX.S.sea.raft && CTX.S.sea.raft.hp, riding: CTX.S.sea.riding, diving: CTX.S.sea.diving } : null,
           kraken: K ? { phase: K.phase, t: +K.t.toFixed(1), left: liveTents().length, curT: +K.curT.toFixed(1), head: [Math.round(K.head.x), Math.round(K.head.y)], tents: K.tents.map(t => ({ st: t.st, hp: t.hp, x: Math.round(t.x), y: Math.round(t.y), rise: +t.rise.toFixed(2) })) } : null,
@@ -420,7 +424,7 @@ export const raidersSea = {
     ensureTestSea(ctx);
     if (!ctx.S.sea) return;
     if (K) updateKraken(dt, ctx);
-    else if (onRaft(ctx)) {                                          // the clock only runs while you are out on the raft
+    else if (onRaft(ctx) && !tutorialOn(ctx)) {                      // the clock only runs while you are out on the raft (plan-43 H2: never during the sea tutorial)
       kTimer -= dt;
       if (kTimer <= 0) { if (farOut(ctx)) startKraken(ctx, false); else kTimer = K_RETRY; }
     }

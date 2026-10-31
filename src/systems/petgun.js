@@ -214,7 +214,7 @@ export const petgun = {
     for (const s of ST.shots) {   /* tia: quả cầu PixelLab bay ở tầm tay (cao 9 px), 2 bóng mờ phía sau */
       if (s.w > 0) continue;   /* chưa rời nòng */
       const x = s.x0 + (s.mx || 0) + Math.cos(s.ang) * s.d, y = s.y0 + Math.sin(s.ang) * s.d;
-      out.push({ y: Math.sin(s.ang) < -0.5 ? y + 1 : Math.max(y + 1, s.y0 + 3), f: () => {   /* vừa rời nòng: vẽ trên người bắn (không bị thân che); bắn lên bắc thì nằm sau người */
+      out.push({ y: Math.sin(s.ang) < 0 ? Math.min(y + 1, s.y0 + 1.5) : Math.max(y + 1, s.y0 + 3), skill: 'gun_shot', f: () => {   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): bắn xuống / ngang → tia vẽ TRƯỚC người bắn; bắn lên (mọi góc sin < 0) → nằm SAU người (y0 = chân − 2) */
         for (let k = Math.min(2, Math.floor(s.d / 6)); k >= 0; k--) {   /* bóng mờ không lùi ra sau nòng súng */
           const tx = x - Math.cos(s.ang) * k * 6, ty = y - Math.sin(s.ang) * k * 6, sx = Math.round(tx - cx), sy = Math.round(ty - 9 - cy);
           g.save(); g.globalAlpha = k ? 0.35 / k : 1;

@@ -1,0 +1,32 @@
+{
+ "n": {
+  "cell": 64,
+  "logic": 32,
+  "foot": 31.0,
+  "top": 8.0,
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north",
+   "north-east"
+  ],
+  "body_logic": 23.0,
+  "armor": true
+ },
+ "p": {
+  "cell": 64,
+  "logic": 32,
+  "foot": 31.0,
+  "top": 7.0,
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north",
+   "north-east"
+  ],
+  "body_logic": 24.0,
+  "armor": true
+ }
+}

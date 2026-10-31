@@ -1,0 +1,70 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "fly_gusts",
+ "fps": 12,
+ "frame_ms": 83,
+ "frames": 12,
+ "loop": true,
+ "canvas": {
+  "w": 148,
+  "h": 78
+ },
+ "anchor": {
+  "kind": "origin",
+  "x": 76,
+  "y": 36
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 142,
+    "h": 72
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -73,
+    "y": -33
+   }
+  },
+  {
+   "name": "part-wind_gusts",
+   "title": "the wind gusts part",
+   "part": "wind_gusts",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 142,
+    "h": 72
+   },
+   "sheets": [
+    {
+     "file": "part-wind_gusts.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -73,
+    "y": -33
+   }
+  }
+ ]
+}

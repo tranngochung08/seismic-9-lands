@@ -44,7 +44,10 @@ const STR = {
     allIn: 'All materials delivered — the crew is on its way.',
     fedOk: 'The workers eat and speed up! ×2 for 90s', noFood: 'Carry a 🐟 fish, 🐔 chicken or 🐄 cow to feed them.',
     noCrew: 'No artist of this nation is here to build.', alertNeed: (f, n) => `🛠 ${f} ${n} — the district needs repairs`,
-    upReady: t => `Next tier: ${t}`, capped: 'This yard is as grand as the land allows.'
+    upReady: t => `Next tier: ${t}`, capped: 'This yard is as grand as the land allows.',
+    rewardRep: (s, x) => `🎁 Reward when rebuilt: +${s} 🪨 · +${x} XP (the nation thanks you)`, rewardUp: (s, x) => `🎁 Reward when raised: +${s} 🪨 · +${x} XP (the nation thanks you)`,
+    mineNote: 'Your nation: higher tiers raise bigger houses, walls and a grander Rocky statue.', otherNote: f => `Not your nation — you still get the reward. Your district: ${f}`,
+    goMine: "Go to my nation's district", noMine: 'Your nation has no district in this land.', noNation: 'No nation yet — meet artists and your nation will show up.', going: n => `Walking to ${n}…`, thanks: (s, x) => `🎁 The nation thanks you: +${s} 🪨 · +${x} XP`
   },
   vi: {
     deliverNear: 'Giao vật liệu', upgradeNear: 'Nâng cấp khu', feedNear: 'Cho thợ ăn',
@@ -59,7 +62,10 @@ const STR = {
     allIn: 'Đã giao đủ vật liệu — thợ đang tới.',
     fedOk: 'Thợ ăn xong, làm nhanh gấp đôi! ×2 trong 90 giây', noFood: 'Cần mang 🐟 cá, 🐔 gà hoặc 🐄 bò để cho thợ ăn.',
     noCrew: 'Không có nghệ sĩ nước này ở đây để xây.', alertNeed: (f, n) => `🛠 ${f} ${n} — khu cần sửa chữa`,
-    upReady: t => `Bậc tiếp theo: ${t}`, capped: 'Khu này đã cao nhất mức vùng đất cho phép.'
+    upReady: t => `Bậc tiếp theo: ${t}`, capped: 'Khu này đã cao nhất mức vùng đất cho phép.',
+    rewardRep: (s, x) => `🎁 Thưởng khi xây lại xong: +${s} 🪨 · +${x} kinh nghiệm (nước này cảm ơn bạn)`, rewardUp: (s, x) => `🎁 Thưởng khi nâng xong: +${s} 🪨 · +${x} kinh nghiệm (nước này cảm ơn bạn)`,
+    mineNote: 'Khu nước bạn: bậc càng cao nhà, tường càng to và tượng Rocky càng oai.', otherNote: f => `Không phải nước bạn — góp vẫn được thưởng. Khu nước bạn: ${f}`,
+    goMine: 'Tới khu nước mình', noMine: 'Nước bạn không có khu ở vùng này.', noNation: 'Bạn chưa thuộc nước nào — gặp nghệ sĩ để nước của bạn hiện ra.', going: n => `Đang đi tới khu ${n}…`, thanks: (s, x) => `🎁 Nước này cảm ơn bạn: +${s} 🪨 · +${x} kinh nghiệm`
   }
 };
 const L = ctx => STR[ctx.lang() === 'vi' ? 'vi' : 'en'];
@@ -117,6 +123,24 @@ function infos(ctx) {
   INFO = arr; infoT = ctx.S.time;
   return arr;
 }
+/* plan-44 X2 (2026-10-17): góp vật liệu cho khu (nước nào cũng được) có THƯỞNG thật khi thợ làm xong (job chỉ chạy khi người chơi đã giao đủ) — ghi rõ trên bảng;
+   bảng khu nước khác có nút 'Tới khu nước mình' (tự đi tới bảng khu nước mình trong vùng này). */
+const repReward = n => ({ s: 2 * n, x: 8 * n });
+const upReward = tier => ({ s: 4 * tier, x: 20 * tier });
+function giveReward(ctx, r) { if (!r || (!r.s && !r.x)) return; ctx.bag.add('stone', r.s); if (ctx.hero && ctx.hero.gainXp) ctx.hero.gainXp(r.x, 'district'); ctx.toast(L(ctx).thanks(r.s, r.x), true); if (ctx.sfx) ctx.sfx('coin'); ctx.persist(); }
+function goMine(ctx) {
+  const t = L(ctx), key = ctx.myNation ? ctx.myNation() : null, m = ctx.S.map;
+  if (!key) { ctx.toast(t.noNation); return; }
+  const i = m.plots.findIndex(q => q.nation === key); if (i < 0) { ctx.toast(t.noMine); return; }
+  const P = m.plots[i], a = infos(ctx)[i], b = a && a.board, p = ctx.S.player;
+  const gx = b ? b.x : Math.floor(P.x + P.w / 2), gy = b ? b.y + 1 : P.y + P.h;
+  closePanel(ctx);
+  let path = null; for (const [dx, dy] of [[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1], [1, 1], [-1, 1]]) { path = ctx.pathTo(Math.floor(p.x / TS), Math.floor(p.y / TS), gx + dx, gy + dy, 10); if (path) break; }
+  const nation = ctx.S.nations.find(x => x.key === key), nm = nation ? `${nation.flag} ${nation.name}` : key;
+  if (path && path.length) { p.autoPath = path; p.autoStuck = 0; }
+  ctx.toast(t.going(nm)); ST_GO.last = { i, ok: !!(path && path.length) };
+}
+const ST_GO = { last: null };
 // The repair request of a district: materials for every ruined piece, or null when the yard is whole.
 function requestOf(ctx, i) {
   const a = infos(ctx)[i];
@@ -422,7 +446,7 @@ function updateRepair(dt, ctx, job) {
 }
 function finishRepair(ctx, job) {
   const t = L(ctx);
-  if (job.done > 0) { ctx.toast(t.rebuilt, true); ctx.quake(0.3); }
+  if (job.done > 0) { ctx.toast(t.rebuilt, true); ctx.quake(0.3); setTimeout(() => giveReward(ctx, repReward(job.done)), 1200); }   /* plan-44 X2 */
   const st = sysState(ctx, job.i);
   st.delivered = { wood: 0, stone: 0 };
   releaseJob(job); JOBS.delete(job.i);
@@ -454,6 +478,7 @@ function updateUpgrade(dt, ctx, job) {
   const st = sysState(ctx, job.i);
   st.updel = { wood: 0, stone: 0 };
   if (np) {
+    setTimeout(() => giveReward(ctx, upReward(np.tier || 1)), 1200);   /* plan-44 X2 */
     ctx.toast(L(ctx).raised(`${nation ? nation.flag + ' ' : ''}${nation ? nation.name : plot.nation}`, tierName(ctx, np.tier)), true);
     ctx.quake(0.5);
   }
@@ -508,6 +533,9 @@ function renderPanel(ctx) {
   if (off && off.ok) rows += matRow(ctx, t.upTitle(tierName(ctx, off.next)), t.upReady(tierName(ctx, off.next)), off.cost, st.updel);
   if (off && !off.ok) { const [k, n] = metCount(ctx, plot.nation); rows += `<div class="hrow"><span class="hwho"><b>⬆ ${esc(tierName(ctx, off.next))}</b><div class="dim">${t.trustLock(k, n)}</div></span></div>`; }
   if (!req && !off) rows += `<div class="hrow"><span class="hwho"><b>✓</b><div class="dim">${t.capped}</div></span></div>`;
+  { const rw = req ? repReward(req.n) : off ? upReward(off.next) : null; if (rw) rows += `<div class="hrow"><span class="hwho"><div style="color:#8a3a12;font-weight:bold">${esc(req ? t.rewardRep(rw.s, rw.x) : t.rewardUp(rw.s, rw.x))}</div></span></div>`; }   /* plan-44 X2 */
+  const myKey = ctx.myNation ? ctx.myNation() : null, mine = !!myKey && myKey === plot.nation, myN = myKey && ctx.S.nations.find(x => x.key === myKey);
+  rows += `<div class="hrow"><span class="hwho"><div class="dim">${esc(mine ? t.mineNote : t.otherNote(myN ? `${myN.flag} ${myN.name}` : (myKey || '—')))}</div></span></div>`;
   if (job) {
     const prog = job.kind === 'repair'
       ? t.progress(job.done, Math.max(job.total, job.done))
@@ -526,6 +554,7 @@ function renderPanel(ctx) {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
       <button class="btn${deliverable ? ' primary' : ''}" id="dt-give" style="${bs}${deliverable ? '' : ';opacity:.4;cursor:default'}"${deliverable ? '' : ' disabled'}>${t.deliverBtn}</button>
       <button class="btn" id="dt-feed" style="${bs}${food >= 0 ? '' : ';opacity:.4;cursor:default'}"${food >= 0 ? '' : ' disabled'}>🍖 ${t.feedBtn}</button>
+      ${mine ? '' : `<button class="btn" id="dt-mine" style="${bs}">🏠 ${t.goMine}</button>`}
       <button class="btn" id="dt-close" style="${bs}">${t.close}</button>
     </div>`;
   panelEl = ctx.panel('districts', html);
@@ -534,6 +563,7 @@ function renderPanel(ctx) {
   p.querySelector('#dt-give').onclick = () => deliver(ctx, i);
   p.querySelector('#dt-feed').onclick = () => feed(ctx, i);
   p.querySelector('#dt-close').onclick = () => closePanel(ctx);
+  { const gm = p.querySelector('#dt-mine'); if (gm) gm.onclick = () => goMine(ctx); }
 }
 function openPanel(ctx, i) {
   openPlot = i;

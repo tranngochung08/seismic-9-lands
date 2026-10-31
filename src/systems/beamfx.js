@@ -26,9 +26,12 @@ export function sheet(name, dark) { return dark ? darkSheet(name) : VX(name); }
 /* vẽ 1 khung f của sheet s, gốc (ax, ay) đặt tại (x, y) màn hình, xoay ang; cut = bề dài logic tối đa tính từ gốc (luồng cắt theo độ dài thật) */
 export function drawAt(g, s, f, x, y, ang = 0, cut = null, alpha = 1) {
   if (!s || !s.img) return false; const hi = s.img.__hi ? 1 : 2, ax = s.ax != null ? s.ax : s.w / 2, ay = s.ay != null ? s.ay : s.h / 2;
-  const w = cut == null ? s.w : Math.max(1, Math.min(s.w, Math.round(ax + cut)));
-  g.save(); g.imageSmoothingEnabled = false; if (alpha !== 1) g.globalAlpha = alpha; g.translate(Math.round(x), Math.round(y)); if (ang) g.rotate(ang);
-  g.drawImage(s.img, (f % s.n) * s.w * hi, 0, w * hi, s.h * hi, -ax, -ay, w, s.h); g.restore(); return true;
+  const w = cut == null ? s.w : Math.max(1, Math.min(s.w, Math.round(ax + cut))), fx0 = (f % s.n) * s.w * hi, axis = !ang || Math.abs(Math.sin(ang * 2)) < 0.02;
+  g.save(); g.imageSmoothingEnabled = !axis; if (alpha !== 1) g.globalAlpha = alpha; g.translate(Math.round(x), Math.round(y)); if (ang) g.rotate(ang);   /* 2026-10-14: góc xiên → lọc mượt (ảnh nguồn 2×) để mép luồng không răng cưa */
+  const cap = cut != null && w < s.w && s.w === 177 ? Math.min(Math.round(s.h * 0.6), w - 2) : 0;   /* luồng bị cắt ngắn: nối đầu BO TRÒN của sheet vào chỗ cắt */
+  if (cap > 0) { g.drawImage(s.img, fx0, 0, (w - cap) * hi, s.h * hi, -ax, -ay, w - cap, s.h); g.drawImage(s.img, fx0 + (s.w - cap) * hi, 0, cap * hi, s.h * hi, -ax + w - cap, -ay, cap, s.h); }
+  else g.drawImage(s.img, fx0, 0, w * hi, s.h * hi, -ax, -ay, w, s.h);
+  g.restore(); return true;
 }
 /* khung theo thời gian (one-shot dừng ở khung cuối · loop quay vòng) */
 export const frameAt = (s, t) => { if (!s) return 0; const f = Math.floor(t * (s.fps || 12)); return s.loop ? f % s.n : Math.min(s.n - 1, f); };

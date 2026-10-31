@@ -1,0 +1,12 @@
+{
+ "inherit": "sky_m9",
+ "classes": {
+  "__base": "sky",
+  "CHASM": "sky",
+  "STONE": "stone",
+  "MARBLE": "stone",
+  "COBBLE": "stone"
+ },
+ "objects": {},
+ "images": {}
+}

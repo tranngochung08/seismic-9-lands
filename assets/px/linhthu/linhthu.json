@@ -1,0 +1,1304 @@
+{
+ "tete2": {
+  "w": 34,
+  "h": 34,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 2
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 3
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 4
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 4
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 1
+    },
+    "east": {
+     "row": 7,
+     "n": 1
+    },
+    "north": {
+     "row": 8,
+     "n": 1
+    }
+   }
+  },
+  "foot": 28
+ },
+ "cachep": {
+  "w": 28,
+  "h": 30,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 4
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 6
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 4
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   },
+   "jump": {
+    "south": {
+     "row": 10,
+     "n": 7
+    },
+    "east": {
+     "row": 11,
+     "n": 7
+    },
+    "north": {
+     "row": 12,
+     "n": 7
+    }
+   }
+  },
+  "foot": 28
+ },
+ "coc": {
+  "w": 26,
+  "h": 28,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 5
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   },
+   "jump": {
+    "south": {
+     "row": 10,
+     "n": 7
+    },
+    "east": {
+     "row": 11,
+     "n": 7
+    },
+    "north": {
+     "row": 12,
+     "n": 7
+    }
+   },
+   "swim": {
+    "south": {
+     "row": 13,
+     "n": 3
+    },
+    "east": {
+     "row": 14,
+     "n": 4
+    },
+    "north": {
+     "row": 15,
+     "n": 5
+    }
+   },
+   "lick": {
+    "south": {
+     "row": 16,
+     "n": 7
+    },
+    "east": {
+     "row": 17,
+     "n": 7
+    },
+    "north": {
+     "row": 18,
+     "n": 7
+    }
+   },
+   "croak": {
+    "south": {
+     "row": 19,
+     "n": 7
+    },
+    "east": {
+     "row": 20,
+     "n": 9
+    },
+    "north": {
+     "row": 21,
+     "n": 7
+    }
+   }
+  },
+  "foot": 25
+ },
+ "tete": {
+  "w": 40,
+  "h": 28,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 5
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   },
+   "roll": {
+    "south": {
+     "row": 10,
+     "n": 4
+    },
+    "east": {
+     "row": 11,
+     "n": 4
+    },
+    "north": {
+     "row": 12,
+     "n": 4
+    }
+   }
+  },
+  "foot": 26
+ },
+ "cachep2": {
+  "w": 32,
+  "h": 34,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 1
+    },
+    "east": {
+     "row": 7,
+     "n": 1
+    },
+    "north": {
+     "row": 8,
+     "n": 1
+    }
+   }
+  },
+  "foot": 27
+ },
+ "coc2": {
+  "w": 27,
+  "h": 29,
+  "foot": 27,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 2
+    }
+   },
+   "jump": {
+    "south": {
+     "row": 3,
+     "n": 4
+    },
+    "east": {
+     "row": 4,
+     "n": 4
+    },
+    "north": {
+     "row": 5,
+     "n": 4
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 4
+    },
+    "east": {
+     "row": 4,
+     "n": 4
+    },
+    "north": {
+     "row": 5,
+     "n": 4
+    }
+   }
+  }
+ },
+ "daibang2": {
+  "w": 40,
+  "h": 36,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 1
+    },
+    "east": {
+     "row": 7,
+     "n": 1
+    },
+    "north": {
+     "row": 8,
+     "n": 1
+    }
+   }
+  },
+  "foot": 34
+ },
+ "kimquy": {
+  "w": 36,
+  "h": 30,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 4
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   }
+  },
+  "foot": 27
+ },
+ "saola": {
+  "w": 38,
+  "h": 38,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 3
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   }
+  },
+  "foot": 37
+ },
+ "de2": {
+  "w": 36,
+  "h": 30,
+  "foot": 27,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 2
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   },
+   "jump": {
+    "south": {
+     "row": 10,
+     "n": 7
+    },
+    "east": {
+     "row": 11,
+     "n": 7
+    },
+    "north": {
+     "row": 12,
+     "n": 7
+    }
+   }
+  }
+ },
+ "tacke": {
+  "w": 30,
+  "h": 30,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 2
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 5
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 3
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   }
+  },
+  "foot": 29
+ },
+ "de": {
+  "w": 36,
+  "h": 30,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 2
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   },
+   "jump": {
+    "south": {
+     "row": 10,
+     "n": 7
+    },
+    "east": {
+     "row": 11,
+     "n": 7
+    },
+    "north": {
+     "row": 12,
+     "n": 7
+    }
+   }
+  },
+  "foot": 27
+ },
+ "kylan": {
+  "w": 34,
+  "h": 34,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 3
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 6
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   }
+  },
+  "foot": 32
+ },
+ "kylan2": {
+  "w": 36,
+  "h": 38,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 1
+    },
+    "east": {
+     "row": 7,
+     "n": 1
+    },
+    "north": {
+     "row": 8,
+     "n": 1
+    }
+   }
+  },
+  "foot": 36
+ },
+ "tacke2": {
+  "w": 30,
+  "h": 30,
+  "foot": 29,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 2
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 5
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 3
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   }
+  }
+ },
+ "hac": {
+  "w": 36,
+  "h": 36,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 7
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   }
+  },
+  "foot": 33
+ },
+ "chuichui2": {
+  "w": 34,
+  "h": 34,
+  "foot": 33,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 3
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 2
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 4
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 3
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 5
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   },
+   "dig": {
+    "south": {
+     "row": 10,
+     "n": 6
+    },
+    "east": {
+     "row": 11,
+     "n": 7
+    },
+    "north": {
+     "row": 12,
+     "n": 4
+    }
+   }
+  }
+ },
+ "chuichui": {
+  "w": 34,
+  "h": 34,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 3
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 2
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 4
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 3
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 5
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 7
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   },
+   "dig": {
+    "south": {
+     "row": 10,
+     "n": 6
+    },
+    "east": {
+     "row": 11,
+     "n": 7
+    },
+    "north": {
+     "row": 12,
+     "n": 4
+    }
+   }
+  },
+  "foot": 33
+ },
+ "saola2": {
+  "w": 38,
+  "h": 38,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 1
+    },
+    "east": {
+     "row": 7,
+     "n": 1
+    },
+    "north": {
+     "row": 8,
+     "n": 1
+    }
+   }
+  },
+  "foot": 36
+ },
+ "daibang": {
+  "w": 38,
+  "h": 36,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 6
+    },
+    "east": {
+     "row": 7,
+     "n": 7
+    },
+    "north": {
+     "row": 8,
+     "n": 6
+    }
+   },
+   "rest": {
+    "south": {
+     "row": 9,
+     "n": 5
+    }
+   }
+  },
+  "foot": 33
+ },
+ "kimquy2": {
+  "w": 34,
+  "h": 36,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 7
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 1
+    },
+    "east": {
+     "row": 7,
+     "n": 1
+    },
+    "north": {
+     "row": 8,
+     "n": 1
+    }
+   }
+  },
+  "foot": 34
+ },
+ "hac2": {
+  "w": 36,
+  "h": 36,
+  "clips": {
+   "idle": {
+    "south": {
+     "row": 0,
+     "n": 5
+    },
+    "east": {
+     "row": 1,
+     "n": 5
+    },
+    "north": {
+     "row": 2,
+     "n": 5
+    }
+   },
+   "walk": {
+    "south": {
+     "row": 3,
+     "n": 7
+    },
+    "east": {
+     "row": 4,
+     "n": 7
+    },
+    "north": {
+     "row": 5,
+     "n": 3
+    }
+   },
+   "cast": {
+    "south": {
+     "row": 6,
+     "n": 1
+    },
+    "east": {
+     "row": 7,
+     "n": 1
+    },
+    "north": {
+     "row": 8,
+     "n": 1
+    }
+   }
+  },
+  "foot": 34
+ }
+}

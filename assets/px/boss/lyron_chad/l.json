@@ -1,0 +1,82 @@
+{
+ "cw": 120,
+ "ch": 116,
+ "clips": {
+  "idle": {
+   "n": 6,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "walk": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "flex": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "pound": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "lasso": {
+   "n": 9,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "punch": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "stare": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "hurt": {
+   "n": 7,
+   "rows": [
+    "south"
+   ]
+  },
+  "defeat": {
+   "n": 9,
+   "rows": [
+    "south"
+   ]
+  },
+  "rot": {
+   "n": 1,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  }
+ }
+}

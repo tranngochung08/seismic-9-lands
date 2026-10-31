@@ -15,9 +15,11 @@
 //  · VFX PixelLab vfx_workbench (hr_orb, hr_shards, hr_clash, hr_boom, hr_morph — tools/px-hrvfx.py) chỉ bật lúc ra chiêu. Thanh máu khung PixelLab ui/hacrocky/bossbar.png.
 //  · Thưởng: thắng lần đầu → sách Rocky bậc 8 (chọn 1 chiêu đang bậc 7 — petlv TIER_MAX 8, quầy Heathcliff vẫn tối đa 7), Ngọc Rồng ngẫu nhiên,
 //    thành tựu 'hacrocky' (danh hiệu), XP + đá; đánh lại: thưởng giảm. Lưu save.sys.hacrocky = { wins, book8, tries, best }.
+import { easyHp } from './diff.js';   /* plan-44 C2: Độ khó Dễ — máu ×0,6 */
 import { obj as defObj } from '../gfx.js';
 import { ART } from '../art.js';
 import * as LV from './petlv.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 import { bossCam, bossCamReset, bossBarBox } from './bosscam.js';
 import { beamKey, sheet as bSheet, drawAt as bDraw, frameAt as bFrame } from './beamfx.js';   /* 2026-10-13: luồng Rocky-ha / Hắc-ha mới (vfx_workbench PixelLab) */
 
@@ -33,7 +35,7 @@ const STR = {
     real: 'Trúng bản thật! Hắc Rocky lộ diện', morph: 'Hắc Rocky biến hình — Siêu Cấp Hư Vô!', absorb: 'Hắc Rocky nuốt đòn của Rocky — giải chiêu để Rocky đánh được!',
     aimYou: 'Hắc Rocky nhắm vào BẠN!', aimRk: 'Hắc Rocky quay sang đánh Rocky',
     supOn: 'Hắc Rocky hóa SIÊU CẤP!', supOff: 'Hết Siêu Cấp — Hắc Rocky hụt hơi! Đánh ngay!', supLbl: 'Siêu Cấp', supLbl2: 'Siêu Cấp Hư Vô',
-    exposed: 'LỘ', phase: n => `Pha ${n}/2`, won: 'HẮC ROCKY BỊ HẠ!', again: 'Hắc Rocky tan vào khe nứt… (đánh lại được, thưởng giảm)',
+    exposed: 'LỘ', phase: n => `Pha ${n}/2`, won: 'HẮC ROCKY BỊ HẠ!', whisper: 'Hắc Rocky thều thào trước khi tan: “Người tạo ra ta… cũng quàng một chiếc khăn đỏ…”', again: 'Hắc Rocky tan vào khe nứt… (đánh lại được, thưởng giảm)',
     book: 'Sách Rocky bậc 8', bookPick: 'Chọn chiêu nâng lên bậc 8 (chỉ chiêu đang bậc 7):', bookKeep: 'Giữ sách, dùng sau (túi đồ)', bookNone: 'Chưa có chiêu nào bậc 7 — sách nằm trong túi đồ, dùng sau.',
     bookDone: (s) => `${s} đạt bậc 8!`, title: 'Danh hiệu: Kẻ Thắng Bóng Mình', exit: '← Sàn Đấu Ngầm',
     sign: 'Khe Nứt · Hắc Rocky.\nĐòn của Rocky vào Hắc Rocky gần như vô dụng — trừ lúc nó LỘ (thắng giằng co, chém đứt xích, đánh trúng bản thật).\nĐộ thân Rocky ≥ 20 thì Xích Tình Bạn không kéo được Rocky sang phe địch.\nHang Nam → Sàn Đấu Ngầm',
@@ -48,7 +50,7 @@ const STR = {
     real: 'You hit the real one! Shadow Rocky is exposed', morph: 'Shadow Rocky transforms — Void Super Form!', absorb: "Shadow Rocky swallows Rocky's attacks — break its tricks so Rocky can hurt it!",
     aimYou: 'Shadow Rocky is targeting YOU!', aimRk: 'Shadow Rocky turns on Rocky',
     supOn: 'Shadow Rocky goes SUPER!', supOff: 'Super form fades — Shadow Rocky is winded! Strike now!', supLbl: 'Super', supLbl2: 'Void Super',
-    exposed: 'EXPOSED', phase: n => `Phase ${n}/2`, won: 'SHADOW ROCKY DEFEATED!', again: 'Shadow Rocky melts into the rift… (rematch any time, smaller reward)',
+    exposed: 'EXPOSED', phase: n => `Phase ${n}/2`, won: 'SHADOW ROCKY DEFEATED!', whisper: 'Shadow Rocky rasps as it fades: "The one who made me… wore a red scarf too…"', again: 'Shadow Rocky melts into the rift… (rematch any time, smaller reward)',
     book: 'Rocky Book tier 8', bookPick: 'Pick a skill to raise to tier 8 (only skills at tier 7):', bookKeep: 'Keep the book for later (bag)', bookNone: 'No skill at tier 7 yet — the book waits in your bag.',
     bookDone: (s) => `${s} reached tier 8!`, title: 'Title: Shadow Twin Slayer', exit: '← Underground Ring',
     sign: "The Rift · Shadow Rocky.\nRocky's attacks barely hurt Shadow Rocky — except while it is EXPOSED (win the beam struggle, cut the chain, hit the real copy).\nWith bond ≥ 20 the Chain of Friendship cannot turn Rocky against you.\nSouth cave → Underground Ring",
@@ -80,7 +82,7 @@ const isSup = mo => !!mo && mo.form !== 'big';
 const spd = mo => SPD[isSup(mo) ? 'sup' : 'big'][mo.phase === 2 ? 1 : 0];
 function bossHp(ctx) {
   const h = ctx.hero, per = h ? h.atk + h.weaponBonus(h.swordTier) : 100, pt = rk(ctx), st = pt ? LV.atkOf(LV.levelFromXp(pt.xp || 0).lv) : 40;
-  return Math.round(per * 150 + st * 60);   /* ≈ 150 nhát kiếm: người cấp 30–50 + Rocky 35–50 mất ~2–3 phút (mô phỏng không né ~75 s) */
+  return easyHp(Math.round(per * 150 + st * 60));   /* ≈ 150 nhát kiếm: người cấp 30–50 + Rocky 35–50 mất ~2–3 phút (mô phỏng không né ~75 s) */
 }
 const sv = ctx => { const s = ctx.S.save; s.sys ||= {}; const h = (s.sys.hacrocky ||= {}); h.wins ||= 0; if (h.book8 > 0) { const inv = (s.inv ||= {}); inv.rkbook8 = (inv.rkbook8 || 0) + h.book8; } delete h.book8; h.tries ||= 0; return h; };   /* 2026-10-13 anh: sách bậc 8 là VẬT PHẨM 'rkbook8' trong túi — save cũ book8 > 0 chuyển vào túi */
 const bk8 = ctx => ((ctx.S.save || {}).inv || {}).rkbook8 || 0;
@@ -138,7 +140,7 @@ function moveMo(ctx, mo, tx, ty, sp, dt) {
       else if (mo.blockT > 1.2) { const s2 = sidestep(ctx, mo, dx, dy); if (s2) { mo.x = s2.x; mo.y = s2.y; } mo.blockT = 0; }
     }
   } else mo.blockT = 0;
-  if (Math.abs(dx) > Math.abs(dy) * 1.1) { mo.face = 'side'; mo.dir = dx < 0 ? -1 : 1; } else mo.face = dy < 0 ? 'dn' : 'ds';
+  face8(mo, dx, dy);   /* plan-53: 8 hướng, có trễ */
   mo.moving = true; return false;
 }
 function sidestep(ctx, mo, dx, dy) { const d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d; for (const k of [10, -10, 18, -18]) { const x = mo.x + nx * k, y = mo.y + ny * k; if (free(ctx, x, y)) return { x, y }; } return null; }
@@ -163,6 +165,8 @@ function hurtPlayer(ctx, frac, from, react = 'stagger', power = 1) {
   if (ctx.knockPlayer && react) { const d = Math.hypot(p.x - from.x, p.y - from.y) || 1; ctx.knockPlayer({ type: react, power, dir: { x: (p.x - from.x) / d, y: (p.y - from.y) / d }, src: from, bound: (x, y) => !inRift(ctx) || y < (ctx.S.map.h - 3) * TS }); }   /* bị hất không văng ra cổng hang Nam (mất trận) */
   return true;
 }
+/* 2026-10-15 máu linh thú: đòn trúng chỗ linh thú đang ra trận (mọi con trong đội) → trừ máu (frac như Rocky; kind 'fly' = hất bay) */
+function ltHitAt(ctx, test, frac, from, kind) { let n = 0; for (const q of (ctx.ltPets ? ctx.ltPets() : [])) if (test(q) && ctx.ltHit(frac * 1.1, from, kind, q.id)) n++; return n > 0; }
 function hurtRocky(ctx, frac, from, kb = 50, kind) {   /* kind 'fly' / 'launch' (hoặc kb ≥ 60) → Rocky bay vòng cung như người chơi (pet.js rkKnock) */
   const pos = ctx.rocky && ctx.rocky.pos && ctx.rocky.pos(); if (!pos) return; const pt = rk(ctx); if (!pt) return;
   const d = Math.hypot(pos.x - from.x, pos.y - from.y) || 1, raw = Math.round(LV.maxHpOf(rkLv(ctx)) * frac * 1.2 * phMul() * RK_TAKE);
@@ -174,26 +178,27 @@ const rkAway = ctx => { const pt = rk(ctx); return !pt || (pt.koT || 0) > 0 || !
 
 /* ---------------- hình vẽ trùm ---------------- */
 function frameOf(mo) {
-  const form = mo.form === 'big' ? 'hrbig' : 'hrsup', p2 = mo.form === 'sup2', dirK = mo.face === 'side' ? 'e' : mo.face === 'dn' ? 'n' : 's', flip = mo.face === 'side' && mo.dir < 0 ? 1 : 0;
+  const form = mo.form === 'big' ? 'hrbig' : 'hrsup', p2 = mo.form === 'sup2', dg = mo.face !== 'side' && mo.diag === mo.face, dirK = mo.face === 'side' ? 'e' : mo.face === 'dn' ? (dg ? 'ne' : 'n') : (dg ? 'se' : 's'), flip = (mo.face === 'side' || dg) && mo.dir < 0 ? 1 : 0;   /* plan-53: chéo ĐN/ĐB, TN/TB = lật */
   const cr = n => (p2 && cre(n.replace('hrsup', 'hrsup2'))) || cre(n);   /* pha 2: bộ hrsup2_* (PixelLab edit: mắt đỏ rực + khăn khói dài) — thiếu clip nào thì dùng hrsup_* */
-  const clip = (k, prog) => { const c = cr(form + '_' + k + '_' + dirK) || cr(form + '_' + k + '_s'); if (!c) return null; const i = Math.max(0, Math.min(c.length - 1, Math.floor(prog * c.length))); return c[i][flip] || c[i][0]; };
-  const loop = (k, fps) => { const c = cr(form + '_' + k + '_' + dirK) || cr(form + '_' + k + '_s'); if (!c) return null; const i = Math.floor((ST.t + (mo.ft || 0)) * fps) % c.length; return c[i][flip] || c[i][0]; };
+  const alt = dg ? 'e' : 's';   /* chéo thiếu clip → clip ngang (lật theo hướng) */
+  const clip = (k, prog) => { const c = cr(form + '_' + k + '_' + dirK) || cr(form + '_' + k + '_' + alt) || cr(form + '_' + k + '_s'); if (!c) return null; const i = Math.max(0, Math.min(c.length - 1, Math.floor(prog * c.length))); return c[i][flip] || c[i][0]; };
+  const loop = (k, fps) => { const c = cr(form + '_' + k + '_' + dirK) || cr(form + '_' + k + '_' + alt) || cr(form + '_' + k + '_s'); if (!c) return null; const i = Math.floor((ST.t + (mo.ft || 0)) * fps) % c.length; return c[i][flip] || c[i][0]; };
   const A = mo.act;
   if (A && A.k === 'super') { const c = (mo.phase === 2 && cre('hrsup2_transform_s')) || cre('hrsup_transform_s'); if (c) return c[Math.min(c.length - 1, Math.floor((1 - Math.max(0, A.t) / A.T0) * c.length))][0]; }   /* màn biến Siêu Cấp: clip gồng PixelLab */
   if (mo.cineT != null && mo.form !== 'big') { const c = cr('hrsup_transform_s'); if (c) return c[Math.min(c.length - 1, Math.floor(mo.cineT * c.length))][0]; }
   if (mo.punchT > 0) { const f = clip('punch', 1 - mo.punchT / 0.4); if (f) return f; }
   if (mo.pose === 'ha') { const f = clip('ha', mo.poseP == null ? 0.6 : mo.poseP); if (f) return f; }
-  const wk = mo.face === 'side' ? cr(form) : cr(form + (mo.face === 'dn' ? '_dn' : '_ds'));
+  const wk0 = dg ? cr(form + '_d' + dirK) : null, wk = wk0 || (mo.face === 'side' || dg ? cr(form) : cr(form + (mo.face === 'dn' ? '_dn' : '_ds'))), wside = !wk0 && (mo.face === 'side' || dg);
   if (!mo.moving && (mo.stunT > 0 || mo.windT > 0)) { const f = loop('stun', 7); if (f) return f; }   /* choáng / hụt hơi (dáng thường có clip stun; Siêu Cấp → thở) */
   if (!mo.moving) { const f = loop('idle', 5); if (f) return f; }
-  if (!wk) return null; const n = mo.face === 'side' ? 3 : wk.length;
-  const i = mo.moving ? (mo.face === 'side' ? 1 + (Math.floor(mo.ft * 8) % 2) : Math.floor(mo.ft * 8) % n) : 0; return wk[Math.min(wk.length - 1, i)][flip] || wk[0][0];
+  if (!wk) return null; const n = wside ? 3 : wk.length;
+  const i = mo.moving ? (wside ? 1 + (Math.floor(mo.ft * 8) % 2) : Math.floor(mo.ft * 8) % n) : 0; return wk[Math.min(wk.length - 1, i)][flip] || wk[0][0];
 }
 function drawBoss(g, mo, x, y, real = true) {
   const im = frameOf(mo), w = im ? im.width : 18, h = im ? im.height : 16;
   g.save();
   g.fillStyle = real ? 'rgba(10,0,20,.55)' : 'rgba(10,0,20,.16)';   /* Siêu Cấp Hư Vô: bản THẬT bóng đậm hơn */
-  g.beginPath(); g.ellipse(Math.round(x), Math.round(y), Math.max(6, w * (real ? 0.36 : 0.3)), real ? 3 : 2, 0, 0, 7); g.fill();
+  if (SHADOW.on) shadowFor(g, mo.x, mo.y, x, y, Math.max(12, Math.round(w * (real ? 0.72 : 0.6))), Math.round(mo.lift || 0), real ? 1.25 : 0.35); else { g.beginPath(); g.ellipse(Math.round(x), Math.round(y), Math.max(6, w * (real ? 0.36 : 0.3)), real ? 3 : 2, 0, 0, 7); g.fill(); }   /* plan-66: bản THẬT bóng đậm, bản sao nhạt (giữ luật cũ) */
   if (!real) g.globalAlpha = 0.9;
   if (mo.flash > 0) g.filter = 'brightness(2.2)'; else if (mo.vuln > 0) g.filter = 'brightness(1.35) saturate(1.3)';
   if (im) g.drawImage(im, Math.round(x - w / 2), Math.round(y - h + 1));
@@ -245,7 +250,7 @@ function bossAi(ctx, mo, dt, p, dp, canHit) {
   { const lh = ctx.monsters.lastHitT ? ctx.monsters.lastHitT() : -99; if (lh !== ST.lastHitSeen) { if (ST.lastHitSeen != null && lh > 0 && !(mo.intro > 0)) ST.agP += AG.hit; ST.lastHitSeen = lh; } }   /* mỗi nhát kiếm người chơi trúng (monsters.js strike) → thù người chơi tăng */
   mo.lastHp = mo.hp;
   if (mo.punchT > 0) mo.punchT -= dt; if (mo.vuln > 0) mo.vuln -= dt;
-  if (mo.intro > 0) { mo.intro -= dt; mo.face = 'ds'; if (mo.intro <= 0 && !mo.sized) { const k = mo.hp / mo.max, nh = bossHp(ctx); mo.max = nh; mo.hp = Math.max(1, Math.round(nh * k)); mo.sized = true; log('hp ' + nh); } return; }   /* máu tính lại khi trồi lên xong (điểm lưu cấp kiếm sau khi vào vùng) */
+  if (mo.intro > 0) { mo.intro -= dt; mo.face = 'ds'; mo.diag = null; mo.sec8 = null; if (mo.intro <= 0 && !mo.sized) { const k = mo.hp / mo.max, nh = bossHp(ctx); mo.max = nh; mo.hp = Math.max(1, Math.round(nh * k)); mo.sized = true; log('hp ' + nh); } return; }   /* máu tính lại khi trồi lên xong (điểm lưu cấp kiếm sau khi vào vùng) */
   if (ST.cine) return cineTick(ctx, mo, dt);
   if (mo.lockHp != null && !(mo.act && mo.act.k === 'super')) mo.lockHp = null;   /* màn biến Siêu Cấp bị cắt ngang (đứt xích / thử nghiệm) → không kẹt bất tử */
   if (mo.lockHp != null && mo.hp < mo.lockHp) { mo.hp = mo.lockHp; mo.lastHp = mo.hp; }   /* đang biến hình: không mất máu */
@@ -328,7 +333,7 @@ function setTgt(ctx, w, say = true) {
 
 /* ---------------- Siêu Cấp có thời hạn (như Rocky) ---------------- */
 function startSuper(ctx, mo) {
-  mo.act = { k: 'super', t: SUP.cast, T0: SUP.cast }; mo.pose = null; mo.lockHp = mo.hp; mo.face = 'ds'; ST.supN++;
+  mo.act = { k: 'super', t: SUP.cast, T0: SUP.cast }; mo.pose = null; mo.lockHp = mo.hp; mo.face = 'ds'; mo.diag = null; mo.sec8 = null; ST.supN++;
   ST.banner = { txt: L(ctx).supOn, t: 1.6 }; ctx.sfx('spar_roar'); if (ctx.quake) ctx.quake(0.25); fx('hr_morph', mo.x, mo.y + 2, { dur: 1.0 }); log('super start');
 }
 function superTick(ctx, mo, A) {
@@ -348,6 +353,7 @@ function startDash(ctx, mo, p) {
   faceTo(mo, p.x, p.y); const d = dist(mo, p) || 1, a = Math.atan2(p.y - mo.y, p.x - mo.x), len = Math.min(170, d + 22), T = isSup(mo) ? 0.35 : 0.42;
   mo.act = { k: 'dash', ph: 'wind', t: T, T0: T, a, len, sp: 380 }; mo.pose = 'ha'; mo.poseP = 0.15;
   ST.tele.push({ type: 'l', x: mo.x, y: mo.y - 2, a, len, w: 16, t: T, T0: T, act: mo.act }); ctx.sfx('spar_charge'); log('dash');
+  if (ctx.threat) ctx.threat.add({ id: 'hr_dash', kind: 'lunge', from: { x: mo.x, y: mo.y - 6 }, to: { x: mo.x + Math.cos(a) * len, y: mo.y - 6 + Math.sin(a) * len }, in: T, dur: len / 380, width: 26 });   /* plan-34: khai báo đòn cho Ki nhào lộn né (ki.js) */
 }
 function dashTick(ctx, mo, A, dt, p) {
   if (A.ph === 'wind') { faceTo(mo, mo.x + Math.cos(A.a), mo.y + Math.sin(A.a)); if (A.t <= 0) { A.ph = 'go'; A.t = A.len / A.sp; A.hitP = false; A.hitR = false; mo.pose = null; ctx.sfx('whoosh_big'); } return; }
@@ -356,7 +362,7 @@ function dashTick(ctx, mo, A, dt, p) {
     if (free(ctx, nx, ny, 5)) { mo.x = nx; mo.y = ny; } else { const o = objAhead(ctx, nx + Math.cos(A.a) * 6, ny + Math.sin(A.a) * 6); if (o && ctx.arenaImpact) ctx.arenaImpact(o.x * TS + 8, o.y * TS + 12, 1.3, 'land'); A.t = 0; }   /* đâm vật → phá, dừng ở vật cứng */
     trailPush(mo, 0.03);
     if (!A.hitP && Math.hypot(p.x - mo.x, p.y - mo.y) < 13) A.hitP = hurtPlayer(ctx, DMG.dash, mo, 'fly', 0.9);
-    const rp = rkPos(ctx); if (!A.hitR && rp && Math.hypot(rp.x - mo.x, rp.y - mo.y) < 12) { A.hitR = true; hurtRocky(ctx, DMG.dash, mo, 65, 'fly'); }
+    const rp = rkPos(ctx); if (!A.hitR && rp && Math.hypot(rp.x - mo.x, rp.y - mo.y) < 12) { A.hitR = true; hurtRocky(ctx, DMG.dash, mo, 65, 'fly'); } if (!A.hitL && ltHitAt(ctx, q => Math.hypot(q.x - mo.x, q.y - mo.y) < 12, DMG.dash, mo, 'fly')) A.hitL = true;
     if (A.t <= 0) { A.ph = 'rec'; A.t = 0.22; mo.punchT = 0; }
     return;
   }
@@ -375,7 +381,15 @@ function dodgeTick(ctx, mo, A, dt, p) {
 function trailPush(mo, gap) {   /* vệt mờ ngắn: chính khung ảnh PixelLab của trùm, mờ dần 0,22 s */
   if (ST.t - (mo.trailT || -9) < gap) return; mo.trailT = ST.t; const im = frameOf(mo); if (im) ST.trail.push({ im, x: mo.x, y: mo.y, t: 0.22 });
 }
-function faceTo(mo, x, y) { const dx = x - mo.x, dy = y - mo.y; if (Math.abs(dx) > Math.abs(dy) * 1.1) { mo.face = 'side'; mo.dir = dx < 0 ? -1 : 1; } else mo.face = dy < 0 ? 'dn' : 'ds'; }
+/* plan-53: hướng 8 cung có trễ — chéo: face 'ds'|'dn' + diag = face; E/W 'side' */
+function face8(o, dx, dy, hyst = true) {
+  if (Math.hypot(dx, dy) < 1e-4) return; const a = Math.atan2(dy, dx), Q = Math.PI / 4; let sec = ((Math.round(a / Q) % 8) + 8) % 8;
+  const now = performance.now();
+  if (hyst && o.sec8 != null) { let d = a - o.sec8 * Q; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < Q / 2 + 0.26 || (now - (o.sec8At || 0) < 220 && Math.abs(d) < 1.75)) sec = o.sec8; else if (sec !== o.sec8) { if (o.cand8 !== sec) { o.cand8 = sec; o.cand8At = now; sec = o.sec8; } else if (now - o.cand8At < 110 && Math.abs(d) < 2.4) sec = o.sec8; } }   /* trễ: lệch tâm cung > 22,5° + 15°; giữ cung ≥ 0,22 s (trừ quay gắt > 100°); cung mới phải giữ ≥ 0,11 s mới đổi (chống nháy khi rung / đi men tường) */
+  if (sec !== o.sec8) o.sec8At = now; o.sec8 = sec; o.face = sec === 0 || sec === 4 ? 'side' : sec <= 3 ? 'ds' : 'dn'; o.diag = sec % 2 ? o.face : null;
+  if (sec !== 2 && sec !== 6) o.dir = sec <= 1 || sec === 7 ? 1 : -1;
+}
+function faceTo(mo, x, y) { face8(mo, x - mo.x, y - mo.y); }   /* plan-53: 8 hướng (bản cũ: 3 mặt side/ds/dn) */
 
 /* đấm thường (0,6 s báo trước) / đấm hất (1,0 s): vòng tròn nhắm vào chỗ người đứng lúc ra đòn */
 function startMelee(ctx, mo, p, k, more = 0, next = false) {   /* more: số cú nối tiếp (chuỗi liên hoàn Siêu Cấp) · next: cú nối → báo trước ngắn hơn (0,38 s) */
@@ -396,7 +410,7 @@ function actTick(ctx, mo, A, dt, p) {
       const q = tgPos(ctx, A.tg) || p;
       if (A.more > 0) { const d = dist(mo, q); if (d > 14 && d < 60) { const k2 = Math.min(10, d - 12) / d, nx = mo.x + (q.x - mo.x) * k2, ny = mo.y + (q.y - mo.y) * k2; if (free(ctx, nx, ny, 5)) { mo.x = nx; mo.y = ny; } } }   /* liên hoàn: nhích tới theo người */
       if (Math.hypot(p.x - A.x, p.y - A.y) < A.r + 4) hurtPlayer(ctx, A.k === 'heavy' ? DMG.heavy : DMG.jab, mo, A.k === 'heavy' ? 'fly' : 'stagger', A.k === 'heavy' ? 1.1 : 0.6);
-      const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - A.x, rp.y - A.y) < A.r + 6) hurtRocky(ctx, A.k === 'heavy' ? DMG.heavy : DMG.jab, mo, A.k === 'heavy' ? 70 : 30, A.k === 'heavy' ? 'fly' : null);
+      const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - A.x, rp.y - A.y) < A.r + 6) hurtRocky(ctx, A.k === 'heavy' ? DMG.heavy : DMG.jab, mo, A.k === 'heavy' ? 70 : 30, A.k === 'heavy' ? 'fly' : null); ltHitAt(ctx, q => Math.hypot(q.x - A.x, q.y - A.y) < A.r + 6, A.k === 'heavy' ? DMG.heavy : DMG.jab, mo, A.k === 'heavy' ? 'fly' : 'hit');
       if (A.k === 'heavy') { if (ctx.vfx) ctx.vfx('rk_shock', A.x, A.y + 4); if (ctx.arenaImpact) ctx.arenaImpact(A.x, A.y, 1.3, 'land'); if (ctx.quake) ctx.quake(0.15); }
       else if (ctx.vfx) ctx.vfx('rk_punch_t4', A.x, A.y + 6);
     } }
@@ -455,12 +469,15 @@ function shotsTick(ctx, dt) {
       s.home -= dt; const hq = tgPos(ctx, s.tg) || p, tx = hq.x - s.x, ty = hq.y - 8 - s.y, ca = Math.atan2(s.vy, s.vx), ta = Math.atan2(ty, tx); let da = ta - ca; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
       const na = ca + Math.max(-2.4 * dt, Math.min(2.4 * dt, da)), sp = 150; s.vx = Math.cos(na) * sp; s.vy = Math.sin(na) * sp; s.x += s.vx * dt; s.y += s.vy * dt;
     } else { s.x += s.vx * dt; s.y += s.vy * dt; }
+    { const sp = Math.hypot(s.vx, s.vy); if (ctx.threat && sp > 1) ctx.threat.add({ id: s, kind: 'projectile', from: { x: s.x, y: s.y + 2 }, to: { x: s.x + s.vx / sp * 70, y: s.y + 2 + s.vy / sp * 70 }, speed: sp, width: 10 }); }   /* plan-34: Ki né */
     if (s.i >= s.pts.length - 1 && solidAt(ctx, s.x, s.y + 6)) {   /* đâm vách / vật → nổ, vật vỡ */
       if (ctx.arenaImpact) ctx.arenaImpact(s.x, s.y + 6, 1.3, 'land'); fx('hr_shards', s.x, s.y, {}); s.life = 0; ctx.sfx('smash'); continue;
     }
     if (Math.hypot(p.x - s.x, p.y - 8 - s.y) < 10) { hurtPlayer(ctx, DMG.curve, { x: s.x - s.vx * 0.05, y: s.y - s.vy * 0.05 + 8 }, 'fly', 0.9); fx('hr_shards', s.x, s.y, {}); s.life = 0; log('curve hit player'); continue; }
+    if (!ST.clash && ltHitAt(ctx, q => Math.hypot(q.x - s.x, q.y - 8 - s.y) < 10, DMG.curve, { x: s.x, y: s.y + 8 }, 'fly')) { fx('hr_shards', s.x, s.y, {}); s.life = 0; continue; }   /* trúng linh thú: đạn nổ như trúng Rocky */
     const rp = rkPos(ctx); if (rp && Math.hypot(rp.x - s.x, rp.y - 8 - s.y) < 10 && !ST.clash) { hurtRocky(ctx, DMG.curve, { x: s.x, y: s.y + 8 }, 60, 'fly'); fx('hr_shards', s.x, s.y, {}); s.life = 0; continue; }
   }
+  if (ctx.threat) for (const s of ST.shots) if (s.life <= 0) ctx.threat.remove(s);
   ST.shots = ST.shots.filter(s => s.life > 0);
 }
 
@@ -483,7 +500,7 @@ function chainTick(ctx, dt) {
   if (C.mode === 'turn') {   /* Rocky đổi phe 5 s: chạy tới đấm người chơi */
     const d = Math.hypot(e.x - p.x, e.y - p.y) || 1; ST.petSpot = { x: p.x + (e.x - p.x) / d * 12, y: p.y + (e.y - p.y) / d * 6 };
     C.atkCd -= dt; if (e.punchT > 0) e.punchT -= dt;
-    if (d < 24 && C.atkCd <= 0) { C.atkCd = 1.1; e.punchT = 0.26; e.sit = false; e.dir = p.x < e.x ? -1 : 1; e.face = Math.abs(p.x - e.x) > Math.abs(p.y - e.y) ? 'side' : p.y < e.y ? 'dn' : 'ds';
+    if (d < 24 && C.atkCd <= 0) { C.atkCd = 1.1; e.punchT = 0.26; e.sit = false; e.dir = p.x < e.x ? -1 : 1; e.diag = null; e.sec8 = null; e.face = Math.abs(p.x - e.x) > Math.abs(p.y - e.y) ? 'side' : p.y < e.y ? 'dn' : 'ds';
       hurtPlayer(ctx, DMG.rocky, e, 'stagger', 0.6); if (ctx.vfx) ctx.vfx('rk_punch_t1', p.x, p.y - 2); }
   } else {   /* độ thân ≥ 20: chỉ bị trói, đi chậm theo người (30 % tốc độ) */
     const tgt = { x: p.x - 18, y: p.y + 4 }, s = C.slow || { x: e.x, y: e.y }, d = Math.hypot(tgt.x - s.x, tgt.y - s.y);
@@ -525,27 +542,27 @@ function clonesCast(ctx, mo, A, dt, p) {
         drawFn: (g, f, x, y) => drawBoss(g, f, x, y, false), onDown: f => fakePop(ctx, f) };
       const f = ctx.monsters.add(c, s.x, s.y); Object.assign(f, { armT: ST.t + 2.4, form: mo.form, phase: mo.phase, face: 'ds', dir: 1, punchT: 0, pose: null, warned: true, angry: true, ft: Math.random() }); ST.clones.push(f); fx('hr_morph', s.x, s.y + 2, { dur: 0.5 });
     });
-    A.ph = 'aim'; A.t = 1.15; A.lanes = [mo, ...ST.clones].map(o => { faceTo(o, p.x, p.y); const d = dist(o, p) || 1, len = Math.min(140, d + 24); const l = { type: 'l', x: o.x, y: o.y, a: Math.atan2(p.y - o.y, p.x - o.x), len, w: 14, t: 1.15, T0: 1.15, who: o }; ST.tele.push(l); return l; });
+    A.ph = 'aim'; A.t = 1.15; A.lanes = [mo, ...ST.clones].map(o => { faceTo(o, p.x, p.y); const d = dist(o, p) || 1, len = Math.min(140, d + 24); const l = { type: 'l', x: o.x, y: o.y, a: Math.atan2(p.y - o.y, p.x - o.x), len, w: 14, t: 1.15, T0: 1.15, who: o }; ST.tele.push(l); if (ctx.threat) ctx.threat.add({ kind: 'lunge', from: { x: o.x, y: o.y - 6 }, to: { x: o.x + Math.cos(l.a) * len, y: o.y - 6 + Math.sin(l.a) * len }, in: 1.15, dur: 0.3, width: 24 }); return l; });
     ST.clonesT = 9; return;
   }
   if (A.ph === 'aim') { if (A.t > 0) return; A.ph = 'dash'; A.t = 0.3; A.hitP = false; A.hitR = false; ctx.sfx('whoosh_big'); return; }
   if (A.ph === 'dash') {   /* cả 3 lao theo làn đã báo; bản thật trúng = đủ đau, bản giả = một nửa */
     for (const l of A.lanes) { const o = l.who; if (!o || (o !== mo && !ST.clones.includes(o))) continue; const sp = l.len / 0.3, nx = o.x + Math.cos(l.a) * sp * dt, ny = o.y + Math.sin(l.a) * sp * dt; if (free(ctx, nx, ny, 5)) { o.x = nx; o.y = ny; } o.punchT = 0.4;
       if (!A.hitP && Math.hypot(p.x - o.x, p.y - o.y) < 12) { A.hitP = hurtPlayer(ctx, DMG.dash * (o === mo ? 1 : 0.5), o, 'fly', o === mo ? 1 : 0.6); }
-      const rp = rkPos(ctx); if (!A.hitR && rp && Math.hypot(rp.x - o.x, rp.y - o.y) < 12) { A.hitR = true; hurtRocky(ctx, DMG.dash, o, 50); } }
+      const rp = rkPos(ctx); if (!A.hitR && rp && Math.hypot(rp.x - o.x, rp.y - o.y) < 12) { A.hitR = true; hurtRocky(ctx, DMG.dash, o, 50); } if (!A.hitL && ltHitAt(ctx, q => Math.hypot(q.x - o.x, q.y - o.y) < 12, DMG.dash, o, 'hit')) A.hitL = true; }
     if (A.t <= 0) { mo.act = null; mo.cd = 0.8; ST.cd.clones = CD.clones; }
   }
 }
 function fakePop(ctx, f) {   /* trúng bản giả → nổ mưa mảnh tím (vùng rơi 0,4 s sau — né được) */
   ST.clones = ST.clones.filter(o => o !== f); fx('hr_shards', f.x, f.y - 8, {}); ctx.sfx('stone_crumble');
-  ST.rains.push({ x: f.x, y: f.y, r: 26, t: 0.45, T0: 0.45 }); ST.tele.push({ type: 'c', x: f.x, y: f.y, r: 26, t: 0.45, T0: 0.45, col: '#c060ff' }); log('fake pop');
+  ST.rains.push({ x: f.x, y: f.y, r: 26, t: 0.45, T0: 0.45 }); if (ctx.threat) ctx.threat.add({ kind: 'slam', from: { x: f.x, y: f.y - 60 }, to: { x: f.x, y: f.y - 6 }, in: 0.45, radius: 26 }); ST.tele.push({ type: 'c', x: f.x, y: f.y, r: 26, t: 0.45, T0: 0.45, col: '#c060ff' }); log('fake pop');
 }
 function revealReal(ctx, mo) { clearClones(ctx); mo.vuln = Math.max(mo.vuln || 0, 3); mo.stunT = 1.2; mo.act = null; mo.pose = null; ctx.toast(L(ctx).real, true); log('real hit'); }
 function clearClones(ctx, poof = true) { for (const f of ST.clones) { if (poof) fx('hr_morph', f.x, f.y + 2, { dur: 0.4 }); if (ctx.monsters) ctx.monsters.remove(f); } ST.clones = []; }
 
 /* ---------------- biến hình pha 2 (sân đảo màu âm bản CHỈ lúc biến hình) ---------------- */
 function startMorph(ctx, mo) {
-  ST.cine = { t: 0 }; ST.ph2At = ST.t; mo.act = null; mo.pose = null; mo.form = 'sup2'; mo.windT = 0; mo.stunT = 0; mo.phase = 2; mo.cineT = 0; mo.lockHp = mo.hp; mo.face = 'ds';
+  ST.cine = { t: 0 }; ST.ph2At = ST.t; mo.act = null; mo.pose = null; mo.form = 'sup2'; mo.windT = 0; mo.stunT = 0; mo.phase = 2; mo.cineT = 0; mo.lockHp = mo.hp; mo.face = 'ds'; mo.diag = null; mo.sec8 = null;
   ST.tele = []; ST.shots = []; clearClones(ctx); if (ST.chain) endChain(ctx, null);
   ST.banner = { txt: L(ctx).morph, t: 2.4 }; ctx.sfx('roar_big'); if (ctx.quake) ctx.quake(0.6); fx('hr_morph', mo.x, mo.y + 2, { dur: 2.2 }); log('morph');
 }
@@ -568,7 +585,7 @@ function startHha(ctx, mo, tp, ult, opt = {}) {   /* opt.duel: trùm bắn TRẢ
   faceTo(mo, tp.x, tp.y); const o = hhaOrigin(mo), a = Math.atan2(tp.y - 6 - o.y, tp.x - o.x);
   mo.act = { k: 'hha', ph: 'wind', t: T, T0: T, a, a0: a, len, w, ult: !!ult, tg: ST.tgt, hitP: false, hitR: false, duel: !!opt.duel, sheet: ult || sup ? 'rk_ha2_l' : 'rk_ha2_s' };
   mo.pose = 'ha'; mo.poseP = 0.1; ST.lastRanged = 'hha';
-  if (!ult) { mo.act.tl = { type: 'l', x: o.x, y: o.y + 6, a, len, w, t: T, T0: T, act: mo.act }; ST.tele.push(mo.act.tl); }
+  if (!ult) { mo.act.tl = { type: 'l', x: o.x, y: o.y + 6, a, len, w, t: T, T0: T, act: mo.act }; ST.tele.push(mo.act.tl); if (ctx.threat) ctx.threat.add({ id: 'hr_hha', kind: 'beam', from: { x: o.x, y: o.y }, to: { x: o.x + Math.cos(a) * len, y: o.y + Math.sin(a) * len }, in: T, dur: 0.4, width: w - 2 }); }   /* plan-34: Ki né (tuyệt chiêu quét KHÔNG khai báo — không né được) */
   else {
     ST.cd.ult = 12; ST.lastUlt = ST.t; ST.banner = { txt: L(ctx).ult, t: 2.4 }; ctx.sfx('spar_roar'); if (ctx.quake) ctx.quake(0.3); if (ST.chain) endChain(ctx, null); clearClones(ctx);
     for (const da of [-0.52, 0, 0.52]) ST.tele.push({ type: 'l', x: o.x, y: o.y + 6, a: a + da, len, w: 16, t: T, T0: T, act: mo.act });   /* quét: báo cả quạt ±30° */
@@ -620,7 +637,7 @@ function hhaTick(ctx, mo, A, dt, p) {
   if (A.ft < 0.4 || A.ult) {
     if (!A.hitP && onLine(p)) A.hitP = hurtPlayer(ctx, A.ult ? DMG.hhaUlt : DMG.hha, o, 'fly', A.ult ? 1.3 : 1);
     const rb = ctx.rocky && ctx.rocky.beamInfo && ctx.rocky.beamInfo(), rkShooting = rb && (!rb.fired || rb.ft < 0.25);   /* Rocky đang tụ / vừa bắn trả → để beamMeet quyết (không hất Rocky trước) */
-    const rp = rkPos(ctx); if (!A.hitR && rp && onLine(rp) && !ST.clash && !(rkShooting && A.ft < 0.3)) { A.hitR = true; hurtRocky(ctx, A.ult ? DMG.hhaUlt : DMG.hha, o, A.ult ? 90 : 70, A.ult ? 'launch' : 'fly'); }
+    const rp = rkPos(ctx); if (!A.hitR && rp && onLine(rp) && !ST.clash && !(rkShooting && A.ft < 0.3)) { A.hitR = true; hurtRocky(ctx, A.ult ? DMG.hhaUlt : DMG.hha, o, A.ult ? 90 : 70, A.ult ? 'launch' : 'fly'); } if (!A.hitL && !ST.clash && ltHitAt(ctx, q => onLine(q), A.ult ? DMG.hhaUlt : DMG.hha, o, 'fly')) A.hitL = true;
   }
   if (A.t <= 0) { mo.act = null; mo.pose = null; mo.cd = 0.4; ST.cd.hha = CD.hha[isSup(mo) ? 1 : 0]; ST.cd.curve = Math.max(ST.cd.curve, 2.5); }
 }
@@ -673,7 +690,7 @@ function clashTick(ctx, dt) {
     C.endT += dt; if (C.endT >= 0.35 && !C.boomed) { C.boomed = true; const E = clashEnds(ctx); const tgt = C.res === 'win' ? (E ? E.B : b) : (E ? E.R : p);
       fx('hr_boom', tgt.x, tgt.y + 6, { top: true }); ctx.sfx('smash'); if (ctx.quake) ctx.quake(0.45); if (ctx.arenaImpact) ctx.arenaImpact(tgt.x, tgt.y + 8, 1.4, 'land');
       if (C.res === 'win') { ctx.S.flash = 0.75; if (b) { const dmg = Math.round(b.max * 0.1); b.hp = Math.max(1, b.hp - dmg); b.flash = 0.3; if (E) { ST.shoveT = -99; shove(ctx, b, E.ux, E.uy, 150); } b.vuln = 5.5; b.stunT = 4.5; if (ctx.pop) ctx.pop(b.x, b.y - 26, '-' + dmg, '#ffd45e'); } ctx.toast(L(ctx).win, true); }   /* nổ giằng co = đòn mạnh: hất trùm lùi thật */
-      else { ctx.S.flash = Math.max(ctx.S.flash || 0, 0.4); hurtRocky(ctx, 0.25, tgt, 90, 'launch'); const d = Math.hypot(p.x - tgt.x, p.y - tgt.y); if (d < 70) hurtPlayer(ctx, DMG.ultLose, b || tgt, 'fly', 1.4); ctx.toast(L(ctx).lose, true); }
+      else { ctx.S.flash = Math.max(ctx.S.flash || 0, 0.4); hurtRocky(ctx, 0.25, tgt, 90, 'launch'); ltHitAt(ctx, q => Math.hypot(q.x - tgt.x, q.y - tgt.y) < 70, 0.25, tgt, 'fly'); const d = Math.hypot(p.x - tgt.x, p.y - tgt.y); if (d < 70) hurtPlayer(ctx, DMG.ultLose, b || tgt, 'fly', 1.4); ctx.toast(L(ctx).lose, true); }
     }
     if (C.endT >= 0.8) { ST.clash = null; ST.petSpot = null; ST.cd.ult = CD.ult; ST.cd.hha = CD.hha[1]; if (b) { b.pose = null; b.cd = 1; if (b.act && b.act.k === 'clashHold') b.act = null; } }
     return;
@@ -682,7 +699,7 @@ function clashTick(ctx, dt) {
   const E = clashEnds(ctx); ST.petSpot = { x: e.x, y: e.y };   /* Rocky giữ thế, không chạy */
   if (!C.cracked) { C.cracked = true; fx('hr_clashcrack', E.O.x, E.O.y + 10, {}); }   /* đất dưới điểm va nứt + đá vụn bay lên (lúc hai luồng chạm nhau) */
   if (C.pulse > 0) C.pulse -= dt;
-  e.sit = false; e.dir = b.x < e.x ? -1 : 1; e.face = Math.abs(E.ux) > Math.abs(E.uy) ? 'side' : E.uy < 0 ? 'dn' : 'ds'; if (e.punchT > 0) e.punchT -= dt;
+  e.sit = false; e.dir = b.x < e.x ? -1 : 1; e.diag = null; e.sec8 = null; e.face = Math.abs(E.ux) > Math.abs(E.uy) ? 'side' : E.uy < 0 ? 'dn' : 'ds'; if (e.punchT > 0) e.punchT -= dt;
   b.pose = 'ha'; b.poseP = 0.75; faceTo(b, e.x, e.y);
   C.b -= C.pull * dt * (1 + 0.15 * Math.sin(C.t * 3));
   { /* hai bên lùi chân trượt theo lực đẩy (vệt bụi dưới chân): bên đang bị đẩy lùi xê dịch theo trục giằng co */
@@ -725,7 +742,7 @@ function onWin(ctx, mo) {
   const h = sv(ctx), first = h.wins === 0, t = L(ctx), secs = Math.round(ST.t - ST.startT);
   h.wins++; h.best = h.best ? Math.min(h.best, secs) : secs; ST.won = true; ST.boss = null; clearClones(ctx); ST.chain = null; ST.clash = null; ST.petSpot = null; ST.shots = []; ST.tele = [];
   fx('hr_boom', mo.x, mo.y - 6, { top: true }); fx('hr_shards', mo.x, mo.y - 10, {}); ctx.S.flash = 0.6; if (ctx.quake) ctx.quake(0.6); ctx.sfx('boss_win');
-  ST.banner = { txt: t.won, t: 3.5 };
+  ST.banner = { txt: t.won, t: 3.5 }; setTimeout(() => ctx.toast(t.whisper, true), 1300);   /* plan-33 mục 9: manh mối twist Lyron (chỉ chữ) */
   const xp = first ? 900 : 220; if (ctx.hero) ctx.hero.gainXp(xp); if (ctx.onMonsterDown) { try { ctx.onMonsterDown(mo, first ? 600 : 160); } catch (e) { /* bỏ qua */ } }
   ctx.give('stone', first ? 250 : 60, mo.x, mo.y); ctx.give('soul', first ? 3 : 1, mo.x + 8, mo.y);
   const r = ((ctx.S.save.sys ||= {}).road ||= {}); r.balls ||= []; const miss = [1, 2, 3, 4, 5, 6, 7].filter(n => !r.balls.includes(n));
@@ -754,6 +771,7 @@ function useBook8(ctx, id) {   /* móc test + thẻ Rocky: dùng sách bậc 8 c
 export const hacrocky = {
   id: 'hacrocky', always: true,   /* chạy mọi vùng: ctx.hrBook cho thẻ Rocky; khe nứt ở 'arena'; trận ở 'rift1' */
   onZoneEnter(ctx) {
+    if (inRift(ctx) && ctx.S.zone) ctx.S.zone.tint = 'rgba(60,0,90,.08)';   /* plan-45 D6: sân sáng hơn (lớp phủ tím .38 → .08) — Hắc Rocky đen viền tối nổi trên nền */
     ctx.hrBook = { open: () => openBook(ctx), use: id => useBook8(ctx, id), count: () => (sv(ctx), bk8(ctx)), add: (n = 1) => { sv(ctx); ctx.bag.add('rkbook8', n); ctx.persist(); } }; sv(ctx);   /* add: thưởng sách bậc 8 của trùm khác (trongdong.js) — dùng chung kho sách */
     if (inArena(ctx)) {   /* khe nứt: mờ khi chưa đủ điều kiện */
       const o = ctx.S.map.objects.find(q => q.rift); if (o) o.type = riftOpen(ctx) ? 'rift_crack' : 'rift_crack_off';
@@ -854,7 +872,7 @@ export const hacrocky = {
     for (const f of ST.fx) out.push({ y: f.top ? 1e9 : f.y + (f.s === VX('hr_morph') ? -8 : 4), f: () => { const n = f.s.n, fr = f.s.loop ? Math.floor(f.t * (f.s.fps || 12)) % n : Math.min(n - 1, Math.floor(f.t * (f.s.fps || 12))); drawSheet(g, f.s, fr, f.x - cx, f.y - cy, f.ang, f.alpha); } });
     for (const tr of ST.trail) out.push({ y: tr.y - 1, f: () => { g.save(); g.globalAlpha = 0.45 * tr.t / 0.22; g.filter = 'brightness(0.6) sepia(1) hue-rotate(230deg) saturate(3)'; g.drawImage(tr.im, Math.round(tr.x - cx - tr.im.width / 2), Math.round(tr.y - cy - tr.im.height + 1)); g.restore(); } });   /* vệt mờ lướt: khung PixelLab của trùm, tím mờ dần */
     const orb = VX('hr_orb');
-    for (const s of ST.shots) out.push({ y: s.y + 10, f: () => {
+    for (const s of ST.shots) out.push({ y: s.y + 8 + (s.vy < 0 ? -0.5 : 0.5), skill: 'hr_curve', f: () => {   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): bay lên nằm sau, bay xuống nằm trước trùm */
       const a = Math.atan2(s.vy, s.vx) || 0, fr = Math.floor(s.t * 12) % (orb ? orb.n : 1);
       if (orb) drawSheet(g, orb, fr, s.x - cx, s.y - cy, a); else { g.fillStyle = '#c050ff'; g.fillRect(Math.round(s.x - cx) - 3, Math.round(s.y - cy) - 3, 6, 6); }
     } });
@@ -864,24 +882,24 @@ export const hacrocky = {
       else { g.fillStyle = '#b040ff'; g.fillRect(0, -1, len, 2); }
       g.restore();
     } }); }
-    if (ST.clash) { const E = clashEnds(ctx); if (E) out.push({ y: Math.min(E.R.y, E.B.y) - 4, f: () => {   /* giằng co (2026-10-13 làm lại): luồng Rocky-ha xanh · Hắc-ha tím-đen lõi đỏ (cùng sheet vfx_workbench) đâm nhau thành quả cầu năng lượng */
-      const C = ST.clash, pt = rk(ctx), tier = pt ? Math.max(1, LV.tierOf(pt, 'ha')) : 7, blue = bSheet(beamKey(Math.max(4, tier))), dark = bSheet('rk_ha2_l', true);
-      const sus = 3 + Math.floor(ST.t * 14) % 5;   /* khung giữa sheet = luồng đang duy trì, mép gợn sóng chạy */
-      let O = E.O, loseThin = null;
-      if (C.res) { if (C.endT >= 0.35) O = null; else { const k = C.endT / 0.35, T = C.res === 'win' ? E.B : E.R; O = { x: E.O.x + (T.x - E.O.x) * k, y: E.O.y + (T.y - E.O.y) * k }; loseThin = C.res; } }   /* phân thắng bại: quả cầu bị đẩy ập vào bên thua, luồng bên thắng nuốt dần luồng kia */
-      if (!O) return;
-      const aR = Math.atan2(O.y - E.R.y, O.x - E.R.x), aB = Math.atan2(O.y - E.B.y, O.x - E.B.x), lR = Math.hypot(O.x - E.R.x, O.y - E.R.y), lB = Math.hypot(O.x - E.B.x, O.y - E.B.y);
-      bDraw(g, blue, loseThin === 'lose' ? 9 : sus, E.R.x - cx, E.R.y - cy, aR, lR);
-      bDraw(g, dark, loseThin === 'win' ? 9 : sus, E.B.x - cx, E.B.y - cy, aB, lB);
-      const big = C.t > 2.5 || Math.abs(C.b) > 0.45 || C.res, orb = VX(big ? 'hr_clashorb_l' : 'hr_clashorb_s') || VX('hr_clash');
-      if (orb) { const fr = Math.floor(ST.t * (orb.fps || 14)) % orb.n; g.save(); if (C.pulse > 0) g.filter = 'brightness(1.7)'; drawSheet(g, orb, fr, O.x - cx, O.y - cy); g.restore(); }
-    } }); }
+    if (ST.clash) { const E = clashEnds(ctx), C = ST.clash; let O = E && E.O, loseThin = null;   /* giằng co (2026-10-13 làm lại): luồng Rocky-ha xanh · Hắc-ha tím-đen lõi đỏ (cùng sheet vfx_workbench) đâm nhau thành quả cầu năng lượng */
+      if (E && C.res) { if (C.endT >= 0.35) O = null; else { const k = C.endT / 0.35, T = C.res === 'win' ? E.B : E.R; O = { x: E.O.x + (T.x - E.O.x) * k, y: E.O.y + (T.y - E.O.y) * k }; loseThin = C.res; } }   /* phân thắng bại: quả cầu bị đẩy ập vào bên thua, luồng bên thắng nuốt dần luồng kia */
+      if (E && O) {   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): mỗi luồng khoá theo chân KẺ BẮN ∓ 0,5 (bắn lên → sau lưng, bắn xuống → trước mặt); quả cầu ngay trên cả hai luồng */
+        const pt = rk(ctx), tier = pt ? Math.max(1, LV.tierOf(pt, 'ha')) : 7, blue = bSheet(beamKey(Math.max(4, tier))), dark = bSheet('rk_ha2_l', true);
+        const sus = 3 + Math.floor(ST.t * 14) % 5;   /* khung giữa sheet = luồng đang duy trì, mép gợn sóng chạy */
+        const aR = Math.atan2(O.y - E.R.y, O.x - E.R.x), aB = Math.atan2(O.y - E.B.y, O.x - E.B.x), lR = Math.hypot(O.x - E.R.x, O.y - E.R.y), lB = Math.hypot(O.x - E.B.x, O.y - E.B.y);
+        const re = rkEnt(ctx), kR = (re ? re.y : E.R.y + 8) + (Math.sin(aR) < 0 ? -0.5 : 0.5), kB = (ST.boss ? ST.boss.y : E.B.y + 14) + (Math.sin(aB) < 0 ? -0.5 : 0.5);
+        out.push({ y: kR, skill: 'hr_clash_rk', f: () => bDraw(g, blue, loseThin === 'lose' ? 9 : sus, E.R.x - cx, E.R.y - cy, aR, lR) });
+        out.push({ y: kB, skill: 'hr_clash_boss', f: () => bDraw(g, dark, loseThin === 'win' ? 9 : sus, E.B.x - cx, E.B.y - cy, aB, lB) });
+        const big = C.t > 2.5 || Math.abs(C.b) > 0.45 || C.res, orb = VX(big ? 'hr_clashorb_l' : 'hr_clashorb_s') || VX('hr_clash');
+        if (orb) out.push({ y: Math.max(kR, kB) + 0.25, skill: 'hr_clash_orb', f: () => { const fr = Math.floor(ST.t * (orb.fps || 14)) % orb.n; g.save(); if (C.pulse > 0) g.filter = 'brightness(1.7)'; drawSheet(g, orb, fr, O.x - cx, O.y - cy); g.restore(); } });
+      } }
     { const b = ST.boss, A = b && b.act; if (A && A.k === 'hha') {   /* Hắc-ha: tụ năng tím ở tay (lớn dần) → luồng tím-đen lõi đỏ, cắt tới vật chắn, xoay theo góc (quét khi tuyệt chiêu) */
       const o = hhaOrigin(b);
-      if (A.ph === 'wind') { const cs = bSheet(A.ult ? 'rk_hacharge_x' : isSup(b) ? 'rk_hacharge' : 'rk_hacharge_m', true); if (cs) out.push({ y: b.y + 20, f: () => bDraw(g, cs, Math.min(cs.n - 1, Math.floor((1 - Math.max(0, A.t) / A.T0) * cs.n)), o.x - cx, o.y - cy) }); }
-      else { const s2 = bSheet(A.sheet, true); if (s2) out.push({ y: b.y + 20, f: () => bDraw(g, s2, A.ult ? 3 + Math.floor(A.ft * 14) % 5 : bFrame(s2, A.ft), o.x - cx, o.y - cy, A.a, A.cut || A.len) }); }
+      if (A.ph === 'wind') { const cs = bSheet(A.ult ? 'rk_hacharge_x' : isSup(b) ? 'rk_hacharge' : 'rk_hacharge_m', true); if (cs) out.push({ y: b.y + (Math.sin(A.a || 0) < 0 ? -0.5 : 0.5), skill: 'hr_charge', f: () => bDraw(g, cs, Math.min(cs.n - 1, Math.floor((1 - Math.max(0, A.t) / A.T0) * cs.n)), o.x - cx, o.y - cy) }); }   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU) */
+      else { const s2 = bSheet(A.sheet, true); if (s2) out.push({ y: b.y + (Math.sin(A.a || 0) < 0 ? -0.5 : 0.5), skill: 'hr_beam', f: () => bDraw(g, s2, A.ult ? 3 + Math.floor(A.ft * 14) % 5 : bFrame(s2, A.ft), o.x - cx, o.y - cy, A.a, A.cut || A.len) }); }
     } }
-    { const b = ST.boss, A = b && b.act; if (A && A.k === 'beam' && A.ph === 'fire') { const s2 = bSheet('rk_ha2_l', true); if (s2) out.push({ y: b.y + 20, f: () => bDraw(g, s2, bFrame(s2, 0.12 + (0.45 - Math.max(0, A.t)) * 1.3), b.x - cx, b.y - 8 - cy, A.a, A.len || 165) }); } }   /* tuyệt chiêu khi không có Rocky: luồng Hắc-ha tím-đen lõi đỏ */
+    { const b = ST.boss, A = b && b.act; if (A && A.k === 'beam' && A.ph === 'fire') { const s2 = bSheet('rk_ha2_l', true); if (s2) out.push({ y: b.y + (Math.sin(A.a || 0) < 0 ? -0.5 : 0.5), skill: 'hr_beam_fb', f: () => bDraw(g, s2, bFrame(s2, 0.12 + (0.45 - Math.max(0, A.t)) * 1.3), b.x - cx, b.y - 8 - cy, A.a, A.len || 165) }); } }   /* tuyệt chiêu khi không có Rocky: luồng Hắc-ha tím-đen lõi đỏ */
     return out;
   },
   draw(g, ctx, cx, cy) {
@@ -936,7 +954,7 @@ const by0 = (H, scale) => Math.max(60, scale * 22);
 /* móc test (QA) */
 function hooks(ctx) {
   return {
-    st: () => { const b = ST.boss; return { inRift: inRift(ctx), open: riftOpen(ctx), road: roadOk(ctx), rkLv: rkLv(ctx), boss: b ? { x: Math.round(b.x), y: Math.round(b.y), hp: Math.round(b.hp), max: b.max, phase: b.phase, form: b.form, act: b.act && b.act.k, ph: b.act && b.act.ph, vuln: +(b.vuln || 0).toFixed(2), stun: +(b.stunT || 0).toFixed(2), intro: b.intro > 0, supT: +(b.supT || 0).toFixed(2), wind: +(b.windT || 0).toFixed(2), spd: spd(b) } : null, supN: ST.supN, chainN: ST.chainN || 0, hitP: ST.hitP || 0, shoves: ST.shoves || 0,
+    st: () => { const b = ST.boss; return { inRift: inRift(ctx), open: riftOpen(ctx), road: roadOk(ctx), rkLv: rkLv(ctx), boss: b ? { x: Math.round(b.x), y: Math.round(b.y), face: b.face, diag: b.diag || null, sec8: b.sec8 ?? null, hp: Math.round(b.hp), max: b.max, phase: b.phase, form: b.form, act: b.act && b.act.k, ph: b.act && b.act.ph, vuln: +(b.vuln || 0).toFixed(2), stun: +(b.stunT || 0).toFixed(2), intro: b.intro > 0, supT: +(b.supT || 0).toFixed(2), wind: +(b.windT || 0).toFixed(2), spd: spd(b) } : null, supN: ST.supN, chainN: ST.chainN || 0, hitP: ST.hitP || 0, shoves: ST.shoves || 0,
       clones: ST.clones.map(f => ({ x: Math.round(f.x), y: Math.round(f.y) })), shots: ST.shots.length, tele: ST.tele.map(t => t.type), chain: ST.chain && { mode: ST.chain.mode, t: +ST.chain.t.toFixed(2), hits: ST.chain.hits }, clash: ST.clash && { b: +ST.clash.b.toFixed(3), t: +ST.clash.t.toFixed(2), presses: ST.clash.presses, wrong: ST.clash.wrong, res: ST.clash.res }, petSpot: ST.petSpot, neg: ST.neg, tgt: ST.tgt, agP: +ST.agP.toFixed(1), tgtT: +ST.tgtT.toFixed(1), tgtLog: { r: +(ST.tgtLog.r || 0).toFixed(1), p: +(ST.tgtLog.p || 0).toFixed(1) }, won: ST.won, cd: { ...ST.cd }, stats: { ...ST.stats }, save: { ...sv(ctx) }, log: ST.log.slice(-15), t: +ST.t.toFixed(1) }; },
     curve: () => { const b = ST.boss; if (b) { b.act = null; b.intro = 0; startCurve(ctx, b, ctx.S.player); } },
     chain: () => { const b = ST.boss; if (b) { b.act = null; b.intro = 0; ST.cd.chain = 0; startChain(ctx, b); } },

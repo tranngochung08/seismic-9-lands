@@ -1,0 +1,287 @@
+{
+ "frames": [
+  {
+   "filename": "odo-payout-burst 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 1.png",
+   "frame": {
+    "x": 50,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 2.png",
+   "frame": {
+    "x": 100,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 3.png",
+   "frame": {
+    "x": 150,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 4.png",
+   "frame": {
+    "x": 0,
+    "y": 58,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 5.png",
+   "frame": {
+    "x": 50,
+    "y": 58,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 6.png",
+   "frame": {
+    "x": 100,
+    "y": 58,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 7.png",
+   "frame": {
+    "x": 150,
+    "y": 58,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 8.png",
+   "frame": {
+    "x": 0,
+    "y": 116,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  },
+  {
+   "filename": "odo-payout-burst 9.png",
+   "frame": {
+    "x": 50,
+    "y": 116,
+    "w": 50,
+    "h": 58
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 58
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 58
+   },
+   "pivot": {
+    "x": 0.48,
+    "y": 0.6379310344827587
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "odo-payout-burst.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 200,
+   "h": 174
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 24,
+   "y": 37
+  },
+  "frameTags": [
+   {
+    "name": "odo-payout-burst",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   }
+  ]
+ }
+}

@@ -1,0 +1,66 @@
+{
+ "cw": 68,
+ "ch": 74,
+ "clips": {
+  "idle": {
+   "n": 6,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "whip": {
+   "n": 9,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "cast": {
+   "n": 7,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  },
+  "slam": {
+   "n": 7,
+   "rows": [
+    "south",
+    "east",
+    "north"
+   ]
+  },
+  "hurt": {
+   "n": 7,
+   "rows": [
+    "south"
+   ]
+  },
+  "defeat": {
+   "n": 9,
+   "rows": [
+    "south"
+   ]
+  },
+  "rot": {
+   "n": 1,
+   "rows": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north"
+   ]
+  }
+ }
+}

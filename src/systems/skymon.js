@@ -37,7 +37,7 @@ function aiThunder(ctx, mo, dt, p, dp) {
   moveTo(ctx, mo, p.x + Math.cos(mo.orb) * 70, p.y + Math.sin(mo.orb) * 48, mo.c.sp, dt);
   if (now >= G.thunderNext && dp < 130 && okTo(ctx)) {   /* cả bầy thay phiên: 2,4 s một con lao */
     G.thunderNext = now + 2.4; const l = dp || 1; mo.sx = mo.x; mo.sy = mo.y; mo.ax = p.x + (p.x - mo.x) / l * 70; mo.ay = p.y + (p.y - mo.y) / l * 70;
-    mo.st2 = 'aim'; mo.t2 = 0.7; mark({ kind: 'lane', x: mo.x, y: mo.y, x2: mo.ax, y2: mo.ay, w: 6, tier: mo.alt, t: 0.7, dur: 0.7 });
+    mo.st2 = 'aim'; mo.t2 = 0.7; mark({ kind: 'lane', x: mo.x, y: mo.y, x2: mo.ax, y2: mo.ay, w: 6, tier: mo.alt, t: 0.7, dur: 0.7 }); if (ctx.threat && API.tier() === mo.alt) ctx.threat.add({ id: mo, kind: 'lunge', from: { x: mo.x, y: mo.y - 6 }, to: { x: mo.ax, y: mo.ay - 6 }, in: 0.7, dur: 0.55, width: 10 });   /* plan-34: Ki né (chỉ khi cùng tầng) */
   }
 }
 /* ---- 2. Sứa Trời: tầng THẤP, trôi chậm về phía người; xúc tu điện: vòng ĐỎ 0,9 s rồi giật cả vòng ---- */
@@ -56,7 +56,7 @@ function aiJelly(ctx, mo, dt, p, dp) {
         trúng khi đang bay = BỊ ĐÁNH RƠI khỏi lưng Rocky; bổ hụt → choáng 1,6 s ở tầng thấp (đánh đau ×1,5) ---- */
 function aiHawk(ctx, mo, dt, p, dp) {
   mo.moving = false;
-  if (mo.st2 === 'aim') { mo.t2 -= dt; if (mo.t2 > 0.5) { mo.rx = p.x; mo.ry = p.y; mo.mk.x = p.x; mo.mk.y = p.y; } face(mo, mo.rx, mo.ry);
+  if (mo.st2 === 'aim') { mo.t2 -= dt; if (mo.t2 > 0.5) { mo.rx = p.x; mo.ry = p.y; mo.mk.x = p.x; mo.mk.y = p.y; } face(mo, mo.rx, mo.ry); if (ctx.threat && API.tier() === mo.dTier) ctx.threat.add({ id: mo, kind: 'slam', from: { x: mo.x, y: mo.y }, to: { x: mo.rx, y: mo.ry - 6 }, in: Math.max(0, mo.t2) + 0.32, radius: 22 });
     if (mo.t2 <= 0) { mo.st2 = 'dive'; mo.t2 = 0.32; ctx.sfx('whoosh'); } return; }
   if (mo.st2 === 'dive') { mo.t2 -= dt; moveTo(ctx, mo, mo.rx, mo.ry, 420, dt); if (mo.t2 <= 0) {
       mo.x = mo.rx; mo.y = mo.ry; if (ctx.quake) ctx.quake(0.18); if (ctx.vfx) ctx.vfx('rock_debris', mo.x, mo.y + 4);
@@ -87,7 +87,7 @@ function aiPirate(ctx, mo, dt, p, dp) {
   moveTo(ctx, mo, p.x + Math.cos(mo.orb) * 110, p.y + Math.sin(mo.orb) * 75, mo.c.sp, dt);
   if (okTo(ctx) && dp < 15 && (mo.cd2 = (mo.cd2 || 0) - dt) <= 0) { mo.cd2 = 1.4; API.hitPlayer(ctx, mo, 0.5, 0, 'ram'); }
   if (mo.cd <= 0 && dp < 200 && okTo(ctx)) { mo.st2 = 'aim'; mo.t2 = 0.8; mo.hTier = API.tier(); const l = dp || 1; mo.ax = p.x + (p.x - mo.x) / l * 40; mo.ay = p.y + (p.y - mo.y) / l * 40;
-    mark({ kind: 'lane', x: mo.x, y: mo.y, x2: mo.ax, y2: mo.ay, w: 4, tier: mo.hTier, t: 0.8, dur: 0.8 }); }
+    mark({ kind: 'lane', x: mo.x, y: mo.y, x2: mo.ax, y2: mo.ay, w: 4, tier: mo.hTier, t: 0.8, dur: 0.8 }); if (ctx.threat) { const hl = Math.hypot(mo.ax - mo.x, mo.ay - mo.y) || 1; ctx.threat.add({ id: mo, kind: 'projectile', from: { x: mo.x, y: mo.y - 12 }, to: { x: mo.x + (mo.ax - mo.x) / hl * 210, y: mo.y - 12 + (mo.ay - mo.y) / hl * 210 }, speed: 320, t0: ctx.S.time + 0.8, width: 8 }); } }
 }
 /* ---- 5. Cá Voi Mây: khổng lồ, bơi vòng quanh quần đảo, CHỞ ĐẢO NHỎ trên lưng — mo.x/y = đảo trên lưng (chỗ đánh được);
         bị chọc giận: luân phiên quạt gió tầng CAO (vòng xanh lớn, hất ra) / quẫy đuôi tầng THẤP (vòng đỏ) ---- */
@@ -121,11 +121,12 @@ function drawSky(g, mo, x, y) {
     g.save(); g.strokeStyle = (mo.trTier ?? mo.alt) ? 'rgba(120,190,255,.7)' : 'rgba(255,120,80,.7)'; g.lineWidth = 2; g.beginPath(); mo.trail.forEach((s, i) => { const sx = s.x + cam.x, sy = s.y + cam.y - MLIFT[mo.trTier ?? 0]; if (i) g.lineTo(sx, sy); else g.moveTo(sx, sy); }); g.stroke(); g.restore();
     if (us && us.img) { const hi = us.img.__hi ? 1 : 2; mo.trail.forEach((s, i) => { if (i % 3) return; const fi = (Math.floor(ft * 14) + i) % us.n; g.globalAlpha = Math.min(1, s.t * 1.5); g.drawImage(us.img, fi * us.w * hi, 0, us.w * hi, us.h * hi, Math.round(s.x + cam.x - us.w / 2), Math.round(s.y + cam.y - MLIFT[mo.trTier ?? 0] - us.h / 2), us.w, us.h); }); g.globalAlpha = 1; }
   }
-  if (mo.hook) {   /* dây móc + móc sắt PixelLab */
+  const hookFx = () => {   /* dây móc + móc sắt PixelLab */
     const h = mo.hook, hx = h.x + x - mo.x, hy = h.y + y - mo.y - MLIFT[h.tier ?? 0], pk = ART.packs && ART.packs.sky, im = pk && pk.images && pk.images.hook;
     g.strokeStyle = '#5a3a22'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y - lift - 10); g.lineTo(hx, hy); g.stroke();
     if (im) g.drawImage(im, Math.round(hx - im.width / 4), Math.round(hy - im.height / 4), im.width / 2, im.height / 2); else { g.fillStyle = '#8a8a96'; g.fillRect(Math.round(hx) - 2, Math.round(hy) - 2, 4, 4); }
-  }
+  };
+  if (mo.hook && !(mo.hook.vy >= 0)) hookFx();   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): móc bắn LÊN → vẽ trước thân (nằm sau lưng); bắn xuống → vẽ sau thân (nằm trước) */
   if (sh) {
     const [row, flip] = rowOf(sh, mo.fa ?? Math.PI / 2), fr = Math.floor(ft * (c.big ? 4 : 8)) % sh.n, cw = sh.cw, ch = sh.ch, dx = x - (cw >> 1), dy = y - ch + 2 - lift;
     if (mo.flash > 0) g.filter = 'brightness(2.4)'; else if (mo.open) g.filter = 'brightness(1.2)'; else if (mo.zap > 0 || mo.st2 === 'charge') g.filter = 'brightness(1.35) saturate(1.4)';
@@ -133,6 +134,7 @@ function drawSky(g, mo, x, y) {
     else g.drawImage(sh.img, fr * cw, row * ch, cw, ch, dx, dy, cw, ch);
     g.filter = 'none';
   } else { g.fillStyle = c.col || '#cfd8ff'; g.fillRect(x - (c.w >> 1), y - 14 - lift, c.w, 12); }
+  if (mo.hook && mo.hook.vy >= 0) hookFx();
   if (mo.hp < mo.max) { const w = Math.min(36, c.w), top = y - lift - (c.vh || 22) - 3; g.fillStyle = '#352022'; g.fillRect(x - (w >> 1) - 1, top, w + 2, 3); g.fillStyle = mo.open ? '#ff9a3a' : '#e84a3a'; g.fillRect(x - (w >> 1), top + 1, Math.max(1, Math.round(w * mo.hp / mo.max)), 1); }
   if ((mo.alt ?? 0) === 1 && !c.big) { g.fillStyle = 'rgba(120,190,255,.85)'; g.fillRect(x - 1, y - 2, 3, 1); }   /* chấm xanh dưới bóng: con này đang ở tầng CAO */
 }

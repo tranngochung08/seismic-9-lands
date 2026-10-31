@@ -106,6 +106,7 @@ const vfx = (ctx, name, x, y, top) => !!(ctx.vfx && ctx.vfx(name, x, y, 0, top))
 const once = (ctx, key, txt, big, gap = 12) => { if (ST.t - (ST.msgT[key] ?? -99) < gap) return; ST.msgT[key] = ST.t; ctx.toast(txt, big); };
 const reachedFloors = ctx => { const r = sv(ctx).reached; return FLOOR_IDS.filter(id => id === 'u1' || r.includes(id)); };
 function bubbles(ctx, x, y, n = 3) {   /* bọt khí: sheet VFX PixelLab 'u_bubbles'; chưa có thì vẽ hạt code (dự phòng) */
+  if (ART.waterNew && ctx.waterBubbles) { ctx.waterBubbles(x, y, n); return; }   /* plan-68: bọt khí vẽ code */
   if (vfx(ctx, 'u_bubbles', x, y, true)) return;
   for (let i = 0; i < n; i++) ST.fx.push({ x: x + (Math.random() - 0.5) * 8, y: y - Math.random() * 4, vy: -18 - Math.random() * 14, t: 0, life: 0.9 + Math.random() * 0.6, r: Math.random() < 0.3 ? 2 : 1, ph: Math.random() * 6 });
   if (ST.fx.length > 80) ST.fx.splice(0, ST.fx.length - 80);
@@ -163,7 +164,7 @@ function renderShop(ctx) {
       + `<span class="hnum"><b>×${inv[id] || 0}</b></span><button class="btn primary" data-pill="${id}" style="${BS}${can ? '' : ';opacity:.35;cursor:default'}"${can ? '' : ' disabled'}>${t.buy}</button></div>`; };
   const html = `<h2>${t.shopTitle}<span class="chip">🪨 ${inv.stone || 0}</span></h2>
     <div class="shopw"><div class="shop-side"><div class="shop-port">${port ? `<img src="${port}" alt="">` : `<img src="assets/px/ui/items/pill_l.png" alt="" style="image-rendering:pixelated">`}</div><p class="shop-say">${t.lead}</p></div>
-    <div class="scroll shop-main">${row('pill_s')}${row('pill_l')}<p class="dim" style="margin:10px 0 4px">${t.have(Math.ceil(u.breath))}</p>${copterRow(ctx)}${binocRow(ctx)}${jarRow(ctx)}${bookRows(ctx)}</div></div>
+    <div class="scroll shop-main">${row('pill_s')}${row('pill_l')}<p class="dim" style="margin:10px 0 4px">${t.have(Math.ceil(u.breath))}</p>${ctx.hopthe ? ctx.hopthe.shopRow() : ''}${copterRow(ctx)}${binocRow(ctx)}${jarRow(ctx)}${bookRows(ctx)}</div></div>
     <button class="btn" id="uw-close">${t.close}</button>`;
   const el = ctx.panel('uwshop', html); ST.shopEl = el; el.panel.classList.add('wide', 'shop'); el.hidden = false;
   el.querySelector('#uw-close').onclick = () => closeShop(ctx);
@@ -172,6 +173,7 @@ function renderShop(ctx) {
   for (const b of el.querySelectorAll('[data-copter]')) b.onclick = () => buyCopter(ctx, +b.dataset.copter);
   for (const b of el.querySelectorAll('[data-binoc]')) b.onclick = () => buyBinoc(ctx);
   for (const b of el.querySelectorAll('[data-jar]')) b.onclick = () => buyJar(ctx);
+  for (const b of el.querySelectorAll('[data-hterring]')) b.onclick = () => { if (ctx.hopthe && ctx.hopthe.buy()) renderShop(ctx); };   /* plan-50: Bông Tai Hợp Thể */
 }
 /* plan-31 v2 (2026-10-13 anh): CHONG CHÓNG TRE — 1 cho người chơi + 1 cho Rocky; vào thẳng túi (dùng: cầm + E / phím X / nút 🚁 ngoài trời ở Làng, M1–M9) */
 const COPTER_PRICE = 150;
@@ -189,7 +191,7 @@ function binocRow(ctx) {
 }
 /* plan-32 C: CHAI THU SÉT — bay vào mây bão trên trời giữ ~2 s → sét đóng chai */
 const JAR_PRICE = 40;
-function jarRow(ctx) {
+function jarRow(ctx) { if (!ctx.S.save.sys.jarShop) return '';   /* 2026-10-14 anh bỏ mây sét đen → không bán Chai thu sét nữa (chai đã có vẫn giữ) */
   const vi = ctx.lang() === 'vi', inv = ctx.S.save.inv || {}, ic = ART.man && ART.man.ui && ART.man.ui.items && ART.man.ui.items.jar, img = ic ? `<img src="assets/px/${ic}" alt="" style="width:32px;height:32px;image-rendering:pixelated;vertical-align:middle">` : '🫙', ok = (inv.stone || 0) >= JAR_PRICE;
   return `<div class="hrow"><span class="hwho">${img} <b>${vi ? 'Chai thu sét' : 'Lightning jar'}</b> <span class="dim">${vi ? 'bay vào mây bão ~2 s' : 'hold inside a storm cloud ~2 s'}</span></span><span class="hnum"><b>×${inv.jar || 0}</b></span><button class="btn primary" data-jar="1" style="${BS}${ok ? '' : ';opacity:.35;cursor:default'}"${ok ? '' : ' disabled'}>${vi ? 'Mua' : 'Buy'} · ${JAR_PRICE} 🪨</button></div>`;
 }
@@ -214,7 +216,8 @@ function bookRows(ctx) {
   const vi = ctx.lang() === 'vi', pt = ctx.rocky && ctx.rocky.pet(), inv = ctx.S.save.inv || {};
   const head = `<h3 style="margin:12px 0 4px">${vi ? '📚 Sách luyện Rocky' : '📚 Rocky training books'}</h3><p class="dim" style="margin:0 0 4px">${vi ? 'Mua xong sách vào túi đồ — mở túi, chạm sách, bấm <b>Đọc</b> cho Rocky.' : 'Books go to your bag — open the bag, tap a book, press <b>Read</b>.'}${pt ? '' : (vi ? ' Chưa có Rocky: vẫn mua được, đọc sau.' : ' No Rocky yet: you can still buy, read later.')}</p>`;
   const lv = pt ? RLV.levelFromXp(pt.xp || 0).lv : 0;
-  return head + RLV.SKILL_IDS.map(id => {
+  const ids = [...RLV.SKILL_IDS, ...RLV.CORE_IDS.filter(id => pt && RLV.hasCore(pt, id))];   /* plan-38: + sách chiêu học từ trùm (chỉ chiêu Rocky đã học) */
+  return head + ids.map(id => {
     const S2 = RLV.SKILLS[id], { cur, own, n } = bookNext(ctx, id), nm = vi ? S2.vi : S2.en;
     const ic = ART.man && ART.man.ui && ART.man.ui.items && (ART.man.ui.items[`rkbook_${id}_${Math.min(RLV.TIER_SHOP, n)}`] || ART.man.ui.items[`rkbook_${id}`]);
     const img = ic ? `<img src="assets/px/${ic}" alt="" style="width:32px;height:32px;image-rendering:pixelated;vertical-align:middle">` : '';
@@ -293,6 +296,17 @@ function drawSwim0(g, ent, still) {
     g.drawImage(sw.img, f * cw, (ent.dir & 3) * ch, cw, ch, x - (cw >> 1), y - 18 - (ch - 20) + bob, cw, ch); return;
   }
   drawBody(g, ent, (ent.moving ? ent.frame : 0) * 16, (ent.dir & 3) * 20, 20, x - 8, y - 18 + bob);   /* dự phòng: sheet đi */
+}
+/* plan-45 BD5: chân người lọt vào ô cứng của vật cao (cột pha lê, đá, xác tàu… — bị hất / lướt / dòng chảy / dịch chỗ) thì
+   lớp vẽ theo CHÂN: chân ở nửa dưới ô chân vật → người vẽ TRƯỚC vật (trước đây khoá p.y < đáy ô → cột pha lê vẽ đè lên người) */
+function sortFoot(ctx, p) {
+  const m = ctx.S.map, O = ctx.O, tx = tileOf(p.x), ty = tileOf(p.y); let up = 0;
+  if (m && O && ctx.isSolid(m, tx, ty)) for (const o of m.objects) {
+    const d = O[o.type]; if (!d || o.ghost || o.ruined || d.solid === false) continue;
+    if (tx < o.x || tx >= o.x + d.fw || ty < o.y || ty >= o.y + d.fh) continue;
+    const by = (o.y + d.fh) * TS; if (p.y >= by - 9) up = Math.max(up, by - p.y + 0.5);
+  }
+  if (up > 0) { p.sortUp = up; ST.sortUp = true; } else if (ST.sortUp) { p.sortUp = 0; ST.sortUp = false; }
 }
 function applySwim(ctx) { const p = ctx.S.player; p.custom = drawSwim; p.passable = null; p.ghost = false; p.boxW = 10; p.boxH = 6; p.speedMul = ST.stun > 0 || ST.petri > 0 ? 0 : SWIM_SPEED; if (ST.petri > 0) p.autoPath = null; }
 function restore(p) { if (p.custom === drawSwim) p.custom = null; p.speedMul = 1; p.passable = null; p.ghost = false; p.boxW = 10; p.boxH = 6; }
@@ -414,7 +428,7 @@ export const underwater = {
     if (typeof window !== 'undefined') window.__uw = {
       state: () => ({ zone: zid(ctx), under: under(ctx), breath: +sv(ctx).breath.toFixed(2), gates: { ...sv(ctx).gates }, chests: JSON.parse(JSON.stringify(sv(ctx).chests)), reached: reachedFloors(ctx), secrets: { ...sv(ctx).secrets }, stun: +ST.stun.toFixed(2), mode: ctx.S.mode, speedMul: ctx.S.player.speedMul, swim: ctx.S.player.custom === drawSwim, atkMul: ctx.atkMul ? ctx.atkMul() : 1, ink: +ST.ink.toFixed(2), dots: ST.dots.map(d => ({ ...d })), petri: +ST.petri.toFixed(2), barA: ST.barA }),
       openShop: () => openShop(ctx), buyBook: spec => buyBook(ctx, spec), buyCopter: n => buyCopter(ctx, n), buyBinoc: () => buyBinoc(ctx), buyJar: () => buyJar(ctx),   /* plan-27 test */
-      hc: () => ST.hc && { x: ST.hc.x, y: ST.hc.y }, dive: () => diveAt(ctx), setBreath: s => { sv(ctx).breath = s; ST.full = Math.max(60, s); return s; }, drink: id => drink(ctx, id), openGate: () => openGate(ctx), diveTo: id => diveTo(ctx, id),
+      hc: () => ST.hc && { x: ST.hc.x, y: ST.hc.y }, shop: () => openShop(ctx), shopHtml: () => ST.shopEl && !ST.shopEl.hidden ? ST.shopEl.innerHTML : '', dive: () => diveAt(ctx), setBreath: s => { sv(ctx).breath = s; ST.full = Math.max(60, s); return s; }, drink: id => drink(ctx, id), openGate: () => openGate(ctx), diveTo: id => diveTo(ctx, id),
       gate: () => { const g = gateObj(ctx); return g && { x: g.x, y: g.y, type: g.type, open: gateOpen(ctx), to: g.uwgate }; },
       vents: () => ctx.S.map.objects.filter(o => o.vent).map(o => ({ x: o.x, y: o.y, spent: +(o.spent || 0).toFixed(1), type: o.type })),
       chests: () => ctx.S.map.objects.filter(o => o.uchest).map(o => ({ id: o.uchest, x: o.x, y: o.y, type: o.type })),
@@ -422,7 +436,7 @@ export const underwater = {
       darkness: () => !!(ctx.S.map && ctx.S.map.cave), lamp: () => LAMP_R,
     };
   },
-  onZoneLeave(ctx) { if (ctx.S.mode === 'uwshop') closeShop(ctx); if (ctx.S.mode === 'uwdive') closeMenu(ctx); restore(ctx.S.player); ST.hc = null; ST.stun = 0; ST.petri = 0; ST.fx = []; ST.ink = 0; ST.dots = []; ctx.persist(); },
+  onZoneLeave(ctx) { if (ctx.S.mode === 'uwshop') closeShop(ctx); if (ctx.S.mode === 'uwdive') closeMenu(ctx); restore(ctx.S.player); if (ST.sortUp) { ctx.S.player.sortUp = 0; ST.sortUp = false; } ST.hc = null; ST.stun = 0; ST.petri = 0; ST.fx = []; ST.ink = 0; ST.dots = []; ctx.persist(); },
   update(dt, ctx) {
     ST.t += dt; ST.ctx = ctx;
     if (!ST.placed && ctx.S.map) { ST.placed = true; try { placeHc(ctx); } catch (e) { console.error('underwater hc', e); } }
@@ -439,8 +453,10 @@ export const underwater = {
       else if (ST.petri <= 0) { ST.petri = 0; ctx.sfx('unstone'); vfx(ctx, 'stone_free', p.x, p.y + 2, true); once(ctx, 'unstone', t.unstone, false, 4); }
     }
     applySwim(ctx);   /* hệ khác (chụp ảnh…) có thể vừa gỡ dáng bơi → gắn lại mỗi khung */
+    sortFoot(ctx, p);
     if (!play || (ctx.hero && ctx.hero.fainted)) return;
-    u.breath = Math.max(0, u.breath - dt);
+    const sty = ctx.story ? ctx.story() : null, bell = !!(sty && sty.items && sty.items.divebell);   /* 2026-10-15: Chuông Lặn (món cốt truyện) → thở lâu gấp đôi trong khu lặn */
+    u.breath = Math.max(0, u.breath - dt * (bell ? 0.5 : 1));
     if ((ST.saveT -= dt) <= 0) { ST.saveT = 3; ctx.persist(); }
     if (u.breath <= LOW && u.breath > 0 && !ST.lowWarned) { ST.lowWarned = true; ctx.toast(pickPill(ctx) ? t.low : t.lowNo, true); ctx.sfx('warn'); }
     if (u.breath <= LOW && (ST.lowBubT -= dt) <= 0) { ST.lowBubT = 0.35; bubbles(ctx, p.x + (Math.random() - 0.5) * 6, p.y - 16, 2); }   /* ≤ 10 s: bọt khí trồi lên */
@@ -538,7 +554,7 @@ export const underwater = {
       d.globalCompositeOperation = 'source-over'; d.clearRect(0, 0, VW, VH); d.fillStyle = 'rgba(3,5,18,.88)'; d.fillRect(0, 0, VW, VH);
       d.globalCompositeOperation = 'destination-out';
       const hole = (x, y, r, soft = 0.5) => { const sx = x - cx, sy = y - cy; if (sx < -r || sy < -r || sx > VW + r || sy > VH + r) return; const gr = d.createRadialGradient(sx, sy, r * 0.12, sx, sy, r); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(soft, 'rgba(0,0,0,.8)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); d.fillStyle = gr; d.fillRect(sx - r, sy - r, r * 2, r * 2); };
-      hole(p.x, p.y - 10, LAMP_R, 0.55);
+      { const sty = ctx.story ? ctx.story() : null; hole(p.x, p.y - 10, LAMP_R * (sty && sty.items && sty.items.greatcrystal ? 1.6 : 1), 0.55); }   /* 2026-10-15: Đại Pha Lê soi sáng hang tối rộng hơn */
       for (const o of m.objects) { const r = o.type === 'gcrystal' ? 58 : o.glow ? 40 : o.vent ? (o.type === 'vent' ? 22 : 12) : o.type === 'uwgate' ? 34 : 0; if (!r) continue; const def = ctx.O && ctx.O[o.type], fw = def ? def.fw : 1; hole(o.x * TS + fw * 8, (o.y + 1) * TS - 8, r, 0.45); }
       for (const mo of (ctx.monsters && ctx.monsters.list()) || []) { if (mo.lure) hole(mo.lure.x, mo.lure.y, mo.lure.r || 24, 0.4); if (mo.c && mo.c.boss && mo.c.glowR) hole(mo.x, mo.y - 10, mo.c.glowR, 0.4); }
       g.drawImage(ST.darkCv, 0, 0);
@@ -574,7 +590,7 @@ export const underwater = {
   hudLines(ctx) {
     const u = sv(ctx), t = L(ctx);
     if (under(ctx)) return [`🫧 ${Math.ceil(u.breath)}s`, `⚔ ${t.atk}`];   /* 🫧 → icon PixelLab st_breath (hud.js) */
-    return u.breath > 0 && zid(ctx) !== 'trench' ? [`🫧 ${Math.ceil(u.breath)}s`] : [];
+    return u.breath > 0 ? [`🫧 ${Math.ceil(u.breath)}s`] : [];
   },
 };
 

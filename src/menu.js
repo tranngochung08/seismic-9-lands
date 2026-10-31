@@ -11,15 +11,18 @@ import { bagPrice, sellFromBag } from './systems/market.js';
 import * as HB from './hotbar.js';   /* plan-20: đưa món lên hotbar */
 import { pxText, keyHint, isTouchUI } from './hud.js';   /* plan-22: emoji → icon pixel */
 import * as AUDIO from './audio.js';
+import { isEasy, setDiff, diffLabel } from './systems/diff.js';   /* plan-44 C2: Độ khó Dễ / Thường */
 import { MAX_LV as HMAX_LV, needXp as hNeedXp } from './systems/hero.js';   /* thẻ Nhân vật: chỉ số chiến đấu */
-import * as RLV from './systems/petlv.js';   /* plan-27: thẻ Rocky (cấp, chỉ số, chiêu) */   /* 2026-10-10: 2 thanh âm lượng nhạc / hiệu ứng */
+import * as RLV from './systems/petlv.js';
+import { collect, nextSteps, rescued, fmtTime } from './journey.js';   /* plan-44 P1/P2/R3/R4: bộ sưu tập + thống kê hành trình */
+import { exportCode, parseCode, importSave } from './save.js';   /* plan-44 Q6: xuất / nhập mã lưu */   /* plan-27: thẻ Rocky (cấp, chỉ số, chiêu) */   /* 2026-10-10: 2 thanh âm lượng nhạc / hiệu ứng */
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ROMAN = ['', 'I', 'II', 'III'];
-const TABS = ['bag', 'shop', 'hero', 'rocky', 'quest', 'gear'];   /* plan-27: thẻ Rocky */   /* 2026-10-10 anh yêu cầu: 'Mua nhanh' công cụ bằng đá Seismic, không qua NPC (phím O) */
+const TABS = ['bag', 'shop', 'hero', 'rocky', 'anlinh', 'quest', 'gear'];   /* 2026-10-15: thẻ Ấn Linh (linh thú + nâng cấp) */   /* plan-27: thẻ Rocky */   /* 2026-10-10 anh yêu cầu: 'Mua nhanh' công cụ bằng đá Seismic, không qua NPC (phím O) */
 const STR = {
   en: {
-    tabs: { bag: 'Bag', shop: 'Quick buy', hero: 'Character', rocky: 'Rocky', quest: 'Quests', gear: 'Settings' }, foot: 'Esc · close   ·   ← → or 1-6 · tabs   ·   B bag · O quick buy · Q quests', footTouch: 'Esc · close   ·   tap a tab to switch',
+    tabs: { bag: 'Bag', shop: 'Quick buy', hero: 'Character', rocky: 'Rocky', anlinh: 'Spirit Seal', quest: 'Quests', gear: 'Settings' }, foot: 'Esc · close   ·   ← → or 1-7 · tabs   ·   B bag · O quick buy · Q quests', footTouch: 'Esc · close   ·   tap a tab to switch',
     shopHint: 'Buy tools and supplies instantly with Seismic stones — no need to find a trader. Bought goods drop at your feet.', tier: 'tier', buyT: (n, p) => `Tier ${n} · ${p} 🪨`, maxT: 'Max tier', buyN: (n, p) => `×${n} · ${p} 🪨`, poor: 'Not enough Seismic stones', boughtT: (n, k) => `${n} tier ${k} — ready on your hotbar`, supplies: 'Supplies', tools: 'Tools',
     equip: 'Equipment', progress: 'Progress', tool: 'Tool tier', currency: 'Currency — gift it to villagers so they can fight', food: 'Food — right-click / E to eat', seedK: 'Seed — plant on tilled soil', dragHint: 'Drag to rearrange · top row = hotbar', trash: 'Drop here to throw away', sort: 'Sort', noTrash: "That can't be thrown away.", trashAsk: (n, k) => `Throw away ${n}${k > 1 ? ' (×' + k + ')' : ''}?`, trash1: 'Throw 1', trashAll: 'Throw all', shards: 'Tremor shards', met: 'Artists met', items: 'Items', load: 'Bag load', empty: 'Nothing in the bag yet — chop, mine, gather.', tipHint: 'Hover or tap a slot to read about it.',
     locked: 'Not crafted yet', weight: 'weight', count: 'count', sell: 'Sell at the village trader', sell1: 'Sell 1', sellAll: 'Sell all', toBar: k => `To slot ${k}`, onBar: (n, k) => `${n} → hotbar slot ${k}`, eat: 'Eat', ate: n => `Yum, ${n}! You feel lively — walking faster for 30 s`, sellHere: 'sell right from the bag', material: 'Crafting / building material', story: 'Story item',
@@ -40,7 +43,7 @@ const STR = {
     resume: 'Resume', lang: 'Tiếng Việt', musicVol: 'Music', sfxVol: 'Sound effects', music: 'Music', fs: 'Fullscreen', quit: 'Save & quit to title', on: 'on', off: 'off'
   },
   vi: {
-    tabs: { bag: 'Túi đồ', shop: 'Mua nhanh', hero: 'Nhân vật', rocky: 'Rocky', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-6 · đổi thẻ   ·   B túi · O mua nhanh · Q nhiệm vụ', footTouch: 'Esc · đóng   ·   chạm thẻ để đổi',
+    tabs: { bag: 'Túi đồ', shop: 'Mua nhanh', hero: 'Nhân vật', rocky: 'Rocky', anlinh: 'Ấn Linh', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-7 · đổi thẻ   ·   B túi · O mua nhanh · Q nhiệm vụ', footTouch: 'Esc · đóng   ·   chạm thẻ để đổi',
     shopHint: 'Mua công cụ và vật tư ngay bằng đá Seismic — không cần tìm thương nhân. Đồ mua rơi ngay dưới chân.', tier: 'cấp', buyT: (n, p) => `Cấp ${n} · ${p} 🪨`, maxT: 'Cấp tối đa', buyN: (n, p) => `×${n} · ${p} 🪨`, poor: 'Không đủ đá Seismic', boughtT: (n, k) => `${n} cấp ${k} — đã lên thanh công cụ`, supplies: 'Vật tư', tools: 'Công cụ',
     equip: 'Trang bị', progress: 'Tiến độ', tool: 'Dụng cụ cấp', currency: 'Tiền — tặng dân làng để họ biết chiến đấu', food: 'Đồ ăn — chuột phải / E để ăn', seedK: 'Hạt giống — gieo trên đất đã cày', dragHint: 'Kéo để xếp · hàng trên = thanh công cụ', trash: 'Thả vào đây để vứt', sort: 'Xếp gọn', noTrash: 'Món này không vứt được.', trashAsk: (n, k) => `Vứt ${n}${k > 1 ? ' (×' + k + ')' : ''}?`, trash1: 'Vứt 1', trashAll: 'Vứt hết', shards: 'Mảnh địa chấn', met: 'Nghệ sĩ đã gặp', items: 'Vật phẩm', load: 'Tải túi', empty: 'Túi chưa có gì — chặt cây, đập đá, nhặt đồ đi.', tipHint: 'Rê chuột hoặc chạm ô để xem mô tả.',
     locked: 'Chưa chế', weight: 'nặng', count: 'số lượng', sell: 'Bán ở Thương nhân Làng', sell1: 'Bán 1', sellAll: 'Bán hết', toBar: k => `Lên ô ${k}`, onBar: (n, k) => `${n} → ô ${k} trên thanh`, eat: 'Ăn', ate: n => `Ngon quá, ${n}! Thấy khoẻ khoắn — đi nhanh hơn 30 giây`, sellHere: 'bán ngay tại túi', material: 'Nguyên liệu chế tạo / xây dựng', story: 'Vật phẩm cốt truyện',
@@ -67,13 +70,16 @@ const L = () => STR[UI.lang() === 'vi' ? 'vi' : 'en'];
 let deps = null, el = null, tab = 'bag', timer = null, tip = '';
 const ui = () => (ART.on && ART.man && ART.man.ui) || null;
 const img = (path, cls = 'pxi') => `<img class="${cls}" src="assets/px/${path}" draggable="false" alt="">`;
-function icon(id) { const u = ui(), p = u && u.items && u.items[id], d = ITEMS[id] || TOOLS[id]; return p ? img(p) : `<span class="emo">${d ? d.icon : '▪'}</span>`; }
+function icon(id) { const u = ui(), p = u && u.items && (u.items[id] || (/^rkbook_/.test(id) && u.items[id.replace(/_\d+$/, '')])), d = ITEMS[id] || TOOLS[id]; return p ? img(p) : `<span class="emo">${d ? d.icon : '▪'}</span>`; }
 function stIcon(k, fb) { const u = ui(), p = u && u.status && u.status[k]; return p ? img(p, 'pxi st ' + k) : `<span class="emo st">${fb}</span>`; }
 function tabIcon(k, fb) { const u = ui(), p = u && u.tabs && (u.tabs[k] || (k === 'shop' && u.items && u.items.stone)); return p ? img(p, 'pxi st') : `<span class="emo st">${fb}</span>`; }
-const TAB_FB = { bag: '🎒', shop: '🪨', hero: '☺', rocky: '🗿', quest: '📜', gear: '⚙' };
+const TAB_FB = { bag: '🎒', shop: '🪨', hero: '☺', rocky: '🗿', anlinh: '🔮', quest: '📜', gear: '⚙' };
 
 export function initMenu(d) {
   deps = d; el = document.createElement('div'); el.id = 'menu'; el.className = 'ov'; el.hidden = true; document.body.appendChild(el);
+  injectCSS();
+  el.addEventListener('keydown', e => { if (e.target && e.target.tagName === 'TEXTAREA') e.stopPropagation(); });   /* plan-44 Q6: gõ / dán mã lưu không đổi thẻ, không bật phím game */
+  el.addEventListener('change', e => { const f = e.target.closest && e.target.closest('[data-importfile]'); if (f && f.files && f.files[0]) { const r = new FileReader(); r.onload = () => { const ta = el.querySelector('#m-imp'); if (ta) ta.value = String(r.result || ''); checkImport(); }; r.readAsText(f.files[0]); } });
   el.addEventListener('pointerover', e => { const s = e.target.closest('[data-tip]'); if (s) setTip(s.dataset.tip); const v = e.target.closest('[data-pos]'); if (v && e.pointerType === 'mouse') showTT(v, e); else if (!v) hideTT(); });
   el.addEventListener('pointermove', e => moveTT(e));
   el.addEventListener('input', e => {   /* thanh âm lượng: nhạc nền / hiệu ứng (bộ âm thanh mới) */
@@ -94,8 +100,17 @@ export function initMenu(d) {
     const f = e.target.closest('[data-eat]'); if (f) { e.preventDefault(); doEat(f.dataset.eat); }
     const rb = e.target.closest('[data-rkread]'); if (rb) { e.preventDefault(); doRead(rb.dataset.rkread); return; }   /* 2026-10-13 anh: đọc sách Rocky từ túi */
     const hb = e.target.closest('[data-hrbook]'); if (hb) { e.preventDefault(); closeMenu(); if (deps.CTX.hrBook) deps.CTX.hrBook.open(); return; }   /* plan-30: sách bậc 8 (thưởng Hắc Rocky) */
+    const gx = e.target.closest('[data-gfx]'); if (gx) { e.preventDefault(); if (deps.CTX.gfx) deps.CTX.gfx.cycle(); render(); return; }   /* plan-37: Đồ họa Tự động / Đẹp / Mượt */
+    const la = e.target.closest('[data-ltsel],[data-ltinfo],[data-ltadd],[data-ltdel],[data-ltup],[data-ltorb]'); if (la && deps.CTX.linhthu && deps.CTX.linhthu.act) { e.preventDefault(); const D = la.dataset, kind = D.ltsel != null ? 'sel' : D.ltinfo != null ? 'info' : D.ltadd != null ? 'add' : D.ltdel != null ? 'del' : D.ltorb != null ? 'orb' : 'up'; if (kind === 'orb') { closeMenu(); deps.CTX.linhthu.act('orb'); return; }   /* 2026-10-15 anh: nút Gọi ra / Thu về — đóng menu rồi gọi */ deps.CTX.linhthu.act(kind, D.ltsel ?? D.ltinfo ?? D.ltadd ?? D.ltdel ?? D.ltup); render(true); if (kind === 'info' || kind === 'sel') { const ib = el.querySelector('.ltp-info'); if (ib && ib.scrollIntoView) ib.scrollIntoView({ block: 'nearest' }); } return; }   /* 2026-10-15 thẻ Ấn Linh: chọn ô đội / xem / mang theo / bỏ / nâng cấp */
+    const lq = e.target.closest('[data-lt]'); if (lq) { e.preventDefault(); if (deps.CTX.linhthu) deps.CTX.linhthu.pick(lq.dataset.lt); render(); return; }   /* plan-39: chọn linh thú đi cùng */
+    const ht = e.target.closest('[data-ht]'); if (ht) { e.preventDefault(); if (deps.CTX.hopthe) { const a = ht.dataset.ht; deps.CTX.hopthe.menuAct(a); if (a === 'toggle' || a === 'wear') closeMenu(); else render(); } return; }   /* plan-50: Hợp thể / đeo-tháo Bông Tai */
+    const rq = e.target.closest('[data-rkeq]'); if (rq) { e.preventDefault(); if (deps.CTX.rkCore) deps.CTX.rkCore.toggle(rq.dataset.rkeq); render(); return; }   /* plan-38: mang / bỏ chiêu học từ trùm */
+    const df = e.target.closest('[data-diff]'); if (df) { e.preventDefault(); const S = deps.S; setDiff(S.save, isEasy(S.save) ? 'normal' : 'easy'); if (deps.CTX.persist) deps.CTX.persist(); render(); return; }   /* plan-44 C2: Độ khó — áp cho trận / quái sinh ra SAU khi đổi */
+    const km = e.target.closest('[data-kimode]'); if (km) { e.preventDefault(); if (deps.CTX.ki) deps.CTX.ki.toggleAuto(); render(); return; }   /* plan-34: Ki tự động / dùng tay */
     const dg = e.target.closest('[data-dragon]'); if (dg) { e.preventDefault(); closeMenu(); if (deps.CTX.dragon) deps.CTX.dragon.summon(); return; }   /* plan-29 */
     const lk = e.target.closest('[data-look]'); if (lk) { e.preventDefault(); if (deps.CTX.dragon) deps.CTX.dragon.wear(lk.dataset.look === 'chad'); render(); return; }   /* plan-29: thẻ Ngoại hình */
+    const jb = e.target.closest('[data-journey]'); if (jb) { e.preventDefault(); openCert(); return; }   /* plan-44 P2 */
+    const xb = e.target.closest('[data-save]'); if (xb) { e.preventDefault(); saveAct(xb.dataset.save); return; }   /* plan-44 Q6 */
     const h = e.target.closest('[data-hb]'); if (h) { e.preventDefault(); HB.setSlot(deps.S.save.hotSel || 0, h.dataset.hb); deps.CTX.toast(L().onBar(deps.CTX.itemName(h.dataset.hb), HB.label(deps.S.save.hotSel || 0))); }
     if (s && s.dataset.id) selId = s.dataset.id;
   });
@@ -117,6 +132,7 @@ function rkWhy(pt, id, n) {
   const vi = UI.lang() === 'vi'; if (!pt) return vi ? 'Chưa có Rocky — ấp nở trứng Rocky trước rồi mới đọc sách.' : 'No Rocky yet — hatch the Rocky egg first.';
   const c = RLV.canBook(pt, id, n), S2 = RLV.SKILLS[id], nm = vi ? S2.vi : S2.en, cur = RLV.tierOf(pt, id), lv = RLV.levelFromXp(pt.xp || 0).lv, need = RLV.bookNeedLv(id, n);
   if (c.ok) return '';
+  if (c.why === 'core') { const b = { hacrocky: vi ? 'Hắc Rocky' : 'Shadow Rocky', trongdong: vi ? 'Trống Đồng' : 'the Bronze Drum', guong: vi ? 'Gương Địa Chấn' : 'the Quake Mirror', hoden: vi ? 'Hố Đen Địa Tâm' : 'the Void Devourer', dongho: vi ? 'Đồng Hồ Đứt Dây' : 'the Broken Clock', bakunawa: vi ? 'Ngô Công Lôi Thần' : 'the Thunder Centipede' }[S2.core] || S2.core; return vi ? `Rocky chưa học ${nm} — hạ ${b} để Rocky ăn mảnh lõi trước.` : `Rocky hasn't learned ${nm} — defeat ${b} so Rocky can eat its core first.`; }   /* plan-38 */
   if (c.why === 'have') return vi ? `${nm} đã ở bậc ${cur} — sách bậc ${n} không còn tác dụng.` : `${nm} is already tier ${cur} — this tier-${n} book is no use.`;
   const lvTxt = lv < need ? (vi ? `Rocky cần cấp ${need} (đang cấp ${lv})` : `Rocky needs Lv ${need} (now Lv ${lv})`) : '';
   if (c.why === 'prev') return (cur === 0 ? (vi ? `Rocky chưa mở chiêu ${nm} (mở ở cấp ${S2.unlock})` : `Rocky hasn't unlocked ${nm} (unlocks at Lv ${S2.unlock})`) : (vi ? `Cần đọc ${nm} bậc ${n - 1} trước (đang bậc ${cur})` : `Read ${nm} tier ${n - 1} first (now tier ${cur})`)) + (lvTxt && cur > 0 ? ' · ' + lvTxt : '') + '.';
@@ -159,7 +175,7 @@ export function menuKey(code) {
   const i = TABS.indexOf(tab);
   if (code === 'ArrowLeft' || code === 'KeyA') { tab = TABS[(i + TABS.length - 1) % TABS.length]; render(); return true; }
   if (code === 'ArrowRight' || code === 'KeyD') { tab = TABS[(i + 1) % TABS.length]; render(); return true; }
-  if (/^Digit[1-6]$/.test(code)) { tab = TABS[+code[5] - 1] || tab; render(); return true; }
+  if (/^Digit[1-7]$/.test(code)) { tab = TABS[+code[5] - 1] || tab; render(); return true; }
   return code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS';   /* nuốt phím di chuyển cho người chơi không đi */
 }
 
@@ -168,7 +184,7 @@ function render(soft) {
   const t = L(), u = ui(), px = !!(u && u.frame);
   const body = el.querySelector('.mbody'), scroll = soft && body ? body.scrollTop : 0;
   const tabs = TABS.map(k => `<div class="mtab ${k === tab ? 'on' : ''}" data-tab="${k}">${tabIcon(k, TAB_FB[k])}<span>${t.tabs[k]}</span></div>`).join('');
-  const inner = tab === 'bag' ? bagBody() : tab === 'shop' ? shopBody() : tab === 'hero' ? heroBody() : tab === 'rocky' ? rockyBody() : tab === 'quest' ? questBody() : gearBody();
+  const inner = tab === 'bag' ? bagBody() : tab === 'shop' ? shopBody() : tab === 'hero' ? heroBody() : tab === 'rocky' ? rockyBody() : tab === 'anlinh' ? anlinhBody() : tab === 'quest' ? questBody() : gearBody();
   const cls = `<button class="px-x m-x" type="button" data-act="resume" aria-label="${esc(t.resume)}"><img src="assets/px/ui/hud/close.png" alt=""></button>`;   /* plan-25 B5: ✕ đóng túi trên điện thoại (CSS ẩn ở desktop) */
   el.innerHTML = `<div class="mframe ${px ? 'px' : ''}"><div class="mtabs">${tabs}${cls}</div><div class="mbody">${inner}</div>` +
     (tab === 'bag' ? `<div id="mtip" class="mtip">${tip || `<span class="mhint">${t.tipHint}</span>`}</div>` : '') + `<div class="mfoot">${isTouchUI() ? keyHint(t.footTouch) : t.foot}</div></div>`;
@@ -338,10 +354,142 @@ function heroBody() {
   const met = (S.save.met || []).filter(id => inLands.has(id)).length, here = S.zone && S.zone.lv != null ? membersOfLevel(S.zone.lv) : [], ms = new Set(S.save.met || []), hereMet = here.filter(m => ms.has(m.id)).length;
   return `${heroCard(name, zone, met, hereMet, here.length)}${blessings()}
     <h3>${lg === 'vi' ? 'Hành trình' : 'Journey'}</h3>${rows}
-    <h3>${t.equip}</h3><div class="mgrid">${eq.join('')}</div><h3>${t.progress}</h3><div class="mgrid">${fl.join('')}</div>
+    <h3>${t.equip}</h3><div class="mgrid">${eq.join('')}</div><h3>${t.progress}</h3><div class="mgrid">${fl.join('')}</div>${ballsRow()}
+    ${badgeRow()}${statsBlock()}
     ${C.dragon && C.dragon.lookHTML ? C.dragon.lookHTML() : ''}
     <h3>${lg === 'vi' ? 'Đất của tôi' : 'My land'}</h3>${landList()}
     <div id="mtip" class="mtip"><span class="mhint">${t.tipHint}</span></div>`;
+}
+/* ---------------------------------------------------------------- plan-44 (2026-10-17): huy hiệu · Ngọc Rồng · thống kê · tổng kết · hậu truyện */
+const isVi = () => UI.lang() === 'vi';
+const achIds = () => Object.keys((UI.L && UI.L.ach) || {});
+function injectCSS() {
+  if (document.getElementById('p44-menu-css')) return; const s = document.createElement('style'); s.id = 'p44-menu-css';
+  s.textContent = `#menu .p44-badges{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;max-width:440px;margin:2px 0 4px}
+#menu .p44-badges .bd{display:flex;flex-direction:column;align-items:center;gap:1px;font:13px VT323,monospace;color:var(--dim)}
+#menu .p44-badges .bd.on{color:var(--gold)} #menu .p44-badges img{width:100%;max-width:44px;image-rendering:pixelated}
+#menu .p44-balls{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:6px 0 2px;font:16px VT323,monospace;color:#d8cbe8}
+#menu .p44-balls img{width:22px;height:22px;image-rendering:pixelated} #menu .p44-balls img.off{opacity:.22;filter:none}
+#menu .p44-stats{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:2px;margin:2px 0 6px}
+#menu .p44-stats .hst{display:flex;justify-content:space-between;gap:8px;font:16px VT323,monospace;color:#d8cbe8;border-bottom:1px dashed var(--line)} #menu .p44-stats .hst b{font:16px VT323,monospace;color:var(--gold);font-weight:normal}
+#menu .p44-coll{display:grid;grid-template-columns:120px 1fr 64px;gap:6px;align-items:center;font:15px VT323,monospace;color:#d8cbe8;padding:2px 0}
+#menu .p44-coll .pbar{height:8px} #menu .p44-coll b{color:var(--gold);font-weight:normal;text-align:right}
+#menu .p44-next{margin:4px 0 0 0;padding-left:4px;font-size:13px;line-height:1.35} #menu .p44-next div{padding:2px 0}
+#menu .p44-save{max-width:340px;margin:10px auto 0} #menu .p44-save .row .btn{flex:1;margin:0} #menu .p44-save textarea{width:100%;min-height:64px;box-sizing:border-box;font:12px monospace;background:#1a1526;color:#e8dcf4;border:2px solid var(--line);resize:vertical}
+#menu .p44-save .row{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0} #menu .p44-save .msg{font-size:13px;min-height:16px}
+@media (max-width:520px){#menu .p44-stats{grid-template-columns:1fr} #menu .p44-coll{grid-template-columns:84px 1fr 62px}}
+#jcert{position:fixed;inset:0;z-index:60;background:rgba(10,8,16,.72);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+#jcert .card{position:relative;width:min(92vw,672px);aspect-ratio:448/336;background:url(assets/px/ui/journey_cert.png) center/100% 100% no-repeat;image-rendering:pixelated}
+#jcert .in{position:absolute;left:14%;right:14%;top:17%;bottom:31%;display:flex;flex-direction:column;align-items:center;color:#4a2e1a;font:clamp(11px,2.6vw,18px) VT323,monospace;text-align:center;line-height:1.15}
+#jcert h2{margin:0;font:clamp(16px,4.6vw,30px) VT323,monospace;color:#6a2b12;letter-spacing:1px} #jcert .nm{font-size:clamp(14px,3.6vw,24px);color:#2c1a0e;margin:1px 0 3px}
+#jcert .gr{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;width:100%;text-align:left} #jcert .gr span{display:flex;justify-content:space-between;border-bottom:1px dotted rgba(74,46,26,.35)} #jcert .gr b{color:#8a3a12;font-weight:normal}
+#jcert .bt{display:flex;gap:8px} #jcert .bt .btn{white-space:nowrap;width:auto;padding:8px 14px}`;
+  document.head.appendChild(s);
+}
+function badgeImg(n, on) { const u = ui(), m = u && u.mbadges; return 'assets/px/' + ((m && m[on ? String(n) : 'off' + n]) || `badges/lv_${n}${on ? '' : '_off'}.png`); }
+function badgeRow() {   /* R4: 9 huy hiệu Magnitude (ảnh huy hiệu anh gửi, bản xám = chưa có) */
+  const vi = isVi(), got = new Set((deps.S.save.badges || []).filter(b => b >= 1 && b <= 9));
+  const cells = Array.from({ length: 9 }, (_, i) => { const n = i + 1, on = got.has(n); return `<div class="bd${on ? ' on' : ''}" data-tip="<b>Magnitude ${n}.0</b> — ${on ? (vi ? 'đã nhận' : 'earned') : (vi ? 'chưa có — gặp đủ nghệ sĩ + xong việc vùng M' + n : 'not yet — meet the artists + finish the M' + n + ' tasks')}"><img src="${badgeImg(n, on)}" alt="" draggable="false">M${n}</div>`; }).join('');
+  return `<h3>${vi ? 'Huy hiệu Magnitude' : 'Magnitude badges'} · ${got.size}/9</h3><div class="p44-badges">${cells}</div>`;
+}
+function ballsRow() {   /* R3: Ngọc Rồng n/7 trong Tiến độ */
+  const vi = isVi(), inv = deps.S.save.inv || {}; let n = 0;
+  const ic = Array.from({ length: 7 }, (_, i) => { const k = 'dball' + (i + 1), on = (inv[k] || 0) > 0; if (on) n++; return `<img class="${on ? '' : 'off'}" src="assets/px/ui/items/${k}.png" alt="" draggable="false" title="${esc(itemName(k, UI.lang()))}">`; }).join('');
+  const hint = n >= 7 ? (vi ? 'đủ 7 — chọn 1 viên trong túi → Gọi Rồng Thần' : 'all 7 — pick one in the bag → Summon') : (vi ? 'rơi từ trùm Khe Nứt (lần đầu chắc chắn) và bạn tập trên đèo' : 'from Rift bosses (first win guaranteed) and pass sparring partners');
+  return `<div class="p44-balls" data-tip="${esc((vi ? 'Ngọc Rồng: ' : 'Dragon Balls: ') + hint)}">🐉 ${vi ? 'Ngọc Rồng' : 'Dragon Balls'} <b style="color:var(--gold)">${n}/7</b> ${ic} <span class="mhint">${esc(hint)}</span></div>`;
+}
+function statsBlock() {   /* P2: thống kê chơi + nút Tổng kết (mở sau khi cứu Lyron) */
+  const vi = isVi(), S = deps.S, c = collect(S.save, achIds()), row = (k, v) => `<div class="hst"><span>${k}</span><b>${v}</b></div>`;
+  const done = rescued(S.save);
+  return `<h3>${vi ? 'Thống kê hành trình' : 'Journey stats'}</h3><div class="p44-stats">
+    ${row(vi ? 'Thời gian chơi' : 'Play time', fmtTime(c.sec, vi))}${row(vi ? 'Số lần ngất' : 'Times fainted', c.faints)}
+    ${row(vi ? 'Quãng đường' : 'Distance walked', `${c.tiles} ${vi ? 'ô' : 'tiles'}`)}${row(vi ? 'Trùm Khe Nứt đã hạ' : 'Rift bosses beaten', `${c.bosses.n}/${c.bosses.of}${c.bosses.wins > c.bosses.n ? ` <span class="dim">(${c.bosses.wins} ${vi ? 'trận thắng' : 'wins'})</span>` : ''}`)}
+    ${row(vi ? 'Nghệ sĩ đã gặp' : 'Artists met', `${c.artists.n}/${c.artists.of}`)}${row(vi ? 'Ảnh đã chụp' : 'Photos taken', c.photos)}
+    ${row(vi ? 'Linh thú' : 'Spirit beasts', `${c.linhthu.n}/${c.linhthu.of}`)}${row(vi ? 'Thành tựu' : 'Achievements', `${c.ach.n}/${c.ach.of}`)}</div>
+    <div style="margin:2px 0 8px">${done ? `<button class="btn primary" data-journey="1">📜 ${vi ? 'Tổng kết hành trình' : 'Journey summary'}</button>` : `<span class="mhint">📜 ${vi ? 'Tổng kết hành trình: mở sau khi cứu Lyron' : 'Journey summary: unlocks after rescuing Lyron'}</span>`}</div>`;
+}
+let certEl = null;
+function openCert() {
+  const vi = isVi(), S = deps.S, c = collect(S.save, achIds()), name = esc(S.save.name || (vi ? 'Bạn' : 'You')), h = S.save.hero || {};
+  if (!certEl) { certEl = document.createElement('div'); certEl.id = 'jcert'; document.body.appendChild(certEl);
+    certEl.addEventListener('pointerdown', e => { const b = e.target.closest('[data-cert]'); if (!b) { if (e.target === certEl) closeCert(); return; } e.preventDefault(); if (b.dataset.cert === 'close') closeCert(); else certPng(); }); }
+  const sp = (k, v) => `<span>${k}<b>${v}</b></span>`;
+  certEl.innerHTML = `<div class="card"><div class="in"><h2>${vi ? 'TỔNG KẾT HÀNH TRÌNH' : 'JOURNEY SUMMARY'}</h2><div>Seismic · 9 ${vi ? 'Vùng Đất' : 'Lands'}</div>
+    <div class="nm">${name} · ${vi ? 'Cấp' : 'Lv'} ${h.lv || 1}</div><div class="gr">
+    ${sp(vi ? 'Thời gian' : 'Play time', fmtTime(c.sec, vi))}${sp(vi ? 'Ngất' : 'Fainted', c.faints)}
+    ${sp(vi ? 'Nghệ sĩ' : 'Artists', `${c.artists.n}/${c.artists.of}`)}${sp('Leader', `${c.leaders.n}/${c.leaders.of}`)}
+    ${sp(vi ? 'Huy hiệu' : 'Badges', `${c.badges.n}/9`)}${sp(vi ? 'Trùm' : 'Bosses', `${c.bosses.n}/${c.bosses.of}`)}
+    ${sp(vi ? 'Linh thú' : 'Spirit beasts', `${c.linhthu.n}/${c.linhthu.of}`)}${sp(vi ? 'Ngọc Rồng' : 'Dragon Balls', `${c.balls.n}/7`)}
+    ${sp(vi ? 'Ảnh chụp' : 'Photos', c.photos)}${sp(vi ? 'Quãng đường' : 'Distance', `${c.tiles} ${vi ? 'ô' : 'tiles'}`)}</div>
+    <div style="margin-top:16px">${vi ? 'Lyron đã về nhà. Cảm ơn bạn!' : 'Lyron is home. Thank you!'}</div></div></div>
+    <div class="bt"><button class="btn primary" data-cert="png">💾 ${vi ? 'Tải ảnh' : 'Save image'}</button><button class="btn" data-cert="close">${vi ? 'Đóng' : 'Close'}</button></div>`;
+  certEl.hidden = false;
+}
+function closeCert() { if (certEl) certEl.hidden = true; }
+function certPng() {   /* vẽ khung giấy khen PixelLab (×2, giữ pixel) + chữ ra PNG để khoe */
+  const im = new Image(); im.onload = () => {
+    const k = 2, W = im.width * k, H = im.height * k, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, W, H);
+    const inn = certEl.querySelector('.in'), lines = [...inn.querySelectorAll('h2, div:not(.gr), .gr span')].filter(e => !e.querySelector('h2'));
+    g.textAlign = 'center'; g.fillStyle = '#4a2e1a'; let y = H * 0.21; const cx = W / 2;
+    const txt = (s, sz, col) => { g.font = `${sz}px VT323, monospace`; g.fillStyle = col; g.fillText(s, cx, y); y += sz * 1.15; };
+    txt(inn.querySelector('h2').textContent, 46, '#6a2b12'); txt('Seismic · 9 ' + (isVi() ? 'Vùng Đất' : 'Lands'), 26, '#4a2e1a'); txt(inn.querySelector('.nm').textContent, 34, '#2c1a0e');
+    const sp = [...inn.querySelectorAll('.gr span')]; g.font = '25px VT323, monospace';
+    sp.forEach((s, i) => { const col = i % 2, row = i >> 1, x0 = W * (col ? 0.52 : 0.15), x1 = W * (col ? 0.85 : 0.48), yy = y + 6 + row * 29; g.textAlign = 'left'; g.fillStyle = '#4a2e1a'; g.fillText(s.firstChild.textContent, x0, yy); g.textAlign = 'right'; g.fillStyle = '#8a3a12'; g.fillText(s.querySelector('b').textContent, x1, yy); });
+    g.textAlign = 'center'; g.font = '26px VT323, monospace'; g.fillStyle = '#4a2e1a'; g.fillText(isVi() ? 'Lyron đã về nhà. Cảm ơn bạn!' : 'Lyron is home. Thank you!', cx, y + 6 + Math.ceil(sp.length / 2) * 29 + 22);   /* ngay dưới bảng số, trên vòng nguyệt quế */
+    const a = document.createElement('a'); a.download = `seismic9-hanh-trinh-${(deps.S.save.name || 'ban').replace(/[\/:*?"<>|\s]+/g, '_')}.png`; a.href = cv.toDataURL('image/png'); document.body.appendChild(a); a.click(); a.remove();
+  }; im.src = 'assets/px/ui/journey_cert.png';
+}
+/* ---- Q6: xuất / nhập mã lưu (thẻ Cài đặt) ---- */
+let pendingImport = null;
+function saveMsg(t, ok) { const m = el.querySelector('#m-savemsg'); if (m) { m.textContent = t; m.style.color = ok === false ? '#ff9a8a' : ok ? '#9be07a' : 'var(--dim)'; } }
+async function saveAct(k) {
+  const vi = isVi(), C = deps.CTX;
+  if (k === 'export' || k === 'file') {
+    try { C.persist(); } catch (e) { /* */ }
+    const code = await exportCode(deps.S.save), ta = el.querySelector('#m-exp'); if (ta) { ta.value = code; ta.hidden = false; }
+    if (k === 'file') { const a = document.createElement('a'), d = new Date(), ds = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; a.download = `seismic9-save-${(deps.S.save.name || 'ban').replace(/[\/:*?"<>|\s]+/g, '_')}-${ds}.txt`; a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' })); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); saveMsg(vi ? 'Đã tải file mã lưu — mở game trên máy kia → Cài đặt → Nhập mã lưu.' : 'Save file downloaded — on the other device: Settings → Import save.', true); return; }
+    let copied = false; try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(code); copied = true; } } catch (e) { /* trình duyệt chặn */ }
+    if (!copied && ta) { ta.focus(); ta.select(); }
+    saveMsg(copied ? (vi ? `Đã chép mã lưu (${code.length} ký tự) — dán vào ô Nhập ở máy kia.` : `Save code copied (${code.length} chars) — paste it into Import on the other device.`) : (vi ? 'Mã lưu ở ô bên dưới — chọn hết rồi chép.' : 'The code is in the box below — select all and copy.'), true);
+  } else if (k === 'check') await checkImport();
+  else if (k === 'yes') {
+    if (!pendingImport) return;
+    if (!importSave(pendingImport)) { saveMsg(vi ? 'Không ghi được (bộ nhớ trình duyệt bị chặn?).' : "Couldn't write (browser storage blocked?).", false); return; }
+    saveMsg(vi ? 'Đã nhập — đang tải lại…' : 'Imported — reloading…', true);
+    const q = new URLSearchParams(location.search); q.delete('reset'); q.delete('zone'); q.delete('auto'); const qs = q.toString();
+    setTimeout(() => { location.href = location.pathname + (qs ? '?' + qs : ''); }, 400);
+  } else if (k === 'no') { pendingImport = null; const c = el.querySelector('#m-impask'); if (c) c.hidden = true; saveMsg(vi ? 'Đã huỷ — save hiện tại giữ nguyên.' : 'Cancelled — your current save is untouched.'); }
+}
+async function checkImport() {
+  const vi = isVi(), ta = el.querySelector('#m-imp'), ask = el.querySelector('#m-impask'); pendingImport = null; if (ask) ask.hidden = true;
+  const r = await parseCode(ta ? ta.value : '');
+  if (!r.ok) { const W = { empty: vi ? 'Chưa dán mã nào.' : 'Nothing pasted yet.', format: vi ? 'Không phải mã lưu Seismic (phải bắt đầu bằng S9Z1: hoặc S9J1:).' : 'Not a Seismic save code (must start with S9Z1: or S9J1:).', nogzip: vi ? 'Trình duyệt này không giải nén được mã — xuất lại trên máy kia bằng trình duyệt mới hơn.' : "This browser can't unpack the code.", broken: vi ? 'Mã bị hỏng / thiếu đoạn — chép lại đủ cả mã.' : 'The code is broken or cut off — copy it again in full.' }; saveMsg(W[r.why] || (vi ? `Mã lưu không hợp lệ (${r.why}).` : `Invalid save (${r.why}).`), false); return; }
+  pendingImport = r.save; const s = r.save, z = ZONE_LIST.find(q => q.id === s.zone), zn = z ? (z.name[UI.lang()] || z.name.en) : s.zone;
+  if (ask) { ask.hidden = false; ask.querySelector('.sum').innerHTML = esc(vi ? `Save: ${s.name || '(chưa đặt tên)'} · cấp ${(s.hero || {}).lv || 1} · ${zn} · ${(s.badges || []).length} huy hiệu · ${(s.met || []).length} nghệ sĩ đã gặp` : `Save: ${s.name || '(no name)'} · Lv ${(s.hero || {}).lv || 1} · ${zn} · ${(s.badges || []).length} badges · ${(s.met || []).length} artists met`); }
+  saveMsg(vi ? 'Mã hợp lệ. Ghi đè save hiện tại? (không hoàn tác được — nên Xuất save hiện tại trước)' : 'Valid code. Overwrite the current save? (cannot be undone — export the current one first)', true);
+}
+function saveBox() {
+  const vi = isVi();
+  return `<div class="p44-save"><h3>${vi ? 'Mang save sang máy khác' : 'Move your save to another device'}</h3>
+    <div class="row"><button class="btn primary" data-save="export">📤 ${vi ? 'Xuất mã lưu (chép)' : 'Export save (copy)'}</button><button class="btn" data-save="file">💾 ${vi ? 'Tải file mã lưu' : 'Download save file'}</button></div>
+    <textarea id="m-exp" readonly hidden></textarea>
+    <div class="mhint">${vi ? 'Nhập mã lưu: dán mã hoặc chọn file rồi bấm Kiểm tra.' : 'Import: paste the code or pick the file, then Check.'}</div>
+    <textarea id="m-imp" placeholder="S9Z1:…"></textarea>
+    <div class="row"><button class="btn" data-save="check">✔ ${vi ? 'Kiểm tra mã' : 'Check code'}</button><label class="btn" style="cursor:pointer">📂 ${vi ? 'Chọn file' : 'Pick file'}<input type="file" accept=".txt,.json,text/plain,application/json" data-importfile="1" hidden></label></div>
+    <div id="m-impask" hidden><div class="sum mhint" style="color:#ffe6a8"></div><div class="row"><button class="btn primary" data-save="yes">⚠ ${vi ? 'Ghi đè & tải lại' : 'Overwrite & reload'}</button><button class="btn" data-save="no">${vi ? 'Huỷ' : 'Cancel'}</button></div></div>
+    <div class="msg mhint" id="m-savemsg"></div></div>`;
+}
+function afterStory() {   /* P1: HẬU TRUYỆN — % từng bộ sưu tập + việc kế tiếp (chỉ hiện sau khi cứu Lyron) */
+  const vi = isVi(), S = deps.S; if (!rescued(S.save)) return '';
+  const c = collect(S.save, achIds());
+  const bar = (k, o, extra = '') => { const pc = o.of ? Math.round(o.n / o.of * 100) : 0; return `<div class="p44-coll"><span>${k}</span><div class="pbar"><div style="width:${pc}%"></div></div><b>${o.n}/${o.of}${extra}</b></div>`; };
+  const steps = nextSteps(S.save, c, vi, 4).map(s => `<div>▸ ${esc(s)}</div>`).join('');
+  const all = [c.artists, c.linhthu, c.balls, c.badges, c.ach, c.leaders, c.bosses].reduce((a, o) => a + (o.of ? o.n / o.of : 0), 0) / 7;
+  return `<h3>${vi ? 'Hậu truyện' : 'Afterwards'} · ${Math.round(all * 100)}%</h3><p class="mhint" style="margin:0 0 4px">${vi ? 'Lyron đã về nhà — nhưng thế giới còn nhiều thứ để gom:' : 'Lyron is home — but there is plenty left to collect:'}</p>
+    ${bar(vi ? 'Nghệ sĩ' : 'Artists', c.artists)}${bar(vi ? 'Linh thú' : 'Spirit beasts', c.linhthu)}${bar(vi ? 'Ngọc Rồng' : 'Dragon Balls', c.balls)}${bar(vi ? 'Huy hiệu' : 'Badges', c.badges)}
+    ${bar(vi ? 'Thành tựu' : 'Achievements', c.ach)}${bar('Leader', c.leaders)}${bar(vi ? 'Trùm đã hạ' : 'Bosses beaten', c.bosses, c.bosses.wins > c.bosses.n ? ` · ${c.bosses.wins}×` : '')}
+    <div class="mhint" style="margin-top:6px"><b style="color:var(--gold)">${vi ? 'Việc kế tiếp' : 'What next'}</b></div><div class="p44-next mhint">${steps}</div>
+    <div style="margin-top:6px"><button class="btn" data-journey="1">📜 ${vi ? 'Tổng kết hành trình' : 'Journey summary'}</button></div>`;
 }
 /* 2026-10-12 anh: thẻ Nhân vật mở đầu bằng chỉ số chiến đấu thật (cấp, kinh nghiệm, máu, sức đánh, kiếm) — điều ước 'Sức mạnh tối đa' phải thấy ngay ở đây */
 function heroCard(name, zone, met, hereMet, hereN) {
@@ -396,7 +544,7 @@ function rockyBody() {
       <div class="hgrid">${hst(vi ? 'Công' : 'Attack', st.atk)}${hst(vi ? 'Thủ' : 'Defense', st.def)}${hst(vi ? 'Độ no' : 'Fullness', Math.round(pt.hunger) + '%')}${hst(vi ? 'Độ thân' : 'Bond', `${vi ? bondN[bl] : bondE[bl]} <span class="dim">(${Math.round(pt.bond)})</span>`)}</div>
       ${hst(vi ? 'Lệnh' : 'Command', esc(cmdTxt))}</div></div>
     ${rk ? `<h3>${vi ? 'Phúc lành Rồng Thần' : 'Dragon blessings'}</h3><div class="hbless"><div class="hb1"><img src="assets/px/dragon/ui/icon_rocky.png" alt="" draggable="false"><span><b>${vi ? 'Rocky mạnh nhất' : 'Strongest Rocky'}</b><i>${vi ? 'Cấp 50 · 3 chiêu bậc 7' : 'Lv 50 · all skills tier 7'}</i></span></div></div>` : ''}
-    <h3>${vi ? 'Chiêu' : 'Skills'}</h3><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-around">${skills}</div>${(deps.S.save.inv.rkbook8 || 0) > 0 ? `<div style="text-align:center;margin-top:6px"><button class="btn primary" data-hrbook="1">📕 ${vi ? 'Dùng sách Rocky bậc 8' : 'Use Rocky tier-8 book'} (${deps.S.save.inv.rkbook8})</button></div>` : ''}
+    <h3>${vi ? 'Chiêu' : 'Skills'}</h3><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-around">${skills}</div>${C.rkCore ? C.rkCore.html() : ''}${C.hopthe ? C.hopthe.menuHtml() : ''}${(deps.S.save.inv.rkbook8 || 0) > 0 ? `<div style="text-align:center;margin-top:6px"><button class="btn primary" data-hrbook="1">📕 ${vi ? 'Dùng sách Rocky bậc 8' : 'Use Rocky tier-8 book'} (${deps.S.save.inv.rkbook8})</button></div>` : ''}
     <p class="mhint" style="margin-top:8px">${vi ? 'Ra lệnh: bấm nút Rocky trên thanh công cụ hoặc phím / (điện thoại: nút chat cạnh nút chụp ảnh) rồi bấm lệnh hoặc gõ <b>bảo vệ</b> · <b>tấn công</b> · <b>đi theo</b> · <b>về nhà</b>. Khi được đánh, Rocky luôn dùng chiêu mạnh nhất đã hồi: Siêu Cấp → Rocky-ha → Đấm. Sách luyện chiêu: Heathcliff ở chân cầu tàu Biển.' : 'Commands: click the Rocky button on the hotbar or press / (phone: the chat button next to the camera), then tap a command or type <b>protect</b> · <b>attack</b> · <b>follow</b> · <b>home</b>. When allowed to fight, Rocky always uses its strongest ready skill: Super → Rocky-ha → Punch. Skill books: Heathcliff at the foot of the Sea pier.'}</p>
     <div id="mtip" class="mtip"><span class="mhint">${L().tipHint}</span></div>`;
 }
@@ -433,7 +581,9 @@ function mainQuests() {
     prevDone = done;
   }
   const items3 = ['divebell', 'trenchmap', 'greatcrystal'];
-  const gatherText = act === 2 ? items3.map(k => `${ITEMS[k] ? ITEMS[k].icon : k} ${itemName(k, lg)} ${(st.items || {})[k] ? '✓' : '·'}`).join(' · ') : act < 2 ? t.qGatherLocked : t.qGatherText;
+  const HINT3 = lg === 'vi' ? { divebell: 'Rèn ở Lò nung M4 (4 kính + 3 sắt)', trenchmap: 'Xin Thủ thư ở bàn thi M6 (sau khi qua bài thi thư viện)', greatcrystal: 'Leader ở Lõi M9 trao (sau khi có huy hiệu M9)' }
+    : { divebell: 'Forge it at the M4 furnace (4 glass + 3 iron)', trenchmap: 'Ask the librarian at the M6 exam desk (after passing the exam)', greatcrystal: 'A Leader in the M9 Core hands it over (after the M9 badge)' };   /* plan-44 D5: lấy từ systems/story_land.js */
+  const gatherText = act === 2 ? items3.map(k => { const ok = (st.items || {})[k]; return `<div>${ITEMS[k] ? ITEMS[k].icon : k} <b>${esc(itemName(k, lg))}</b> ${ok ? '✓' : `· <span class="dim">${esc(HINT3[k])}</span>`}</div>`; }).join('') : act < 2 ? t.qGatherLocked : t.qGatherText;
   rows.push({ name: t.qGather, state: act >= 3 ? 'done' : act === 2 ? 'now' : 'locked', text: gatherText });
   rows.push({ name: t.qTrench, state: act >= 4 ? 'done' : act === 3 ? 'now' : 'locked', text: act >= 4 ? t.qHome : t.qTrenchText });
   return rows;
@@ -442,12 +592,15 @@ function qRow(r) {
   const ic = r.state === 'done' ? stIcon('check', '✓') : r.state === 'now' ? stIcon('play', '▶') : stIcon('quest', '?');
   return `<div class="mq ${r.state}"><span class="qs">${ic}</span><span style="flex:1;min-width:0">${r.av || ''}<b>${esc(r.name)}</b>${r.right ? `<span class="chip" style="float:right">${r.right}</span>` : ''}<div class="mhint">${r.text}</div></span></div>`;
 }
+function anlinhBody() {   /* 2026-10-15: thẻ ẤN LINH — nội dung do linhthu.js dựng (quả cầu + cấp + nâng cấp · đội hình · bộ sưu tập · mô tả) */
+  const C = deps.CTX; return C.linhthu && C.linhthu.panel ? C.linhthu.panel() : `<p class="dim">${UI.lang() === 'vi' ? 'Chưa có Ấn Linh.' : 'No Spirit Seal yet.'}</p>`;
+}
 function questBody() {
   const t = L(), C = deps.CTX; let side = [];
   try { side = questRows(C); } catch (e) { side = []; }
   const main = mainQuests().map(qRow).join('');
   const sd = side.map(q => qRow({ name: q.name, state: q.done ? 'done' : 'now', text: `${esc(q.text)}${q.here ? '' : ` · <span class="dim">${esc(q.zone)}</span>`}`, right: `${q.have}/${q.need} · 🪨 ${q.reward}` })).join('');
-  return `<h3>${t.main}</h3>${main}<h3>${t.side}</h3>${sd || `<p class="dim" style="padding:6px 2px">${t.none}</p>`}`;
+  return `${afterStory()}<h3>${t.main}</h3>${main}<h3>${t.side}</h3>${sd || `<p class="dim" style="padding:6px 2px">${t.none}</p>`}`;
 }
 
 // ---------------------------------------------------------------- cài đặt
@@ -457,5 +610,5 @@ function gearBody() {
   const mv = AUDIO.getMusicVolume ? AUDIO.getMusicVolume() : 0.5, sv = AUDIO.getSfxVolume ? AUDIO.getSfxVolume() : 0.5;
   return `<div class="mgear"><button class="btn primary" data-act="resume">${t.resume}</button><button class="btn" data-act="lang">${t.lang}</button>
     ${vol('music', t.musicVol, mv)}${vol('sfx', t.sfxVol, sv)}
-    <button class="btn" data-act="music">♪ ${t.music}: ${on ? t.on : t.off}</button><button class="btn" data-act="fs">⛶ ${t.fs}</button><button class="btn" data-act="quit">${t.quit}</button></div>`;
+    <button class="btn" data-act="music">♪ ${t.music}: ${on ? t.on : t.off}</button><button class="btn" data-diff="1" title="${deps.CTX.lang() === 'vi' ? 'Dễ: máu & đòn của quái, bạn tập, trùm ×0,6 — phần thưởng giữ nguyên' : 'Easy: monsters, sparring partners and bosses have ×0.6 HP & damage — same rewards'}">⚖ ${diffLabel(deps.CTX.lang() === 'vi', deps.S.save)}</button>${deps.CTX.ki ? `<button class="btn" data-kimode="1">◉ ${deps.CTX.ki.menuLabel()}</button>` : ''}${deps.CTX.gfx ? `<button class="btn" data-gfx="1">▣ ${deps.CTX.gfx.label(deps.CTX.lang() === 'vi')}</button>` : ''}<button class="btn" data-act="fs">⛶ ${t.fs}</button><button class="btn" data-act="quit">${t.quit}</button></div>${saveBox()}`;
 }

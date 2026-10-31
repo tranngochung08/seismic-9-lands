@@ -2,6 +2,7 @@
 // Cấp 1: 100 máu, sức 10; mỗi cấp +15 máu, +3 sức; lên cấp cần 50 × cấp hiện tại kinh nghiệm.
 // API cho hệ khác: ctx.hero = { lv, hp, max, atk, swordTier, weaponBonus, hit(dmg, from), heal(n), gainXp(n, why), fainted }.
 // Hồi máu: tự hồi khi 6 s không bị đánh (2 %/s), ăn đồ (+25), sang ngày mới (ngủ) đầy máu.
+import { isEasy, easyDmg, noteLoss, bossKey } from './diff.js';   /* plan-44 C2: Độ khó Dễ — sát thương lên người chơi ×0,6 (một chỗ chung: hit) */
 const BONUS = [0, 5, 12, 22, 35, 50, 70];   // sát thương thêm theo cấp kiếm 0..6 (0 = rìu / tay)
 const L = ctx => (ctx.lang() === 'vi'
   ? { lv: 'Cấp', up: n => `⬆ Lên cấp ${n}! Máu và sức đánh tăng`, faint: 'Bạn ngất đi… tỉnh lại ở chỗ an toàn (không mất gì)', xp: n => `+${n} kinh nghiệm` }
@@ -19,11 +20,12 @@ function hud(ctx) {
     ST.el = document.createElement('div'); ST.el.id = 'herobar'; document.body.appendChild(ST.el);
   }
   const h = sv(ctx), max = maxHp(h.lv), hide = ctx.S.mode !== 'play' && ctx.S.mode !== 'menu';
-  const sig = [h.lv, Math.ceil(h.hp), max, h.xp, hide, ctx.lang()].join('|'); if (sig === ST.sig) return; ST.sig = sig;
+  const ez = isEasy(ctx.S.save), sig = [h.lv, Math.ceil(h.hp), max, h.xp, hide, ctx.lang(), ez].join('|'); if (sig === ST.sig) return; ST.sig = sig;
   ST.el.hidden = hide; if (hide) return;
   const t = L(ctx), hp = Math.max(0, Math.ceil(h.hp)), xpN = needXp(h.lv);
-  ST.el.innerHTML = `<b class="hb-lv">${t.lv} ${h.lv}</b><div class="hb-bars"><div class="hb-hp" title="${hp}/${max}"><div class="hb-slot"><i style="height:${Math.round(hp / max * 100)}%"></i></div></div>`
+  ST.el.innerHTML = `<b class="hb-lv">${t.lv} ${h.lv}</b>${ez ? `<b class="hb-lv hb-easy" style="font-size:13px;color:#1f6a30" title="${ctx.lang() === 'vi' ? 'Độ khó: Dễ' : 'Difficulty: Easy'}">${ctx.lang() === 'vi' ? 'Dễ' : 'Easy'}</b>` : ''}<div class="hb-bars"><div class="hb-hp" title="${hp}/${max}"><div class="hb-slot"><i style="height:${Math.round(hp / max * 100)}%"></i></div></div>`
     + `<div class="hb-xp" title="${h.xp}/${xpN}"><i style="height:${Math.round(h.xp / xpN * 100)}%"></i></div><span class="hb-num">${hp}/${max}</span></div>`;   /* plan-22: thanh dọc góc dưới phải kiểu Stardew */
+  if (ctx.kiMount) ctx.kiMount(ST.el);   /* plan-34: thanh Ki 7 viên ngọc gắn vào .hb-bars (ki.js) */
 }
 function respawnSpot(ctx) {   /* giường gần nhất → khu nhà mình → điểm vào vùng */
   const S = ctx.S, p = S.player, bed = S.map.objects.filter(o => o.bed).sort((a, b) => Math.hypot(a.x * 16 - p.x, a.y * 16 - p.y) - Math.hypot(b.x * 16 - p.x, b.y * 16 - p.y))[0];
@@ -45,6 +47,7 @@ function goHome(ctx) {
 }
 function faint(ctx) {
   const S = ctx.S, p = S.player, t = FL(ctx); ST.faintT = 999; ctx.sfx('fail');
+  try { noteLoss(ctx, bossKey(ctx)); } catch (e) { }   /* plan-44 C2: ngất trước cùng 1 trùm 2 lần liền → gợi ý Độ khó Dễ */
   p.autoPath = null; p.action = null; if (p.hasAct && p.hasAct('knockdown')) p.action = { name: 'knockdown', t: 0, dur: 0.55, hold: true, walk: false, loop: false };   /* ngã ngửa rồi giữ khung nằm tới khi chọn */
   document.body.classList.add('fainted');
   const ui = ctx.ART && ctx.ART.man && ctx.ART.man.ui, stoneImg = ui && ui.items && ui.items.stone, homeImg = ui && ui.status && ui.status.home;
@@ -61,7 +64,7 @@ function faint(ctx) {
     const h = sv(ctx);
     if (how === 'rev' && ctx.bag.remove('stone', 1) === 1) {
       h.hp = Math.round(maxHp(h.lv) * REVIVE_HP); ST.faintT = 0; ST.inv = 2.5; ctx.persist();
-      if (ctx.vfx) ctx.vfx('level_up', p.x, p.y + 2, 0, true); ctx.sfx('coin'); ctx.toast(t.revived, true);
+      if (ctx.wfx && ctx.wfx('levelup', p.x, p.y + 2, { top: true, heal: true })) { /* plan-69 */ } else if (ctx.vfx) ctx.vfx('level_up', p.x, p.y + 2, 0, true); ctx.sfx('coin'); ctx.toast(t.revived, true);
     } else { ST.faintT = 1.0; goHome(ctx); }
   };
   el.addEventListener('pointerdown', ev => { const b = ev.target.closest('[data-fa]'); if (!b || b.disabled) return; ev.preventDefault(); ev.stopPropagation(); F.finish(b.dataset.fa); });
@@ -73,8 +76,8 @@ function faint(ctx) {
 }
 function placeFaint(ctx) {   /* bám theo xác trên màn hình: số đếm trên đầu, 2 ô dưới chân (mỗi ô ~1 ô lưới) */
   const F = ST.fa, cv = document.getElementById('c'); if (!F || !cv || !ctx.cam || !ctx.VW) return;
-  const r = cv.getBoundingClientRect(), k = r.width / ctx.VW, p = ctx.S.player;
-  const sx = r.left + (p.x - ctx.cam.cx) * k, top = r.top + (p.y - 30 - ctx.cam.cy) * k, bot = r.top + (p.y + 4 - ctx.cam.cy) * k;
+  const r = cv.getBoundingClientRect(), k = r.width / ctx.VW, p = ctx.S.player, AL = ctx.air && ctx.air.on() ? ctx.air.lift() : 0;   /* 2026-10-14: ngất giữa trời — xác lơ lửng cao hơn */
+  const sx = r.left + (p.x - ctx.cam.cx) * k, top = r.top + (p.y - 30 - AL - ctx.cam.cy) * k, bot = r.top + (p.y + 4 - ctx.cam.cy) * k;
   const cell = Math.max(34, Math.round(16 * k));
   F.el.style.setProperty('--cell', cell + 'px'); F.el.style.left = Math.round(sx) + 'px';
   F.el.querySelector('.fa-cd').style.top = Math.round(top - r.top) + 'px'; F.el.querySelector('.fa-row').style.top = Math.round(bot - r.top) + 'px'; F.el.style.top = Math.round(r.top) + 'px';
@@ -91,13 +94,14 @@ export const hero = {
       get fainted() { return ST.faintT > 0; },
       hit(dmg) {
         const hh = sv(ctx); if (ST.inv > 0 || ST.faintT > 0) return false;
+        dmg = easyDmg(dmg, ctx.S.save);   /* plan-44 C2: Độ khó Dễ → ×0,6 (tối thiểu 1) */
         if (ctx.sparOn && ctx.sparOn()) dmg = Math.min(dmg, Math.max(0, Math.ceil(hh.hp) - 1));   /* spar.js: trận tập không ngất — còn 1 máu là chịu thua */
         hh.hp -= dmg; ST.lastHit = ctx.S.time; ST.inv = 0.6;
-        const p = ctx.S.player; if (p.hasAct && p.hasAct('hurt') && (!p.custom || (ctx.isUnderwater && ctx.isUnderwater())) && !p.action) p.act('hurt', 0);   /* plan-26: dưới nước người chơi vẽ kiểu bơi (custom) nhưng vẫn hiện clip bị đánh */
+        const p = ctx.S.player; if (p.hasAct && p.hasAct('hurt') && (!p.custom || p.airBody || (ctx.isUnderwater && ctx.isUnderwater())) && !p.action) p.act('hurt', 0);   /* plan-26: dưới nước người chơi vẽ kiểu bơi (custom) nhưng vẫn hiện clip bị đánh */
         if (ctx.pop) ctx.pop(p.x, p.y - 22, `-${dmg}`, '#ff6b6b');
         ctx.sfx('hit'); if (hh.hp <= 0) { hh.hp = 0; faint(ctx); } return true;
       },
-      iframes(sec) { ST.inv = sec; },   /* knock.js: miễn sát thương khi đang bị hất bay / vừa chạm đất */
+      iframes(sec, keep) { ST.inv = keep ? Math.max(ST.inv, sec) : sec; },   /* plan-34: keep = không rút ngắn miễn đòn đang có (ki.js nhào lộn) */   /* knock.js: miễn sát thương khi đang bị hất bay / vừa chạm đất */
       heal(n) { const hh = sv(ctx); hh.hp = Math.min(maxHp(hh.lv), hh.hp + n); },
       gainXp(n) {
         const hh = sv(ctx); hh.xp += n; let up = false;

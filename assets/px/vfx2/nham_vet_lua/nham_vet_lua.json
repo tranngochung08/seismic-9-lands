@@ -1,0 +1,1 @@
+{"n": 10, "fw": 100.0, "fh": 26.0, "ax": 0.0, "ay": 23.0, "fps": 14, "origin": "left = dash start; flames ignite along the dash path (+x) in sequence then burn out; ground decal strip, draw BEFORE the creature", "layers": "draw BEFORE the struck creature"}

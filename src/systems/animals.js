@@ -4,6 +4,7 @@ import { mkCanvas, HOOK } from '../gfx.js';
 import { STONE_FILTER } from './petgun.js';
 import { ART } from '../art.js';
 import { FPS, loopFrame, phase, waterDraw } from '../anim.js';
+import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 import { keyHint, isTouchUI } from '../hud.js';
 import { thirst, drawThirsty } from './thirst.js';   /* 2026-10-11 anh: thú thấy nước chỉ uống, không xuống */   /* polish 2026-10-10: cảm ứng → Ⓐ / ☰ thay E / Esc */
 
@@ -892,7 +893,7 @@ export const animals = {
       if (a.stoneT) { out.push({ y: a.y, f: () => { g.save(); g.filter = STONE_FILTER; g.drawImage(img, dx, dy); g.restore(); } }); continue; }   /* petgun.js: tượng đá = chính ảnh thú tô đá */
       if (a.kind === 'bird' && a.z > 1) {
         const bx = Math.round(a.x) - cx, by = Math.round(a.y) - cy, r = Math.max(2, 5 - a.z / 10);
-        out.push({ y: a.y - 1, f: () => { g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(bx, by, r, r * 0.5, 0, 0, 7); g.fill(); } });
+        out.push({ y: a.y - 1, f: () => { if (SHADOW.on) shadowFor(g, a.x, a.y, bx, by, 10, a.z); else { g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(bx, by, r, r * 0.5, 0, 0, 7); g.fill(); } } });   /* plan-66 */
         out.push({ y: 1e5 + a.y, f: () => g.drawImage(img, dx, dy) });
       } else if (a.kind === 'fish') {
         // keep the silhouette inside the water: never let it spill onto the beach
@@ -904,7 +905,7 @@ export const animals = {
         if (ctx.getG(map, tx, ty + 1) !== W) fy2 = Math.min(fy2, (ty + 1) * TILE - img.height - cy);
         out.push({ y: a.y - 200, f: () => g.drawImage(img, fx2, fy2) });
       } else {
-        out.push({ y: a.y, f: () => waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => drawThirsty(g, img, dx, dy, a)) });   /* thú lội nước vẽ ngập; đang uống → cúi đầu (thirst.js) */
+        out.push({ y: a.y, f: () => { if (SHADOW.on) shadowFor(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy + 1, Math.max(8, Math.round(img.width * 0.7)), a.z || 0); waterDraw(g, a.x, a.y, Math.round(a.x) - cx, Math.round(a.y) - cy, () => drawThirsty(g, img, dx, dy, a)); } });   /* plan-66: thú đất có bóng */   /* thú lội nước vẽ ngập; đang uống → cúi đầu (thirst.js) */
       }
     }
     // plan-9: đồ mang theo (tay / xô / lồng / xe) vẽ tập trung cho mọi module

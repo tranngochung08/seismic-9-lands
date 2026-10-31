@@ -18,7 +18,7 @@ const STR = {
     crystalPages: n => [`${n}: 'You have met all fifteen of us. The Core has watched you cross every land — and it has heard why.'`,
       "'This crystal holds the light of the Core. Down in the trench there is no sun. Let it burn for Lyron. Bring him home — the whole community is waiting.'"],
     crystalGot: '🔮 The fifteen Leaders entrust you with the Great Crystal',
-    allThree: 'You have all three — dive at the pier of the Sea of Origins',
+    allThree: 'You have all three — dive under the pier of the Sea of Origins and swim down to the Kraken\'s Lair',
     dive: 'Dive into the Kraken Trench',
     divePage: 'The bell is heavy on your shoulders. The map points straight down, under the pier.', rockyWith: n => `The Rocky of ${n} wades into the sea behind you.`,
     rockyNone: 'No Rocky trusts you yet — the Kraken will be merciless.', ready: 'Ready?', diveHint: 'E  dive  ·  Esc  not yet', later: 'The sea can wait a little longer.',
@@ -27,7 +27,7 @@ const STR = {
       "'Every artist in Seismic is a little bit of this village. Take this — the only card of me there will ever be.'"],
     lyronPages: ["Lyron: 'The lanterns are for you, you know. The whole village hung them the night we came back.'",
       "Lyron: 'Seismic was never about me. It is every artist who washed up on this shore and decided to stay.'",
-      "Lyron: 'Next time we go to sea, I row. Deal?'"],
+      "Lyron: 'Next time we go to sea, I row. Deal?'", "Lyron: 'Rocky is growing so fast. Let it get even stronger, okay? I still need… I mean, the whole village still needs it.'"],
     cardGot: '🖼 Unique art card: Lyron', scarfGiven: "🧣 Noxx gives you Lyron's scarf"
   },
   vi: {
@@ -40,7 +40,7 @@ const STR = {
     crystalPages: n => [`${n}: 'Bạn đã gặp đủ mười lăm người chúng tôi. Lõi đã dõi theo bạn qua từng vùng đất — và đã nghe vì sao.'`,
       "'Tinh thể này giữ ánh sáng của Lõi. Dưới vực không có mặt trời. Hãy để nó cháy vì Lyron. Đưa cậu ấy về — cả cộng đồng đang đợi.'"],
     crystalGot: '🔮 Mười lăm Leader trao bạn Đại tinh thể',
-    allThree: 'Đủ ba thứ rồi — ra cầu tàu Biển Khởi Nguồn mà lặn',
+    allThree: 'Đủ ba thứ rồi — lặn qua khu nước dưới cầu tàu Biển Khởi Nguồn tới Hang Ổ Kraken',
     dive: 'Lặn xuống Vực Kraken',
     divePage: 'Chuông nặng trĩu trên vai. Bản đồ chỉ thẳng xuống, ngay dưới cầu tàu.', rockyWith: n => `Rocky của ${n} lội biển theo sau bạn.`,
     rockyNone: 'Chưa Rocky nào tin bạn — Kraken sẽ không nương tay.', ready: 'Sẵn sàng chưa?', diveHint: 'E  lặn  ·  Esc  để sau', later: 'Biển còn đợi được thêm chút nữa.',
@@ -49,7 +49,7 @@ const STR = {
       "'Mỗi nghệ sĩ trong Seismic đều mang một chút ngôi làng này. Cầm lấy — tấm thẻ duy nhất về mình từng có.'"],
     lyronPages: ["Lyron: 'Đèn lồng là cho bạn đấy. Cả làng treo lên cái đêm bọn mình về.'",
       "Lyron: 'Seismic chưa bao giờ là về mình. Nó là mọi nghệ sĩ từng dạt vào bờ này và quyết định ở lại.'",
-      "Lyron: 'Lần sau ra biển, mình chèo. Chịu không?'"],
+      "Lyron: 'Lần sau ra biển, mình chèo. Chịu không?'", "Lyron: 'Rocky lớn nhanh thật đấy. Cứ để nó mạnh thêm nữa nhé — mình còn cần… à không, cả làng còn cần nó.'"],
     cardGot: '🖼 Thẻ tranh độc nhất: Lyron', scarfGiven: '🧣 Noxx trao bạn chiếc khăn của Lyron'
   }
 };
@@ -93,23 +93,7 @@ function askCrystal(ctx, npc) {
 }
 
 // ---------------------------------------------------------------- the pier dive (sea zone, act ≥ 3)
-function bestRocky(ctx) {
-  const tamed = (ctx.S.save.sys.rocky || {}).tamed || {}; let best = null;
-  for (const [k, v] of Object.entries(tamed)) if (v > 0 && (!best || v > best.v)) best = { k, v };
-  return best ? best.k : null;
-}
-function askDive(ctx) {
-  const t = L(ctx), rk = bestRocky(ctx);
-  if (!st.ask) {                                                          // own mode: E = dive, Esc = not yet (a plain dialog could not be cancelled)
-    st.ask = true;
-    ctx.onAction('diveask', () => { if (ctx.S.mode !== 'diveask' || performance.now() - st.askT < 350) return; hideDlg(); ctx.setMode('play'); ctx.sfx('splash'); ctx.travel('trench', 'default'); });
-    ctx.registerCloser('diveask', () => { hideDlg(); ctx.setMode('play'); ctx.toast(L(ctx).later); });
-  }
-  st.askT = performance.now();
-  ctx.setMode('diveask');
-  ctx.openDialog({ title: '🌊', pages: [`${t.divePage}\n${rk ? t.rockyWith(ctx.nationName(rk)) : t.rockyNone}\n${t.ready}`], onClose: null });
-  const h = document.getElementById('d-hint'); if (h) h.textContent = t.diveHint;
-}
+/* 2026-10-15: bỏ bestRocky / askDive (lặn chuông xuống Vực Kraken cốt truyện) — bản cũ ở _bak/kstory/src/systems/story_land.js */
 const dockPx = m => ({ x: m.dock.x * TS + 8, y: m.dock.y * TS + 8 });
 // the water tiles flanking the pier end (bubble columns rise there, not over the planks)
 function bubbleSpots(ctx) {
@@ -117,7 +101,7 @@ function bubbleSpots(ctx) {
   for (const dir of [-1, 1]) for (let k = 1; k <= 5; k++) { const x = m.dock.x + dir * k; if (water(x, m.dock.y)) { out.push({ x, y: m.dock.y }); break; } }
   return out.length ? out : [{ x: m.dock.x, y: m.dock.y - 1 }];
 }
-const diveOffer = ctx => { const S = ctx.S, s = story(ctx); return !!(s && s.act >= 3 && S.map && S.map.sea && S.map.dock && S.sea && S.sea.riding === null && !S.sea.diving); };
+const diveOffer = ctx => { const S = ctx.S, s = story(ctx); return !!(s && s.act === 3 && !s.rescued && S.map && S.map.sea && S.map.dock && S.sea && S.sea.riding === null && !S.sea.diving); };
 
 // ---------------------------------------------------------------- Lyron in the village (act 4)
 function drawLyron(ctx, g, ent) {
@@ -180,7 +164,7 @@ export const storyLand = {
     const S = ctx.S, s = story(ctx); if (!s || !S.map || !S.zone) return;
     if (S.zone.id === 'village') {
       keepsake(ctx);
-      if (s.rescued) { spawnLyron(ctx); hangLanterns(ctx); }
+      if (s.rescued) { const ly = (S.save.sys || {}).lyron, bk = (S.save.sys || {}).bakunawa; if (!(ly && ly.stage) && !(bk && bk.wins > 0)) spawnLyron(ctx); hangLanterns(ctx); }   /* 2026-10-15: sau khi hạ Rết Lyron lộ mặt phản diện (đợi ở cầu tàu / đã bị phong ấn) → không còn sống hiền ở Làng */
     }
   },
 
@@ -208,10 +192,7 @@ export const storyLand = {
       for (const n of S.npcs) { if (!n.m || !ctx.isLeader(n.m)) continue; const dd = dist(n.x, n.y); if (dd < bd) { bd = dd; best = { label: t.askCrystal, x: n.x, y: n.y, limit: 22, priority: 2, data: { kind: 'crystal', npc: n } }; } }
       return best;
     }
-    if (z === 'sea' && diveOffer(ctx)) {
-      const d = dockPx(m);
-      return dist(d.x, d.y) < 48 ? { label: t.dive, x: d.x, y: d.y, limit: 48, priority: 3, data: { kind: 'dive' } } : null;
-    }
+    /* 2026-10-15: bỏ lối 'Lặn xuống Vực Kraken' ở đầu cầu tàu — giờ lặn bằng vòng xoáy của underwater.js, qua 4 tầng tới Hang Ổ Kraken (krstory.js) */
     if (z === 'village' && st.lyron && S.npcs.includes(st.lyron)) {
       const n = st.lyron;
       return dist(n.x, n.y) < 22 ? { label: t.talk, x: n.x, y: n.y, limit: 22, priority: 2, data: { kind: 'lyron' } } : null;
@@ -224,7 +205,6 @@ export const storyLand = {
     if (k === 'bell') forgeBell(ctx);
     else if (k === 'map') askMap(ctx);
     else if (k === 'crystal') askCrystal(ctx, cand.data.npc);
-    else if (k === 'dive') askDive(ctx);
     else if (k === 'lyron') talkLyron(ctx);
   },
 

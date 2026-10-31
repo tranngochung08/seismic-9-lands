@@ -57,14 +57,29 @@ function pxNode(n) {
 const cleanC = t => (typeof t === 'string' && hasEmo(t) ? t.replace(EMO, e => (KEEP.has(e.replace(/️/g, '')) ? e : '')).replace(/\s{2,}/g, ' ').trim() : t);
 function patchCanvas() {
   const P = CanvasRenderingContext2D.prototype; if (P.__px) return; P.__px = true;
-  for (const k of ['fillText', 'strokeText', 'measureText']) { const f = P[k]; P[k] = function (t, ...a) { return f.call(this, cleanC(t), ...a); }; }
+  for (const k of ['fillText', 'strokeText', 'measureText']) { const f = P[k]; P[k] = function (t, a, b, c) { const n = arguments.length; return n <= 1 ? f.call(this, cleanC(t)) : n === 3 ? f.call(this, cleanC(t), a, b) : f.call(this, cleanC(t), a, b, c); }; }   /* plan-37: không rest-args (mỗi chữ vẽ = 1 mảng rác) */
 }
 let pxQ = false;
 export function watchPixel() {
-  const run = () => { pxQ = false; if (!ICON && !deps) return; for (const r of document.querySelectorAll('.ov:not([hidden]), #menu:not([hidden])')) pxNode(r); };
+  const run = () => { pxQ = false; if (!ICON && !deps) return; for (const r of document.querySelectorAll('.ov:not([hidden]), #menu:not([hidden])')) pxNode(r); earnTip(); };
   new MutationObserver(() => { if (!pxQ) { pxQ = true; requestAnimationFrame(run); } }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
 }
 const strip = s => String(s).replace(EMO, '').replace(/\s{2,}/g, ' ').trim();
+/* plan-44 Q3: thẻ Mua nhanh (menu.js) khi thiếu đá cho món rẻ nhất chưa có → 1 dòng 'cách kiếm đá' ngay dưới dòng giới thiệu. Chèn qua DOM (menu.js thuộc đợt khác). */
+const EARN = {
+  vi: '💡 Kiếm đá 🪨: đào mỏ tím (tay không, 3 nhát = 2 🪨) · chặt cây rồi bán gỗ ở Thương nhân (1 🪨/gỗ) · gặp nghệ sĩ mới · đánh quái nhỏ ở bãi cỏ hai bên đèo. Đá bán ra rơi xuống đất — nhớ nhặt.',
+  en: '💡 Earn stones 🪨: mine purple veins (bare hands, 3 hits = 2 🪨) · chop trees and sell wood at the Trader (1 🪨/wood) · meet new artists · fight the little monsters beside the passes. Sold stones drop on the ground — pick them up.',
+};
+function earnTip() {
+  const menu = document.getElementById('menu'); if (!menu || menu.hidden || !deps || !deps.S.save) return;
+  const rows = menu.querySelectorAll('.shoprow'); if (!rows.length) return;
+  const stone = (deps.S.save.inv && deps.S.save.inv.stone) || 0, cheapest = Math.min(...[...rows].map(r => { const m = /(\d+)\s*(?:<img[^>]*stone|🪨)/.exec(r.innerHTML); return m ? +m[1] : Infinity; }));
+  const old = menu.querySelector('.p44-earn'), need = stone < Math.max(30, Number.isFinite(cheapest) ? cheapest : 30);
+  if (!need) { if (old) old.remove(); return; }
+  if (old) return;
+  const hint = menu.querySelector('.mhint'); if (!hint) return;
+  const p = document.createElement('p'); p.className = 'mhint p44-earn'; p.innerHTML = pxText(EARN[document.documentElement.lang === 'vi' ? 'vi' : 'en']); hint.insertAdjacentElement('afterend', p);
+}
 
 function el(tag, id, parent) { const e = document.createElement(tag); if (id) e.id = id; (parent || root).appendChild(e); return e; }
 export function initHud(d) {
@@ -73,7 +88,7 @@ export function initHud(d) {
   const clock = el('div', 'px-clock'); clock.innerHTML = '<div class="pc-date"></div><div class="pc-time"></div>';
   el('div', 'px-money').innerHTML = '<img class="pxi" src="assets/px/ui/items/stone.png" alt=""><b>0</b>';
   el('div', 'px-status');
-  el('div', 'px-notes');
+  el('div', 'px-notes').addEventListener('pointerdown', noteClick);   /* plan-44 Q4: × đóng / chạm mở hết */
   el('div', 'px-banner').hidden = true;
   el('div', 'px-label').hidden = true;
   watchPixel(); patchCanvas();
@@ -83,14 +98,25 @@ export function notify(text, big) {
   if (!root) return false;
   if (big) { const b = root.querySelector('#px-banner'); b.innerHTML = pxText(text); b.hidden = false; bannerT = 2.2; return true; }
   const m = /^\+(\d+)\s*(.+)$/.exec(String(text).trim());   /* gộp "+N món" cùng loại */
-  if (m) { const key = strip(m[2]); const old = notes.find(n => n.key === key); if (old) { old.n += +m[1]; old.t = 3; old.html = pxText(`+${old.n} ${m[2]}`); render(); return true; } notes.push({ key, n: +m[1], t: 3, html: pxText(text) }); }
-  else { const key = strip(text); const old = notes.find(n => n.key === key); if (old) old.t = 3; else notes.push({ key, t: 3, html: pxText(text) }); }
+  const T = noteTime(text);   /* plan-44 Q4: câu dài ở lâu hơn (đọc kịp) */
+  if (m) { const key = strip(m[2]); const old = notes.find(n => n.key === key); if (old) { old.n += +m[1]; old.t = T; old.html = pxText(`+${old.n} ${m[2]}`); render(); return true; } notes.push({ id: ++noteId, key, n: +m[1], t: T, html: pxText(text) }); }
+  else { const key = strip(text); const old = notes.find(n => n.key === key); if (old) old.t = Math.max(old.t, T); else notes.push({ id: ++noteId, key, t: T, html: pxText(text), long: strip(text).length > 56 }); }
   while (notes.length > 4) notes.shift();
   render(); return true;
 }
-function render() {
-  const box = root.querySelector('#px-notes');
-  box.innerHTML = notes.map(n => `<div class="pn" style="opacity:${Math.min(1, n.t / 0.6).toFixed(2)}">${n.html}</div>`).join('');
+let notesHTML = null, noteId = 0;
+const noteTime = text => 3 + Math.min(7, Math.max(0, strip(text).length - 40) / 18);   /* plan-44 Q4: 3 s + ~1 s mỗi 18 ký tự quá 40 (tối đa 10 s) */
+function render() {   /* plan-37: chỉ ghi DOM khi nội dung đổi (trước: innerHTML mỗi khung khi có thông báo) */
+  const touch = isTouchUI();   /* plan-44 Q4 + M1: chữ xuống dòng (CSS); điện thoại tối đa 2 dòng — chạm để mở hết; nút × (điện thoại: mọi thông báo, máy tính: câu dài) */
+  const html = notes.map(n => `<div class="pn${n.long ? ' long' : ''}${n.open ? ' open' : ''}" data-id="${n.id}" style="opacity:${Math.min(1, n.t / 0.6).toFixed(1)}"><span class="pn-t">${n.html}</span>${touch || n.long ? '<button type="button" class="pn-x" aria-label="close">×</button>' : ''}</div>`).join('');
+  if (html === notesHTML) return; notesHTML = html;
+  root.querySelector('#px-notes').innerHTML = html;
+}
+function noteClick(e) {
+  const pn = e.target.closest('.pn'); if (!pn) return; const n = notes.find(q => String(q.id) === pn.dataset.id); if (!n) return;
+  e.preventDefault(); e.stopPropagation();
+  if (e.target.closest('.pn-x')) notes = notes.filter(q => q !== n); else { n.open = !n.open; n.t = Math.max(n.t, 6); }
+  render();
 }
 /* ---- trạng thái (thay dòng HUD dài): mỗi dòng hudLines → 1 icon chip, rê chuột xem đủ ---- */
 export function setStatus(lines) {
@@ -108,26 +134,51 @@ function behind(S) {
   const hit = pts.some(([x, y]) => { const sx = r.left + (x - C.cam.cx) * k, sy = r.top + (y - C.cam.cy) * k; return box.some(b => sx > b.left - 8 && sx < b.right + 8 && sy > b.top - 8 && sy < b.bottom + 8); });
   root.classList.toggle('behind', hit);
 }
+/* ---- 2026-10-15 (tác nhân HUD): điện thoại — chip trạng thái nằm ngay dưới tên vùng / nhiệm vụ (.hud-tl), thông báo (điện thoại dọc) ngay dưới chip.
+   Đo 2 lần / giây, chỉ ghi style khi đổi. Máy tính: giữ CSS (chip dưới đồng hồ). ---- */
+let lyT = 0;
+function layoutInfo() {
+  const now = performance.now(); if (now - lyT < 500) return; lyT = now;
+  const st = root.querySelector('#px-status'), nt = root.querySelector('#px-notes'); if (!st || !nt) return;
+  if (!matchMedia('(pointer:coarse)').matches) { if (st.style.top) st.style.top = ''; if (nt.style.top) nt.style.top = ''; return; }
+  const tl = document.querySelector('#hud .hud-tl'), rr = root.getBoundingClientRect(), q = tl && tl.getBoundingClientRect();
+  const y = q && q.height ? Math.round(q.bottom - rr.top + 6) : 10, ty = y + 'px'; if (st.style.top !== ty) st.style.top = ty;
+  const por = matchMedia('(orientation:portrait) and (max-width:640px)').matches, lan = !por && matchMedia('(orientation:landscape) and (max-height:500px)').matches;   /* ngang: thông báo cũng về cột trái dưới chip (trước nằm giữa màn) */
+  if (por || lan) { const ny = Math.max(por ? 178 : 0, Math.round(y + st.offsetHeight + 6)) + 'px'; if (nt.style.top !== ny) nt.style.top = ny; }
+  else if (nt.style.top) nt.style.top = '';
+}
 /* ---- nhãn hành động ---- */
 export function setLabel(text, sx, sy) {
   const lb = root.querySelector('#px-label');
   if (!text) { if (!lb.hidden) lb.hidden = true; sig.lb = ''; return; }
   if (sig.lb !== text) { sig.lb = text; lb.innerHTML = pxText(text); }
-  lb.hidden = false; lb.style.left = Math.round(sx) + 'px'; lb.style.top = Math.round(sy) + 'px';
+  if (lb.hidden) lb.hidden = false; const L = Math.round(sx), T = Math.round(sy); if (sig.lbx !== L) { sig.lbx = L; lb.style.left = L + 'px'; } if (sig.lby !== T) { sig.lby = T; lb.style.top = T + 'px'; }   /* plan-37: chỉ ghi style khi đổi */
 }
 export function tick(dt) {
   if (!root || !deps.S.save) return;
   const S = deps.S, play = S.mode === 'play';
   if (document.body.dataset.mode !== S.mode) document.body.dataset.mode = S.mode;   /* plan-25 B5: CSS điện thoại theo chế độ (câu cá → ẩn D-pad) */
-  root.hidden = !(S.map && (play || S.mode === 'menu' || S.mode === 'dialog' || S.mode === 'chat'));   /* plan-27: ô chat Rocky không làm tắt HUD */
+  { const hid = !(S.map && (play || S.mode === 'menu' || S.mode === 'dialog' || S.mode === 'chat' || S.mode === 'sleepask' || S.mode === 'roadlost')); if (root.hidden !== hid) root.hidden = hid; }   /* plan-42 A6: chỉ ghi khi đổi (ghi trùng vẫn bắn MutationObserver) */   /* plan-27: ô chat Rocky không làm tắt HUD */
   if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) root.querySelector('#px-banner').hidden = true; }
-  if (notes.length) { for (const n of notes) n.t -= dt; const before = notes.length; notes = notes.filter(n => n.t > 0); render(); if (notes.length !== before) render(); }
+  if (notes.length) { for (const n of notes) n.t -= dt; notes = notes.filter(n => n.t > 0); render(); }
   const ck = document.getElementById('h-clock'); const txt = ck ? ck.textContent : '';   /* đồng hồ cũ (clock.js) làm nguồn chữ, ẩn bằng CSS */
   if (txt !== sig.ck) { sig.ck = txt; const m = /(\d{1,2}:\d{2}\s*(?:[AaPp][Mm])?)\s*$/.exec(txt.trim()), t = m ? m[1] : '', d = (m ? txt.trim().slice(0, m.index) : txt).replace(/[·\s]+$/, '').trim(); root.querySelector('.pc-date').textContent = d; root.querySelector('.pc-time').textContent = t; }   /* giờ = 'hh:mm' cuối chuỗi, còn lại là mùa · ngày */
-  behind(S);
+  behind(S); layoutInfo(); night45(S);
   const st = (S.save.inv && S.save.inv.stone) || 0; if (st !== sig.st2) { sig.st2 = st; root.querySelector('#px-money b').textContent = st; }
 }
 
+/* plan-45 BD2: ban đêm (từ 19:00, clock.isNight) mặt đồng hồ HUD đổi sang ảnh trăng PixelLab (ui/hud/clock_night.png, CSS #px-clock.night) — đổi 1 lần, không nhấp nháy.
+   plan-45 D12: đang đánh trùm (S.bossFight của Rết, hoặc trùm còn sống ≤ 320 px) → body.p45-boss: CSS ẩn máy đo địa chấn #seis, rút gọn tên vùng. Kiểm 4 lần / giây. */
+let n45T = 0;
+const BOSS45 = mo => !!(mo && mo.c && (mo.c.boss || mo.c.hrBoss || mo.c.tdBoss || mo.c.gmBoss || mo.c.hdBoss || mo.c.dhBoss || mo.c.bkBoss || mo.c.lyBoss || mo.c.chaseBoss || mo.c.ai === 'kraken'));
+function night45(S) {
+  const now = performance.now(); if (now - n45T < 250) return; n45T = now;
+  const C = deps.CTX, ck = root.querySelector('#px-clock'), nt = !!(C && C.clock && S.save && S.save.clock && C.clock.isNight());
+  if (ck && ck.classList.contains('night') !== nt) ck.classList.toggle('night', nt);
+  let boss = !!S.bossFight;
+  if (!boss && C && C.monsters && C.monsters.list && S.player) { try { for (const mo of C.monsters.list()) if (BOSS45(mo) && mo.hp > 0 && mo.state !== 'dead' && Math.hypot(mo.x - S.player.x, mo.y - S.player.y) < 320) { boss = true; break; } } catch (e) { /* bỏ qua */ } }
+  if (document.body.classList.contains('p45-boss') !== boss) document.body.classList.toggle('p45-boss', boss);
+}
 /* ---- phím T: ném thú trên đầu bay vòng cung vào ô trống của thanh công cụ (anh yêu cầu 2026-10-10: hiệu ứng ấn tượng, toàn pixel) ----
    icon PixelLab của con thú xoay 2 vòng + vệt bóng mờ dần; tới nơi: ô nảy + viền vàng nháy, chùm 'item_pickup_pop' + 'crop_sparkle' (sheet VFX PixelLab). */
 function sheetBurst(name, x, y, size, delay = 0) {

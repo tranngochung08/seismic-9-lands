@@ -297,7 +297,7 @@ function recipeRow(ctx, r) {
   return `<div class="hrow">
     <span style="font-size:19px;width:22px;text-align:center">${r.icon}</span>
     <span class="hwho"><b>${esc(rName(ctx, r))}</b>${extra}
-      <div style="margin-top:3px;line-height:1.7">${inputsHTML(ctx, r)}</div>
+      ${st === 'owned' ? '' : `<div style="margin-top:3px;line-height:1.7">${inputsHTML(ctx, r)}</div>`}
       ${note ? `<div class="dim tiny" style="margin-top:2px">${esc(note)}</div>` : ''}</span>
     ${right}</div>`;
 }
@@ -450,7 +450,8 @@ export const crafting = {
     for (const s of ST.list) {
       if (!map.objects.includes(s.o)) continue;
       const x = s.o.x * TS + 16, y = (s.o.y + 1) * TS - 4, d = Math.hypot(x - p.x, y - p.y);
-      if (d < 30 && d < bd) { bd = d; best = { label: t.st[s.key], x, y, limit: 30, data: s }; }
+      const v = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir & 3], fr = d < 1 || ((x - p.x) * v[0] + (y - p.y) * v[1]) / d > 0.3;   /* plan-43 K1 / B3: bàn ở phía mặt nhìn → ưu tiên (thắng Vườn Tượng Đá, Rocky) */
+      if (d < 30 && d < bd) { bd = d; best = { label: t.st[s.key], x, y, limit: 30, ...(fr ? { priority: 1.2 } : {}), data: s }; }
     }
     return best;
   },

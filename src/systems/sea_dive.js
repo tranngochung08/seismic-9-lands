@@ -307,6 +307,14 @@ function castTarget(ctx) {
   if (isWaterT(ctx, bx + dx, by + dy)) { bx += dx; by += dy; }
   return { bx, by, x: bx * TILE + 8, y: by * TILE + 8 };
 }
+function shoreTarget(ctx) {   /* plan-43 B1: đứng trên ô KHÔNG phải nước, ô trước mặt là nước (lấy ô xa thứ 2 nếu cũng là nước) */
+  const p = ctx.S.player, ptx = tileOf(p.x), pty = tileOf(p.y - 2);
+  if (isWaterT(ctx, ptx, pty)) return null;
+  const [dx, dy] = DIRV[p.dir & 3]; let bx = ptx + dx, by = pty + dy;
+  if (!isWaterT(ctx, bx, by)) return null;
+  if (isWaterT(ctx, bx + dx, by + dy)) { bx += dx; by += dy; }
+  return { bx, by, x: bx * TILE + 8, y: by * TILE + 8 };
+}
 function startCast(ctx, t) {
   const S = L(ctx);
   const d = densityAt(t.bx, t.by), luck = 0.7 + Math.random() * 0.6;
@@ -422,7 +430,7 @@ export const seaDive = {
     const out = [], g = ctx.g, VW = ctx.VW, VH = ctx.VH;
     const onScreen = (x, y, m = 40) => x - cx > -m && y - cy > -m && x - cx < VW + m && y - cy < VH + m;
     // fish schools: shadows under the surface (drawn beneath everything)
-    for (const s of schools) {
+    if (!(ctx.ART && ctx.ART.waterNew)) for (const s of schools) {   /* plan-68: cá vẽ ở water.js */
       if (!onScreen(s.x, s.y, 60)) continue;
       for (const f of s.fish) {
         const wx = s.x + f.ox + Math.sin(now * 1.3 + f.ph) * 3, wy = s.y + f.oy + Math.cos(now * 1.1 + f.ph) * 2;
@@ -524,7 +532,12 @@ export const seaDive = {
     if (!seaOK(ctx) || fishing) return null;
     const S = L(ctx), p = ctx.S.player;
     if (dive) return { label: S.surface, x: p.x, y: p.y, limit: 40, priority: true, data: { surface: true } };
-    if (!onRaft(ctx)) return null;
+    if (!onRaft(ctx)) {   /* plan-43 B1 (anh duyệt 2026-10-16): đứng trên cát / cầu tàu, mặt nhìn ra nước → câu cá như trên bè (trước đây chỉ câu được từ bè) */
+      const sea = ctx.S.sea; if (sea.riding || sea.diving || ctx.S.swimming) return null;
+      const t = shoreTarget(ctx); if (!t || !hasRod(ctx)) return null;
+      if (ctx.holding && !ctx.holding('rod')) { const mt = ctx.mouseTile && ctx.mouseTile(); if (mt && ctx.needHold && isWaterT(ctx, mt.tx, mt.ty) && Math.hypot(mt.wx - p.x, mt.wy - p.y) < 56) return { label: ctx.needHold('rod'), x: mt.wx, y: mt.wy, limit: 60, mouse: true, cursor: 'tool', need: true, needId: 'rod', data: { need: true } }; return null; }
+      return { label: S.cast, x: t.x, y: t.y, limit: 44, priority: 1.2, mouse: false, data: { cast: t, shore: true } };
+    }
     const here = tileAt(ctx, p.x, p.y - 2);
     // priority 0.5: beats the raft's own "patch/sail" prompts (same spot, no priority) but still loses to its "Step off" (priority 1)
     if (here === ctx.T.REEF) return { label: S.dive, x: p.x, y: p.y, limit: 40, priority: 0.5, data: { dive: true } };
@@ -542,6 +555,7 @@ export const seaDive = {
     if (d.surface) { surface(ctx, 'ok'); return; }
     if (d.dive) { if (onRaft(ctx)) startDive(ctx); return; }
     if (d.hint) { ctx.toast(L(ctx).needRod); return; }
+    if (d.cast && d.shore) { if (!ctx.S.sea.riding && !ctx.S.sea.diving) { if (!seaCast(ctx, d.cast, densityAt(d.cast.bx, d.cast.by))) startCast(ctx, d.cast); } return; }   /* plan-43 B1 */
     if (d.cast) { if (onRaft(ctx)) { if (!seaCast(ctx, d.cast, densityAt(d.cast.bx, d.cast.by))) startCast(ctx, d.cast); } }   /* 2026-10-10: câu từ bè = luồng câu trên bờ (animals.js) */
   },
 

@@ -1,0 +1,145 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "fly_streaks",
+ "fps": 12,
+ "frame_ms": 83,
+ "frames": 8,
+ "loop": true,
+ "canvas": {
+  "w": 108,
+  "h": 49
+ },
+ "anchor": {
+  "kind": "feet",
+  "x": 77,
+  "y": 39
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 102,
+    "h": 43
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -74,
+    "y": -36
+   }
+  },
+  {
+   "name": "whole-with-sprite",
+   "title": "the whole effect with the sprite in it",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 102,
+    "h": 43
+   },
+   "sheets": [
+    {
+     "file": "whole-with-sprite.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -74,
+    "y": -36
+   }
+  },
+  {
+   "name": "behind",
+   "title": "everything behind the sprite",
+   "depth": "behind",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 94,
+    "h": 41
+   },
+   "sheets": [
+    {
+     "file": "behind.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -71,
+    "y": -34
+   }
+  },
+  {
+   "name": "front",
+   "title": "everything in front of the sprite",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 102,
+    "h": 35
+   },
+   "sheets": [
+    {
+     "file": "front.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -74,
+    "y": -36
+   }
+  },
+  {
+   "name": "part-speed_lines",
+   "title": "the speed lines part",
+   "part": "speed_lines",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 102,
+    "h": 43
+   },
+   "sheets": [
+    {
+     "file": "part-speed_lines.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -74,
+    "y": -36
+   }
+  }
+ ]
+}
