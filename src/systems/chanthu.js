@@ -4,7 +4,7 @@
 //  · Trong trận: máu thú hoang ≤ 30 % → nút / phím Ấn Thu (linhduel.js). Bắt được → đội (≤ 6) hoặc kho; hụt → nó chạy, lát sau mới hiện lại.
 //  · Lưu: save.sys.chanthu = { v, starter, team: [{ id, sp, lv, name }], box: [...], anThu, nextId, caught } — save cũ không có trường → coi như chưa chọn con nào.
 //  · Ấn Thu mua ở quầy Thương nhân (market.js gọi ctx.chanthuShopRow / chanthuShopBind).
-import { SPECIES, TYPE_NAME, TYPE_COLOR, RARITY_NAME } from './duel-data.js';
+import { SPECIES, TYPE_NAME, TYPE_COLOR, RARITY_NAME, SPECIES_EN, TYPE_EN } from './duel-data.js';
 import { T, O } from '../gfx.js';
 import { SHADOW, shadowAt, shadowFor } from './shadow.js';   /* plan-66: bóng dưới chân (ảnh PixelLab flyshadow, co + nhạt theo độ cao) */
 
@@ -15,23 +15,25 @@ const STARTER_LV = 20, GIFT = 3, PRICE = 25, TEAM_MAX = 6, TEAM_SIZE = { '3v3': 
 const WILD = { m1: ['bachkinh', 'vitbao'], m2: ['cuoitho', 'loiho'], m3: ['diepnhan', 'cuoitho'], m4: ['golem', 'tinhmieu'], m5: ['golem', 'vitbao'],
   m6: ['tinhmieu', 'cuoitho'], m7: ['rongdo', 'golem'], m8: ['tuyetky', 'banhbao'], m9: ['loiho', 'banhbao'] };
 const RESPAWN = { fled: 40, beaten: 60, caught: 90 };   /* giây (giờ thật) trước khi con khác hiện lại chỗ đó */
-const SPEED = { s: 22, m: 17, l: 13 };
+const SPEED = { xs: 26, s: 22, m: 17, l: 13 };   /* p72: bậc Tí (linh thú) */
 const FPS = { idle: 8, run: 14 };
-const SHW = { s: 10, m: 14, l: 20 };   /* plan-66: bề ngang bóng theo bậc cỡ */
+const SHW = { xs: 9, s: 10, m: 14, l: 20 };   /* plan-66: bề ngang bóng theo bậc cỡ */
 const STR = {
   vi: { pick: '◉ Chọn Chấn Thú khởi đầu', team: '◉ Đội Chấn Thú', pickT: 'Chọn Chấn Thú khởi đầu', pickLead: 'Chọn 1 con đi cùng bạn. Đặt tên được (đổi lại sau ở đây).',
     name: 'Tên', ok: '✓ Chọn', later: 'Để sau', close: 'Đóng', save: '✓ Lưu', lead: 'Ra trận', isLead: '★ Ra đầu', box: 'Kho', empty: 'trống', order: 'Thứ tự ra trận: ▲▼ để xếp · 1–3 đánh 3v3 · 1–6 đánh 6v6', up: 'Lên', down: 'Xuống',
     got: (n, k) => `${n} đã về đội! Nhận ${k} Ấn Thu.`, wildL: (n, lv) => `⚔ ${n} hoang Lv${lv}`, noStarter: 'Chưa có Chấn Thú — về Làng chọn con khởi đầu (3 Ấn Chấn cạnh lối vào).',
     caught: (n, w) => `Đã bắt ${n}! → ${w === 'team' ? 'vào đội' : 'vào kho'}`, balls: n => `Ấn Thu ×${n}`, anthu: 'Ấn Thu', anthuNote: 'ném khi thú hoang còn ≤ 30 % máu', poor: 'Không đủ đá Seismic',
-    bought: 'Đã mua 1 Ấn Thu', size: { s: 'Nhỏ', m: 'Vừa', l: 'To' } },
-  en: { pick: '◉ Choose your first Chấn Thú', team: '◉ Chấn Thú team', pickT: 'Choose your first Chấn Thú', pickLead: 'Pick one partner. You can name it (rename here later).',
+    bought: 'Đã mua 1 Ấn Thu', size: { xs: 'Tí', s: 'Nhỏ', m: 'Vừa', l: 'To' } },
+  en: { pick: '◉ Choose your first beast', team: '◉ Beast team', pickT: 'Choose your first beast', pickLead: 'Pick one partner. You can name it (rename here later).',
     name: 'Name', ok: '✓ Choose', later: 'Later', close: 'Close', save: '✓ Save', lead: 'Lead', isLead: '★ Leads', box: 'Storage', empty: 'empty', order: 'Battle order: ▲▼ to sort · 1–3 fight 3v3 · 1–6 fight 6v6', up: 'Up', down: 'Down',
     got: (n, k) => `${n} joined your team! Got ${k} Seal Stones.`, wildL: (n, lv) => `⚔ Wild ${n} Lv${lv}`, noStarter: 'No Chấn Thú yet — go back to the Village and pick a starter (3 orbs by the entrance).',
     caught: (n, w) => `Caught ${n}! → ${w === 'team' ? 'team' : 'storage'}`, balls: n => `Seal Stone ×${n}`, anthu: 'Seal Stone', anthuNote: 'throw when a wild one is at ≤ 30 % HP', poor: 'Not enough Seismic stones',
-    bought: 'Bought 1 Seal Stone', size: { s: 'Small', m: 'Medium', l: 'Large' } },
+    bought: 'Bought 1 Seal Stone', size: { xs: 'Tiny', s: 'Small', m: 'Medium', l: 'Large' } },
 };
 const L = ctx => STR[ctx.lang() === 'en' ? 'en' : 'vi'];
-const spN = sp => (SPECIES[sp] ? SPECIES[sp].name : sp);
+const enL = () => !!(ST && ST.ctx && ST.ctx.lang && ST.ctx.lang() === 'en');   /* p74: tên tiếng Anh khi lang=en */
+const spN = sp => (enL() && SPECIES_EN[sp]) || (SPECIES[sp] ? SPECIES[sp].name : sp);
+const nmOf = m => (m.name && !(SPECIES[m.sp] && m.name === SPECIES[m.sp].name) ? m.name : spN(m.sp));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* ---------- save ---------- */
@@ -83,8 +85,20 @@ function dryOK(ctx, m, tx, ty) { if (tx < 1 || ty < 1 || tx >= m.w - 1 || ty >= 
 function walkPx(ctx, x, y) { const m = ctx.S.map; return dryOK(ctx, m, Math.floor(x / 16), Math.floor(y / 16)); }
 function openAt(ctx, m, tx, ty) { for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if (!dryOK(ctx, m, tx + i, ty + j)) return false; return true; }
 function zoneLv(id) { const n = +String(id).slice(1) || 1; return 12 + n + (n > 5 ? n - 5 : 0); }   /* M1 13 … M5 17 … M9 25 */
+/* p110m: 4 Chấn Thú mới gặp / bắt được ở Làng mới, đặt theo HỆ của loài (anh 02/11): Moyaki + Oa Lì cạnh suối / ao, Molandak trên cao nguyên đồi, Chog đồng cỏ.
+   HIẾM: mỗi lần vào Làng mỗi loài ~50 % có mặt (đổi theo khung 10 phút). Không phải thủ lĩnh (thủ lĩnh do farm106). Loài chưa có trong SPECIES thì bỏ qua. */
+const V110 = [['molandak', 'hill'], ['chog', 'meadow'], ['moyaki', 'water'], ['oali', 'water']];
+function spawnVillage110(ctx) {
+  const m = ctx.S.map, T = ctx.T, R = rng(hash('village:110:' + Math.floor(Date.now() / 600000)));
+  const wet = (tx, ty) => { for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) { const g = ctx.getG(m, tx + i, ty + j); if (g === T.WATER || g === T.DEEP) return true; } return false; };
+  const kind = (tx, ty) => (wet(tx, ty) ? 'water' : ty < 44 && tx <= 61 ? 'hill' : 'meadow');
+  V110.forEach(([sp, want], i) => { if (!SPECIES[sp] || R() > 0.5) return; let at = null;
+    for (let k = 0; k < 4000 && !at; k++) { const tx = 4 + Math.floor(R() * (m.w - 8)), ty = 4 + Math.floor(R() * (m.h - 8)); if (!openAt(ctx, m, tx, ty) || kind(tx, ty) !== want) continue; if (Math.hypot(tx - 80, ty - 62) < 16) continue; if (ST.wild.some(w => Math.hypot(w.hx - (tx * 16 + 8), w.hy - (ty * 16 + 12)) < 160)) continue; at = { x: tx * 16 + 8, y: ty * 16 + 12 }; }
+    if (!at) return; ST.wild.push({ key: 'village:110:' + i, sp, lv: 14 + i, x: at.x, y: at.y, hx: at.x, hy: at.y, fx: 0, fy: 1, ct: R() * 2, wait: 1 + R() * 2, goal: null, moving: false, tier: SPECIES[sp].size || 'm' }); });
+  if (typeof window !== 'undefined') window.__v110wild = () => ST.wild.filter(w => /village:110/.test(w.key)).map(w => ({ sp: w.sp, x: Math.round(w.x), y: Math.round(w.y) }));
+}
 function spawnWild(ctx) {
-  ST.wild = []; const z = ctx.S.zone.id, list = WILD[z]; if (!list) return; const m = ctx.S.map, e = (m.entries && m.entries.default) || { x: m.w >> 1, y: m.h >> 1 }, R = rng(hash(z + ':ct'));
+  ST.wild = []; const z = ctx.S.zone.id; if (z === 'village') { spawnVillage110(ctx); return; } const list = WILD[z]; if (!list) return;   /* p110m: Làng mới có thú hoang mới theo hệ */ const m = ctx.S.map, e = (m.entries && m.entries.default) || { x: m.w >> 1, y: m.h >> 1 }, R = rng(hash(z + ':ct'));
   list.forEach((sp, i) => {
     if (!SPECIES[sp]) return; let at = null;
     for (let k = 0; k < 600 && !at; k++) { const d = 7 + R() * 16, a = R() * Math.PI * 2, tx = Math.round(e.x + Math.cos(a) * d), ty = Math.round(e.y + Math.sin(a) * d * 0.8);
@@ -106,18 +120,21 @@ function updWild(ctx, w, dt) {
   if (!walkPx(ctx, nx, ny)) { w.goal = null; w.moving = false; w.wait = 0.8; return; }
   w.x = nx; w.y = ny; w.moving = true;
 }
+const inDuel = (ctx, w) => !!(ctx.duel && ctx.duel.wildKey && ctx.duel.wildKey() === w.key);   /* p79: đang đấu tại chỗ với con này → ẩn bản trên map (không hiện 2 con) */
 function fightWild(ctx, w) {
-  if (!hasStarter(ctx)) { ctx.toast(L(ctx).noStarter); return; }
+  const LT0 = ctx.ltDuelTeam ? ctx.ltDuelTeam() : [];   /* p72: có linh thú đấu được thì cũng đánh thú hoang được */
+  if (!hasStarter(ctx) && !LT0.length) { ctx.toast(ctx.S.save && ctx.S.save.flags && ctx.S.save.flags.p120new ? (ctx.lang() === 'en' ? 'No Quake Beast yet — talk to Noxx in the Village square to pick one.' : 'Chưa có Chấn Thú — gặp Noxx ở quảng trường Làng để chọn 1 con.') : L(ctx).noStarter); return; }
   if (!ctx.duel || !ctx.duel.start || ctx.duel.active()) return;
-  const d = ensure(ctx), me = d.team[0], key = w.key, sp = w.sp, lv = w.lv, t = L(ctx);
-  ctx.duel.start({ wild: { sp, lv, key, ...(w.rare ? { rarity: 'hiem', rare: w.rare } : {}) }, mode: '1v1', lv: me.lv, team: [{ sp: me.sp, lv: me.lv, name: me.name }], foeTeam: [{ sp, lv }],
+  if (ctx.comp79 && !ctx.comp79.out()) { ctx.comp79.need(); return; }   /* p79: thả Chấn Thú ra trước rồi mới đấu */
+  const d = ensure(ctx), me = (ctx.comp79 && ctx.comp79.out() && d.team[0]) || (ctx.duelLead && ctx.duelLead()) || d.team[0], key = w.key, sp = w.sp, lv = w.lv, t = L(ctx);
+  ctx.duel.start({ wildAt: { x: w.x, y: w.y }, wild: { sp, lv, key, ...(w.rare ? { rarity: 'hiem', rare: w.rare } : {}) }, mode: '1v1', lv: me.lv, team: [{ sp: me.sp, lv: me.lv, name: me.name, lt: me.lt || null }], foeTeam: [{ sp, lv }],
     onCatch: () => { const where = addMon(ctx, sp, lv); const dd = ensure(ctx); dd.caught++; ctx.persist(); markGone(key, 'caught'); try { ctx.toast(t.caught(spN(sp), where)); } catch (e) { } return where; },
     onWin: () => markGone(key, 'beaten'), onFlee: () => markGone(key, 'fled'), onLose: () => { } });
 }
 
 /* ---------- bệ Ấn Chấn ở Làng ---------- */
 function placePad(ctx) {
-  ST.pad = null; if (ctx.S.zone.id !== 'village') return; const m = ctx.S.map, e = m.entries && m.entries.default; if (!e) return;
+  ST.pad = null; if (ctx.S.zone.id !== 'village') return; if (ctx.S.save && ctx.S.save.flags && ctx.S.save.flags.p120new) return;   /* p120: người mới chọn Chấn Thú ở Noxx — không có bệ 3 Ấn Chấn (save cũ giữ bệ) */ const m = ctx.S.map, e = m.entries && m.entries.default; if (!e) return;
   const clear = (tx, ty) => { for (let j = -2; j <= 3; j++) for (let i = -2; i <= 2; i++) if (!dryOK(ctx, m, tx + i, ty + j)) return false; return true; };   /* thoáng 5×6 ô: không cây / vật cao phía dưới che 3 viên */
   let best = null; for (let dy = -9; dy <= 2; dy++) for (let dx = -8; dx <= 8; dx++) { if (Math.abs(dx) < 2) continue; const tx = e.x + dx, ty = e.y + dy, d = Math.hypot(dx, dy * 1.2); if ((!best || d < best.d) && clear(tx, ty)) best = { tx, ty, d }; }   /* không chắn lối đi giữa */
   if (best) ST.pad = { x: best.tx * 16 + 8, y: best.ty * 16 + 12 };
@@ -146,7 +163,7 @@ function css() {
   document.head.appendChild(s);
 }
 const port = sp => (SPR && SPR._port && SPR._port[sp]) ? BASE + SPR._port[sp] : BASE + 'linhduel/ui/port_' + sp + '.png';
-const chip = (ctx, sp) => { const t = SPECIES[sp].types[0]; return `<span class="chip" style="background:${TYPE_COLOR[t]}"><img src="${BASE}linhduel/ui/icon_${t}.png" alt="">${TYPE_NAME[t]}</span>`; };
+const chip = (ctx, sp) => { const t = SPECIES[sp].types[0]; return `<span class="chip" style="background:${TYPE_COLOR[t]}"><img src="${BASE}linhduel/ui/icon_${t}.png" alt="">${(enL() ? TYPE_EN : TYPE_NAME)[t]}</span>`; };
 function panelEl() { css(); let el = document.getElementById('ct-panel'); if (!el) { el = document.createElement('div'); el.id = 'ct-panel'; document.body.appendChild(el); } el.hidden = false; return el; }
 function closePanel(ctx) { const el = document.getElementById('ct-panel'); if (el) el.hidden = true; ST.panel = null; if (ctx.S.mode === 'ctpick') ctx.setMode('play'); }
 function openPick(ctx) {
@@ -170,16 +187,16 @@ function choose(ctx, sp, name) {
 }
 function openTeam(ctx) {
   const t = L(ctx), d = ensure(ctx), el = panelEl(); ST.panel = 'team';
-  const n = d.team.length, row = (m, i) => `<div class="tm"><b class="no${i < 3 ? ' n3' : ''}">${i + 1}</b><img class="p" src="${port(m.sp)}" alt=""><div class="i"><input data-id="${m.id}" maxlength="14" value="${esc(m.name || spN(m.sp))}"><small>${esc(spN(m.sp))} · Lv${m.lv} ${chip(ctx, m.sp)}</small></div>`
+  const n = d.team.length, row = (m, i) => `<div class="tm"><b class="no${i < 3 ? ' n3' : ''}">${i + 1}</b><img class="p" src="${port(m.sp)}" alt=""><div class="i"><input data-id="${m.id}" maxlength="14" value="${esc(nmOf(m))}"><small>${esc(spN(m.sp))} · Lv${m.lv} ${chip(ctx, m.sp)}</small></div>`
     + `<span class="ud"><button data-mv="${i}" data-d="-1" title="${t.up}"${i === 0 ? ' disabled' : ''}>▲</button><button data-mv="${i}" data-d="1" title="${t.down}"${i === n - 1 ? ' disabled' : ''}>▼</button></span><button data-lead="${i}"${i === 0 ? ' disabled' : ''}>${i === 0 ? t.isLead : t.lead}</button></div>`;   /* p52d: ▲▼ xếp thứ tự ra trận (3v3 lấy 1–3, 6v6 lấy 1–6) */
-  el.innerHTML = `<h3>${t.team.replace('◉ ', '')}</h3><p>${t.balls(d.anThu)}</p>${n > 1 ? `<p class="ord">${t.order}</p>` : ''}${d.team.map(row).join('')}
-    <div class="bx">${t.box}: ${d.box.length ? d.box.map(m => esc(m.name || spN(m.sp)) + ' Lv' + m.lv).join(' · ') : t.empty}</div>
+  el.innerHTML = `<h3>${t.team.replace('◉ ', '')}</h3><p>${t.balls(d.anThu)}</p>${ctx.fieldct ? `<div class="r" style="margin:0 0 6px"><button class="b" data-a="tn">${ctx.lang() === 'en' ? '✦ Potential' : '✦ Tiềm Năng'}</button>${ctx.kho78 ? `<button class="b" data-a="sap">${ctx.lang() === 'en' ? '⚙ Moves' : '⚙ Sắp Chiêu'}</button>` : ''}</div>` : ''}${n > 1 ? `<p class="ord">${t.order}</p>` : ''}${d.team.map(row).join('')}
+    <div class="bx">${t.box}: ${d.box.length ? d.box.map(m => esc(nmOf(m)) + ' Lv' + m.lv).join(' · ') : t.empty}</div>
     <div class="r"><button class="b" data-a="save">${t.save}</button><button class="b" data-a="no">${t.close}</button></div>`;
   const saveNames = () => { for (const inp of el.querySelectorAll('input[data-id]')) { const m = d.team.find(q => q.id === +inp.dataset.id); if (m) m.name = inp.value.trim().slice(0, 14) || spN(m.sp); } ctx.persist(); };
   el.onclick = e => {
     const ld = e.target.closest('button[data-lead]'); if (ld) { saveNames(); const i = +ld.dataset.lead; const [m] = d.team.splice(i, 1); d.team.unshift(m); ctx.persist(); openTeam(ctx); return; }
     const mv = e.target.closest('button[data-mv]'); if (mv) { saveNames(); moveMon(ctx, +mv.dataset.mv, +mv.dataset.d); openTeam(ctx); return; }
-    const b = e.target.closest('button.b'); if (!b) return; if (b.dataset.a === 'save') saveNames(); closePanel(ctx);
+    const b = e.target.closest('button.b'); if (!b) return; if (b.dataset.a === 'sap') { saveNames(); closePanel(ctx); ctx.kho78.openSap(); return; }   /* p78: Sắp Chiêu */ if (b.dataset.a === 'tn') { saveNames(); closePanel(ctx); ctx.fieldct.openTN(); return; }   /* p74: bảng Tiềm Năng (fieldct.js) */ if (b.dataset.a === 'save') saveNames(); closePanel(ctx);
   };
   ctx.setMode('ctpick'); ctx.registerCloser('ctpick', () => closePanel(ctx));
 }
@@ -194,11 +211,17 @@ function moveMon(ctx, i, dir) { const d = ensure(ctx), j = i + dir; if (i < 0 ||
    Loài: chỉ dùng loài đã có sprite trận (Bóng Lẻ / Đom Sáng hệ Ảnh / Quang trong duel-data chưa có ảnh). Test: ctx.chanthu.setWx({ night: true }) hoặc URL ?wx=night|dawn|rain|storm. */
 const RARE = { storm: ['loiho'], rain: ['bachkinh'], dawn: ['banhbao'], night: ['cuoitho', 'tinhmieu'] };
 const RARE_ORDER = ['storm', 'rain', 'dawn', 'night'];
+const RARE_Z100 = { m6: { sang: ['chog'] } };   /* p100: Chog (Mã, Hiếm) ở M6 Thành Nghiêng, giờ bản tin sáng 6–10 h */
+const sangNow100 = ctx => { const c = ctx.clock, sv = ctx.S.save; if (ST.wxForce) return !ST.wxForce.night; if (!(c && sv && sv.clock)) return false; const t = c.hour + c.minute / 60; return t >= 6 && t < 10; };
+const RARE_Z99 = { m1: { ven: ['moyaki'] } };   /* p99: Moyaki (Triều, Hiếm) ở M1 Bãi Bồi Yên, ban ngày, ven nước */
+const dayNow99 = ctx => { const c = ctx.clock, sv = ctx.S.save; if (ST.wxForce) return !ST.wxForce.night && !ST.wxForce.dawn; if (!(c && sv && sv.clock)) return true; const t = c.hour + c.minute / 60; return t >= 7 && t < 18; };
+function nearWater99(ctx, m, tx, ty) { for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) { const x = tx + i, y = ty + j; if (x < 0 || y < 0 || x >= m.w || y >= m.h) continue; const t = ctx.getG(m, x, y); if (t === T.WATER || t === T.DEEP || t === T.REEF) return true; } return false; }
+const RARE_Z = { m4: { day: ['molandak'] } };   /* p96: Molandak (Chấn, Hiếm) ở M4 Mỏ Đá Lở lúc trời quang ban ngày */
 const RARE_RESPAWN = { fled: 90, beaten: 240, caught: 600 };
 const RARE_ICON = 'ui/zmap/rare.png';
 const RSTR = {
-  vi: { night: 'đêm', dawn: 'bình minh', rain: 'mưa', storm: 'bão sét', appear: (n, k) => `✦ ${n} HIẾM xuất hiện (${k}) · bản đồ M`, pin: (n, k) => `${n} hiếm (${k})`, leave: n => `${n} hiếm đã bỏ đi`, wildL: (n, lv) => `⚔ ${n} HIẾM Lv${lv}` },
-  en: { night: 'night', dawn: 'dawn', rain: 'rain', storm: 'thunderstorm', appear: (n, k) => `✦ RARE ${n} appeared (${k}) · map M`, pin: (n, k) => `Rare ${n} (${k})`, leave: n => `The rare ${n} has left`, wildL: (n, lv) => `⚔ RARE ${n} Lv${lv}` },
+  vi: { day: 'ban ngày', sang: 'bản tin sáng', night: 'đêm', dawn: 'bình minh', rain: 'mưa', storm: 'bão sét', ven: 'ven nước', appear: (n, k) => `✦ ${n} HIẾM xuất hiện (${k}) · bản đồ M`, pin: (n, k) => `${n} hiếm (${k})`, leave: n => `${n} hiếm đã bỏ đi`, wildL: (n, lv) => `⚔ ${n} HIẾM Lv${lv}` },
+  en: { day: 'daytime', sang: 'morning news', night: 'night', dawn: 'dawn', rain: 'rain', storm: 'thunderstorm', ven: 'by the water', appear: (n, k) => `✦ RARE ${n} appeared (${k}) · map M`, pin: (n, k) => `Rare ${n} (${k})`, leave: n => `The rare ${n} has left`, wildL: (n, lv) => `⚔ RARE ${n} Lv${lv}` },
 };
 const RL = ctx => RSTR[ctx.lang() === 'en' ? 'en' : 'vi'];
 function wxNow(ctx) {
@@ -233,7 +256,7 @@ function rareSpot(ctx, offOK) {
   const m = ctx.S.map, p = ctx.S.player, c = ctx.cam, VW = ctx.VW || 320, VH = ctx.VH || 200, tall = VH > VW * 1.1, cands = [], far = [], UR = uiRects(ctx);
   const nearGate = (x, y) => (m.gates || []).some(g => x > g.x * 16 - 40 && x < (g.x + g.w) * 16 + 40 && y > g.y * 16 - 24 && y < (g.y + g.h) * 16 + 56);   /* lối ra có nhãn tên vùng nổi phía trên → tránh */
   const underUI = (x, y) => UR.some(u => x + 14 > u.x0 && x - 14 < u.x1 && y + 3 > u.y0 && y - 44 < u.y1);   /* cả biểu tượng trên đầu */
-  const ok = (tx, ty) => { if (!openAt(ctx, m, tx, ty)) return null; const x = tx * 16 + 8, y = ty * 16 + 12; if (ST.wild.some(w => Math.hypot(w.x - x, w.y - y) < 64) || occluded(ctx, x, y) || underUI(x, y) || nearGate(x, y)) return null; return { x, y }; };
+  const ok = (tx, ty) => { if (!openAt(ctx, m, tx, ty)) return null; if (ST.rareNear99 && !nearWater99(ctx, m, tx, ty)) return null; const x = tx * 16 + 8, y = ty * 16 + 12; if (ST.wild.some(w => Math.hypot(w.x - x, w.y - y) < 64) || occluded(ctx, x, y) || underUI(x, y) || nearGate(x, y)) return null; return { x, y }; };
   const V = viewRect(ctx); if (V) { const H = V.y1 - V.y0, x0 = V.x0 + 20, x1 = V.x1 - 20, y0 = V.y0 + H * 0.12 + 34, y1 = V.y0 + H * 0.9;   /* HUD / thông báo đã loại bằng uiRects */
     for (let ty = Math.floor(y0 / 16); ty * 16 + 12 <= y1; ty++) for (let tx = Math.floor(x0 / 16); tx * 16 + 8 <= x1; tx++) { const d = Math.hypot(tx * 16 + 8 - p.x, ty * 16 + 12 - p.y); if (d < 56) continue; const q = ok(tx, ty); if (q) (d <= 160 ? cands : far).push(q); } }
   const pool = cands.length ? cands : far; if (pool.length) return pool[Math.floor(Math.random() * pool.length)]; if (!offOK) return null;   /* khung đang kín chữ / tán cây: chờ lần kiểm sau (mỗi 1 s, tối đa ~12 s) */
@@ -241,14 +264,19 @@ function rareSpot(ctx, offOK) {
   for (let k = 0; k < 500; k++) { const d = 4 + Math.random() * 6, a = Math.random() * Math.PI * 2, q = ok(Math.round(ptx + Math.cos(a) * d), Math.round(pty + Math.sin(a) * d * 0.8)); if (q) return q; }
   return null;
 }
+function pondNear(ctx, R) {   /* p97: có ô nước nông / sâu trong R ô quanh người chơi (ao, đầm, suối) */
+  const m = ctx.S.map, p = ctx.S.player; if (!m || !p) return false; const tx = Math.floor(p.x / 16), ty = Math.floor(p.y / 16);
+  for (let j = -R; j <= R; j++) for (let i = -R; i <= R; i++) { const x = tx + i, y = ty + j; if (x < 0 || y < 0 || x >= m.w || y >= m.h) continue; const t = ctx.getG(m, x, y); if (t === T.WATER || t === T.DEEP) return true; }
+  return false;
+}
 function rareTick(ctx) {
-  const z = ctx.S.zone.id; if (!WILD[z] || !ctx.S.player) return; const k = rareKind(ctx), p = ctx.S.player; let cur = ST.wild.find(w => w.rare);
+  const z = ctx.S.zone.id; if (!WILD[z] || !ctx.S.player) return; const k = rareKind(ctx) || (RARE_Z100[z] && RARE_Z100[z].sang && sangNow100(ctx) ? 'sang' : null) || (RARE_Z99[z] && RARE_Z99[z].ven && dayNow99(ctx) ? 'ven' : null) || (RARE_Z[z] && RARE_Z[z].day ? 'day' : null), p = ctx.S.player; let cur = ST.wild.find(w => w.rare);
   if (cur && cur.rare !== k) {   /* hết giờ / tạnh: bỏ đi (người chơi đang sát bên hay đang đấu thì chờ) */
     if (Math.hypot(p.x - cur.x, p.y - cur.y) < 48 || (ctx.duel && ctx.duel.active && ctx.duel.active())) return;
     ST.wild = ST.wild.filter(w => w !== cur); if (!goneNow(cur)) { try { ctx.toast(RL(ctx).leave(spN(cur.sp))); } catch (e) { } } ST.rareLog.push({ t: +(performance.now() / 1000).toFixed(1), z, ev: 'leave', sp: cur.sp, k: cur.rare }); cur = null;   /* điều kiện mới (vd đêm → bình minh) thì con mới hiện ngay */
   }
   if (cur || !k) return; const key = z + ':r:' + k; if ((ST.gone[key] || 0) > performance.now() / 1000) return;
-  const list = RARE[k], n = +String(z).slice(1) || 1, sp = list[n % list.length]; if (!SPECIES[sp]) return; const at = rareSpot(ctx, (ST.rareWait = (ST.rareWait || 0) + 1) > 12); if (!at) return; ST.rareWait = 0;
+  const list = (RARE_Z[z] && RARE_Z[z][k]) || (RARE_Z100[z] && RARE_Z100[z][k]) || (RARE_Z99[z] && RARE_Z99[z][k]) || RARE[k],   /* p116: sửa lỗi gộp p99/p100 — thiếu RARE_Z99 → 'ven' (Moyaki M1) lỗi list undefined mỗi khung */ n = +String(z).slice(1) || 1, sp = list[n % list.length]; if (!SPECIES[sp]) return; ST.rareNear99 = k === 'ven'; const at = rareSpot(ctx, (ST.rareWait = (ST.rareWait || 0) + 1) > 12); if (!at) return; ST.rareWait = 0;
   ST.wild.push({ key, sp, lv: zoneLv(z) + 3, rare: k, x: at.x, y: at.y, hx: at.x, hy: at.y, fx: 0, fy: 1, ct: Math.random() * 2, wait: 1.5, goal: null, moving: false, tier: SPECIES[sp].size || 'm' });
   ST.rareLog.push({ t: +(performance.now() / 1000).toFixed(1), z, ev: 'appear', sp, k }); const R0 = RL(ctx); try { ctx.toast(R0.appear(spN(sp), R0[k])); } catch (e) { }
 }
@@ -300,10 +328,10 @@ export const chanthu = {
     if (cand.data && cand.data.wild) fightWild(ctx, cand.data.wild);
   },
   key(code, ctx) { if (ST.panel && code === 'Escape') { closePanel(ctx); return true; } return false; },
-  update(dt, ctx) { if (ctx.S.mode !== 'play' && ctx.S.mode !== 'ctpick') return; for (const w of ST.wild) if (!goneNow(w)) updWild(ctx, w, Math.min(dt, 0.1)); if ((ST.rareT += dt) >= 1) { ST.rareT = 0; rareTick(ctx); } },
+  update(dt, ctx) { if (ctx.S.mode !== 'play' && ctx.S.mode !== 'ctpick') return; for (const w of ST.wild) if (!goneNow(w) && !inDuel(ctx, w)) updWild(ctx, w, Math.min(dt, 0.1)); if ((ST.rareT += dt) >= 1) { ST.rareT = 0; rareTick(ctx); } },
   drawables(ctx, cx, cy) {
     const g = ctx.g, out = [];
-    for (const w of ST.wild) if (!goneNow(w)) out.push({ y: w.y, f: () => { drawMon(g, w, cx, cy); if (w.rare) drawRareIcon(g, w, cx, cy); } });
+    for (const w of ST.wild) if (!goneNow(w) && !inDuel(ctx, w)) out.push({ y: w.y, f: () => { drawMon(g, w, cx, cy); if (w.rare) drawRareIcon(g, w, cx, cy); } });
     if (ST.pad) for (const o of padOrbs(ctx)) { const c = orbTinted(SPECIES[o.sp].types[0]); if (c) out.push({ y: o.y, f: () => g.drawImage(c, 0, 0, ORB.fw, ORB.fw, Math.round(o.x - cx - 8), Math.round(o.y - cy - 13), 16, 16) }); }   /* ảnh 32 px = 16 px logic (vẽ kèm cỡ đích) */
     return out;
   },

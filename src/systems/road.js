@@ -16,7 +16,7 @@ const vi = ctx => ctx.lang() === 'vi';
 const L = ctx => (vi(ctx) ? {
   block: n => `${n} chặn cổng đèo — bước vào sân để đấu!`, open: '🚪 Cổng đèo đã mở! Đường lên vùng trên thông rồi.', lost: 'Bạn bị đánh văng xuống chân đèo — đã hồi đầy máu. Thử lại nhé!',
   swordTip: '⚔ Chưa có kiếm thì khó thắng Ca Rô — bấm O (Mua nhanh) → Kiếm cấp I · 30 🪨. Thiếu đá: chặt cây, đào đá, đánh quái nhỏ ở bãi cỏ hai bên đèo.',
-  lostSword: '💡 Mẹo: mua Kiếm cấp I (bấm O · Mua nhanh · 30 🪨) rồi quay lại — kiếm đánh mạnh hơn rìu nhiều.',
+  lostSword: '💡 Mẹo: mua Kiếm cấp I (bấm O · Mua nhanh · 30 🪨) rồi quay lại — kiếm đánh mạnh hơn Búa Seismic nhiều.',
   toVillage: '🏘 Làng Xuất Phát — đi lên (phía Bắc) để vào làng',
   next: n => `Còn ${n}! Chuẩn bị…`, dare: n => `🥊 Thách đấu ${n} (thắng có thưởng)`, back: n => `${n} sẽ quay lại sau ít phút`, gateTip: 'Cổng đèo đóng — thắng bạn tập để mở',
   /* plan-44 D6 + C1 */ recTag: (lv, sw) => `⚔ Đề nghị cấp ${lv} · Kiếm ${sw}`, recText: (up, n, lv, sw, hl, hs) => `Đèo lên ${up}.\n${n} canh CỔNG ĐÈO phía trước — bước vào sân là vào trận.\nĐề nghị: cấp ${lv} · Kiếm cấp ${sw}.\nBạn đang: cấp ${hl} · Kiếm cấp ${hs || 0}${hl < lv || hs < sw ? ' — nên luyện thêm (đánh quái ở bãi cỏ hai bên đèo, nâng kiếm ở Mua nhanh).' : ' — đủ sức rồi!'}\nThua thì về chân đèo, hồi đầy máu, có nút Đấu lại.`,
@@ -24,7 +24,7 @@ const L = ctx => (vi(ctx) ? {
 } : {
   block: n => `${n} blocks the pass gate — step into the clearing to fight!`, open: '🚪 The pass gate is open! The way up is clear.', lost: 'You got knocked back down the pass — fully healed. Try again!',
   swordTip: '⚔ Without a sword, Checkers is hard to beat — press O (Quick buy) → Sword tier I · 30 🪨. Short on stones? Chop trees, mine rocks, fight the little monsters in the grass pockets beside the pass.',
-  lostSword: '💡 Tip: buy a Sword tier I (press O · Quick buy · 30 🪨) and come back — a sword hits far harder than an axe.',
+  lostSword: '💡 Tip: buy a Sword tier I (press O · Quick buy · 30 🪨) and come back — a sword hits far harder than the Seismic Hammer.',
   toVillage: '🏘 Harbor Village — walk up (north) into the village',
   next: n => `${n} is next! Get ready…`, dare: n => `🥊 Challenge ${n} (win for loot)`, back: n => `${n} will be back in a minute`, gateTip: 'The pass gate is shut — beat the partner to open it',
   recTag: (lv, sw) => `⚔ Suggested Lv ${lv} · Sword ${sw}`, recText: (up, n, lv, sw, hl, hs) => `Pass to ${up}.\n${n} guards the PASS GATE ahead — step into the clearing to fight.\nSuggested: Lv ${lv} · Sword tier ${sw}.\nYou: Lv ${hl} · Sword tier ${hs || 0}${hl < lv || hs < sw ? ' — train a bit more (monsters in the grass beside the pass, upgrade the sword in Quick buy).' : ' — you are ready!'}\nLose and you wake at the foot of the pass, healed, with a Rematch button.`,
@@ -34,8 +34,8 @@ const L = ctx => (vi(ctx) ? {
 const SWORD_SIGN = {
   tag: { vi: '⚔ Cần kiếm', en: '⚔ Sword needed' },
   text: {
-    vi: 'Đèo lên Bãi Bồi Yên.\nCa Rô canh CỔNG ĐÈO phía trước — bước vào sân là vào trận.\nCầm rìu thì rất khó thắng: hãy có KIẾM trước.\n• Bấm O (Mua nhanh) → Kiếm cấp I · 30 🪨 đá Seismic (điện thoại: Túi → thẻ Mua nhanh).\n• Thiếu đá? Chặt cây, đào đá ở Làng, hoặc đánh quái nhỏ ở bãi cỏ hai bên đèo để có đá và lên cấp.\nThua thì về chân đèo, hồi đầy máu — đánh lại bao nhiêu lần cũng được.',
-    en: 'Pass to the Calm Shoals.\nCheckers guards the PASS GATE ahead — step into the clearing to fight.\nWith just an axe it is very hard to win: get a SWORD first.\n• Press O (Quick buy) → Sword tier I · 30 🪨 Seismic stones (phones: Bag → Quick buy tab).\n• Short on stones? Chop trees, mine rocks in the village, or fight the little monsters in the grass pockets beside the pass to earn stones and level up.\nLose and you wake at the foot of the pass, fully healed — retry as often as you like.',
+    vi: 'Đèo lên Bãi Bồi Yên.\nCa Rô canh CỔNG ĐÈO phía trước — bước vào sân là vào trận.\nChỉ cầm Búa Seismic thì rất khó thắng: hãy có KIẾM trước.\n• Bấm O (Mua nhanh) → Kiếm cấp I · 30 🪨 đá Seismic (điện thoại: Túi → thẻ Mua nhanh).\n• Thiếu đá? Chặt cây, đào đá ở Làng, hoặc đánh quái nhỏ ở bãi cỏ hai bên đèo để có đá và lên cấp.\nThua thì về chân đèo, hồi đầy máu — đánh lại bao nhiêu lần cũng được.',
+    en: 'Pass to the Calm Shoals.\nCheckers guards the PASS GATE ahead — step into the clearing to fight.\nWith just the Seismic Hammer it is very hard to win: get a SWORD first.\n• Press O (Quick buy) → Sword tier I · 30 🪨 Seismic stones (phones: Bag → Quick buy tab).\n• Short on stones? Chop trees, mine rocks in the village, or fight the little monsters in the grass pockets beside the pass to earn stones and level up.\nLose and you wake at the foot of the pass, fully healed — retry as often as you like.',
   },
 };
 function sv(ctx) { const s = ctx.S.save; s.sys ||= {}; const r = (s.sys.road ||= {}); r.won ||= {}; r.beat ||= {}; r.cd ||= {}; r.balls ||= []; if (r.maxZ == null) r.maxZ = Math.max(0, ...(s.badges || [])); return r; }

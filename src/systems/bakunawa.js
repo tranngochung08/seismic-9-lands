@@ -1626,10 +1626,10 @@ export const bakunawa = {
         if (ob) { const os = rh * 0.62, ph = ST.beatF / 2 - Math.floor(ST.beatF / 2), past = ph * 2 * BEAT; for (let i = 0; i < 4; i++) { const tt = (i === 0 ? -past : (1 - ph) * 2 * BEAT + (i - 1) * 2 * BEAT); if (tt < -WIN * 1.5 || tt > span) continue; const ox = tm + tt / span * half; if (ox < tx0 || ox > tx1) continue; ug.globalAlpha = tt < 0 ? 0.4 : 1; ug.drawImage(ob, Math.round(ox - os / 2), Math.round(ty - os / 2), Math.round(os), Math.round(os)); ug.globalAlpha = 1; } }
         if (fb) ug.drawImage(fb, rx, ry, rw, rh); yb = ry + rh + 4;
       }
-      ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, scale); ug.restore();
+      ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale)); ug.restore();
     }
     if (ST.banner) {
-      const a = Math.min(1, ST.banner.t * 3), fs = Math.max(17, Math.min(W / 22, scale * 7)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
+      const a = Math.min(1, ST.banner.t * 3), fs = Math.max(17, Math.min(W / 22, (globalThis.__u89?globalThis.__u89(scale):scale) * 7)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
       let y = Math.max(Hh * 0.2, yb + fs * 0.9); const pb = typeof document !== 'undefined' && document.getElementById('px-banner'); if (pb && !pb.hidden) { const r = pb.getBoundingClientRect(); if (r.height > 0) y = Math.max(y, r.bottom * (W / innerWidth) + fs * 0.75); }   /* không đè dải đỏ thông báo lớn (Siêu Cấp Rocky…) — xếp xuống dưới */
       /* 2026-10-15 (bố cục HUD mới: cột phải đồng hồ → máu/Ki → thước độ cao kéo gần hết chiều cao điện thoại dọc): dải tên chiêu thu HẸP vào khoảng trống giữa các ô HUD 2 bên, chữ dài thì xuống 2 dòng — không còn chạy dưới thanh máu */
       const R = hudRects(ug); let x0 = 0, x1 = W; if (R.ok) for (const r of R.hit) { if (r.y1 < y - fs * 0.8 || r.y0 > y + fs * 1.9) continue; if ((r.x0 + r.x1) / 2 > W / 2) x1 = Math.min(x1, r.x0 - 6); else x0 = Math.max(x0, r.x1 + 6); }
@@ -1642,7 +1642,7 @@ export const bakunawa = {
       const fr = img('ui/bakunawa/mashbar.png'), bw = Math.min(W * 0.62, 340), bh = fr ? bw * fr.naturalHeight / fr.naturalWidth : bw * 0.16, bx = Math.round((W - bw) / 2), by = Math.round(Hh * 0.66), k = Math.min(1, G.mash / (G.cons ? CONS.need : GRAB.need)), pulse = G.shake > 0 ? 1 : 0;
       ug.save(); ug.imageSmoothingEnabled = false; const ix = bx + bw * 19 / 256, iy = by + bh * 17 / 64, iw = bw * 216 / 256, ih = bh * 30 / 64;   /* khe trong của khung PixelLab */ ug.fillStyle = '#1a0c22'; ug.fillRect(ix, iy, iw, ih);
       const gr = ug.createLinearGradient(0, iy, 0, iy + ih); gr.addColorStop(0, '#ffe8a0'); gr.addColorStop(1, '#d08a20'); ug.fillStyle = gr; ug.fillRect(ix, iy, iw * k, ih); if (fr) ug.drawImage(fr, bx, by, bw, bh); else { ug.strokeStyle = '#ffd860'; ug.lineWidth = 2; ug.strokeRect(ix - 2, iy - 2, iw + 4, ih + 4); }
-      const fs = Math.max(18, Math.min(W / 16, scale * 8)) * (1 + pulse * 0.08); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'bottom'; ug.fillStyle = '#000'; ug.fillText(t.mash, W / 2 + 2, by - 2); ug.fillStyle = '#fff0b0'; ug.fillText(t.mash, W / 2, by - 4);
+      const fs = Math.max(18, Math.min(W / 16, (globalThis.__u89?globalThis.__u89(scale):scale) * 8)) * (1 + pulse * 0.08); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'bottom'; ug.fillStyle = '#000'; ug.fillText(t.mash, W / 2 + 2, by - 2); ug.fillStyle = '#fff0b0'; ug.fillText(t.mash, W / 2, by - 4);
       ug.font = font(Math.max(13, fs * 0.6)); ug.textBaseline = 'top'; ug.fillStyle = '#e8eeff'; ug.fillText(G.cons ? t.consHint : t.carryTo(zname(ctx, G.dest.z)), W / 2, by + bh + 4); ug.restore(); }
   },
 };

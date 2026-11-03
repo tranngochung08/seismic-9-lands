@@ -21,8 +21,20 @@ export function loadSave() { try { const s = JSON.parse(localStorage.getItem(KEY
    Cùng ngày (đợt 3) anh bỏ thêm THÒNG LỌNG, XE CHỞ VẬT NUÔI, YÊN NGỰA, BẪY: gỡ cấp/dụng cụ/túi/thanh công cụ; bò/cừu trong xe chở → cũng chỉ 1 con
    trên tay (chung luật với thú nhỏ: tay bế đúng 1 con), còn lại vào túi ('a_cow', 'a_sheep'). */
 export const GONE_TOOLS = ['bucket', 'cage', 'cart', 'lasso', 'trap', 'saddle'];
+const MERGED80 = ['axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'torch'];
+export function mergeTools80(s) {   /* p80: gỡ Rìu / Cuốc / Xẻng / Liềm / Dao / Đuốc khỏi cấp / túi / thanh / bảng thứ tự; cấp Búa = cấp cao nhất cũ (chạy nhiều lần không sao) */
+  const tt = s.toolTier = s.toolTier || {}, tl = s.tools || null; let best = tt.bua || 0, any = best > 0;
+  for (const id of MERGED80) { const t = tt[id] || (tl && tl[id] ? 1 : 0); if (t > 0) { any = true; best = Math.max(best, t); } delete tt[id]; if (tl) delete tl[id]; if (s.inv) delete s.inv[id]; }
+  if (any) tt.bua = Math.max(1, best);
+  let put = Array.isArray(s.hotbar) && s.hotbar.includes('bua'); const rep = a => (Array.isArray(a) ? a.map(id => (MERGED80.includes(id) ? (put ? null : ((put = true), 'bua')) : id)) : a);
+  s.hotbar = rep(s.hotbar); if (Array.isArray(s.bagOrder)) { if (put) s.bagOrder = s.bagOrder.map(id => (id === 'bua' && s.hotbar.includes('bua') ? null : id)); s.bagOrder = rep(s.bagOrder); }
+  if (Array.isArray(s.hbSeen)) { s.hbSeen = s.hbSeen.filter(id => !MERGED80.includes(id)); if (any && !s.hbSeen.includes('bua')) s.hbSeen.push('bua'); }
+  if (MERGED80.includes(s.mHeld)) s.mHeld = 'bua';
+  return s;
+}
 export function dropBucket(s) {
   if (!s || typeof s !== 'object') return s;
+  mergeTools80(s);   /* p80: 6 dụng cụ → Búa Seismic */
   const gone = id => GONE_TOOLS.includes(id);
   for (const id of GONE_TOOLS) { if (s.toolTier) delete s.toolTier[id]; if (s.tools) delete s.tools[id]; if (s.inv) delete s.inv[id]; }
   if (Array.isArray(s.hotbar)) s.hotbar = s.hotbar.map(id => (gone(id) ? null : id));

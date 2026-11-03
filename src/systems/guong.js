@@ -1045,10 +1045,10 @@ export const guong = {
         const tip = ST.exposed > 0 ? t.exposedT(Math.ceil(ST.exposed)) : !shardsHome() ? t.shardsAway : t.order;
         ug.fillStyle = '#000'; ug.fillText(tip, tcx + 1, yb + 1, bw); ug.fillStyle = ST.exposed > 0 ? '#fff6c8' : '#e8dcff'; ug.fillText(tip, tcx, yb, bw); yb += fs2 + 4;
       }
-      ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, scale); ug.restore();
+      ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale)); ug.restore();
     }
     if (ST.banner) {
-      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, scale * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
+      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, (globalThis.__u89?globalThis.__u89(scale):scale) * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
       const y = Math.max(H * 0.24, yb + fs * 0.8); const tw = Math.min(W - 10, ug.measureText(ST.banner.txt).width + 24); ug.fillStyle = 'rgba(14,8,30,.7)'; ug.fillRect((W - tw) / 2, y - fs * 0.6, tw, fs * 1.2);
       ug.fillStyle = '#000'; ug.fillText(ST.banner.txt, W / 2 + 2, y + 2, W - 16); ug.fillStyle = '#efe6ff'; ug.fillText(ST.banner.txt, W / 2, y, W - 16); ug.restore();
     }

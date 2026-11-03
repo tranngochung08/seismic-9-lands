@@ -438,7 +438,7 @@ export const seaRaft = {
     if (!st.on || !ctx.S.sea) return;
     const p = ctx.S.player, m = ctx.S.map, W = ug.canvas.width;
     /* plan-44 D1: la bàn đặt ở chỗ TRỐNG cạnh khung đồng hồ (trước nằm đúng dưới khung đồng hồ DOM → bị che hẳn); kim chỉ MỤC TIÊU hiện tại của chuỗi biển (xoáy nước gần nhất → ván / sò / ẩn sĩ / hải lưu → bến) */
-    const r = Math.round(Math.max(22, Math.min(scale * 9, 40))), pos = compassPos(ug.canvas, r), ox = pos.x, oy = pos.y;
+    const r = Math.round(Math.max(22, Math.min((globalThis.__u89?globalThis.__u89(scale):scale) * 9, 40))), pos = compassPos(ug.canvas, r), ox = pos.x, oy = pos.y;
     const goal = compassGoal(ctx), dx = goal.x - p.x, dy = goal.y - p.y, dist = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
     ug.save();
     ug.fillStyle = 'rgba(13,11,20,.6)'; ug.beginPath(); ug.arc(ox, oy, r, 0, TAU); ug.fill();
@@ -456,8 +456,8 @@ export const seaRaft = {
       ug.lineTo(ox + Math.cos(a - Math.PI / 2) * 3, oy + Math.sin(a - Math.PI / 2) * 3);
       ug.closePath(); ug.fill();
       ug.fillStyle = '#f2ebe0'; ug.beginPath(); ug.arc(ox, oy, 2.5, 0, TAU); ug.fill();
-    } else { ug.font = `bold ${Math.max(12, Math.round(scale * 4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e'; ug.fillText('⌂', ox, oy + 1); }
-    { const fz = Math.max(13, Math.min(20, Math.round(scale * 2.8))), t = L(ctx), lines = [`${t.cmp[goal.k] || t.cmp.dock} · ${Math.round(dist / 16)}`];   /* chữ dưới la bàn: mục tiêu · số ô; D7: đang giữ thư kho báu → toạ độ ô của bạn */
+    } else { ug.font = `bold ${Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e'; ug.fillText('⌂', ox, oy + 1); }
+    { const fz = Math.max(13, Math.min(20, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.8))), t = L(ctx), lines = [`${t.cmp[goal.k] || t.cmp.dock} · ${Math.round(dist / 16)}`];   /* chữ dưới la bàn: mục tiêu · số ô; D7: đang giữ thư kho báu → toạ độ ô của bạn */
       if (ctx.S.sea.treasure) lines.push(`${t.you} (${Math.floor(p.x / 16)}, ${Math.floor(p.y / 16)})`);
       ug.font = `bold ${fz}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'top';
       lines.forEach((s, i) => { const tw = ug.measureText(s).width + 8, y = oy + r + 3 + i * (fz + 2); ug.fillStyle = 'rgba(13,11,20,.6)'; ug.fillRect(Math.round(ox - tw / 2), y - 1, Math.round(tw), fz + 2); ug.fillStyle = i ? '#9fe3ff' : '#f2ebe0'; ug.fillText(s, ox, y); }); }
@@ -465,7 +465,7 @@ export const seaRaft = {
     const c = st.caught;
     if (c) {
       const sx = Math.round((p.x - cx) * scale), sy = Math.round((p.y - 46 - cy) * scale), bw = Math.round(scale * 30), bh = Math.round(scale * 2.2);
-      ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
+      ug.font = `bold ${Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
       const label = L(ctx).escape, tw = ug.measureText(label).width + 10;
       ug.fillStyle = 'rgba(13,11,20,.7)'; ug.beginPath(); ug.roundRect(sx - tw / 2, sy - bh - 8 - Math.round(scale * 4) - 4, tw, Math.round(scale * 4) + 4, 4); ug.fill();
       ug.fillStyle = '#ff6b6b'; ug.fillText(label, sx, sy - bh - 8);

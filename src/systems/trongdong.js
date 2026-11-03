@@ -776,12 +776,12 @@ export const trongdong = {
       ug.save(); ug.imageSmoothingEnabled = false; if (fr) ug.drawImage(fr, bx, by, bw, bh); else { ug.fillStyle = '#0a0602'; ug.fillRect(ix, iy, iw, ih); }   /* khung có lòng tối đặc → vẽ khung trước, máu đè lên lòng */
       const gr = ug.createLinearGradient(0, iy, 0, iy + ih); gr.addColorStop(0, b.vuln > 0 ? '#fff6c8' : '#ffd45e'); gr.addColorStop(1, b.vuln > 0 ? '#e0a020' : '#a8641e'); ug.fillStyle = gr; ug.fillRect(ix, iy, iw * k, ih);
       ug.fillStyle = 'rgba(255,255,255,.18)'; ug.fillRect(ix, iy, iw * k, Math.max(1, ih * 0.22));
-      if (!isLh && b.phase === 1) { ug.fillStyle = 'rgba(255,255,255,.55)'; ug.fillRect(Math.round(ix + iw * 0.5), iy, Math.max(1, scale * 0.4), ih); }
+      if (!isLh && b.phase === 1) { ug.fillStyle = 'rgba(255,255,255,.55)'; ug.fillRect(Math.round(ix + iw * 0.5), iy, Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) * 0.4), ih); }
       const fs = Math.max(14, bh * 0.36); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'top';
       const nm = isLh ? (narrow ? `${t.lhName} · ${t.phase(2)}` : `${t.lhName} · ${t.lhSub} · ${t.phase(2)}`) : narrow ? `${t.name} · ${t.phase(1)}${b.vuln > 0 ? ' · ' + t.exposed : ''}` : `${t.name} · ${b.phase === 2 ? t.ph2 : t.ph1} · ${t.phase(1)}${b.vuln > 0 ? ' · ' + t.exposed : ''}`;   /* pha 1 = trống, pha 2 = Lạc Hầu */   /* điện thoại dọc: tên ngắn cho khỏi tràn */
       ug.fillStyle = '#000'; ug.fillText(nm, tcx + 1, by + bh + 1, bw); ug.fillStyle = b.vuln > 0 ? '#fff6c8' : '#ffe27a'; ug.fillText(nm, tcx, by + bh, bw);
       yb = by + bh + fs + 6;
-      if (isLh) { ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, scale); ug.restore(); }
+      if (isLh) { ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale)); ug.restore(); }
       else {
       /* thanh nhịp (khung PixelLab): ánh sáng chạy từ phải vào dấu ‹•› giữa thanh; tới dấu đúng lúc = đúng nhịp */
       const fb = img('ui/trongdong/beatbar.png'), ob = img('ui/trongdong/beat_orb.png'), rw = Math.min(bw * 0.9, 300), rh = rw * 48 / 256, rx = Math.round(tcx - rw / 2), ry = Math.round(yb);
@@ -793,12 +793,12 @@ export const trongdong = {
       if (fb) ug.drawImage(fb, rx, ry, rw, rh);
       const fs2 = Math.max(13, rh * 0.42); ug.font = font(fs2); ug.textBaseline = 'top'; const tip = b.vuln > 0 ? t.miss : t.bar(ST.combo, ST.mute ? Math.ceil(ST.mute.t) : 0);
       ug.fillStyle = '#000'; ug.fillText(tip, tcx + 1, ry + rh + 1, bw); ug.fillStyle = ST.mute ? '#ffb0b0' : '#f0e0b0'; ug.fillText(tip, tcx, ry + rh, bw);
-      yb = ry + rh + fs2 + 4; ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, scale);
+      yb = ry + rh + fs2 + 4; ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale));
       ug.restore();
       }
     }
     if (ST.banner) {
-      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, scale * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
+      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, (globalThis.__u89?globalThis.__u89(scale):scale) * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
       const y = Math.max(H * 0.24, yb + fs * 0.8); const tw = Math.min(W - 10, ug.measureText(ST.banner.txt).width + 24); ug.fillStyle = 'rgba(18,10,2,.68)'; ug.fillRect((W - tw) / 2, y - fs * 0.6, tw, fs * 1.2);
       ug.fillStyle = '#000'; ug.fillText(ST.banner.txt, W / 2 + 2, y + 2, W - 16); ug.fillStyle = '#ffe9a8'; ug.fillText(ST.banner.txt, W / 2, y, W - 16); ug.restore();
     }

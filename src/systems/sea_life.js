@@ -496,7 +496,7 @@ export const seaLife = {
 
   drawUI(ug, ctx, cx, cy, scale) {
     if (!ctx.S.map.sea) return;
-    const S = L(ctx), fs = Math.max(10, scale * 3), near = ctx.S.near && ctx.S.near.kind === 'sys' && ctx.S.near.cand && ctx.S.near.cand.data;
+    const S = L(ctx), fs = Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3), near = ctx.S.near && ctx.S.near.kind === 'sys' && ctx.S.near.cand && ctx.S.near.cand.data;
     ug.save();
     ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     const label = (text, x, y, color, mark) => {
@@ -514,12 +514,12 @@ export const seaLife = {
     if (race) {
       const bs = buoys(ctx), b = bs[race.i];
       if (b) label(S.buoyLbl(b.buoy), b.x * TILE + 8, b.y * TILE - 18, '#ffd45e', false);
-      const tf = Math.max(14, scale * 5), x0 = 16, y0 = Math.max(70, scale * 24);   // top-left, under the HUD (the toast owns the top centre)
+      const tf = Math.max(14, (globalThis.__u89?globalThis.__u89(scale):scale) * 5), x0 = 16, y0 = Math.max(70, (globalThis.__u89?globalThis.__u89(scale):scale) * 24);   // top-left, under the HUD (the toast owns the top centre)
       ug.font = `bold ${tf}px VT323, monospace`; ug.textBaseline = 'top'; ug.textAlign = 'left';
       const txt = `${race.t.toFixed(1)}s`, w = Math.max(ug.measureText(txt).width, tf * 3) + tf;
       ug.fillStyle = 'rgba(13,11,20,.75)'; ug.beginPath(); ug.roundRect(x0, y0, w, tf * 2, 8); ug.fill();
       ug.fillStyle = '#ffd45e'; ug.fillText(txt, x0 + tf * 0.5, y0 + tf * 0.15);
-      ug.font = `${Math.max(9, scale * 2.6)}px VT323, monospace`; ug.fillStyle = '#a79a86';
+      ug.font = `${Math.max(9, (globalThis.__u89?globalThis.__u89(scale):scale) * 2.6)}px VT323, monospace`; ug.fillStyle = '#a79a86';
       ug.fillText(`${S.timer} · ${race.i + 1}/${bs.length}`, x0 + tf * 0.5, y0 + tf * 1.25);
     }
     ug.restore();

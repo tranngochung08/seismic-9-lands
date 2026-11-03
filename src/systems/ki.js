@@ -30,14 +30,14 @@ const DASH_MIN = 46, DASH_MAX = 116, DASH_SP = 430, DASH_STOP = 20, DASH_FREE = 
 const STR = {
   vi: { auto: 'Ki: Tự động (tự lộn né + tự lướt)', manual: 'Ki: Tự bấm (Shift lộn · K / chuột phải lướt)', low: 'Chưa đủ Ki', cd: 'Đang hồi chiêu', tip: 'Ki — Nhào lộn né (2 nấc) · Lướt tới đánh (1 nấc)',
     perfect: 'Né hoàn hảo!', roll: 'Lộn', dash: 'Lướt',
-    tutPc: 'Ki (thanh xanh cạnh thanh máu): Shift = nhào lộn né (2 nấc) · K hoặc chuột phải = lướt tới đánh (1 nấc). Lộn đúng lúc đòn sắp chạm = Né hoàn hảo!',
-    tutAuto: 'Ki (thanh xanh cạnh thanh máu): đủ Ki là TỰ nhào lộn né đòn sắp trúng (2 nấc) và TỰ lướt tới chém khi đánh mục tiêu ở xa (1 nấc). Muốn tự bấm: ⚙ → Ki.',
-    tutTouch: 'Ki (thanh xanh cạnh thanh máu): nút Lộn = nhào lộn né (2 nấc) · nút Lướt = lướt tới đánh (1 nấc). Lộn đúng lúc đòn sắp chạm = Né hoàn hảo!' },
+    tutPc: 'Ki (7 ngọc xanh cạnh chân dung, giữa dưới): Shift = nhào lộn né (2 nấc) · K hoặc chuột phải = lướt tới đánh (1 nấc). Lộn đúng lúc đòn sắp chạm = Né hoàn hảo!',
+    tutAuto: 'Ki (7 ngọc xanh cạnh chân dung): đủ Ki là TỰ nhào lộn né đòn sắp trúng (2 nấc) và TỰ lướt tới chém khi đánh mục tiêu ở xa (1 nấc). Muốn tự bấm: ⚙ → Ki.',
+    tutTouch: 'Ki (7 ngọc xanh cạnh chân dung): nút Lộn = nhào lộn né (2 nấc) · nút Lướt = lướt tới đánh (1 nấc). Lộn đúng lúc đòn sắp chạm = Né hoàn hảo!' },
   en: { auto: 'Ki: Auto (auto dodge + dash)', manual: 'Ki: Manual (Shift roll · K / right-click dash)', low: 'Not enough Ki', cd: 'Cooling down', tip: 'Ki — Dodge roll (2) · Dash strike (1)',
     perfect: 'Perfect dodge!', roll: 'Roll', dash: 'Dash',
-    tutPc: 'Ki (green bar by your health): Shift = dodge roll (2) · K or right-click = dash strike (1). Roll right before a hit lands = Perfect dodge!',
-    tutAuto: 'Ki (green bar by your health): with enough Ki you AUTO-roll away from incoming hits (2) and AUTO-dash in when attacking a far target (1). Manual mode: ⚙ → Ki.',
-    tutTouch: 'Ki (green bar by your health): Roll button = dodge roll (2) · Dash button = dash strike (1). Roll right before a hit lands = Perfect dodge!' },
+    tutPc: 'Ki (7 green orbs by your portrait, bottom centre): Shift = dodge roll (2) · K or right-click = dash strike (1). Roll right before a hit lands = Perfect dodge!',
+    tutAuto: 'Ki (7 green orbs by your portrait): with enough Ki you AUTO-roll away from incoming hits (2) and AUTO-dash in when attacking a far target (1). Manual mode: ⚙ → Ki.',
+    tutTouch: 'Ki (7 green orbs by your portrait): Roll button = dodge roll (2) · Dash button = dash strike (1). Roll right before a hit lands = Perfect dodge!' },
 };
 const ST = { ki: MAX, cd: { roll: 0, dash: 0 }, ifr: 0, mv: null, ghosts: [], thr: new Map(), nid: 1, lastHitSeen: -99, dealtT: -99, takenT: -99,
   stillT: 0, bonusUntil: 0, log: [], el: null, sig: '', btns: null, flashT: 0, flashN: 0, ctx: null, shiftDown: 0, shiftDirty: false, slowUntil: 0, perfT: 0,
@@ -431,7 +431,7 @@ export const ki = {
       if (b.life <= 0) { ST.lastShot = ST.lastShot && ST.lastShot.t > now(ctx) - 0.5 ? ST.lastShot : { hit: false, t: +now(ctx).toFixed(2), miss: true }; ST.shots.splice(i, 1); if (b.id) ST.thr.delete(b.id); } }
     if (S.mode !== 'play') { renderBar(ctx); kiButtons(ctx); return; }
     /* lời chỉ dẫn 1 lần */
-    { const s = sv(ctx); if (!s.tut && (ST.tutT = (ST.tutT || 0) + dt) > 2.5) { s.tut = 1; ctx.toast(isAuto(ctx) ? L(ctx).tutAuto : touchUI() ? L(ctx).tutTouch : L(ctx).tutPc);   /* dòng nhỏ, 1 lần */ ctx.persist(); } }
+    { const s = sv(ctx); if (!s.tut && (ST.tutT = (ST.tutT || 0) + dt) > 2.5) { s.tut = 1; if (!globalThis.__np91Hint) ctx.toast(isAuto(ctx) ? L(ctx).tutAuto : touchUI() ? L(ctx).tutTouch : L(ctx).tutPc);   /* dòng nhỏ, 1 lần */ ctx.persist(); } }
     /* nạp Ki */
     const lh = ctx.monsters && ctx.monsters.lastHitT ? ctx.monsters.lastHitT() : -99;
     if (lh > ST.lastHitSeen) { ST.lastHitSeen = lh; ST.dealtT = now(ctx); gain(ctx, 1 / 3, 'hit'); }
@@ -481,7 +481,7 @@ export const ki = {
     if (!(ST.perfT > 0)) return; const p = p_(ctx), x = (p.x - cx) * scale, y = (p.y - 10 - cy) * scale, a = Math.min(1, Math.max(0, ST.perfT - 0.4) / 0.6), r = (14 + (1 - a) * 22) * scale;
     ug.save();
     if (a > 0 && !ST.perfW) { const gr = ug.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(220,255,230,${0.35 * a})`); gr.addColorStop(1, 'rgba(220,255,230,0)'); ug.fillStyle = gr; ug.beginPath(); ug.arc(x, y, r, 0, 7); ug.fill(); }
-    const fs = Math.max(12, Math.round(scale * 3.4)), ty = (p.y - 36 - (1 - ST.perfT) * 8 - cy) * scale, txt = ST.perfTxt || '';   /* chữ nhỏ bay lên trên đầu, mờ dần */
+    const fs = Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4)), ty = (p.y - 36 - (1 - ST.perfT) * 8 - cy) * scale, txt = ST.perfTxt || '';   /* chữ nhỏ bay lên trên đầu, mờ dần */
     ug.globalAlpha = Math.min(1, ST.perfT * 2.5); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom'; const w = ug.measureText(txt).width + 8;
     ug.fillStyle = 'rgba(13,11,20,.6)'; ug.beginPath(); ug.roundRect(x - w / 2, ty - fs - 2, w, fs + 3, 3); ug.fill(); ug.fillStyle = '#b8ffc8'; ug.fillText(txt, x, ty); ug.restore();
   },

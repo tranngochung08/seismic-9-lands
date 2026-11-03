@@ -921,7 +921,7 @@ export const hacrocky = {
       if (fr) ug.drawImage(fr, bx, by, bw, bh); else { ug.fillStyle = '#12061c'; ug.fillRect(ix, iy, iw, ih); }
       const gr = ug.createLinearGradient(0, iy, 0, iy + ih); gr.addColorStop(0, b.vuln > 0 ? '#ffe27a' : '#d070ff'); gr.addColorStop(1, b.vuln > 0 ? '#c08a20' : '#5a1a9a'); ug.fillStyle = gr; ug.fillRect(ix, iy, iw * k, ih);
       ug.fillStyle = 'rgba(255,255,255,.18)'; ug.fillRect(ix, iy, iw * k, Math.max(1, ih * 0.22));
-      if (b.phase === 1) { ug.fillStyle = 'rgba(255,255,255,.55)'; ug.fillRect(Math.round(ix + iw * 0.5), iy, Math.max(1, scale * 0.4), ih); }   /* mốc biến hình 50 % */
+      if (b.phase === 1) { ug.fillStyle = 'rgba(255,255,255,.55)'; ug.fillRect(Math.round(ix + iw * 0.5), iy, Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) * 0.4), ih); }   /* mốc biến hình 50 % */
       const fs = Math.max(14, bh * 0.36); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'top';
       const nm = `${t.name} · ${isSup(b) ? (b.phase === 2 ? t.supLbl2 : t.supLbl) : t.ph1} · ${t.phase(b.phase)}${b.vuln > 0 ? ' · ' + t.exposed : ''}`;
       ST.uiTop = by + bh + fs + 4;
@@ -934,22 +934,22 @@ export const hacrocky = {
     }
     if (ST.clash && !ST.clash.res) {   /* thanh lực hai màu (vàng Rocky · tím Hắc Rocky) trên đầu chỗ giằng co */
       const E = clashEnds(ctx); if (E) {
-        const sx = (E.O.x - cx) * scale, sy = (Math.min(E.R.y, E.B.y) - cy) * scale - scale * 22, bw = Math.min(W * 0.7, scale * 90), bh = Math.max(10, scale * 3.2), bx = Math.max(6, Math.min(W - bw - 6, sx - bw / 2)), by2 = Math.min(H * 0.8, Math.max((ST.banner ? ST.bannerBot || 0 : ST.uiTop || 60) + Math.max(22, scale * 8), sy));   /* dưới thanh máu trùm */
+        const sx = (E.O.x - cx) * scale, sy = (Math.min(E.R.y, E.B.y) - cy) * scale - scale * 22, bw = Math.min(W * 0.7, scale * 90), bh = Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3.2), bx = Math.max(6, Math.min(W - bw - 6, sx - bw / 2)), by2 = Math.min(H * 0.8, Math.max((ST.banner ? ST.bannerBot || 0 : ST.uiTop || 60) + Math.max(22, (globalThis.__u89?globalThis.__u89(scale):scale) * 8), sy));   /* dưới thanh máu trùm */
         const k = (ST.clash.b + 1) / 2; ug.save(); ug.fillStyle = 'rgba(10,4,18,.8)'; ug.fillRect(bx - 3, by2 - 3, bw + 6, bh + 6);
         ug.fillStyle = '#ffcf40'; ug.fillRect(bx, by2, bw * k, bh); ug.fillStyle = '#9a30ff'; ug.fillRect(bx + bw * k, by2, bw * (1 - k), bh);
-        ug.fillStyle = '#fff'; ug.fillRect(bx + bw * k - Math.max(1, scale * 0.5), by2 - 3, Math.max(2, scale), bh + 6);
-        ug.font = font(Math.max(16, scale * 6)); ug.textAlign = 'center'; ug.textBaseline = 'bottom'; const tx = t.mash;
+        ug.fillStyle = '#fff'; ug.fillRect(bx + bw * k - Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) * 0.5), by2 - 3, Math.max(2, (globalThis.__u89?globalThis.__u89(scale):scale)), bh + 6);
+        ug.font = font(Math.max(16, (globalThis.__u89?globalThis.__u89(scale):scale) * 6)); ug.textAlign = 'center'; ug.textBaseline = 'bottom'; const tx = t.mash;
         ug.fillStyle = '#000'; ug.fillText(tx, bx + bw / 2 + 1, by2 - 5); ug.fillStyle = '#ffe27a'; ug.fillText(tx, bx + bw / 2, by2 - 6); ug.restore();
       }
     }
     if (ST.banner) {   /* tên chiêu ở giữa-trên màn */
-      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 16, scale * 9)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
+      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 16, (globalThis.__u89?globalThis.__u89(scale):scale) * 9)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
       const y = Math.max(H * 0.2, (ST.uiTop || 60) + fs * 0.8); ST.bannerBot = y + fs * 0.7; ug.fillStyle = 'rgba(10,4,18,.65)'; const tw = Math.min(W - 10, ug.measureText(ST.banner.txt).width + 24); ug.fillRect((W - tw) / 2, y - fs * 0.6, tw, fs * 1.2);
       ug.fillStyle = '#000'; ug.fillText(ST.banner.txt, W / 2 + 2, y + 2); ug.fillStyle = '#f0c8ff'; ug.fillText(ST.banner.txt, W / 2, y); ug.restore();
     }
   },
 };
-const by0 = (H, scale) => Math.max(60, scale * 22);
+const by0 = (H, scale) => Math.max(60, (globalThis.__u89?globalThis.__u89(scale):scale) * 22);
 
 /* móc test (QA) */
 function hooks(ctx) {

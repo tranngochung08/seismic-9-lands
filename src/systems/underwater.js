@@ -567,8 +567,8 @@ export const underwater = {
   },
   drawUI(ug, ctx, cx, cy, scale) {
     if (!under(ctx) || (ctx.S.mode !== 'play' && ctx.S.mode !== 'menu')) return;
-    const u = sv(ctx), t = L(ctx), W = ug.canvas.width, fs = Math.max(12, Math.round(scale * 4)), bw = Math.min(W * 0.36, 300), bh = Math.max(10, Math.round(scale * 3.2));
-    const bx = Math.round((W - bw) / 2), by = Math.max(58, Math.round(scale * 19)), low = u.breath <= LOW, k = Math.max(0, Math.min(1, u.breath / Math.max(1, ST.full))), isz = Math.round(fs * 1.5);
+    const u = sv(ctx), t = L(ctx), W = ug.canvas.width, fs = Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 4)), bw = Math.min(W * 0.36, 300), bh = Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.2));
+    const bx = Math.round((W - bw) / 2), by = Math.max(58, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 19)), low = u.breath <= LOW, k = Math.max(0, Math.min(1, u.breath / Math.max(1, ST.full))), isz = Math.round(fs * 1.5);
     /* plan-26 B2 (P3): người chơi hoặc trùm (đầu Kraken / Xealist) nằm dưới khung thanh hơi thở → vẽ mờ 0,35 cho thấy bên dưới */
     const rx0 = bx - 12, rx1 = bx + bw + 12, ry0 = by - fs * 1.5, ry1 = by + bh + fs * 1.4;
     const covers = (wx, wy0, wy1, hw) => { const sx0 = (wx - hw - cx) * scale, sx1 = (wx + hw - cx) * scale, sy0 = (wy0 - cy) * scale, sy1 = (wy1 - cy) * scale; return sx1 > rx0 && sx0 < rx1 && sy1 > ry0 && sy0 < ry1; };
@@ -584,7 +584,7 @@ export const underwater = {
     ug.fillStyle = low ? '#ff6b6b' : '#dff6ff'; ug.fillText(label, W / 2, by - fs * 0.7);
     ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, bh / 2); ug.fill();
     ug.fillStyle = low ? '#ff4d4d' : k > 0.5 ? '#5cd6ff' : '#ffb347'; ug.beginPath(); ug.roundRect(bx, by, Math.max(bh, bw * k), bh, bh / 2); ug.fill();
-    ug.font = `${Math.max(10, Math.round(scale * 2.8))}px VT323, monospace`; ug.fillStyle = '#ffb3a0'; ug.fillText(t.atk, W / 2, by + bh + fs * 0.75);
+    ug.font = `${Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.8))}px VT323, monospace`; ug.fillStyle = '#ffb3a0'; ug.fillText(t.atk, W / 2, by + bh + fs * 0.75);
     ug.restore();
   },
   hudLines(ctx) {

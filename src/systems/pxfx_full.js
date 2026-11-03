@@ -1618,6 +1618,582 @@ FS.chan_signs2 = SC((c, at, R, P, o) => {   /* chạm sừng: chớp + đá vụ
   };
 });
 /* p67:scenes:end */
+/* p72:scenes:begin */
+/* p72 (plan-51): CẢNH VFX CODE cho chiêu linh thú khi đấu như Chấn Thú — cùng khung mẫu pxfx_full (thú 50,84 → đối thủ 128,84), RES 2.
+   Mỗi cảnh: gồng 0–0,3 s (tụ hạt ở miệng / thân), tung ở 0,3 s, cú trúng gọi o.hit(p) đúng nhịp; mọi thứ tắt hết khi xong (không lặp quanh thú). */
+const SUNC = ['#ffffff', '#fffbe0', '#fff2a0', '#ffd64a', '#f2a52a', '#c9681a', '#7a3a10'].map(H);
+function ltFunnel(kind) {   /* phễu xoay quanh đối thủ: 'fire' = Lốc Lửa (Kỳ Lân) · 'sand' = Lốc Cát (Tê Tê). Nửa sau sau lưng, nửa trước mỏng; vòng dưới chân; cuối bung tung */
+  return SC((c, at, R, P, o) => {
+    const F = { x: c.ax, y: c.ay }, T0 = 0.3, T1 = 1.22, NJ = 10, FR = [P[0], P[1], P[2], P[3], P[4], P[5]], fire = kind === 'fire';
+    const funnel = (B, t, fr) => { if (t < T0 || t > T1) return; const g = outCubic(tm(t, T0, T0 + 0.15)) * (1 - tm(t, T1 - 0.12, T1));
+      for (let j = 0; j < NJ * g; j++) { const z = j * 3.4, r = 5 + j * 1.6, sp = 12 - j * 0.45;
+        for (let d = 0; d < 3; d++) { if (fr && d === 2) continue; const a0 = t * sp + j * 0.7 + d * TAU / 3;
+          for (let a = a0; a < a0 + 1.05; a += 0.05) { const sn = Math.sin(a); if ((sn >= 0) !== fr) continue; const X = c.X(F.x + Math.cos(a) * r), Y = c.Y(F.y + sn * r * 0.4, z), hot = a > a0 + 0.9;
+            const col = fire ? (hot ? P[0] : j < 3 ? P[1] : j < 7 ? P[2] : P[3]) : (hot ? P[0] : j < 4 ? P[2] : P[1]);
+            B.set(X, Y - 1, col); B.set(X, Y, col); B.set(X, Y + 1, fire ? (j > 6 ? P[4] : P[3]) : P[3]); B.set(X + 1, Y, col); if (j > 7) B.set(X, Y + 2, fire ? P[5] : P[4]); } } } };
+    return {
+      update(t) {
+        if (t > 0.06 && t < T0) gather(c, o.C.x + 4, o.C.y, 10, FR.slice(0, 4), 1.2, 12);
+        if (t > T0 && t < T1) {
+          if (fire) { if (R.chance(0.85)) { const a = R.range(0, TAU), r = R.range(4, 12); flame(c, F.x + Math.cos(a) * r, F.y + Math.sin(a) * r * 0.4, R.range(0, 6), -Math.sin(a) * 40, Math.cos(a) * 14, R.range(30, 60), R.range(0.25, 0.4), R.range(1.2, 2.2), FR, { lift: 40 }); }
+            if (R.chance(0.45)) fx(c, F.x + R.range(-10, 10), F.y + R.range(-3, 3), R.range(6, 30), R.range(-30, 30), 0, R.range(30, 60), 0.45, dSpark, { size: 2, g: 0.2, ramp: FR }); }
+          else { if (R.chance(0.8)) { const a = R.range(0, TAU); puff(c, F.x + Math.cos(a) * 9, F.y + Math.sin(a) * 3.5, R.pick([P[2], P[3], P[4]]), 2.6, 0.35, 10, { vx: -Math.sin(a) * 36, vy: Math.cos(a) * 14 }); }
+            if (R.chance(0.5)) { const a = R.range(0, TAU), r = R.range(6, 14), z = R.range(4, 30); part(c, K.CHUNK, F.x + Math.cos(a) * r, F.y + Math.sin(a) * r * 0.4, z, -Math.sin(a) * 60, Math.cos(a) * 20, R.range(10, 40), R.range(0.3, 0.45), R.pick([P[3], P[4], P[5]]), 1, { g: 0.4 }); } }
+        }
+        for (const h of [0.45, 0.75, 1.05]) at('h' + h, t, h, () => { o.hit?.(0.5); if (fire) addLight(c, F.x, F.y - 10, 16, P[2], 0.45, 0.12); });
+        at('end', t, T1 - 0.05, () => {
+          if (fire) { for (let k = 0; k < 14; k++) { const a = R.range(0, TAU), v = R.range(30, 80); flame(c, F.x, F.y + 0.5, R.range(4, 20), Math.cos(a) * v, Math.sin(a) * v * 0.4, R.range(10, 40), R.range(0.3, 0.45), R.range(1.8, 3), FR); }
+            sparks(c, 14, F.x, F.y + 0.5, 10, 95, { up: 1.3, g: 0.5, drag: 1.2, ramp: FR, life: 1.2 }); for (let k = 0; k < 4; k++) smokeP(c, F.x + R.range(-8, 8), F.y - 1, R.range(14, 26), R.pick(SMOKE), 3.4, 0.7, 20); }
+          else { o.shake?.(0.12); for (let k = 0; k < 10; k++) pebbleHop(c, F.x + R.range(-8, 8), F.y + R.range(-3, 3), 1.2, [P[3], P[4], P[5]]); for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; puff(c, F.x + Math.cos(a) * 6, F.y + Math.sin(a) * 2.5, R.pick([P[1], P[2], P[3]]), 3.4, 0.55, 6, { vx: Math.cos(a) * 55, vy: Math.sin(a) * 22 }); } }
+        });
+      },
+      back(B, L, t) { const k = outCubic(tm(t, T0, T0 + 0.18)) * (1 - tm(t, T1 - 0.1, T1 + 0.15)); if (k > 0) { gring(B, c, F.x, F.y + 1, 0, 13 * k, 2.2, fire ? [P[1], P[3], P[5]] : [P[2], P[3], P[5]], 1, -1); if (fire) L.glow(c.X(F.x), c.Y(F.y, 14), 22, P[2], 0.22 * k); } funnel(B, t, false); },
+      front(B, L, t) { const k = outCubic(tm(t, T0, T0 + 0.18)) * (1 - tm(t, T1 - 0.1, T1 + 0.15)); if (k > 0) gring(B, c, F.x, F.y + 1, 0, 13 * k, 2.2, fire ? [P[1], P[3], P[5]] : [P[2], P[3], P[5]], 1, 1); funnel(B, t, true); },
+      end: 1.45,
+    };
+  });
+}
+FS.nham_loclua = ltFunnel('fire');   /* Lốc Lửa (Kỳ Lân): phễu LỬA, lưỡi lửa cuốn lên, tàn lửa; cuối bung lửa + khói */
+FS.chan_loccat = ltFunnel('sand');   /* Lốc Cát (Tê Tê): phễu CÁT, bụi cuộn, sỏi bay vòng; cuối nổ cát + sỏi rơi */
+FS.nham_sun = SC((c, at, R, P, o) => {   /* Nắng Gắt (Kỳ Lân): bờm sáng rực tụ lửa → MẶT TRỜI nhỏ bật lên trên đầu, tia nắng xoay toả, vòng nắng loé trên đất lan rộng, hơi nóng bốc lên; tắt hẳn sau ~1,4 s (thời tiết giữ trong engine, không vẽ lặp) */
+  const C = o.C, SZ = 44, T0 = 0.3, T1 = 1.35;
+  return {
+    update(t) {
+      if (t > 0.04 && t < T0) gather(c, C.x, C.y, 10, [SUNC[1], SUNC[2], SUNC[3]], 1.4, 14);
+      at('pop', t, T0, () => { addLight(c, C.x, C.y - SZ, 26, SUNC[2], 0.7, 0.16); for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; fx(c, C.x + Math.cos(a) * 4, C.y, SZ + Math.sin(a) * 4, Math.cos(a) * 70, 0, Math.sin(a) * 70, 0.32, dSpark, { size: 2, drag: 1.5, ramp: SUNC.slice(0, 5) }); } });
+      if (t > T0 && t < T1 && R.chance(0.9)) { const a = R.range(0, TAU), r = R.range(6, 34); fx(c, C.x + Math.cos(a) * r, C.y + Math.sin(a) * r * 0.45, 0, R.range(-4, 4), 0, R.range(16, 34), R.range(0.5, 0.8), dSpark, { size: 2, sway: 6, ramp: [SUNC[2], SUNC[3], SUNC[4], SUNC[5]] }); }
+      at('ring2', t, 0.55, () => sparks(c, 10, C.x, C.y + 0.5, 2, 70, { up: 0.6, g: 0.4, drag: 1.6, ramp: SUNC.slice(1, 6), life: 0.9 }));
+    },
+    back(B, L, t) {
+      const k = outCubic(tm(t, T0, T0 + 0.35)), fade = 1 - tm(t, T1 - 0.25, T1); if (t < T0 || fade <= 0) return;
+      gring(B, c, C.x, C.y + 1, 0, 5 + 20 * k, 2.4 * fade + 0.5, [SUNC[1], SUNC[3], SUNC[5]], fade > 0.5 ? 1 : 0.55, -1, 0.42);
+      L.glow(c.X(C.x), c.Y(C.y, SZ), 30, SUNC[3], 0.3 * fade);
+    },
+    front(B, L, t) {
+      if (t > 0.06 && t < T0 + 0.02) { const k = tm(t, 0.06, T0); orb(B, c.X(C.x), c.Y(C.y, 14), 1 + 3 * k, [SUNC[0], SUNC[2], SUNC[3]], SUNC[5]); }
+      const k = outBack(tm(t, T0, T0 + 0.22)), fade = 1 - tm(t, T1 - 0.25, T1); if (t < T0 || fade <= 0) return;
+      gring(B, c, C.x, C.y + 1, 0, 5 + 20 * outCubic(tm(t, T0, T0 + 0.35)), 2.4 * fade + 0.5, [SUNC[1], SUNC[3], SUNC[5]], fade > 0.5 ? 1 : 0.55, 1, 0.42);
+      const X = c.X(C.x), Y = c.Y(C.y, SZ + 3 * Math.sin(t * 5)), r = 7 * k * (0.6 + 0.4 * fade);
+      for (let i = 0; i < 10; i++) { const a = t * 1.6 + i / 10 * TAU, l0 = (r + 3) * RES, l1 = (r + 7 + (i % 2) * 4) * RES * (0.7 + 0.3 * Math.sin(t * 9 + i)); lineT(B, X + Math.cos(a) * l0, Y + Math.sin(a) * l0, X + Math.cos(a) * l1, Y + Math.sin(a) * l1, i % 2 ? SUNC[3] : SUNC[2], fade, SUNC[6]); }
+      orb(B, X, Y, Math.max(1, r * RES), [SUNC[0], SUNC[1], SUNC[2], SUNC[3], SUNC[4]], SUNC[6]);
+      L.glow(X, Y, (r + 10) * RES, SUNC[2], 0.35 * fade);
+    },
+    end: 1.5,
+  };
+});
+FS.chan_cuonlan = SC((c, at, R, P, o) => {   /* Cuộn Lăn (Tê Tê): cuộn thành quả cầu vảy lăn tới — vệt bụi + sỏi bắn sau lưng, vạch tốc độ thấp sát đất; va chạm: vòng sóng đất, đá vụn văng, bụi toả, nứt sao */
+  const C = o.C, F = { x: c.ax, y: c.ay }, T0 = 0.3, TD = 0.24, TH = T0 + TD, cr = starCrack(R, F.x - 4, F.y + 1, 6, 9);
+  return {
+    update(t) {
+      if (t > 0.06 && t < T0) { if (R.chance(0.6)) puff(c, C.x - 3 + R.range(-3, 3), C.y + 1, R.pick([P[2], P[3]]), 1.8, 0.25, 5); }
+      at('go', t, T0, () => { o.shake?.(0.08); for (let k = 0; k < 5; k++) puff(c, C.x - 4, C.y + 1, R.pick([P[2], P[3], P[4]]), 2.6, 0.4, 6, { vx: -50 }); });
+      if (t > T0 && t < TH) { const x = o.cx ? o.cx() : C.x; for (let k = 0; k < 2; k++) part(c, K.STREAK, x - 5, C.y + 0.6, R.range(1, 6), -R.range(80, 130), 0, 0, 0.16, R.chance(0.5) ? P[1] : P[2], 1, {});
+        if (R.chance(0.8)) puff(c, x - 6, C.y + 1, R.pick([P[2], P[3]]), 2.2, 0.32, 5, { vx: -30 }); if (R.chance(0.5)) pebbleHop(c, x - 4, C.y + 1, 0.7, [P[3], P[4], P[5]]); }
+      at('hit', t, TH, () => { o.hit?.(1.3); o.shake?.(0.3); for (let k = 0; k < 10; k++) pebbleHop(c, F.x - 4 + R.range(-4, 4), F.y + R.range(-2, 2), 1.3, [P[3], P[4], P[5]]);
+        for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; puff(c, F.x - 4 + Math.cos(a) * 6, F.y + 1 + Math.sin(a) * 2.5, R.pick([P[1], P[2], P[3]]), 3, 0.5, 6, { vx: Math.cos(a) * 55, vy: Math.sin(a) * 20 }); } });
+    },
+    back(B, L, t) { const k = tm(t, TH, TH + 0.32); if (k > 0 && k < 1) { gring(B, c, F.x - 4, F.y + 1, 0, 6 + 26 * outCubic(k), 2.6, [P[1], P[3], P[5]], k < 0.6 ? 1 : 0.5, -1); drawCracks(B, c, cr, 1, P[6], P[5], P[3], 1 - k * 0.6); } },
+    front(B, L, t) {
+      if (t > T0 && t < TH + 0.04) { const x = o.cx ? o.cx() : C.x, X = c.X(x), Y = c.Y(C.y, 3); for (let i = 0; i < 4; i++) { const y = Y - i * 3, l = (18 + i * 6) * RES; for (let xx = X - 10 - l; xx <= X - 10; xx++) B.dot(xx, y, i % 2 ? P[1] : P[2], (xx - (X - 10 - l)) / l); } }
+      const k = tm(t, TH, TH + 0.32); if (k > 0 && k < 1) gring(B, c, F.x - 4, F.y + 1, 0, 6 + 26 * outCubic(k), 2.6, [P[1], P[3], P[5]], k < 0.6 ? 1 : 0.5, 1);
+    },
+    end: 1.3,
+  };
+});
+FS.loi_tich = SC((c, at, R, P, o) => {   /* Tích Điện (Hạc): tia lửa điện tụ về thân, 3 cung sét bò quanh mình chập chờn, lông xù sáng, vòng điện loé dưới chân, cuối nổ tia toả (chỉ ~1,2 s) */
+  const C = o.C, T0 = 0.3, T1 = 1.15, Z = 9;
+  return {
+    update(t) {
+      if (t > 0.04 && t < T1) gather(c, C.x, C.y, Z, [P[0], P[1], P[2]], t < T0 ? 1.6 : 0.8, 16);
+      at('pop', t, T0, () => { o.shake?.(0.06); addLight(c, C.x, C.y - Z, 18, P[1], 0.6, 0.14); });
+      for (const h of [0.55, 0.8]) at('b' + h, t, h, () => sparks(c, 6, C.x, C.y, Z, 70, { up: 0.8, g: 0.3, drag: 1.6, ramp: [P[0], P[1], P[2], P[3]], life: 0.8 }));
+      at('end', t, T1 - 0.05, () => { sparks(c, 14, C.x, C.y, Z, 110, { up: 1, g: 0.3, drag: 1.4, ramp: [P[0], P[1], P[2], P[3]], life: 1 }); addLight(c, C.x, C.y - Z, 22, P[1], 0.7, 0.14); });
+    },
+    back(B, L, t) { const k = tm(t, T0, T0 + 0.25), f = 1 - tm(t, T1 - 0.15, T1); if (t < T0 || f <= 0) return; gring(B, c, C.x, C.y + 1, 0, 6 + 10 * outCubic(k), 1.6, [P[0], P[1], P[3]], f, -1); },
+    front(B, L, t) {
+      const f = 1 - tm(t, T1 - 0.15, T1); if (t < T0 || f <= 0) return; gring(B, c, C.x, C.y + 1, 0, 6 + 10 * outCubic(tm(t, T0, T0 + 0.25)), 1.6, [P[0], P[1], P[3]], f, 1);
+      const X = c.X(C.x), Y = c.Y(C.y, Z);
+      for (let i = 0; i < 3; i++) { if (R.chance(0.25)) continue; const a0 = t * 7 + i * TAU / 3, a1 = a0 + 1.4, r = 10 * RES; zap(B, R, X + Math.cos(a0) * r, Y + Math.sin(a0) * r * 0.8, X + Math.cos(a1) * r, Y + Math.sin(a1) * r * 0.8, 1.6, 1, P, 3, 0.15, f); }
+      L.glow(X, Y, 16 * RES, P[1], 0.28 * f);
+    },
+    end: 1.3,
+  };
+});
+FS.trieu_tongue = SC((c, at, R, P, o) => {   /* Lưỡi Dính (Cóc): má phồng, LƯỠI hồng vút từ miệng dính chặt đối thủ (giọt nước bắn), giật kéo về rồi thu lưỡi */
+  const M = o.M, F = { x: c.ax, y: c.ay }, T0 = 0.3, HIT = 0.42, PULL = 0.62, END = 0.86, FZ = 8;
+  const tip = t => { const k = t < HIT ? outCubic(tm(t, T0, HIT)) : t < PULL ? 1 : 1 - outCubic(tm(t, PULL, END)); return { x: lerp(M.x + 2, F.x - 3, k), z: lerp(M.z, FZ, k), k }; };
+  return {
+    update(t) {
+      if (t > 0.06 && t < T0 && R.chance(0.5)) fx(c, M.x + 2, M.y, M.z, R.range(-10, 10), 0, R.range(5, 15), 0.25, dDrop, { size: 1.5, g: 0.6, ramp: [P[0], P[2], P[4]] });
+      at('hit', t, HIT, () => { o.hit?.(1); o.shake?.(0.08); splash(c, F.x - 3, F.y, FZ, 10, 0.9); });
+      at('pull', t, PULL, () => { o.knock?.(); splash(c, F.x - 3, F.y, FZ, 6, 0.6); });
+    },
+    front(B, L, t) {
+      if (t < T0 || t > END) return; const q = tip(t), x0 = c.X(M.x + 1), y0 = c.Y(M.y, M.z), x1 = c.X(q.x), y1 = c.Y(M.y + (F.y - M.y) * q.k, q.z), n = 10, pts = [];
+      for (let i = 0; i <= n; i++) { const u = i / n, sag = Math.sin(u * Math.PI) * (t > HIT && t < PULL ? 3 : 1.5) * RES; pts.push([lerp(x0, x1, u), lerp(y0, y1, u) + sag]); }
+      tube(B, pts, u => lerp(2.2, 3.4, u), [TONG[0], TONG[1], TONG[1], TONG[2], TONG[3]], 1); orb(B, x1, y1, 4.5, [TONG[0], TONG[1], TONG[2]], TONG[3]);
+    },
+    end: 1.1,
+  };
+});
+FS.trieu_rain = SC((c, at, R, P, o) => {   /* Gọi Mưa (Cóc): mây đen tụ trên đầu, MƯA trút xuống cả vùng (vệt mưa xiên, vòng gợn + giọt toé trên đất) ~1,2 s rồi tạnh; thời tiết giữ trong engine 14 s (không vẽ lặp) */
+  const C = o.C, CZ = 46, T0 = 0.3, T1 = 1.45, RR = 46;
+  const drops = Array.from({ length: 56 }, () => ({ x: R.range(-RR, RR), y: R.range(-RR * 0.45, RR * 0.45), ph: R.range(0, 1), sp: R.range(1.6, 2.4) }));
+  return {
+    update(t) {
+      if (t > 0.04 && t < T0 + 0.2 && R.chance(0.7)) puff(c, C.x + R.range(-20, 20), C.y, R.pick(CLOUD), 4, 0.6, 0, { z: CZ + R.range(-3, 3), vx: R.range(-8, 8), vy: 0, drag: 3 });
+      if (t > T0 && t < T1) for (const d of drops) { const u = (t * d.sp + d.ph) % 1; if (u < 0.08 && R.chance(0.5)) splash(c, C.x + d.x, C.y + d.y, 0, 2, 0.35); }
+    },
+    back(B, L, t) { const k = outCubic(tm(t, 0.05, T0)) * (1 - tm(t, T1 - 0.2, T1)); if (k <= 0) return; for (let i = 0; i < 6; i++) { const X = c.X(C.x - 24 + i * 9.6), Y = c.Y(C.y - 4, CZ + Math.sin(i * 1.7) * 2); orb(B, X, Y, (7 + (i % 3) * 1.5) * RES * k, [CLOUD[0], CLOUD[1], CLOUD[2]], CLOUD[3], 0.92); } },
+    front(B, L, t) {
+      if (t < T0 || t > T1) return; const f = 1 - tm(t, T1 - 0.2, T1);
+      for (const d of drops) { const u = (t * d.sp + d.ph) % 1, z = CZ * (1 - u), X = c.X(C.x + d.x - u * 4), Y = c.Y(C.y + d.y, z); lineT(B, X, Y, X + 2, Y - 9, P[1], 0.9 * f, P[4]);
+        if (u > 0.92) gring(B, c, C.x + d.x, C.y + d.y, 0, 1 + 3 * (u - 0.92) / 0.08, 1, [P[0], P[2]], f * 0.8, 0, 0.4); }
+    },
+    end: 1.6,
+  };
+});
+FS.trieu_phao = SC((c, at, R, P, o) => {   /* Thuỷ Pháo (Cóc, tuyệt chiêu): nước xoáy tụ thành cầu ở miệng → CỘT NƯỚC dày bắn thẳng (lõi trắng, viền sóng, bọt hai mép) 3 nhịp → nổ vương miện nước + mưa giọt */
+  const M = o.M, F = { x: c.ax, y: c.ay }, T0 = 0.4, T1 = 1.1, FZ = 9;
+  return {
+    update(t) {
+      if (t > 0.05 && t < T0) gather(c, M.x + 3, M.y, M.z, [P[0], P[1], P[2], P[3]], 1.8, 14);
+      for (const h of [0.5, 0.7, 0.9]) at('h' + h, t, h, () => { o.hit?.(h < 0.85 ? 0.45 : 1); o.shake?.(0.15); splash(c, F.x - 3, F.y, FZ, 12, 1.1); });
+      at('kn', t, 0.95, () => o.knock?.());
+      if (t > T0 && t < T1 && R.chance(0.9)) fx(c, lerp(M.x + 4, F.x - 4, R.range(0, 1)), M.y + R.range(-1, 1), lerp(M.z, FZ, 0.5) + R.range(-4, 4), R.range(-20, 20), R.range(-6, 6), R.range(10, 40), 0.35, dDrop, { size: 1.6, g: 0.8, ramp: [P[0], P[1], P[3]] });
+      at('end', t, T1, () => { for (let k = 0; k < 18; k++) { const a = R.range(0, TAU), v = R.range(30, 90); fx(c, F.x - 3, F.y, FZ, Math.cos(a) * v, Math.sin(a) * v * 0.4, R.range(30, 80), 0.6, dDrop, { size: 2, g: 1, ramp: [P[0], P[1], P[3]] }); } });
+    },
+    back(B, L, t) { const k = tm(t, T0, T0 + 0.1) * (1 - tm(t, T1 - 0.08, T1 + 0.1)); if (k > 0) gring(B, c, F.x - 3, F.y + 1, 0, 8 + 10 * k, 2, [P[0], P[2], P[4]], k, -1); },
+    front(B, L, t) {
+      if (t > 0.05 && t < T0 + 0.05) { const k = tm(t, 0.05, T0); orb(B, c.X(M.x + 3), c.Y(M.y, M.z), 1 + 5 * k, [P[0], P[1], P[2], P[3]], P[5]); L.glow(c.X(M.x + 3), c.Y(M.y, M.z), 10 * k + 4, P[1], 0.25 * k); }
+      const k = tm(t, T0, T0 + 0.1) * (1 - tm(t, T1 - 0.08, T1 + 0.1)); if (k <= 0) return;
+      const x0 = c.X(M.x + 3), y0 = c.Y(M.y, M.z), x1 = c.X(F.x - 3), y1 = c.Y(F.y, FZ), w = 3 + 5 * k + Math.sin(t * 40) * 0.6;
+      beam(B, x0, y0, x1, y1, w * 0.6, w * RES * 0.9, [H('#ffffff'), P[0], P[1], P[2], P[4]], { a: 1 });
+      gring(B, c, F.x - 3, F.y + 1, 0, 8 + 10 * k, 2, [P[0], P[2], P[4]], k, 1); L.glow(x1, y1, 22, P[1], 0.35 * k);
+    },
+    end: 1.5,
+  };
+});
+/* p72:scenes:end */
+/* p96:scenes:begin */
+/* p96 — MOLANDAK (mascot Monad, hệ Chấn): cảnh VFX VẼ CODE (skill vfx-code) cho 5 chiêu, 3 dạng (hậu tố '' / 2 / 3 = độ lực Q).
+   Bảng màu: gai / ánh sáng = bảng TÍM đo từ sprite Molandak (QP, 8 bậc); đất / bụi / nứt = bảng Chấn của cảnh (P). Mờ bằng dither, tắt gọn, không lặp.
+   Mốc: giờ cảnh 0,3 = lúc tung chiêu (khung chạm của clip). Cảnh *b / ult2 tạo lúc chạm (sigScene) — neo ở chân đối thủ. */
+const QP = ['#fbf2fb', '#e7b8ee', '#bb54cc', '#a23cba', '#8b17a6', '#6d1a7e', '#4c0d58', '#2a0631'].map(H);
+const QLIP = ['#ffd2c2', '#f08a72', '#c8505a', '#8a2a3c'].map(H);
+const QQ = { '': 1, '2': 1.35, '3': 1.75 };
+/* bản nháp (skill vfx-code): r = Lăn Gai, q = Bắn Gai, u = cú đập tuyệt chiêu — trang so GIF đặt globalThis.__MDKV; game dùng bản em chọn (MDKV0) */
+const MDKV0 = { r: 'b', q: 'c', u: 'b' }; const MV96 = k => ((globalThis.__MDKV || {})[k] || MDKV0[k]);
+/* gai bay: kim 2 tông (thân tím đậm, đầu trắng) dài L px logic theo hướng (ux, uy) trên mặt phẳng màn (đã tính z) */
+function quill(B, X, Y, ux, uy, L, a = 1) { for (let d = 0; d <= L * RES; d += 0.5) { const col = d < 1.5 ? QP[0] : d < L * RES * 0.45 ? QP[4] : QP[5], aa = d > L * RES * 0.7 ? a * (1.25 - d / (L * RES)) : a; B.dot(X - ux * d, Y - uy * d, col, aa); if (d > 1 && d < L * RES * 0.6) { B.dot(X - ux * d - uy, Y - uy * d + ux, QP[6], aa); B.dot(X - ux * d + uy, Y - uy * d - ux, QP[3], aa); } } }
+/* chớp gai toả tròn quanh 1 điểm (xù gai): n tia ngắn, dài theo k */
+function spikeBurst(B, c, x, y, z, n, r0, r1, k, a = 1, rot = 0) { const X = c.X(x), Y = c.Y(y, z); for (let i = 0; i < n; i++) { const an = rot + i / n * TAU, ux = Math.cos(an), uy = Math.sin(an) * 0.62, ra = r0 * RES, rb = (r0 + (r1 - r0) * k) * RES; for (let d = ra; d <= rb; d += 0.5) B.dot(X + ux * d, Y + uy * d, d > rb - 1.5 ? QP[0] : d > rb - 4 ? QP[2] : QP[4], a); } }
+/* dấu tức giận (gân chữ thập 4 góc) màu đỏ trên đầu đối thủ — tĩnh, chỉ nở / co theo k */
+function anger(B, X, Y, s, a = 1) { const g = 2 * s, r = 6 * s; for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const ox = X + sx * (g + r), oy = Y + sy * (g + r); for (let an = 0; an <= Math.PI / 2; an += 0.04) { const ux = -sx * Math.cos(an), uy = -sy * Math.sin(an); for (let w = -1.5; w <= 1.5; w += 0.5) B.dot(ox + ux * (r + w), oy + uy * (r + w), w > 0.9 ? QLIP[3] : w < -0.9 ? QLIP[1] : QLIP[2], a); } } return;  const q = Math.max(1, Math.round(3 * s)); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const cx = X + sx * (q + 1), cy = Y + sy * (q + 1); for (let i = 0; i <= q * 2; i++) { B.dot(cx - sx * i * 0.5, cy, i < 2 ? QLIP[0] : QLIP[2], a); B.dot(cx, cy - sy * i * 0.5, i < 2 ? QLIP[0] : QLIP[2], a); B.dot(cx - sx * i * 0.5 + sx, cy + sy, QLIP[3], a); } } }
+function mkMdk(suf) {
+  const Q = QQ[suf];
+  /* 1. LĂN GAI HÚC — cuộn tròn: bụi xoáy dưới chân + gai loé; lăn: vệt bụi sát đất, sỏi bắn sau lưng, vụn gai tím văng (theo thân đang lăn o.cx()) */
+  FS['chan_mdk1' + suf] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.3, END = 1.25;
+    return {
+      update(t) {
+        if (t > 0.08 && t < T0) { if (R.chance(0.7)) puff(c, C.x + R.range(-5, 5), C.y + 1, R.pick([P[2], P[3]]), 1.6, 0.25, 4, { vx: R.range(-20, 20) }); }
+        at('glint', t, 0.2, () => star(c, C.x + 2, C.y, 9, QP[1], 2.2, 0.14));
+        at('go', t, T0, () => { o.shake?.(0.06 * Q); for (let k = 0; k < 4 + 2 * Q; k++) puff(c, C.x - 4, C.y + 1, R.pick([P[2], P[3], P[4]]), 2.4, 0.4, 6, { vx: -R.range(30, 70) }); });
+        if (t > T0 && t < 1.05) { const x = o.cx ? o.cx() : C.x;
+          if (R.chance(0.75)) puff(c, x - 6, C.y + 1, R.pick([P[2], P[3]]), 2 + 0.3 * Q, 0.3, 5, { vx: -30 });
+          if (R.chance(0.35 * Q)) pebbleHop(c, x - 4, C.y + 1, 0.7, [P[3], P[4], P[5]]);
+          if (MV96('r') !== 'c' && R.chance(0.3 * Q)) part(c, K.SHARD, x - 3, C.y + R.range(-1, 1), R.range(4, 9), -R.range(30, 80), R.range(-20, 20), R.range(30, 70), R.range(0.3, 0.45), R.pick([QP[3], QP[4], QP[5]]), R.range(1.5, 2.5), { g: 1, drag: 0.5, bounce: 0.3, va: R.range(-16, 16) });
+          for (let k = 0; k < 2; k++) part(c, K.STREAK, x - 6, C.y + 0.5, R.range(1, 5), -R.range(80, 130), 0, 0, 0.14, R.chance(0.5) ? P[2] : P[3], 1, {}); }
+      },
+      front(B, L, t) { if (MV96('r') === 'b' && t > T0 && t < 1.05) { const x = o.cx ? o.cx() : C.x, X = c.X(x), Y = c.Y(C.y, 6), r = 8 * RES + 2, sp = t * 26; for (let i = 0; i < 2; i++) crescent(B, X, Y, r, sp + i * Math.PI, 3, [QP[0], QP[2], QP[5]], 0.85, 0.9); } },
+      over: t => t > END,
+    };
+  });
+  /* 1b. chạm: chớp tím-trắng + vụn gai toả hình quạt về phía trước + vòng sóng đất + nứt sao nhỏ */
+  FS['chan_mdk1b' + suf] = SC((c, at, R, P, o) => {
+    const F = { x: c.ax, y: c.ay }, cr = starCrack(R, F.x - 3, F.y + 1, 5 + Math.round(Q), 7 + 2 * Q);
+    return {
+      update(t) {
+        at('hit', t, 0, () => { o.hit?.(1.2 + 0.2 * Q); o.shake?.(0.18 * Q); star(c, F.x - 5, F.y, 9, QP[0], 2.6 + Q * 0.4, 0.14); addLight(c, F.x - 4, F.y - 8, 12, QP[1], 0.35, 0.1);
+          for (let k = 0; k < 6 + 4 * Q; k++) { const an = R.range(-1.1, 1.1); part(c, K.SHARD, F.x - 4, F.y + R.range(-1, 1), R.range(5, 11), Math.cos(an) * R.range(70, 140), Math.sin(an) * R.range(20, 50), R.range(30, 80), R.range(0.35, 0.55), R.pick([QP[2], QP[3], QP[4], QP[5]]), R.range(1.8, 3), { g: 1, drag: 0.5, bounce: 0.3, va: R.range(-16, 16) }); }
+          for (let k = 0; k < 5 + 2 * Q; k++) pebbleHop(c, F.x - 3 + R.range(-3, 3), F.y + R.range(-1.5, 1.5), 1.1, [P[3], P[4], P[5]]);
+          for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; puff(c, F.x - 3 + Math.cos(a) * 5, F.y + 1 + Math.sin(a) * 2, R.pick([P[2], P[3]]), 2.6, 0.45, 5, { vx: Math.cos(a) * 45, vy: Math.sin(a) * 16 }); } });
+      },
+      back(B, L, t) { const k = tm(t, 0, 0.3); if (k > 0 && k < 1) { gring(B, c, F.x - 3, F.y + 1, 0, 5 + (14 + 6 * Q) * outCubic(k), 2.2, [P[1], P[3], P[5]], k < 0.6 ? 1 : 0.5, -1); drawCracks(B, c, cr, 1, P[6], P[5], P[3], 1 - k * 0.7); } },
+      front(B, L, t) { const k = tm(t, 0, 0.3); if (k > 0 && k < 1) gring(B, c, F.x - 3, F.y + 1, 0, 5 + (14 + 6 * Q) * outCubic(k), 2.2, [P[1], P[3], P[5]], k < 0.6 ? 1 : 0.5, 1); },
+      end: 0.9,
+    };
+  });
+  /* 2. BẮN GAI QUẠT — gồng: gai lưng rung + chấm sáng tụ ở đỉnh lưng (o.M); 0,3: bắn N kim hình quạt từ đỉnh lưng (gốc có chớp), kim giữa cắm vào đối thủ, kim rìa bay qua tắt dần */
+  FS['chan_mdk2' + suf] = SC((c, at, R, P, o) => {
+    const M = o.M, F = { x: c.ax, y: c.ay }, T0 = 0.3, N = suf === '3' ? 7 : 5, V = 300, Z1 = 7, qs = [];
+    for (let i = 0; i < N; i++) { const s = i - (N - 1) / 2, ty = F.y + s * 9, tx = F.x + Math.abs(s) * 6 + (Math.abs(s) >= 2 ? 30 : 0), d = Math.hypot(tx - M.x, ty - M.y) || 1; qs.push({ s, x0: M.x, y0: M.y, z0: M.z, tx, ty, d, T: d / V, hitC: Math.abs(s) < 1.5, d0: MV96('q') === 'c' ? Math.abs(s) * 0.035 : 0 }); }
+    const ARC = MV96('q') === 'b' ? 12 : 4, TR = MV96('q') === 'b' ? 22 : 14;
+    return {
+      update(t) {
+        if (t > 0.05 && t < T0 && R.chance(0.5)) part(c, K.STAR, M.x + R.range(-4, 2), M.y + R.range(-1, 1), M.z + R.range(-2, 3), 0, 0, 0, 0.12, QP[1], 0.8);
+        at('flash', t, T0, () => { star(c, M.x, M.y, M.z, QP[0], 2.4 + 0.3 * Q, 0.12); addLight(c, M.x, M.y - M.z, 8, QP[1], 0.3, 0.1); o.shake?.(0.05); });
+        for (const q of qs) if (q.hitC) at('h' + q.s, t, T0 + q.d0 + q.T, () => { o.hit?.(q.s === 0 ? 1 : 0.4); star(c, F.x - 3, F.y + q.s * 2, 8, QP[0], 1.8, 0.1);
+          for (let k = 0; k < 3; k++) part(c, K.SHARD, F.x - 3, F.y + q.s * 2, R.range(5, 10), -R.range(30, 70), R.range(-30, 30), R.range(20, 60), R.range(0.3, 0.45), R.pick([QP[3], QP[4], QP[5]]), R.range(1.5, 2.2), { g: 1, drag: 0.5, bounce: 0.3, va: R.range(-16, 16) }); });
+      },
+      front(B, L, t) {
+        if (t > 0.05 && t < T0 + 0.02) { const k = tm(t, 0.05, T0); spikeBurst(B, c, M.x - 3, M.y, M.z - 3, 7, 4, 4 + 3 * k, k, 0.7 + 0.3 * k, t * 6); }
+        for (const q of qs) { const u = (t - T0 - q.d0) / q.T; if (u <= 0) continue; const stopAt = q.hitC ? 1 : 1.25; if (u > stopAt + (q.hitC ? 0.35 : 0)) continue;
+          const uu = Math.min(u, stopAt), x = lerp(q.x0, q.tx, uu), y = lerp(q.y0, q.ty, uu), z = lerp(q.z0, Z1, uu) + Math.sin(Math.min(1, uu) * Math.PI) * ARC, X = c.X(x), Y = c.Y(y, z);
+          const dx = c.X(q.tx) - c.X(q.x0), dy = c.Y(q.ty, Z1) - c.Y(q.y0, q.z0), dl = Math.hypot(dx, dy) || 1, a = u > 1 ? (q.hitC ? (u < 1.2 ? 1 : 0.5) : Math.max(0, 1 - (u - 1) / 0.25)) : 1;
+          quill(B, X, Y, dx / dl, dy / dl, 6 + Q, a);
+          if (u < 1) for (let d = 6 + Q; d < TR; d++) B.dot(X - dx / dl * d * RES, Y - dy / dl * d * RES, QP[2], 0.45 * (1 - d / TR)); }
+      },
+      end: 1.15,
+    };
+  });
+  /* 3. TRỀ MÔI KHINH KHỈNH — 0,3: 2 làn hơi 'hừ' cuộn ra từ môi (o.M), chấm lấp lánh khinh khỉnh ở mắt; đối thủ: dấu tức giận đỏ nở trên đầu 0,6 s rồi co tắt */
+  FS['chan_mdk3' + suf] = SC((c, at, R, P, o) => {
+    const M = o.M, F = { x: c.ax, y: c.ay }, T0 = 0.3, HZ = 26;
+    return {
+      update(t) {
+        at('puff', t, T0, () => { for (let k = 0; k < 3 + Q; k++) puff(c, M.x + 1 + k * 2, M.y + R.range(-1, 1), R.pick([QP[1], QP[2], QP[1]]), 1.1 + k * 0.3, 0.55, 2, { z: M.z - 1, vx: R.range(30, 55), vy: R.range(-5, 5), drag: 3 });
+          star(c, M.x - 3, M.y, M.z + 4, QP[0], 1.6, 0.18); });
+        at('mad', t, T0 + 0.18, () => { o.hit?.(0.3); for (let k = 0; k < 4; k++) puff(c, F.x + R.range(-6, 6), F.y + R.range(-1, 1), QLIP[2], 1.4, 0.4, 14, { z: HZ - 6, vx: R.range(-14, 14), drag: 2.5 }); });
+      },
+      front(B, L, t) { const k = tm(t, T0 + 0.18, T0 + 0.3), e = tm(t, T0 + 0.85, T0 + 1.0); if (k > 0 && e < 1) { const s = (0.5 + 0.7 * outBack(k)) * (1 - e) * (0.9 + 0.15 * Q); if (s > 0.15) anger(B, c.X(F.x + 6), c.Y(F.y, HZ), s, 1); } },
+      end: 1.45,
+    };
+  });
+  /* 4. CUỘN GAI THỦ — 0,3: cuộn tròn, gai xù toả ra 1 lần (chớp tím-trắng) + vòng bụi đất; KHÔNG lớp lặp trong lúc thủ */
+  FS['chan_mdk4' + suf] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.3, cz = 6;
+    return {
+      update(t) { at('go', t, T0, () => { o.shake?.(0.05); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; puff(c, C.x + Math.cos(a) * 6, C.y + 1 + Math.sin(a) * 2, R.pick([P[2], P[3]]), 2.2, 0.4, 4, { vx: Math.cos(a) * 35, vy: Math.sin(a) * 12 }); } addLight(c, C.x, C.y - cz, 10, QP[1], 0.3, 0.12); }); },
+      back(B, L, t) { const k = tm(t, T0, T0 + 0.22); if (k > 0 && k < 1) gring(B, c, C.x, C.y + 1, 0, 6 + 12 * outCubic(k), 1.6, [P[2], P[4]], k < 0.6 ? 1 : 0.5, -1); },
+      front(B, L, t) { const k = tm(t, T0, T0 + 0.18); if (k > 0 && k < 1) spikeBurst(B, c, C.x, C.y, cz, 10 + 2 * Q, 7, 11 + 2 * Q, outCubic(k), k < 0.6 ? 1 : 1.4 - k, 0.3); const k2 = tm(t, T0, T0 + 0.22); if (k2 > 0 && k2 < 1) gring(B, c, C.x, C.y + 1, 0, 6 + 12 * outCubic(k2), 1.6, [P[2], P[4]], k2 < 0.6 ? 1 : 0.5, 1); },
+      end: 0.8,
+    };
+  });
+  /* 4b. phản đòn (đối thủ đánh cận chiến vào cầu gai): kim tím đâm ngược vào kẻ đánh + chớp */
+  FS['chan_mdk4b' + suf] = SC((c, at, R, P, o) => {
+    const F = { x: c.ax, y: c.ay };
+    return {
+      update(t) { at('hit', t, 0, () => { o.hit?.(0.6); star(c, F.x - 2, F.y, 8, QP[0], 2.2, 0.12); for (let k = 0; k < 5 + 2 * Q; k++) part(c, K.SHARD, F.x - 6, F.y + R.range(-2, 2), R.range(4, 10), R.range(40, 110), R.range(-30, 30), R.range(20, 60), R.range(0.3, 0.45), R.pick([QP[2], QP[3], QP[4]]), R.range(1.6, 2.4), { g: 1, drag: 0.5, bounce: 0.3, va: R.range(-16, 16) }); }); },
+      front(B, L, t) { const k = tm(t, 0, 0.12), e = tm(t, 0.16, 0.3); if (k > 0 && e < 1) for (let i = -1; i <= 1; i++) quill(B, c.X(F.x - 14 + 10 * outCubic(k)), c.Y(F.y + i * 3, 8 + i * 2), 1, 0, 5 + Q, 1 - e); },
+      end: 0.6,
+    };
+  });
+  /* 5. TUYỆT CHIÊU — CẦU GAI VƯỢT ẢI: tụ lực (bụi xoáy vào chân, nứt dưới thân, chấm sáng tím quay quanh) → lăn (engine) */
+  FS['chan_mdk' + suf + 'ult'] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.4, cr = starCrack(R, C.x, C.y + 1, 5, 8 + 2 * Q);
+    return {
+      update(t) {
+        if (t < T0) { const a = t * 14; if (R.chance(0.8)) puff(c, C.x + Math.cos(a) * 12, C.y + 1 + Math.sin(a) * 4, R.pick([P[2], P[3], P[4]]), 1.8, 0.3, 4, { vx: -Math.cos(a) * 40, vy: -Math.sin(a) * 14 }); if (R.chance(0.5)) part(c, K.STAR, C.x + Math.cos(-a) * 9, C.y + Math.sin(-a) * 3, R.range(3, 9), 0, 0, 0, 0.12, QP[1], 0.8); }
+        at('go', t, T0, () => { o.shake?.(0.12 * Q); o.flash?.(0.06); star(c, C.x, C.y, 7, QP[0], 3, 0.14); for (let k = 0; k < 8; k++) pebbleHop(c, C.x + R.range(-4, 4), C.y + R.range(-1, 1.5), 1.2, [P[3], P[4], P[5]]); });
+      },
+      back(B, L, t) { if (t > 0.1) { const fd = 1 - tm(t, 0.9, 1.3); if (fd > 0) drawCracks(B, c, cr, tm(t, 0.1, T0), P[6], P[4], P[7], fd > 0.5 ? 1 : 0.5); } },
+      end: 1.3,
+    };
+  });
+  /* 5b. cú đập kết thúc: nứt sao lớn, 2 vòng sóng đất, VÒNG KIM TÍM toả tròn (12–20 kim) bay ra rồi rơi cắm đất tắt dần, đá vụn nảy, mây bụi, chớp sáng */
+  FS['chan_mdk' + suf + 'ult2'] = SC((c, at, R, P, o) => {
+    const F = { x: c.ax, y: c.ay }, NQ = Math.round(10 + 4 * Q), cr = starCrack(R, F.x, F.y + 1, 8, 16 + 4 * Q), qs = [];
+    const UV = MV96('u'); for (let i = 0; i < NQ; i++) { const an = i / NQ * TAU + R.range(-0.12, 0.12), v = (UV === 'b' ? R.range(25, 55) : R.range(70, 110)) * (0.85 + 0.15 * Q); qs.push({ an, v, z0: R.range(4, 10), vz: UV === 'b' ? R.range(120, 170) : R.range(40, 80), l: UV === 'b' ? R.range(0.8, 1.0) : R.range(0.45, 0.6), r: R.range(12, 22 + 4 * Q) }); }
+    return {
+      update(t) {
+        at('slam', t, 0, () => { o.hit?.(1.6 + 0.2 * Q); o.knock?.(); o.shake?.(0.35 + 0.1 * Q); o.flash?.(0.1); star(c, F.x, F.y, 6, QP[0], 3.4 + 0.4 * Q, 0.16); addLight(c, F.x, F.y - 6, 16 + 4 * Q, QP[1], 0.4, 0.14);
+          for (let k = 0; k < 10 + 4 * Q; k++) { const a = R.range(0, TAU), v = R.range(40, 110); part(c, K.CHUNK, F.x + Math.cos(a) * 4, F.y + Math.sin(a) * 2, 3, Math.cos(a) * v, Math.sin(a) * v * 0.45, R.range(50, 120), R.range(0.5, 0.75), P[3], R.range(1.2, 2.4), { g: 1, bounce: 0.35, drag: 0.5, va: R.range(-14, 14), qf: 1 }); }
+          for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; puff(c, F.x + Math.cos(a) * 9, F.y + Math.sin(a) * 3.5, R.pick([P[2], P[3], P[4]]), 3.6, 0.55, 6, { vx: Math.cos(a) * 42, vy: Math.sin(a) * 15 }); } });
+      },
+      back(B, L, t) { const fd = 1 - tm(t, 0.9, 1.3); if (fd > 0) drawCracks(B, c, cr, tm(t, 0, 0.12), P[6], P[4], P[7], fd > 0.5 ? 1 : 0.5);
+        for (const [t0, R0, th] of [[0, 24 + 6 * Q, 3], [0.12, 34 + 7 * Q, 2]]) { const k = tm(t, t0, t0 + 0.38); if (k > 0 && k < 1) gring(B, c, F.x, F.y + 1, 0, 6 + R0 * outCubic(k), th, [P[1], P[3], P[5]], k < 0.6 ? 1 : 0.5, -1); } },
+      front(B, L, t) {
+        for (const [t0, R0, th] of [[0, 24 + 6 * Q, 3], [0.12, 34 + 7 * Q, 2]]) { const k = tm(t, t0, t0 + 0.38); if (k > 0 && k < 1) gring(B, c, F.x, F.y + 1, 0, 6 + R0 * outCubic(k), th, [P[1], P[3], P[5]], k < 0.6 ? 1 : 0.5, 1); }
+        if (UV === 'c') { for (const q of qs) { const k = tm(t, 0.02, 0.12), e = tm(t, 0.55, 0.8); if (k <= 0 || e >= 1) continue; const h = (6 + 3 * Q) * outBack(k) * (1 - e), X = c.X(F.x + Math.cos(q.an) * q.r), Y0 = c.Y(F.y + Math.sin(q.an) * q.r * 0.5, 0); if (h > 0.5) quill(B, X, c.Y(F.y + Math.sin(q.an) * q.r * 0.5, h), 0, -1, h, 1); B.dot(X, Y0, P[6]); B.dot(X + 1, Y0, P[6]); } return; }
+        for (const q of qs) { const tt = Math.min(t, q.l); if (t > q.l + 0.35) continue; const x = F.x + Math.cos(q.an) * q.v * tt, y = F.y + Math.sin(q.an) * q.v * tt * 0.5, z = Math.max(0, q.z0 + q.vz * tt - 150 * tt * tt);
+          const vx = Math.cos(q.an), vy = Math.sin(q.an) * 0.5, vzz = q.vz - 300 * tt, sx = vx * q.v * RES, sy = (vy * q.v - vzz) * RES, sl = Math.hypot(sx, sy) || 1, a = t > q.l ? 1 - (t - q.l) / 0.35 : 1;
+          quill(B, c.X(x), c.Y(y, z), sx / sl, sy / sl, 5 + Q, a); }
+      },
+      end: 1.4,
+    };
+  });
+}
+for (const s of ['', '2', '3']) mkMdk(s);
+/* p96:scenes:end */
+/* p99:scenes:begin */
+/* p99 — MOYAKI (mascot Monad, hệ Triều): cảnh VFX VẼ CODE (skill vfx-code) cho 5 chiêu, 3 dạng (hậu tố '' / 2 / 3 = độ lực Q).
+   Bảng màu: NƯỚC = bảng Triều của cảnh (P, đo từ ô nước game zones/m1/wang); môi / mồ hôi / lấp lánh = bảng riêng đo từ sprite Moyaki (YP, YLIP).
+   Mờ bằng dither, tắt gọn, KHÔNG lớp lặp (luật 22/09, 10/10). Mốc: giờ cảnh 0,3 = lúc tung chiêu (tuyệt chiêu 0,4). Cảnh *b / ult2 tạo lúc chạm (sigScene) — neo ở chân đối thủ. */
+const YP = ['#fbf6ff', '#e4d9fb', '#a189e2', '#7a54a6', '#cc62a0', '#943b69', '#26173d'].map(H);
+const YQ = { '': 1, '2': 1.3, '3': 1.6 };
+/* bản nháp (skill vfx-code): d = vệt trượt Quẫy Vây, b = bong bóng, u = thác tuyệt chiêu — trang so GIF đặt globalThis.__MYKV; game dùng bản em chọn (MYKV0) */
+const MYKV0 = { d: 'b', b: 'a', u: 'b' }; const MV99 = k => ((globalThis.__MYKV || {})[k] || MYKV0[k]);
+/* bong bóng nước r (điểm đệm): viền 2 tông, chấm sáng góc trên-trái; half = chỉ nửa trên/dưới */
+function ybub(B, P, X, Y, r, a = 1) { const n = Math.max(8, Math.ceil(r * 7)); for (let i = 0; i < n; i++) { const an = i / n * TAU, s = Math.sin(an), cx = Math.cos(an); B.dot(X + cx * r, Y + s * r, an > 3.4 && an < 4.9 ? P[0] : s > 0.5 ? P[5] : P[3], a); if (r > 2.5) B.dot(X + cx * (r - 1), Y + s * (r - 1), s > 0.5 ? P[4] : P[1], a * 0.8); }
+  if (r > 2.5) for (let y = -r + 1; y < r; y++) for (let x = -r + 1; x < r; x++) if (x * x + y * y < (r - 1.5) * (r - 1.5) && bayer(X + x, Y + y) < 0.12) B.dot(X + x, Y + y, P[2], a); B.dot(X - r * 0.45, Y - r * 0.5, P[0], a); B.dot(X - r * 0.45 + 1, Y - r * 0.5, P[0], a); }
+/* giọt mồ hôi (meme) — tĩnh, chỉ nở/co theo s */
+function sweat(B, P, X, Y, s, a = 1) { const h = Math.max(3, Math.round(7 * s)), w = Math.max(2, Math.round(4 * s)); for (let y = 0; y <= h; y++) { const hw = y < h * 0.45 ? (y / (h * 0.45)) * w * 0.5 : w * 0.5 * Math.sqrt(Math.max(0, 1 - ((y - h * 0.45) / (h * 0.55)) ** 2)) + (y < h * 0.8 ? 0.5 : 0); for (let x = -Math.ceil(hw) - 1; x <= Math.ceil(hw) + 1; x++) { const inn = Math.abs(x) <= hw; if (!inn) { if (Math.abs(x) <= hw + 1) B.dot(X + x, Y + y, P[6], a); continue; } B.dot(X + x, Y + y, x < -hw * 0.2 && y > h * 0.3 && y < h * 0.7 ? P[0] : x > hw * 0.4 ? P[4] : P[2], a); } } B.dot(X, Y - 1, P[6], a); B.dot(X, Y + h + 1, P[6], a); }
+/* lấp lánh 4 cánh (liếc) */
+function glint(B, X, Y, n, col, a = 1) { for (let i = -n; i <= n; i++) { B.dot(X + i, Y, Math.abs(i) < 2 ? YP[0] : col, a); B.dot(X, Y + i, Math.abs(i) < 2 ? YP[0] : col, a); } B.dot(X + 1, Y + 1, col, a * 0.6); B.dot(X - 1, Y - 1, col, a * 0.6); }
+/* thác nước đứng chảy NGƯỢC (vượt vũ môn): cột rộng w logic, cao h, vạch nước chạy lên theo t */
+function upfall(B, P, X, Y0, w, h, t, a = 1, white = false) { const W = Math.round(w * RES), Hh = Math.round(h * RES); if (Hh < 2) return;
+  for (let y = 0; y < Hh; y++) { const taper = y > Hh - 6 ? (Hh - y) / 6 : 1, hw = Math.max(1, W * 0.5 * (0.75 + 0.25 * taper) + Math.sin(y * 0.35 - t * 18) * 1.2);
+    for (let x = -Math.ceil(hw); x <= Math.ceil(hw); x++) { const u = Math.abs(x) / hw; if (u > 1) continue; const s = ((y + t * 90 + (x & 3) * 3) % 14 + 14) % 14;
+      const col = u > 0.86 ? P[5] : white ? P[0] : s < 2 ? P[0] : u < 0.3 ? P[1] : u < 0.62 ? P[2] : P[3]; B.dot(X + x, Y0 - y, col, a); } }
+  for (let i = 0; i < 6; i++) { const ox = Math.round((i - 2.5) * W / 5), oy = Math.round(Math.sin(t * 20 + i) * 2); B.dot(X + ox, Y0 - Hh - 1 + oy, P[0], a); B.dot(X + ox + 1, Y0 - Hh + oy, P[1], a); } }
+function mkMyk(suf) {
+  const Q = YQ[suf];
+  /* 1. QUẪY VÂY LƯỚT — 0,3: ngã bụng bắn nước; lướt: nước toé sau đuôi + VỆT NƯỚC trên đất (vũng dither, tắt sau ~1 s) theo thân đang lướt o.cx() */
+  FS['trieu_myk1' + suf] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.3, END = 1.9, trail = [];
+    return {
+      update(t) {
+        at('go', t, T0, () => { o.shake?.(0.05 * Q); splash(c, C.x - 3, C.y + 0.5, 3, 8 + Math.round(3 * Q), 0.7); });
+        if (t > T0 && t < 1.05) { const x = o.cx ? o.cx() : C.x;
+          if (!trail.length || Math.abs(trail[trail.length - 1].x - x) > 5) trail.push({ x, t });
+          if (R.chance(0.8)) fx(c, x - 7, C.y + R.range(-1, 1), 2, -R.range(30, 70), R.range(-10, 10), R.range(30, 60), 2, dDrop, { g: 1, drag: 0.4, col: R.chance(0.4) ? P[0] : P[1], c2: P[4], onLand: (cc, p) => { p.draw = dCrown; p.life = p.max = 0.16; } });
+          if (MV99('d') !== 'a') for (let k = 0; k < 2; k++) part(c, K.STREAK, x - 6, C.y + 0.5, R.range(1, 4), -R.range(80, 130), 0, 0, 0.14, R.chance(0.5) ? P[0] : P[1], 1, {}); }
+      },
+      back(B, L, t) { for (const q of trail) { const age = t - q.t; if (age > 1.05) continue; const fd = 1 - tm(age, 0.6, 1.05), X = c.X(q.x), Y = c.Y(C.y + 0.5);
+        ditherOval(B, X, Y, 4.5 * RES, 1.6 * RES, P[4], fd > 0.5 ? 0.55 : 0.28); ellipse(B, X, Y - 1, 3.2 * RES, 1 * RES, P[1], fd > 0.5 ? 0.7 : 0.35, -1); } },
+      end: END,
+    };
+  });
+  /* 1b. chạm: vương miện nước toé + vòng nước + bọt */
+  FS['trieu_myk1b' + suf] = SC((c, at, R, P, o) => {
+    const F = { x: c.ax, y: c.ay };
+    return {
+      update(t) { at('hit', t, 0, () => { o.hit?.(1.1 + 0.2 * Q); o.shake?.(0.16 * Q); star(c, F.x - 5, F.y, 9, P[0], 2.4 + 0.3 * Q, 0.12); splash(c, F.x - 4, F.y + 0.5, 8, 12 + Math.round(5 * Q), 1);
+        for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; puff(c, F.x - 3 + Math.cos(a) * 5, F.y + 1 + Math.sin(a) * 2, P[0], 2.2, 0.35, 5, { vx: Math.cos(a) * 40, vy: Math.sin(a) * 14 }); } }); },
+      back(B, L, t) { const k = tm(t, 0, 0.32); if (k > 0 && k < 1) gring(B, c, F.x - 3, F.y + 1, 0, 5 + (13 + 5 * Q) * outCubic(k), 2, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, -1); },
+      front(B, L, t) { const k = tm(t, 0, 0.32); if (k > 0 && k < 1) gring(B, c, F.x - 3, F.y + 1, 0, 5 + (13 + 5 * Q) * outCubic(k), 2, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, 1); },
+      end: 0.8,
+    };
+  });
+  /* 2. BONG BÓNG TRỀ MÔI — gồng: bọt nhỏ tụ ở MÔI (o.M); từ 0,3: N bóng phồng ở môi rồi bay lượn sóng tới đối thủ, tới đúng giờ trúng engine (0,58 + 0,12 i) thì vỡ toé */
+  FS['trieu_myk2' + suf] = SC((c, at, R, P, o) => {
+    const M = o.M, F = { x: c.ax, y: c.ay }, T0 = 0.3, N = suf === '3' ? 4 : 3, FZ = 8, bs = [];
+    for (let i = 0; i < N; i++) bs.push({ i, t0: T0 + 0.07 * i, t1: 0.58 + 0.12 * i, dy: (i - (N - 1) / 2) * 3, r: (i === N - 1 ? 4.5 : 3.5) * (0.9 + 0.1 * Q), w: R.range(5, 9) * (i % 2 ? 1 : -1) });
+    return {
+      update(t) {
+        if (t > 0.05 && t < T0 && R.chance(0.5)) fx(c, M.x + R.range(1, 4), M.y + R.range(-1, 1), M.z + R.range(-1, 2), R.range(-6, 6), 0, R.range(6, 14), 0.3, (B, L, cc, p, x, y, k) => ybub(B, P, x, y, p.size, 1), { size: 1.5 });
+        for (const b of bs) at('h' + b.i, t, b.t1, () => { o.hit?.(b.i === N - 1 ? 1 : 0.45); splash(c, F.x - 3, F.y + b.dy * 0.4, FZ, b.i === N - 1 ? 14 : 7, b.i === N - 1 ? 1 : 0.6);
+          for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; fx(c, F.x - 3 + Math.cos(a) * 3, F.y + b.dy * 0.4, FZ + Math.sin(a) * 3, Math.cos(a) * 30, 0, Math.sin(a) * 30, 0.25, (B, L, cc, p, x, y, k2) => { B.dot(x, y, P[0]); B.dot(x + 1, y, P[1]); }, {}); } });
+      },
+      front(B, L, t) {
+        for (const b of bs) { if (t < b.t0 || t > b.t1) continue; const u = tm(t, b.t0, b.t1), grow = MV99('b') === 'b' ? 1 : outBack(tm(t, b.t0, b.t0 + 0.08), 1.6),
+            x = lerp(M.x + 3, F.x - 4, u), y = lerp(M.y, F.y + b.dy * 0.4, u) + Math.sin(u * Math.PI * 2) * b.w * 0.18, z = lerp(M.z, FZ, u) + Math.sin(u * Math.PI) * 6 + Math.sin(u * 9 + b.i) * 1.5;
+          ybub(B, P, c.X(x), c.Y(y, z), b.r * RES * 0.8 * Math.max(0.3, grow), 1); }
+      },
+      end: 0.58 + 0.12 * (N - 1) + 0.45,
+    };
+  });
+  /* 3. LIẾC KHINH KHỈNH — 0,3: lấp lánh khinh khỉnh ở mắt (trên môi o.M); đối thủ: GIỌT MỒ HÔI to nở cạnh đầu 0,7 s rồi co tắt (tĩnh, không lặp) */
+  FS['trieu_myk3' + suf] = SC((c, at, R, P, o) => {
+    const M = o.M, F = { x: c.ax, y: c.ay }, T0 = 0.3, HZ = 24;
+    return {
+      update(t) { at('mad', t, T0 + 0.16, () => { o.hit?.(0.25); }); },
+      front(B, L, t) { const g = tm(t, T0 - 0.05, T0 + 0.06), ge = tm(t, T0 + 0.22, T0 + 0.36); if (g > 0 && ge < 1) glint(B, c.X(M.x - 2), c.Y(M.y, M.z + 5), Math.round(2 + 3 * g * (1 - ge)), YP[2], 1);
+        const k = tm(t, T0 + 0.16, T0 + 0.28), e = tm(t, T0 + 0.85, T0 + 1.0); if (k > 0 && e < 1) { const s = (0.7 + 0.8 * outBack(k)) * (1 - e) * (0.9 + 0.12 * Q); if (s > 0.15) sweat(B, P, c.X(F.x + 7), c.Y(F.y, HZ), s, 1); } },
+      end: 1.45,
+    };
+  });
+  /* 4. BƠI NGƯỢC DÒNG — 0,3: vòng nước dưới chân + giọt nước bắn NGƯỢC lên quanh thân (0,6 s) + chớp hồi máu; không lớp lặp lúc VỮNG */
+  FS['trieu_myk4' + suf] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.3, T1 = 0.9;
+    return {
+      update(t) { at('go', t, T0, () => { o.shake?.(0.04); addLight(c, C.x, C.y - 8, 12, P[1], 0.3, 0.12); });
+        if (t > T0 && t < T1 && R.chance(0.85)) { const a = R.range(0, TAU); fx(c, C.x + Math.cos(a) * 9, C.y + Math.sin(a) * 3, 1, -Math.cos(a) * 6, 0, R.range(60, 110), 0.4, dDrop, { g: 0.2, col: R.chance(0.4) ? P[0] : P[1], c2: P[4] }); } },
+      back(B, L, t) { const k = tm(t, T0, T0 + 0.3); if (k > 0 && k < 1) gring(B, c, C.x, C.y + 1, 0, 6 + 12 * outCubic(k), 1.8, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, -1); },
+      front(B, L, t) { const k = tm(t, T0, T0 + 0.3); if (k > 0 && k < 1) gring(B, c, C.x, C.y + 1, 0, 6 + 12 * outCubic(k), 1.8, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, 1);
+        const h = tm(t, T0 + 0.05, T0 + 0.2) * (1 - tm(t, T1 - 0.15, T1)); if (h > 0) for (let i = 0; i < 3; i++) { const X = c.X(C.x + (i - 1) * 7), Y = c.Y(C.y, 6 + 10 * tm(t, T0, T1) + i * 2); for (let d = 0; d < 5; d++) B.dot(X, Y - d, d < 2 ? P[0] : P[2], h); B.dot(X - 1, Y - 3, P[1], h); B.dot(X + 1, Y - 3, P[1], h); } },
+      end: 1.1,
+    };
+  });
+  /* 5. TUYỆT CHIÊU — CÁ CHÉP VƯỢT VŨ MÔN: tụ nước dưới chân (0–0,4) → THÁC CHẢY NGƯỢC dâng sau lưng (0,4–0,9) → khi vọt lên thác đổ sập toé (0,9–1,3) */
+  FS['trieu_myk' + suf + 'ult'] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.4, UP = 0.9, H0 = 34 + 6 * Q, W0 = 9 + 2 * Q;
+    const hgt = t => H0 * (MV99('u') === 'a' ? outCubic(tm(t, T0, UP)) : outBack(tm(t, T0, UP), 1.3)) * (1 - outCubic(tm(t, UP + 0.05, UP + 0.4)));
+    return {
+      update(t) {
+        if (t < T0) { const a = t * 12; if (R.chance(0.8)) fx(c, C.x + Math.cos(a) * 12, C.y + Math.sin(a) * 4, 1, -Math.cos(a) * 30, -Math.sin(a) * 10, R.range(10, 30), 0.35, dDrop, { g: 0.6, col: P[1], c2: P[4] }); }
+        at('go', t, T0, () => { o.shake?.(0.1 * Q); splash(c, C.x, C.y + 0.5, 2, 10, 0.8); });
+        if (t > T0 && t < UP && R.chance(0.6)) splash(c, C.x + R.range(-W0 / 2, W0 / 2), C.y + 0.5, 1, 1, 0.5);
+        at('fall', t, UP + 0.05, () => { o.shake?.(0.08); for (let k = 0; k < 20; k++) { const a = R.range(0, TAU), v = R.range(30, 80); fx(c, C.x + R.range(-W0 / 2, W0 / 2), C.y, R.range(6, H0 * 0.6), Math.cos(a) * v, Math.sin(a) * v * 0.4, R.range(0, 40), 2, dDrop, { g: 1, drag: 0.3, col: R.chance(0.4) ? P[0] : P[1], c2: P[4], onLand: (cc, p) => { p.draw = dCrown; p.life = p.max = 0.16; } }); } });
+      },
+      back(B, L, t) { const k = tm(t, 0.05, T0); if (t < UP + 0.4) ditherOval(B, c.X(C.x), c.Y(C.y + 1), (6 + 8 * k) * RES, (2 + 3 * k) * RES, P[4], t < UP ? 0.5 : 0.25);
+        const h = hgt(t); if (h > 1 && MV99('u') !== 'c') upfall(B, P, c.X(C.x), c.Y(C.y - 1), W0, h, t, 1); },
+      front(B, L, t) { const h = hgt(t); if (h > 1 && MV99('u') === 'c') upfall(B, P, c.X(C.x), c.Y(C.y + 1), W0, h, t, 0.85);
+        if (t > T0 && t < UP + 0.3) { const k = tm(t, T0, T0 + 0.25); gring(B, c, C.x, C.y + 1, 0, 5 + (W0 + 6) * outCubic(k), 1.6, [P[0], P[2], P[4]], t < UP ? 1 : 0.5, 1); } },
+      end: 1.4,
+    };
+  });
+  /* 5b. cú bổ nhào: cột nước dựng + vương miện nước lớn, 2 vòng sóng nước, vũng nước tối tắt dần, chớp sáng */
+  FS['trieu_myk' + suf + 'ult2'] = SC((c, at, R, P, o) => {
+    const F = { x: c.ax, y: c.ay }, HC = 20 + 6 * Q;
+    return {
+      update(t) {
+        at('slam', t, 0, () => { o.hit?.(1.6 + 0.2 * Q); o.knock?.(); o.shake?.(0.32 + 0.1 * Q); o.flash?.(0.1, '200,235,255'); star(c, F.x, F.y, 6, P[0], 3.2 + 0.4 * Q, 0.16); addLight(c, F.x, F.y - 6, 16 + 4 * Q, P[1], 0.4, 0.14);
+          for (let k = 0; k < 36 + 10 * Q; k++) { const a = R.range(0, TAU), v = R.range(40, 120); fx(c, F.x + Math.cos(a) * 5, F.y + Math.sin(a) * 2, R.range(2, 10), Math.cos(a) * v, Math.sin(a) * v * 0.45, R.range(60, 140), 2, dDrop, { g: 1, drag: 0.3, col: R.chance(0.4) ? P[0] : P[1], c2: P[4], onLand: (cc, p) => { p.draw = dCrown; p.life = p.max = 0.16; } }); }
+          for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; puff(c, F.x + Math.cos(a) * 10, F.y + Math.sin(a) * 4, P[1], 1.8, 0.4, 4, { vx: Math.cos(a) * 46, vy: Math.sin(a) * 16 }); } });
+      },
+      back(B, L, t) { const fd = 1 - tm(t, 0.8, 1.3); if (fd > 0) ditherOval(B, c.X(F.x), c.Y(F.y + 1), (16 + 6 * Q) * RES, (6 + 2 * Q) * RES, P[5], fd > 0.5 ? 0.45 : 0.2);
+        for (const [t0, R0, th] of [[0, 28 + 8 * Q, 3], [0.12, 44 + 10 * Q, 2]]) { const k = tm(t, t0, t0 + 0.38); if (k > 0 && k < 1) gring(B, c, F.x, F.y + 1, 0, 6 + R0 * outCubic(k), th, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, -1); }
+        const kc = tm(t, 0, 0.1) * (1 - tm(t, 0.18, 0.42)); if (kc > 0) upfall(B, P, c.X(F.x), c.Y(F.y), 7 + 2 * Q, HC * kc, t, 1, t < 0.06); },
+      front(B, L, t) { for (const [t0, R0, th] of [[0, 28 + 8 * Q, 3], [0.12, 44 + 10 * Q, 2]]) { const k = tm(t, t0, t0 + 0.38); if (k > 0 && k < 1) gring(B, c, F.x, F.y + 1, 0, 6 + R0 * outCubic(k), th, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, 1); } },
+      end: 1.35,
+    };
+  });
+}
+for (const s of ['', '2', '3']) mkMyk(s);
+/* p99:scenes:end */
+/* p100:scenes:begin */
+/* p100 — CHOG (mascot Monad, hệ Mã): cảnh VFX VẼ CODE (skill vfx-code) cho 5 chiêu, 3 dạng (hậu tố '' / 2 / 3 = độ lực Q).
+   Bảng màu: dữ liệu / nhiễu / ánh sáng = bảng Mã của cảnh (P, xanh bạc hà 8 bậc); gai bờm = bảng TÍM đo từ sprite Chog (CP, 8 bậc); tag LIVE = đỏ (CR).
+   Mờ bằng dither, tắt gọn, KHÔNG lớp lặp. Mốc: giờ cảnh 0,3 = lúc tung chiêu (tuyệt chiêu 0,4). Cảnh *b tạo lúc chạm (sigScene) — neo ở chân đối thủ. */
+const CP = ['#fbf2fb', '#e3c4f2', '#bd7de1', '#9a3fd8', '#7b09c5', '#5c0a95', '#51204b', '#2a0631'].map(H);
+const CR = ['#ffd0d0', '#ff5a5a', '#c8202c', '#6a0c14'].map(H);
+const CHQ = { '': 1, '2': 1.3, '3': 1.6 };
+/* bản nháp (skill vfx-code): d = vệt lao, m = gai bờm, i = phỏng vấn, u = màn bản tin — trang so GIF đặt globalThis.__CHGV; game dùng bản em chọn (CHGV0) */
+const CHGV0 = { d: 'b', m: 'a', i: 'c', u: 'a' }; const MV100 = k => ((globalThis.__CHGV || {})[k] || CHGV0[k]);
+/* chữ pixel 3×5 (tiếng Anh, không lật gương), viền tối; S = điểm / ô */
+const F100 = { L: [4, 4, 4, 4, 7], I: [7, 2, 2, 2, 7], V: [5, 5, 5, 2, 2], E: [7, 4, 6, 4, 7], N: [5, 7, 7, 5, 5], W: [5, 5, 7, 7, 5], S: [7, 4, 7, 1, 7], '?': [7, 1, 3, 0, 2], '!': [2, 2, 2, 0, 2] };
+function txt100(B, X, Y, str, col, edge, S = 2, a = 1) {
+  const on = (g, i, j) => g && i >= 0 && j >= 0 && i < 3 && j < 5 && ((g[j] >> (2 - i)) & 1); X = Math.round(X); Y = Math.round(Y);
+  [...str].forEach((ch, n) => { const g = F100[ch], ox = X + n * 4 * S; if (!g) return;
+    for (let j = -1; j <= 5; j++) for (let i = -1; i <= 3; i++) { const v = on(g, i, j); if (!v && !(on(g, i + 1, j) || on(g, i - 1, j) || on(g, i, j + 1) || on(g, i, j - 1))) continue; if (!v && edge == null) continue; for (let q = 0; q < S * S; q++) B.dot(ox + i * S + (q % S), Y + j * S + ((q / S) | 0), v ? col : edge, a); } });
+}
+/* gai bờm bay: kim tím 2 tông (đầu trắng) dài L px logic theo hướng (ux, uy) trên mặt phẳng màn */
+function chq(B, X, Y, ux, uy, L, a = 1) { for (let d = 0; d <= L * RES; d += 0.5) { const col = d < 1.5 ? CP[0] : d < L * RES * 0.4 ? CP[3] : CP[4], aa = d > L * RES * 0.7 ? a * (1.25 - d / (L * RES)) : a; B.dot(X - ux * d, Y - uy * d, col, aa); if (d > 1 && d < L * RES * 0.55) { B.dot(X - ux * d - uy, Y - uy * d + ux, CP[6], aa); B.dot(X - ux * d + uy, Y - uy * d - ux, CP[2], aa); } } }
+/* bờm xù: n gai ngắn toả tròn quanh (X, Y) — dài theo k */
+function maneBurst(B, X, Y, n, r0, r1, k, a = 1, rot = 0) { for (let i = 0; i < n; i++) { const an = rot + i / n * TAU, ux = Math.cos(an), uy = Math.sin(an) * 0.8, ra = r0 * RES, rb = (r0 + (r1 - r0) * k) * RES; for (let d = ra; d <= rb; d += 0.5) { B.dot(X + ux * d, Y + uy * d, d > rb - 1.5 ? CP[0] : d > rb - 4 ? CP[2] : CP[4], a); B.dot(X + ux * d + uy * 0.6, Y + uy * d - ux * 0.6, CP[6], a * 0.6); } } }
+/* khung ngắm máy quay (4 góc chữ L) quanh hộp X0..X1 × Y0..Y1 (điểm đệm) */
+function brackets(B, X0, Y0, X1, Y1, col, edge, a = 1) { const l = 8; for (const [x, y, sx, sy] of [[X0, Y0, 1, 1], [X1, Y0, -1, 1], [X0, Y1, 1, -1], [X1, Y1, -1, -1]]) { for (let d = -1; d <= l; d++) for (let w = -1; w <= 2; w++) { B.dot(x + sx * d, y + sy * w, edge, a); B.dot(x + sx * w, y + sy * d, edge, a); } for (let d = 0; d < l; d++) for (let w = 0; w < 2; w++) { B.dot(x + sx * d, y + sy * w, col, a); B.dot(x + sx * w, y + sy * d, col, a); } } }
+/* bong bóng thoại (điểm đệm): khung trắng viền tím sẫm + đuôi nhọn xuống-trái, ký tự giữa */
+function bubble(B, X, Y, w, h, s, ch, a = 1) { const W = Math.round(w * s), Hh = Math.round(h * s); if (W < 4 || Hh < 4) return; const x0 = Math.round(X - W / 2), y0 = Math.round(Y - Hh);
+  for (let y = -1; y <= Hh; y++) for (let x = -1; x <= W; x++) { const cor = (x <= 0 || x >= W - 1) && (y <= 0 || y >= Hh - 1); if (cor && (x < 0 || x > W - 1 || y < 0 || y > Hh - 1)) continue; const e = x < 1 || y < 1 || x > W - 2 || y > Hh - 2; B.dot(x0 + x, y0 + y, e ? CP[6] : y < 3 ? CP[0] : CP[1], a); }
+  for (let k = 0; k < 6; k++) for (let x = 0; x < 6 - k; x++) B.dot(x0 + 6 + x, y0 + Hh + k, x === 0 || x === 5 - k ? CP[6] : CP[1], a);
+  if (s > 0.7) txt100(B, X - 3 * Math.max(1, Math.round(2 * s)) / 2 - 1, y0 + Hh / 2 - 5 * Math.max(1, Math.round(2 * s)) / 2, ch, CP[5], null, Math.max(1, Math.round(2 * s)), a); }
+function mkChg(suf) {
+  const Q = CHQ[suf];
+  /* 1. TIN NÓNG LƯỚT TỚI — gồng: bit dữ liệu hút vào thân; lao: vệt tốc độ sát đất + (b) dải dữ liệu đứt quãng bám sau lưng, vụn bit rơi */
+  FS['ma_chg1' + suf] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.3, S1 = {};
+    return {
+      update(t) {
+        if (t > 0.06 && t < T0) gather(c, C.x, C.y, 12, [P[0], P[1], P[2]], 1.1, 12);
+        at('go', t, T0, () => { o.shake?.(0.06 * Q); star(c, C.x + 2, C.y, 14, P[0], 2.2, 0.12); bits(c, C.x - 4, C.y + 0.5, 6, 6 + 2 * Q, 60, 0.4); });
+        if (t > T0 && t < 1.05) { const x = o.cx ? o.cx() : C.x;
+          for (let k = 0; k < 2; k++) part(c, K.STREAK, x - 6, C.y + 0.5, R.range(2, 20), -R.range(90, 140), 0, 0, 0.14, R.chance(0.5) ? P[1] : P[2], 1, {});
+          if (R.chance(0.35 * Q)) fx(c, x - 6, C.y + R.range(-1, 1), R.range(6, 22), -R.range(20, 50), 0, R.range(10, 40), R.range(0.3, 0.45), dBit, { g: 1, bounce: 0.3, drag: 0.6, col: R.pick([P[1], P[2], P[3]]), c2: P[0], size: 1.1, qf: 1 });
+          if (MV100('d') === 'c' && R.chance(0.3)) puff(c, x - 5, C.y + 1, R.pick([P[4], P[5]]), 1.8, 0.3, 4, { vx: -30 }); }
+      },
+      back(B, L, t) { if (MV100('d') !== 'a' && t > T0 && t < 1.05) { const x = o.cx ? o.cx() : C.x, X = c.X(x); if (S1.x0 == null) S1.x0 = x; S1.v = lerp(S1.v || 0, Math.abs(x - (S1.xl ?? x)), 0.5); S1.xl = x; const sp = Math.min(1, S1.v / 4); if (sp < 0.15) return; for (const [z, ln, ph] of [[6, 26, 0], [14, 34, 3], [22, 20, 6]]) { const Y = c.Y(C.y, z); for (let d = 8; d < (ln + 4 * Q) * RES * sp; d += 1) { if (((d + ph + Math.floor(t * 40)) % 9) < 2) continue; const col = d < 14 ? P[0] : d < 30 ? P[1] : P[3], a = d > ln * RES * 0.7 ? 0.5 : 1; B.dot(X - d, Y, col, a); if (z === 14) B.dot(X - d, Y + 1, P[4], a); } } } },
+      end: 1.2,
+    };
+  });
+  /* 1b. chạm: chớp trắng + bit vỡ toả quạt phía trước + vạch nhiễu cắt ngang thân đối thủ 0,15 s + vòng sóng bạc hà dưới chân */
+  FS['ma_chg1b' + suf] = SC((c, at, R, P, o) => {
+    const F = { x: c.ax, y: c.ay };
+    return {
+      update(t) {
+        at('hit', t, 0, () => { o.hit?.(1.2 + 0.2 * Q); o.shake?.(0.16 * Q); star(c, F.x - 5, F.y, 10, P[0], 2.6 + 0.4 * Q, 0.14); addLight(c, F.x - 4, F.y - 10, 12, P[1], 0.35, 0.1);
+          for (let k = 0; k < 8 + 5 * Q; k++) { const an = R.range(-1.1, 1.1), v = R.range(60, 130); fx(c, F.x - 4, F.y + R.range(-1, 1), R.range(6, 14), Math.cos(an) * v, Math.sin(an) * v * 0.4, R.range(30, 70), R.range(0.35, 0.55), dBit, { g: 1, bounce: 0.3, drag: 0.5, col: R.pick([P[1], P[2], P[3], CP[3]]), c2: P[0], size: R.chance(0.3) ? 1.6 : 1.1, qf: 1 }); } });
+      },
+      back(B, L, t) { const k = tm(t, 0, 0.3); if (k > 0 && k < 1) gring(B, c, F.x - 3, F.y + 1, 0, 5 + (13 + 5 * Q) * outCubic(k), 2, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, -1); },
+      front(B, L, t) { const k = tm(t, 0, 0.3); if (k > 0 && k < 1) gring(B, c, F.x - 3, F.y + 1, 0, 5 + (13 + 5 * Q) * outCubic(k), 2, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, 1); if (t > 0.02 && t < 0.16) glitchBars(B, R, c.X(F.x), c.Y(F.y, 0), 30, 30, 4, P, t > 0.1 ? 0.5 : 1); },
+      end: 0.8,
+    };
+  });
+  /* 2. BỜM GAI NHIỄU SÓNG — gồng: bờm xù dần quanh đầu (o.M), bit tụ; 0,3: N gai tím toả tròn bay ra (gai hướng đối thủ cắm tới chân đối thủ),
+        (b) gai đi theo nhịp giật (nhảy 2 khung một, để lại khối bit mờ), (c) thêm vòng quét nhiễu; trúng 0,42: vạch nhiễu + bit vỡ trên đối thủ */
+  FS['ma_chg2' + suf] = SC((c, at, R, P, o) => {
+    const M = o.M, C = o.C, F = { x: c.ax, y: c.ay }, T0 = 0.3, N = suf === '3' ? 8 : 6, RAD = 40 + 4 * Q, V = 260, qs = [];
+    for (let i = 0; i < N; i++) { const an = (i + 0.5) / N * TAU, ux = Math.cos(an), uy = Math.sin(an), right = Math.abs(an) < 0.6 || Math.abs(an - TAU) < 0.6, r = right ? Math.max(RAD, F.x - 6 - C.x) : RAD; qs.push({ ux, uy, r, T: 0.12 * (0.8 + 0.2 * r / RAD) / (0.8 + 0.2 * Math.max(RAD, F.x - 6 - C.x) / RAD) }); }
+    if (N === 6) qs.push({ ux: 1, uy: 0, r: Math.max(RAD, F.x - 6 - C.x), T: 0.12 });   /* gai thẳng vào đối thủ */
+    return {
+      update(t) {
+        if (t > 0.05 && t < T0) gather(c, M.x - 2, M.y, M.z, [P[0], P[1], P[2]], 1, 10);
+        at('flash', t, T0, () => { o.shake?.(0.08 * Q); star(c, M.x - 2, M.y, M.z, CP[0], 2.6 + 0.3 * Q, 0.12); addLight(c, M.x - 2, M.y - M.z, 10, P[1], 0.3, 0.1); bits(c, M.x - 2, M.y, M.z, 6 + 2 * Q, 70, 0.4); });
+        at('hit', t, T0 + 0.12, () => { o.hit?.(1); star(c, F.x - 3, F.y, 10, P[0], 2, 0.12); bits(c, F.x - 3, F.y + 0.5, 10, 10 + 4 * Q, 80, 0.45); });
+        if (MV100('m') === 'b' && t > T0 && t < T0 + 0.35) for (const q of qs) { const u = (t - T0) / q.T; if (u > 0 && u < 1 && R.chance(0.25)) fx(c, C.x + q.ux * q.r * u, C.y + q.uy * q.r * u * 0.5, lerp(M.z, 6, u), 0, 0, 0, 0.18, dBit, { col: R.pick([P[1], P[2]]), c2: P[0], size: 1.1, qf: 1 }); }
+      },
+      back(B, L, t) { if (MV100('m') === 'c') { const k = tm(t, T0, T0 + 0.3); if (k > 0 && k < 1) gring(B, c, C.x, C.y + 1, 0, 8 + RAD * outCubic(k), 1.5, [P[0], P[2]], k < 0.6 ? 1 : 0.5, -1); } },
+      front(B, L, t) {
+        if (t > 0.05 && t < T0 + 0.06) { const k = tm(t, 0.05, T0); maneBurst(B, c.X(M.x - 2), c.Y(M.y, M.z), 9, 6, 7 + 4 * k, k, 0.75 + 0.25 * k, t * 4); }
+        for (const q of qs) { let u = (t - T0) / q.T; if (u <= 0 || u > 1.3) continue; if (MV100('m') === 'b') u = Math.floor(u * 7) / 7 + 0.07;
+          const uu = Math.min(1, u), pos = w => [c.X(C.x + q.ux * q.r * w), c.Y(C.y + q.uy * q.r * w * 0.5, lerp(M.z, 6, w))], [X, Y] = pos(uu), [Xb, Yb] = pos(Math.max(0, uu - 0.08)), dx = X - Xb, dy = Y - Yb, dl = Math.hypot(dx, dy) || 1, a = u > 1 ? Math.max(0, 1 - (u - 1) / 0.3) : 1;
+          chq(B, X, Y, dx / dl, dy / dl, 9 + Q, a); if (u < 1) for (let d = 9 + Q; d < 22; d++) B.dot(X - dx / dl * d * RES, Y - dy / dl * d * RES, P[2], 0.5 * (1 - d / 22)); }
+        if (MV100('m') === 'c') { const k = tm(t, T0, T0 + 0.3); if (k > 0 && k < 1) gring(B, c, C.x, C.y + 1, 0, 8 + RAD * outCubic(k), 1.5, [P[0], P[2]], k < 0.6 ? 1 : 0.5, 1); }
+        if (t > T0 + 0.12 && t < T0 + 0.28) glitchBars(B, R, c.X(F.x), c.Y(F.y, 0), 30, 30, 4, P, t > T0 + 0.2 ? 0.5 : 1);
+      },
+      end: 1.0,
+    };
+  });
+  /* 3. PHỎNG VẤN BẤT NGỜ — 0,3: chớp ở micro (o.M = tay), 2 cung sóng âm bay tới; 0,5: bong bóng '?' bật trên đầu đối thủ + ĐỨNG HÌNH:
+        (c) khung ngắm máy quay 4 góc quanh đối thủ, vạch nhiễu giật 3 lần trong 1 s, rồi co tắt */
+  FS['ma_chg3' + suf] = SC((c, at, R, P, o) => {
+    const M = o.M, F = { x: c.ax, y: c.ay }, T0 = 0.3, TH = 0.5, OFF = 0.5 + 1 + 0.15 * (Q - 1) / 0.3, HZ = 26;
+    return {
+      update(t) {
+        at('flash', t, T0, () => { star(c, M.x, M.y, M.z, P[0], 2, 0.12); addLight(c, M.x, M.y - M.z, 8, P[1], 0.3, 0.1); });
+        at('hit', t, TH, () => { o.hit?.(0.4); o.shake?.(0.06); bits(c, F.x, F.y + 0.5, 14, 8, 50, 0.4); });
+        at('off', t, OFF, () => bits(c, F.x, F.y + 0.5, 14, 6, 40, 0.35));
+      },
+      front(B, L, t) {
+        if (MV100('i') !== 'b') for (const d0 of [0, 0.07]) { const u = tm(t, T0 + d0, TH + d0); if (u > 0 && u < 1) { const x = lerp(M.x + 2, F.x - 10, u), X = c.X(x), Y = c.Y(lerp(M.y, F.y, u), lerp(M.z, 14, u)); crescent(B, X, Y, (4 + 6 * u) * RES * 0.5 + 2, 0, 2, [P[0], P[1], P[3]], u > 0.8 ? 0.5 : 1, 1.0); } }
+        if (MV100('i') === 'b') { const u = tm(t, T0, TH); if (u > 0 && u < 1) bubble(B, c.X(lerp(M.x, F.x, u)), c.Y(lerp(M.y, F.y, u), lerp(M.z + 6, HZ, u)), 13, 13, 0.5 + 0.5 * u, '?'); }
+        const k = tm(t, TH, TH + 0.12), e = tm(t, OFF - 0.12, OFF);
+        if (k > 0 && e < 1) { const s = outBack(k) * (1 - e); bubble(B, c.X(F.x + 6), c.Y(F.y, HZ + 4), 13, 13, s, '?');
+          if (MV100('i') === 'c') { const g = 1 + 0.25 * (1 - k), w = 15 * g, h0 = 2, h1 = HZ * g; brackets(B, c.X(F.x - w), c.Y(F.y, h1), c.X(F.x + w), c.Y(F.y, -h0), P[1], P[6], e > 0 ? 0.5 : 1);
+          }
+          for (const g0 of [TH, TH + 0.4, TH + 0.8]) if (t > g0 && t < g0 + 0.1) glitchBars(B, R, c.X(F.x), c.Y(F.y, 0), 28, 30, 4, P, 1); }
+      },
+      end: OFF + 0.4,
+    };
+  });
+  /* 4. CƯỜI TÍT LÁCH MÃ — 0,3: vạch quét bạc hà chạy từ chân lên đầu Chog 1 lần, thân 'tách lớp' (vạch nhiễu ngắn), bit nảy + 2 sao lấp lánh ở mắt; bóng ảo do engine (ghostPush) */
+  FS['ma_chg4' + suf] = SC((c, at, R, P, o) => {
+    const C = o.C, T0 = 0.3, HB = 19;
+    return {
+      update(t) { at('go', t, T0, () => { o.shake?.(0.04); bits(c, C.x, C.y + 0.5, 8, 8 + 2 * Q, 55, 0.4); star(c, C.x - 4, C.y, 14, P[0], 1.6, 0.25); star(c, C.x + 4, C.y, 15, CP[1], 1.4, 0.25); addLight(c, C.x, C.y - 10, 9, P[1], 0.25, 0.12); }); },
+      front(B, L, t) { const k = tm(t, T0, T0 + 0.22); if (k > 0 && k < 1) { const Y = c.Y(C.y, HB * k), X0 = c.X(C.x - 11), X1 = c.X(C.x + 11); for (let x = X0; x <= X1; x++) { B.dot(x, Y, P[0]); B.dot(x, Y + 1, P[1]); B.dot(x, Y + 2, P[3], 0.5); } }
+        if (t > T0 && t < T0 + 0.14) glitchBars(B, R, c.X(C.x), c.Y(C.y, 0), 26, 36, 3, P, t > T0 + 0.08 ? 0.5 : 1); },
+      end: 0.9,
+    };
+  });
+  /* 5. TUYỆT CHIÊU — BẢN TIN LỊCH SỬ: tụ (bit hút vào Chog) → 0,45 màn hình bản tin dựng sau lưng đối thủ (khung tím, nền bạc hà có vạch quét, tag LIVE đỏ)
+        → 0,8 / 1,05 / 1,3: 3 dải tin chạy quét ngang qua đối thủ ở 3 độ cao → 1,6 màn VỠ thành khối điểm ảnh nổ toả + 2 vòng sóng + chớp. */
+  FS['ma_chg' + suf + 'ult'] = SC((c, at, R, P, o) => {
+    const C = o.C, A = { x: c.ax, y: c.ay }, SW = Math.round(54 + 8 * Q), SH = Math.round(30 + 4 * Q), SZ = 10, YB = A.y - 7, BRK = 1.6, TK = [[0.8, 7], [1.05, 17], [1.3, 12]];
+    const blocks = []; for (let j = 0; j < 5; j++) for (let i = 0; i < 8; i++) blocks.push({ x: A.x - SW / 2 + (i + 0.5) * SW / 8, z: SZ + (j + 0.5) * SH / 5, an: R.range(0, TAU), v: R.range(50, 110) * (0.8 + 0.2 * Q) });
+    const scr = (B, t) => { if (t < 0.45 || t > BRK) return; const k = outBack(tm(t, 0.45, 0.6)), h = Math.round(SH * k * RES), w = Math.round(SW * RES), X0 = Math.round(c.X(A.x) - w / 2), Yb = Math.round(c.Y(YB, SZ));
+      for (const lx of [-w / 2 + 6, w / 2 - 8]) for (let y = 0; y < SZ * RES; y++) for (let x = 0; x < 3; x++) B.dot(c.X(A.x) + lx + x, c.Y(YB) - y, x === 0 ? CP[6] : CP[5]);   /* 2 chân đế */
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const e = x < 2 || y < 2 || x > w - 3 || y > h - 3, e2 = x < 4 || y < 4 || x > w - 5 || y > h - 5; let col = e ? CP[6] : e2 ? CP[4] : ((y + Math.floor(t * 30)) % 6 < 1 ? P[3] : (y > h - 12 ? P[6] : P[5]));
+        if (!e2 && y > h - 12 && y < h - 4 && ((x + Math.floor(t * 60)) % 14) < 8 && (x + Math.floor(t * 60)) % 14 > 1) col = P[1];   /* dải chữ chạy đáy màn */
+        B.dot(X0 + x, Yb - h + y, col); }
+      if (k > 0.9) { txt100(B, X0 + 8, Yb - h + 8, 'LIVE', CR[0], CR[3], 2); const blink = Math.floor(t * 6) % 2; if (blink) disc(B, X0 + 8 + 32 + 4, Yb - h + 12, 2.2, CR[1]);
+        const gx = c.X(A.x) + 4; for (let i = 0; i < 4; i++) { const bh = Math.round((6 + i * 5) * Math.min(1, tm(t, 0.6 + i * 0.08, 0.75 + i * 0.08)) * (1 + 0.15 * (Q - 1))); for (let y = 0; y < bh; y++) for (let x = 0; x < 6; x++) B.dot(gx + i * 9 + x, Yb - 14 - y, y === bh - 1 ? P[0] : x === 0 || x === 5 ? P[6] : P[2]); }   /* biểu đồ cột mọc dần (mưu lược) */
+        txt100(B, X0 + 8, Yb - 20, 'NEWS', P[0], P[7], 1); }
+      if (t > BRK - 0.04) { const W2 = Math.round(SW * RES), H2 = Math.round(SH * RES); for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++) if ((x + y) % 2 === 0 || t < BRK - 0.01) B.dot(X0 + x, Yb - H2 + y, P[0]); } };
+    const tick = (B, t) => { for (const [t0, z] of TK) { const u = tm(t, t0, t0 + 0.28); if (u <= 0 || u >= 1) continue; const xs = lerp(C.x - 10, A.x + 70, u), X = c.X(xs), Y = c.Y(A.y, z), Ln = 64 * RES, hh = 5 * RES;
+        for (let d = 0; d < Ln; d++) for (let y = 0; y < hh; y++) { const x = X - d, edge = y === 0 || y === hh - 1, lead = d < 6, glyphC = !edge && y > 2 && y < hh - 3 && ((d + Math.floor(u * 90)) % 10) < 6 && ((d + Math.floor(u * 90)) % 10) > 1;
+          B.dot(x, Y - y, lead ? P[0] : edge ? P[6] : glyphC ? P[7] : P[1], d > Ln * 0.8 ? 0.5 : 1); } } };
+    return {
+      update(t) {
+        if (t < 0.4) gather(c, C.x + 2, C.y, 14, [P[0], P[1], P[2], P[3]], 1.4, 16);
+        at('up', t, 0.45, () => { o.shake?.(0.1); for (let k = 0; k < 10; k++) bits(c, A.x + R.range(-SW / 2, SW / 2), YB, SZ, 1, 40, 0.35); addLight(c, A.x, YB - SZ - SH / 2, 22, P[1], 0.3, 0.2); });
+        for (const [i, [t0]] of TK.entries()) at('tk' + i, t, t0 + 0.12, () => { o.hit?.(0.5); o.shake?.(0.08); bits(c, A.x, A.y + 0.5, 10, 6, 70, 0.35); });
+        at('brk', t, BRK, () => { o.hit?.(1.8 + 0.2 * Q); o.knock?.(); o.shake?.(0.4 + 0.1 * Q); o.flash?.(0.1, '200,255,230'); star(c, A.x, YB, SZ + SH / 2, P[0], 3.6 + 0.4 * Q, 0.16); addLight(c, A.x, YB - SZ - SH / 2, 26 + 4 * Q, P[1], 0.45, 0.16);
+          for (const q of blocks) fx(c, q.x, YB, q.z, Math.cos(q.an) * q.v, Math.sin(q.an) * q.v * 0.4, R.range(30, 90), R.range(0.5, 0.8), dBit, { g: 1, bounce: 0.35, drag: 0.5, col: R.pick([P[1], P[2], P[3], P[5], CP[4]]), c2: P[0], size: R.range(1.6, 2.6), qf: 1 });
+          bits(c, A.x, A.y + 0.5, 12, 14 + 6 * Q, 110, 0.6); });
+      },
+      back(B, L, t) { scr(B, t); for (const [t0, R0, th] of [[BRK, 30 + 6 * Q, 3], [BRK + 0.12, 40 + 7 * Q, 2]]) { const k = tm(t, t0, t0 + 0.38); if (k > 0 && k < 1) gring(B, c, A.x, A.y + 1, 0, 6 + R0 * outCubic(k), th, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, -1); } },
+      front(B, L, t) { tick(B, t); for (const [t0, R0, th] of [[BRK, 30 + 6 * Q, 3], [BRK + 0.12, 40 + 7 * Q, 2]]) { const k = tm(t, t0, t0 + 0.38); if (k > 0 && k < 1) gring(B, c, A.x, A.y + 1, 0, 6 + R0 * outCubic(k), th, [P[0], P[2], P[4]], k < 0.6 ? 1 : 0.5, 1); }
+        if (t > BRK - 0.06 && t < BRK + 0.12) glitchBars(B, R, c.X(A.x), c.Y(YB, SZ), SW * RES, SH * RES, 6, P, t > BRK + 0.06 ? 0.5 : 1); },
+      end: 2.4,
+    };
+  });
+}
+for (const s of ['', '2', '3']) mkChg(s);
+/* p100:scenes:end */
 addScenes(Object.fromEntries(Object.entries(FS).map(([k, v]) => ['full_' + k, v])));
 
 /* bảng chiêu (SET5): tên hiển thị + clip của thú ra chiêu */

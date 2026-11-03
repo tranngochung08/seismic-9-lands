@@ -15,9 +15,9 @@ const STR = {
     chipIce: 'Chip ice', mineCrystal: 'Cut crystal', scoopLava: 'Scoop lava', cutLeaf: 'Cut palm leaves',
     tapResin: 'Tap resin', cutHay: 'Cut hay', pickFlowers: 'Pick flowers', pickBerries: 'Pick berries',
     pickMush: 'Pick mushroom', takeHoney: 'Take honey', plant: 'Plant a seed',
-    needPick: 'Needs a pickaxe — craft Pickaxe I at the workbench (6 wood + 2 rock)', needIron: 'Needs Pickaxe II — craft it at the furnace in M4/M5 (3 iron + 2 wood)', needKnife: 'Needs a knife — craft it at the workbench (2 rock + 1 wood)',
-    needShovel: 'Needs a shovel — craft it at the workbench (4 wood)', needScythe: 'Needs a scythe — craft it at the workbench (3 wood + 1 rock)', needTorch: 'Bees! Bring a torch — craft it at the workbench (2 wood + 1 resin)',
-    bees: 'Bees! Bring a torch — craft it at the workbench (2 wood + 1 resin)',
+    needPick: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)', needIron: 'Needs Seismic Hammer II — craft it at the furnace in M4/M5 (3 iron + 2 wood) or Quick buy (O)', needKnife: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)',
+    needShovel: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)', needScythe: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)', needTorch: 'Bees! The Seismic Hammer smokes them off — craft Seismic Hammer I at the workbench (6 wood + 2 rock)',
+    bees: 'Bees! The Seismic Hammer smokes them off — craft Seismic Hammer I at the workbench (6 wood + 2 rock)',
     planted: 'Seed planted', grown: 'A sapling grew into a tree'
   },
   vi: {
@@ -25,9 +25,9 @@ const STR = {
     chipIce: 'Đục băng', mineCrystal: 'Đục tinh thể', scoopLava: 'Múc dung nham', cutLeaf: 'Cắt lá cọ',
     tapResin: 'Lấy nhựa thông', cutHay: 'Cắt cỏ khô', pickFlowers: 'Hái hoa', pickBerries: 'Hái quả',
     pickMush: 'Hái nấm', takeHoney: 'Lấy mật ong', plant: 'Trồng hạt',
-    needPick: 'Cần cuốc — chế Cuốc I ở Bàn mộc (6 gỗ + 2 đá)', needIron: 'Cần Cuốc II — chế ở Lò nung M4/M5 (3 sắt + 2 gỗ)', needKnife: 'Cần dao — chế ở Bàn mộc (2 đá + 1 gỗ)',
-    needShovel: 'Cần xẻng — chế ở Bàn mộc (4 gỗ)', needScythe: 'Cần liềm — chế ở Bàn mộc (3 gỗ + 1 đá)', needTorch: 'Ong! Cần đuốc — chế ở Bàn mộc (2 gỗ + 1 nhựa thông)',
-    bees: 'Ong! Cần đuốc — chế ở Bàn mộc (2 gỗ + 1 nhựa thông)',
+    needPick: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)', needIron: 'Cần Búa Seismic II — chế ở Lò nung M4/M5 (3 sắt + 2 gỗ) hoặc Mua nhanh (O)', needKnife: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)',
+    needShovel: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)', needScythe: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)', needTorch: 'Ong! Cần Búa Seismic để hun khói — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)',
+    bees: 'Ong! Cần Búa Seismic để hun khói — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)',
     planted: 'Đã trồng hạt', grown: 'Cây non đã thành cây lớn'
   }
 };
@@ -615,7 +615,7 @@ export const gather = {
       const d0 = near.cand.data;
       if ((d0.def.hits || 1) > 1 && !pips.some(e => e.o === d0.o)) pips.push({ o: d0.o, def: d0.def });
     }
-    const r = Math.max(2, scale * 1.0), gap = r * 3;
+    const r = Math.max(2, (globalThis.__u89?globalThis.__u89(scale):scale) * 1.0), gap = r * 3;
     for (const e of pips) {
       const d = ctx.O[e.o.type]; if (!d) continue;
       const wx = e.o.x * TS + d.fw * 8, wy = (e.o.y + d.fh) * TS - d.h - 8;
@@ -626,13 +626,13 @@ export const gather = {
         const x = sx + (i - (hits - 1) / 2) * gap;
         ug.beginPath(); ug.arc(x, sy, r, 0, 7);
         ug.fillStyle = i < (e.o.gh || 0) ? '#ffd45e' : 'rgba(13,11,20,.65)'; ug.fill();
-        ug.strokeStyle = 'rgba(13,11,20,.85)'; ug.lineWidth = Math.max(1, scale / 3); ug.stroke();
+        ug.strokeStyle = 'rgba(13,11,20,.85)'; ug.lineWidth = Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) / 3); ug.stroke();
       }
     }
     // progress bar for the running action
     if (a) {
       const sx = Math.round((a.wx - cx) * scale), sy = Math.round((a.by - cy) * scale);
-      const w = Math.round(13 * scale), h = Math.max(4, Math.round(2.4 * scale));
+      const w = Math.round(13 * scale), h = Math.max(4, Math.round(2.4 * (globalThis.__u89?globalThis.__u89(scale):scale)));
       const k = Math.max(0, Math.min(1, a.t / a.dur));
       ug.fillStyle = 'rgba(13,11,20,.78)';
       ug.beginPath(); ug.roundRect(sx - w / 2 - 2, sy - 2, w + 4, h + 4, 3); ug.fill();
@@ -640,9 +640,9 @@ export const gather = {
       ug.fillStyle = '#3a3346'; ug.fillRect(sx - w / 2, sy, w, h);
       ug.fillStyle = '#ffd45e'; ug.fillRect(sx - w / 2, sy, Math.round(w * k), h);
       ug.fillStyle = 'rgba(255,255,255,.5)'; ug.fillRect(sx - w / 2, sy, Math.round(w * k), 1);
-      const fs = Math.max(11, Math.round(scale * 3.2));
+      const fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.2));
       ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
-      ug.lineWidth = Math.max(2, scale); ug.strokeStyle = 'rgba(13,11,20,.85)'; ug.lineJoin = 'round';
+      ug.lineWidth = Math.max(2, (globalThis.__u89?globalThis.__u89(scale):scale)); ug.strokeStyle = 'rgba(13,11,20,.85)'; ug.lineJoin = 'round';
       ug.strokeText(a.label, sx, sy - 5); ug.fillStyle = '#f2ebe0'; ug.fillText(a.label, sx, sy - 5);
     }
     ug.restore();

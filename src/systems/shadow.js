@@ -10,7 +10,7 @@ import { WATER } from '../anim.js';
 
 const SRC = 'assets/px/fx/shadow/flyshadow.png';
 export const SIZE = { S: 8, M: 12, L: 18, XL: 28 };
-export const SHADOW = { on: true, n: 0, base: 0.48, boost: 1.0, img: null };
+export const SHADOW = { on: true, n: 0, base: 0.3,   /* p110sh: anh 02/11 'bóng đậm quá' → alpha ≈ 0,22–0,3 cho MỌI bóng (người chơi, dân, Chấn Thú như nhau) */ boost: 1.0, img: null };
 let IM = null;
 function img() {
   if (!IM && typeof Image !== 'undefined') { IM = new Image(); IM.src = SRC; SHADOW.img = IM; }
@@ -36,7 +36,7 @@ export function shadowAt(g, x, y, w, z = 0, a = 1, dk = null) {
   if (!(a > 0.01)) return false;
   const k = shadowK(z), W = Math.max(8, Math.round(w * k) * 2), H = Math.max(4, Math.min(16, Math.round(W * 0.32 / 2) * 2)), c = shadowCv(W, H); if (!c) return false;
   const d = dk == null ? LUM.night : dk, a0 = g.globalAlpha; g.globalAlpha = a0 * Math.min(0.88, SHADOW.base * a * (0.3 + 0.7 * k) * (1 + SHADOW.boost * d));   /* nền tối → đậm hơn (vẫn mềm, tối đa 0,88) */
-  g.drawImage(c, 0, 0, W, H, Math.round(x) - W / 4, Math.round(y) - H / 4, W / 2, H / 2);
+  g.drawImage(c, 0, 0, W, H, (globalThis.__R89||Math.round)(x) - W / 4, (globalThis.__R89||Math.round)(y) - H / 4, W / 2, H / 2);
   g.globalAlpha = a0; SHADOW.n++; return true;
 }
 /* ĐỘ SÁNG NỀN dưới chân: ~mỗi 12 khung thu nhỏ khung hình (lúc vừa vẽ xong nền, CHƯA vẽ nhân vật) về lưới 64×36 rồi đọc độ sáng từng ô.
@@ -45,7 +45,7 @@ const LUM = { cv: null, x: null, d: null, w: 64, h: 36, f: 0, VW: 480, VH: 270, 
 function sampleGround(g, ctx, cx, cy) {
   LUM.cx = cx; LUM.cy = cy; LUM.VW = ctx.VW || 480; LUM.VH = ctx.VH || 270;
   const dn = ctx.darkness ? ctx.darkness() || 0 : 0, dg = ctx.S.map && ctx.S.map.dungeon ? 0.45 : 0; LUM.night = Math.min(1, dn * 1.6 + dg);
-  if (LUM.f-- > 0 && LUM.d) return; LUM.f = 12;
+  if (LUM.f-- > 0 && LUM.d) return; LUM.f = ctx.scaleUI > ctx.scale && ctx.opt89 !== false ? 30 : 12;   /* p89 vòng 4: lùi camera (canvas lớn) → đọc độ sáng nền thưa hơn (~0,5 s; getImageData chặn GPU) */
   try {
     if (!LUM.cv) { LUM.cv = document.createElement('canvas'); LUM.cv.width = LUM.w; LUM.cv.height = LUM.h; LUM.x = LUM.cv.getContext('2d', { willReadFrequently: true }); }
     const src = g.canvas; LUM.x.imageSmoothingEnabled = true; LUM.x.drawImage(src, 0, 0, src.width, src.height, 0, 0, LUM.w, LUM.h); LUM.d = LUM.x.getImageData(0, 0, LUM.w, LUM.h).data;
@@ -97,3 +97,9 @@ export const shadow = {
     const dk = darkAt(p.x, p.y); shadowAt(g, p.x - cx, p.y - cy + 1, w, z, aU, dk); SHADOW.last = { w, z, dk: +dk.toFixed(2) };
   },
 };
+
+/* p110sh:begin — bóng theo cỡ thật (anh 02/11): bề ngang bóng = 0,65 × bề ngang CHÂN đo từ ảnh đang dùng (shadow110.py, chạy lại khi đổi ảnh / cỡ) */
+export const FW110 = {"utchan":8.0,"thanhong":9.0,"golem":8.0,"rongdo":11.5,"bachkinh":6.0,"loiho":3.5,"vitbao":5.5,"diepnhan":13.0,"banhbao":6.0,"tinhmieu":5.5,"cuoitho":6.0,"tuyetky":8.0,"bovimach":8.0,"culibong":10.0,"hacgiac":13.0,"hoahung":7.0,"macuu":5.0,"nguuson":9.0,"kylan":5.0,"kylan2":6.0,"tete":4.0,"tete2":5.5,"hac":2.5,"saola":4.0,"saola2":5.0,"daibang":5.0,"de":8.5,"tacke":10.0,"kimquy":10.5,"chuichui":6.0,"cachep":5.0,"coc":7.0,"de2":8.5,"chuichui2":6.0,"tacke2":10.0,"hac2":4.0,"daibang2":6.5,"kimquy2":16.0,"cachep2":10.5,"coc2":7.5,"rocky":15.0,"molandak":8.0,"molandak2":7.0,"molandak3":11.0,"moyaki":6.0,"moyaki2":8.0,"moyaki3":8.0,"chog":7.0,"chog2":6.0,"chog3":10.0,"oali":9.0,"oalipho":11.0,"laooa":10.0,"elyziuma":16.5,"pwoofer":8.0};
+export function fw110(sp, w0) { const f = sp && FW110[sp]; return f ? Math.max(6, Math.round(f * 0.65)) : w0; }
+if (typeof globalThis !== 'undefined') globalThis.__fw110 = fw110;
+/* p110sh:end */

@@ -670,12 +670,12 @@ export const spar = {
     return out;
   },
   drawUI(ug, ctx, cx, cy, scale) {   /* thanh máu bạn tập (giữa dưới) */
-    const bfs = Math.max(10, Math.round(scale * 3));
+    const bfs = Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3));
     for (const n of [ST.b && ST.b.mo, ST.leave]) if (n && n.bubble && ctx.drawBubble) ctx.drawBubble(ug, n, Math.round((n.x - cx) * scale), Math.round((n.y - 30 - (n === (ST.b && ST.b.mo) ? Math.round(27 * (bodyK(sheetId(n)) - 1)) : 0) - cy) * scale) - bfs - 6, bfs);   /* bong bóng lời bạn tập (cao hơn dân) */
     const b = ST.b; if (!b || ctx.S.mode !== 'play') return; const mo = b.mo, W = ug.canvas.width, H = ug.canvas.height;
     { const A = b.atk; if (A && A.ult) { const T0 = A.T0 || 1, dk = A.ph === 'wind' ? Math.min(1, (T0 - A.t) / 0.4) : A.ph === 'go' ? 1 : Math.max(0, A.t / 1.6 - 0.6) * 2.5;   /* tuyệt chiêu: tối sầm cả màn (chỉ trong lúc ra chiêu), lóe sáng khi kết thúc */
       ug.save(); ug.fillStyle = `rgba(14,6,22,${(0.34 * dk).toFixed(3)})`; ug.fillRect(0, 0, W, H); if (A.ph === 'rec' && A.t > 1.35) { ug.fillStyle = `rgba(255,240,210,${((A.t - 1.35) * 1.6).toFixed(3)})`; ug.fillRect(0, 0, W, H); } ug.restore(); } }
-    const fs = Math.max(12, Math.round(scale * 3.4)), bw = Math.min(W * 0.42, 360), bh = Math.max(7, Math.round(scale * 2.3)), bx = Math.round((W - bw) / 2), by = H - Math.max(118, Math.round(scale * 40));
+    const fs = Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4)), bw = Math.min(W * 0.42, 360), bh = Math.max(7, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.3)), bx = Math.round((W - bw) / 2), by = Math.min(H - Math.max(118, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 40)), H - (globalThis.__h91bot ? globalThis.__h91bot(H) : 0) - bh - 14);   /* p91: trên cụm HUD giữa dưới */
     ug.save(); ug.fillStyle = 'rgba(13,11,20,.78)'; ug.beginPath(); ug.roundRect(bx - 10, by - fs - 8, bw + 20, bh + fs + 16, 7); ug.fill();
     ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.fillStyle = '#ffd45e';
     const FF = formsOf(b.r) && formsOf(b.r)[b.form]; ug.fillText(`🥊 ${FF && b.form ? (vi(ctx) ? FF.vi + ' · ' + FF.tvi : FF.en + ' · ' + FF.ten) : nm(ctx, b.r) + ' · ' + (vi(ctx) ? b.r.svi : b.r.sen)}`, W / 2, by - fs / 2 - 2);

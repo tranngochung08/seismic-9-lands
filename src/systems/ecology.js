@@ -13,7 +13,7 @@ const STR = {
   en: {
     sheep: 'Catch sheep', shear: 'Shear', gotSheep: 'Caught a sheep! 🐑', gotWool: 'Sheared: +2 🐑 wool', shorn: 'This one is already shorn',
     full: 'Hands full — sell at the trader',
-    feedHay: 'Feed hay', needHay: 'Needs hay 🌾 — cut tall grass with a scythe (workbench: 3 wood + 1 rock)', horseAte: n => `The horse eats the hay (${n}/3)`, horseTame: 'The horse trusts you now! 💛',
+    feedHay: 'Feed hay', needHay: 'Needs hay 🌾 — cut tall grass with the Seismic Hammer', horseAte: n => `The horse eats the hay (${n}/3)`, horseTame: 'The horse trusts you now! 💛',
     ride: 'Ride', off: 'Dismount', busy: 'Get off what you are riding first',   /* 2026-10-11 anh bỏ YÊN NGỰA: cưỡi không cần yên */
     rabbit: 'Catch rabbit', gotRabbit: 'Caught a rabbit! 🐰',   /* 2026-10-11 anh bỏ BẪY: bắt thỏ bằng tay như gà */
     crab: 'Catch crab', gotCrab: 'Caught a crab! 🦀', pinch: 'Ouch — the crab pinched you! −1 🪨', pinch0: 'Ouch — the crab pinched you!',
@@ -22,13 +22,13 @@ const STR = {
     moth: 'Catch moth', gotCrystal: 'Crystal dust! +1 💎', mothGone: 'The moth slipped away',
     foxFeed: 'Feed a fish', foxNeed: 'Wants a fish — catch one at a shore with the fishing rod and bring it here', foxAte: n => `The snow fox eats (${n}/3)`, foxPet: 'The snow fox follows you now! 🦊',
     foxDug: n => `The fox digs up ${n}`,
-    coopFeed: n => `Give hay to the coop (${n}/3)`, coopNeedHay: 'Needs hay 🌾 — cut tall grass with a scythe (workbench: 3 wood + 1 rock)', coopReady: 'The coop is stocked — the hens will lay 🥚', coopOk: 'The coop is warm and full of hay',
+    coopFeed: n => `Give hay to the coop (${n}/3)`, coopNeedHay: 'Needs hay 🌾 — cut tall grass with the Seismic Hammer', coopReady: 'The coop is stocked — the hens will lay 🥚', coopOk: 'The coop is warm and full of hay',
     gotEgg: 'Picked up an egg 🥚'
   },
   vi: {
     sheep: 'Bắt cừu', shear: 'Xén lông', gotSheep: 'Bắt được cừu! 🐑', gotWool: 'Xén xong: +2 🐑 len', shorn: 'Con này vừa xén rồi',
     full: 'Đầy tay rồi — đem bán ở Thương nhân',
-    feedHay: 'Cho ăn rơm', needHay: 'Cần rơm 🌾 — cắt cỏ cao bằng liềm (chế ở Bàn mộc: 3 gỗ + 1 đá)', horseAte: n => `Ngựa ăn rơm (${n}/3)`, horseTame: 'Ngựa đã tin bạn! 💛',
+    feedHay: 'Cho ăn rơm', needHay: 'Cần rơm 🌾 — cắt cỏ cao bằng Búa Seismic', horseAte: n => `Ngựa ăn rơm (${n}/3)`, horseTame: 'Ngựa đã tin bạn! 💛',
     ride: 'Cưỡi ngựa', off: 'Xuống ngựa', busy: 'Xuống khỏi thứ đang cưỡi/lái đã',
     rabbit: 'Bắt thỏ', gotRabbit: 'Bắt được thỏ! 🐰',
     crab: 'Bắt cua', gotCrab: 'Bắt được cua! 🦀', pinch: 'Á — cua kẹp tay! −1 🪨', pinch0: 'Á — cua kẹp tay!',
@@ -37,7 +37,7 @@ const STR = {
     moth: 'Bắt bướm', gotCrystal: 'Bụi tinh thể! +1 💎', mothGone: 'Bướm bay mất rồi',
     foxFeed: 'Cho ăn cá', foxNeed: 'Nó muốn cá — câu một con ở bờ nước bằng cần câu rồi mang tới', foxAte: n => `Cáo tuyết ăn cá (${n}/3)`, foxPet: 'Cáo tuyết theo bạn rồi! 🦊',
     foxDug: n => `Cáo đào được ${n}`,
-    coopFeed: n => `Cho chuồng gà ăn rơm (${n}/3)`, coopNeedHay: 'Cần rơm 🌾 — cắt cỏ cao bằng liềm (chế ở Bàn mộc: 3 gỗ + 1 đá)', coopReady: 'Chuồng đã đủ rơm — gà sắp đẻ 🥚', coopOk: 'Chuồng ấm và đầy rơm',
+    coopFeed: n => `Cho chuồng gà ăn rơm (${n}/3)`, coopNeedHay: 'Cần rơm 🌾 — cắt cỏ cao bằng Búa Seismic', coopReady: 'Chuồng đã đủ rơm — gà sắp đẻ 🥚', coopOk: 'Chuồng ấm và đầy rơm',
     gotEgg: 'Nhặt được quả trứng 🥚'
   }
 };
@@ -456,6 +456,7 @@ function coopSpot0(ctx) {
     }
     return !ctx.isSolid(map, x, y + 2) && !objAt(ctx, x, y + 2);      // somewhere to stand in front of the door
   };
+  if (map.spots && map.spots.coop && ok(map.spots.coop.x, map.spots.coop.y)) return { ...map.spots.coop };   /* p88: Làng mới */
   let best = null, bd = Infinity;
   for (let y = 6; y <= 30; y++) for (let x = 14; x <= 66; x++) {
     if (!ok(x, y)) continue;
@@ -720,7 +721,7 @@ export const ecology = {
     const e = sv(ctx), id = ctx.S.zone.id;
     const rng = ctx.rngFrom(((ctx.hashStr('eco:' + id) ^ (Date.now() >>> 7)) >>> 0) || 7);
     const n = r => r[0] + ((rng() * (r[1] - r[0] + 1)) | 0);
-    const th = TH[id];
+    const th0 = TH[id], th = th0 && (th0.bat || th0.moth) ? { bat: th0.bat, moth: th0.moth } : null;   /* p106nopet2: anh 02/11 bỏ cừu, ngựa, thỏ, cua cạn, kỳ nhông, cáo; GIỮ dơi + bướm (hiệu ứng bay) */
     if (th) {
       if (th.sheep) spawnKind(ctx, rng, 'sheep', n(th.sheep));
       if (th.horse) spawnHorses(ctx, rng, n(th.horse));
@@ -732,8 +733,8 @@ export const ecology = {
       if (th.moth) spawnMoths(ctx, rng, n(th.moth));
     }
     for (const a of list) if (a.kind === 'sala' || a.kind === 'fox' || a.kind === 'crab') a.hr = 64;
-    if (id === 'village') placeCoop(ctx);
-    if (e.fox) { const p = ctx.S.player; pet = { kind: 'fox', x: p.x - 12, y: p.y + 4, dir: 1, fr: 0, ft: 0 }; }
+    /* p106nopet2: không đặt chuồng gà ở Làng (gà đã bỏ) */
+    if (false && e.fox) { const p = ctx.S.player; pet = { kind: 'fox', x: p.x - 12, y: p.y + 4, dir: 1, fr: 0, ft: 0 }; }
     ctx.persist();
     if (typeof window !== 'undefined') window.__eco = {
       state: () => ({

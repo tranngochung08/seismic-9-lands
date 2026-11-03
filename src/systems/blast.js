@@ -95,8 +95,8 @@ export const blastLog = ST.log;
    · Cần CẦM xẻng (luật hotbar: nhãn 'cần cầm Xẻng', click / nút A tự cầm); chưa có xẻng → nhãn bảo chế ở Bàn mộc.
    · Vào lại vùng = mọi thứ lành lại (bản đồ dựng mới) như luật cũ. Đèo: vành ngoài + hàng cổng khi còn chặn (vẫn cứng) KHÔNG đào được. */
 const RB_STR = {
-  vi: { uproot: (h, m) => `Bứng gốc (${h}/${m})`, dig: (h, m) => `Đào dọn (${h}/${m})`, noShovel: 'Cần xẻng — chế ở Bàn mộc (4 gỗ)', done: 'Dọn sạch!' },
-  en: { uproot: (h, m) => `Uproot stump (${h}/${m})`, dig: (h, m) => `Clear rubble (${h}/${m})`, noShovel: 'Needs a shovel — craft it at the workbench (4 wood)', done: 'Cleared!' },
+  vi: { uproot: (h, m) => `Bứng gốc (${h}/${m})`, dig: (h, m) => `Đào dọn (${h}/${m})`, noShovel: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)', done: 'Dọn sạch!' },
+  en: { uproot: (h, m) => `Uproot stump (${h}/${m})`, dig: (h, m) => `Clear rubble (${h}/${m})`, noShovel: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)', done: 'Cleared!' },
 };
 const RB_REACH = 26, RB_CD = 0.32, STUMP_HITS = 3;
 const RB = { cd: 0, stat: { stumps: 0, ruins: 0, hits: 0 } };

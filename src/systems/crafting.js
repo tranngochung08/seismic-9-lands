@@ -8,6 +8,7 @@ import { PAL, TS, circle } from '../gfx.js';
 
 // ---------- text ----------
 const ROMAN = ['', 'I', 'II', 'III'];
+const M80 = ['axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'torch'];   /* p80: đã gộp vào Búa Seismic — không liệt kê trong túi / HUD */
 const STR = {
   en: {
     st: { bench: 'Workbench', furnace: 'Furnace', loom: 'Loom', forge: 'Forge', altar: 'Crystal altar' },
@@ -17,17 +18,17 @@ const STR = {
     weight: 'weight', cap: 'Bag load', hint: 'B · bag',
     names: {
       sword1: 'Wooden sword', sword2: 'Stone sword', sword3: 'Iron sword', sword4: 'Obsidian sword', sword5: 'Crystal sword', sword6: 'Seismic sword', revive: 'Revival tinder',
-      axe1: 'Axe I', pick1: 'Pickaxe I', shovel: 'Shovel', scythe: 'Scythe', knife: 'Knife', torch: 'Torch',
+      bua1: 'Seismic Hammer I',
       rope: 'Rope', raft: 'Raft', wax: 'Ski wax',
-      charcoal: 'Charcoal', iron: 'Iron bar', glass: 'Glass', axe2: 'Axe II', pick2: 'Pickaxe II', rod2: 'Fishing rod II',
+      charcoal: 'Charcoal', iron: 'Iron bar', glass: 'Glass', bua2: 'Seismic Hammer II', rod2: 'Fishing rod II',
       sail: 'Sail', cape: 'Rocky cape', coat: 'Warm coat',
-      axe3: 'Axe III', pick3: 'Pickaxe III', tires: 'Obsidian tires', armor: 'Rocky armour', lavaglass: 'Lava glass',
+      bua3: 'Seismic Hammer III', tires: 'Obsidian tires', armor: 'Rocky armour', lavaglass: 'Lava glass',
       lamp: 'Crystal lamp', charge: 'Rocky charge', rod3: 'Fishing rod III',
       pen1: 'Wooden pen', pen2: 'Stone pen', scarecrow: 'Rocky scarecrow'
     },
     notes: {
       rope: 'Braided palm leaves',
-      raft: 'Cross open water', wax: 'Ski down the snow', charcoal: 'Furnace fuel', pick2: 'Mines harder rock · scoops lava',
+      raft: 'Cross open water', wax: 'Ski down the snow', charcoal: 'Furnace fuel', bua1: 'Chops, mines, tills, cuts grass, taps resin, smokes bees', bua2: 'Mines harder rock · scoops lava',
       sail: 'Faster raft', cape: 'Rocky glides', coat: 'Survive the cold', tires: 'Drive over lava rock',
       armor: 'Rocky takes hits', lavaglass: 'Melted with lava', lamp: 'Lights the core', charge: 'Wakes a Rocky',
       pen1: 'Place it in your nation\'s plot · 4 small / 2 big animals', pen2: 'Twice the room', scarecrow: 'Keeps birds off the crops'
@@ -42,17 +43,17 @@ const STR = {
     weight: 'nặng', cap: 'Tải túi', hint: 'B · túi đồ',
     names: {
       sword1: 'Kiếm gỗ', sword2: 'Kiếm đá', sword3: 'Kiếm sắt', sword4: 'Kiếm obsidian', sword5: 'Kiếm pha lê', sword6: 'Kiếm Seismic', revive: 'Bùi nhùi hồi sinh',
-      axe1: 'Rìu I', pick1: 'Cuốc I', shovel: 'Xẻng', scythe: 'Liềm', knife: 'Dao', torch: 'Đuốc',
+      bua1: 'Búa Seismic I',
       rope: 'Dây thừng', raft: 'Bè', wax: 'Sáp trượt',
-      charcoal: 'Than', iron: 'Thanh sắt', glass: 'Kính', axe2: 'Rìu II', pick2: 'Cuốc II', rod2: 'Cần câu II',
+      charcoal: 'Than', iron: 'Thanh sắt', glass: 'Kính', bua2: 'Búa Seismic II', rod2: 'Cần câu II',
       sail: 'Buồm', cape: 'Áo choàng Rocky', coat: 'Áo ấm',
-      axe3: 'Rìu III', pick3: 'Cuốc III', tires: 'Lốp obsidian', armor: 'Giáp Rocky', lavaglass: 'Kính dung nham',
+      bua3: 'Búa Seismic III', tires: 'Lốp obsidian', armor: 'Giáp Rocky', lavaglass: 'Kính dung nham',
       lamp: 'Đèn tinh thể', charge: 'Pin Rocky', rod3: 'Cần câu III',
       pen1: 'Chuồng gỗ', pen2: 'Chuồng đá', scarecrow: 'Bù nhìn Rocky'
     },
     notes: {
       rope: 'Bện từ lá cọ',
-      raft: 'Vượt mặt nước', wax: 'Trượt trên tuyết', charcoal: 'Nhiên liệu lò', pick2: 'Đào đá cứng · múc dung nham',
+      raft: 'Vượt mặt nước', wax: 'Trượt trên tuyết', charcoal: 'Nhiên liệu lò', bua1: 'Chặt cây, đập đá, cày đất, cắt cỏ, lấy nhựa, hun ong', bua2: 'Đào đá cứng · múc dung nham',
       sail: 'Bè chạy nhanh hơn', cape: 'Rocky lượn được', coat: 'Chịu lạnh', tires: 'Chạy trên đá lửa',
       armor: 'Rocky chịu đòn', lavaglass: 'Nấu bằng dung nham', lamp: 'Thắp sáng lõi', charge: 'Đánh thức Rocky',
       pen1: 'Đặt trong plot nước mình · 4 thú nhỏ / 2 gia súc', pen2: 'Chứa gấp đôi', scarecrow: 'Đuổi chim khỏi ruộng'
@@ -77,16 +78,11 @@ const STATIONS = {
 // in: bag items · tool/tier: ctx.tool.set · flag: save.sys[a][b] = true · count: save.sys[a][b]++
 const RECIPES = [
   // --- workbench ---
-  { id: 'axe1', st: 'bench', icon: '🪓', tool: 'axe', tier: 1, in: { wood: 5 } },
+  { id: 'bua1', st: 'bench', icon: '🔨', tool: 'bua', tier: 1, in: { wood: 6, rock: 2 } },   /* p80 đợt 3: Búa Seismic I thay Rìu I / Cuốc I / Xẻng / Liềm / Dao / Đuốc */
   /* plan-21: kiếm 6 cấp (quái càng mạnh càng cần kiếm cao) + bùi nhùi hồi sinh dân */
   { id: 'sword1', st: 'bench', icon: '🗡', tool: 'sword', tier: 1, in: { wood: 6, rope: 1 } },
   { id: 'sword2', st: 'bench', icon: '🗡', tool: 'sword', tier: 2, in: { rock: 6, wood: 2, gel: 2 } },
   { id: 'revive', st: 'bench', icon: '🕯', item: 'revive', n: 1, in: { flower: 2, honey: 1, soul: 1 } },
-  { id: 'pick1', st: 'bench', icon: '⛏', tool: 'pickaxe', tier: 1, in: { wood: 6, rock: 2 } },
-  { id: 'shovel', st: 'bench', icon: '🥄', tool: 'shovel', tier: 1, in: { wood: 4 } },
-  { id: 'scythe', st: 'bench', icon: '🌾', tool: 'scythe', tier: 1, in: { wood: 3, rock: 1 } },
-  { id: 'knife', st: 'bench', icon: '🔪', tool: 'knife', tier: 1, in: { rock: 2, wood: 1 } },
-  { id: 'torch', st: 'bench', icon: '🔦', tool: 'torch', tier: 1, in: { wood: 2, resin: 1 } },
   { id: 'rope', st: 'bench', icon: '🪢', item: 'rope', n: 1, in: { leaf: 3 } },
   /* 2026-10-11 anh bỏ thòng lọng, bẫy, yên ngựa, xe chở vật nuôi I/II/III: thỏ bắt tay, ngựa cưỡi trần, bò/cừu bế trên đầu */
   { id: 'raft', st: 'bench', icon: '🛶', flag: ['vehicles', 'raft'], in: { wood: 6, rope: 2 } },
@@ -98,9 +94,8 @@ const RECIPES = [
   { id: 'charcoal', st: 'furnace', icon: '🔥', item: 'charcoal', n: 2, in: { wood: 3 } },
   { id: 'iron', st: 'furnace', icon: '🔩', item: 'iron', n: 1, in: { ore: 2, charcoal: 1 } },
   { id: 'glass', st: 'furnace', icon: '🪟', item: 'glass', n: 1, in: { sand: 2, charcoal: 1 } },
-  { id: 'axe2', st: 'furnace', icon: '🪓', tool: 'axe', tier: 2, in: { iron: 3, wood: 2 } },
+  { id: 'bua2', st: 'furnace', icon: '🔨', tool: 'bua', tier: 2, in: { iron: 3, wood: 2 } },   /* p80: = Cuốc II cũ */
   { id: 'sword3', st: 'furnace', icon: '⚔', tool: 'sword', tier: 3, in: { iron: 4, wood: 1, fang: 2 } },
-  { id: 'pick2', st: 'furnace', icon: '⛏', tool: 'pickaxe', tier: 2, in: { iron: 3, wood: 2 } },
   { id: 'rod2', st: 'furnace', icon: '🎣', tool: 'rod', tier: 2, in: { iron: 1, rope: 2, wood: 2 } },
   { id: 'pen2', st: 'furnace', icon: '🏛', item: 'pen2', n: 1, in: { rock: 8, iron: 4 } },   /* F03: chuồng đá, sức chứa gấp đôi */
   // --- loom ---
@@ -108,9 +103,8 @@ const RECIPES = [
   { id: 'cape', st: 'loom', icon: '🧣', flag: ['rocky', 'cape'], in: { wool: 5, flower: 3 } },
   { id: 'coat', st: 'loom', icon: '🧥', flag: ['ecology', 'coat'], in: { yetifur: 1, wool: 4 } },
   // --- forge ---
-  { id: 'axe3', st: 'forge', icon: '🪓', tool: 'axe', tier: 3, in: { obsidian: 4, iron: 2 } },
+  { id: 'bua3', st: 'forge', icon: '🔨', tool: 'bua', tier: 3, in: { obsidian: 4, iron: 2 } },   /* p80: = Cuốc III cũ */
   { id: 'sword4', st: 'forge', icon: '⚔', tool: 'sword', tier: 4, in: { obsidian: 5, iron: 2, core: 2 } },
-  { id: 'pick3', st: 'forge', icon: '⛏', tool: 'pickaxe', tier: 3, in: { obsidian: 4, iron: 2 } },
   { id: 'tires', st: 'forge', icon: '🛞', flag: ['vehicles', 'tires'], in: { obsidian: 3, rope: 2 } },
   { id: 'armor', st: 'forge', icon: '🛡', flag: ['rocky', 'armor'], in: { wormhide: 1, obsidian: 4 } },
   { id: 'lavaglass', st: 'forge', icon: '🪟', item: 'glass', n: 5, in: { lava: 1, glass: 2 } },
@@ -246,6 +240,7 @@ function findSpot(ctx, map, taken) {
   const ok = (x, y) => free(ctx, map, x, y) && free(ctx, map, x + 1, y) &&
     (free(ctx, map, x, y + 1) || free(ctx, map, x + 1, y + 1)) &&
     !taken.some(t => Math.abs(t.x - x) < 3 && Math.abs(t.y - y) < 2);
+  if (map.spots && map.spots.bench) for (const s of map.spots.bench) if (ok(s.x, s.y)) return { ...s };   /* p88: Làng mới — mép Tây quảng trường */
   for (const s of SPOTS) if (ok(s.x, s.y)) return s;
   for (let y = 6; y <= 12; y++) for (let x = 20; x <= 58; x++) { if (x >= 30 && x <= 50) continue; if (ok(x, y)) return { x, y }; }
   for (let y = 12; y <= 16; y++) for (let x = 22; x <= 56; x++) if (ok(x, y)) return { x, y };
@@ -354,7 +349,7 @@ function bagHTML(ctx) {
   }
   const tools = [];
   for (const id of Object.keys(ctx.TOOLS)) {
-    const tier = ctx.tool.tier(id); if (!tier) continue;
+    const tier = M80.includes(id) ? 0 : ctx.tool.tier(id); if (!tier) continue;
     tools.push(`<span class="chip" style="font-size:13px;color:#ffd45e">${ctx.TOOLS[id].icon} ${esc(ctx.itemName(id))} ${ROMAN[tier] || tier}</span>`);
   }
   const flags = FLAG_ROWS.map(([a, b, icon, isCount]) => {
@@ -403,6 +398,7 @@ export const crafting = {
   id: 'crafting',
 
   onZoneEnter(ctx) {
+    if (typeof window !== 'undefined') window.__craft80 = { ids: () => RECIPES.map(r => r.id), open: key => { closePanels(ctx); ST.station = key; ST.mode = 'craft'; ctx.setMode('craft'); ensureClosers(ctx); renderCraft(ctx); return true; } };   /* p80 test: mở bảng chế ở trạm bất kỳ */
     ensureSprites(ctx);
     closePanels(ctx);
     ST.list.length = 0; ST.parts.length = 0; ST.anim = null;
@@ -480,7 +476,7 @@ export const crafting = {
     if (!ST.list.length) return;
     const t = L(ctx), map = ctx.S.map;
     ug.save();
-    const fs = Math.max(10, scale * 3);
+    const fs = Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3);
     ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     for (const s of ST.list) {
       if (!map || !map.objects.includes(s.o)) continue;
@@ -507,7 +503,7 @@ export const crafting = {
   hudLines(ctx) {
     const out = [];
     for (const id of Object.keys(ctx.TOOLS)) {
-      const tier = ctx.tool.tier(id); if (!tier) continue;
+      const tier = M80.includes(id) ? 0 : ctx.tool.tier(id); if (!tier) continue;
       out.push(`${ctx.TOOLS[id].icon}${ROMAN[tier] || tier}`);
     }
     return out.length ? [out.join(' ')] : [];

@@ -18,9 +18,9 @@ const STR = {
       boar: n => `🐗 Wild boars are charging the ${n} yard!`,
       beaver: n => `🦫 A giant beaver is heading for the ${n} yard!`
     },
-    help: { rat: 'Help, the rats!', monkey: 'The monkeys are back!', boar: 'Boars! Get the axe!', beaver: 'That beaver will dam our road!' },
+    help: { rat: 'Help, the rats!', monkey: 'The monkeys are back!', boar: 'Boars! Get the hammer!', beaver: 'That beaver will dam our road!' },
     name: { rat: 'Rats', monkey: 'Monkeys', boar: 'Boars', beaver: 'Beaver' },
-    shoo: 'Shoo!', catchM: 'Catch monkey', giveFish: 'Give it a fish 🐟', hitAxe: 'Hit with axe', needAxe: 'Needs an axe — craft Axe I at the workbench (5 wood)',
+    shoo: 'Shoo!', catchM: 'Catch monkey', giveFish: 'Give it a fish 🐟', hitAxe: 'Hit with hammer', needAxe: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)',
     offerWood: 'Offer 5 🪵 wood', pickWood: n => `+${n} 🪵 wood`,
     shooed: 'The rat runs off!', dropBack: 'It dropped a chicken! 🐔',
     squashed: 'Rocky squashed it!',
@@ -40,9 +40,9 @@ const STR = {
       boar: n => `🐗 Heo rừng đang húc khu ${n}!`,
       beaver: n => `🦫 Hải ly khổng lồ đang tới khu ${n}!`
     },
-    help: { rat: 'Cứu với, chuột!', monkey: 'Lũ khỉ lại tới rồi!', boar: 'Heo rừng! Lấy rìu mau!', beaver: 'Con hải ly sắp chặn đường mất!' },
+    help: { rat: 'Cứu với, chuột!', monkey: 'Lũ khỉ lại tới rồi!', boar: 'Heo rừng! Lấy Búa mau!', beaver: 'Con hải ly sắp chặn đường mất!' },
     name: { rat: 'Chuột', monkey: 'Khỉ', boar: 'Heo rừng', beaver: 'Hải ly' },
-    shoo: 'Đuổi!', catchM: 'Bắt khỉ', giveFish: 'Cho nó con cá 🐟', hitAxe: 'Chém rìu', needAxe: 'Cần rìu — chế Rìu I ở Bàn mộc (5 gỗ)',
+    shoo: 'Đuổi!', catchM: 'Bắt khỉ', giveFish: 'Cho nó con cá 🐟', hitAxe: 'Đập Búa', needAxe: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)',
     offerWood: 'Cho 5 🪵 gỗ', pickWood: n => `+${n} 🪵 gỗ`,
     shooed: 'Con chuột chạy mất!', dropBack: 'Nó làm rơi con gà! 🐔',
     squashed: 'Rocky giẫm bẹp nó!',
@@ -840,7 +840,7 @@ export const raidersLow = {
       const left = Math.max(0, total - m.hits);
       const bx = Math.round((m.x - cx) * scale), by = Math.round((m.y - (m.kind === 'beaver' ? 22 : 20) - cy) * scale);
       if (bx < -60 || bx > W + 60) continue;
-      const r = Math.max(2, Math.round(scale * 1.1)), gap = r * 3;
+      const r = Math.max(2, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 1.1)), gap = r * 3;
       const x0 = bx - ((total - 1) * gap) / 2;
       for (let i = 0; i < total; i++) {
         ug.beginPath(); ug.arc(x0 + i * gap, by, r, 0, TAU);
@@ -851,11 +851,11 @@ export const raidersLow = {
     // a small chip: what is out there and how long it stays
     const alive = mobs.filter(m => !m.gone && m.st !== 'flee').length;
     if (phase === 'raid' && alive) {
-      const fs = Math.max(11, Math.round(scale * 3.4));
+      const fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4));
       ug.font = `bold ${fs}px VT323, monospace`;
       const txt = S.chip(CONF[kind].icon, `${S.name[kind]} ×${alive}`, Math.max(0, Math.ceil(RAID_MAX - raidT)));
       // sits between the toast (top: 60) and Rocky's timer bar (y: 122)
-      const w = ug.measureText(txt).width + fs * 1.4, h = fs * 1.8, x = Math.round((W - w) / 2), y = Math.round(Math.max(96, scale * 24));
+      const w = ug.measureText(txt).width + fs * 1.4, h = fs * 1.8, x = Math.round((W - w) / 2), y = Math.round(Math.max(96, (globalThis.__u89?globalThis.__u89(scale):scale) * 24));
       ug.fillStyle = 'rgba(13,11,20,.78)'; ug.beginPath(); ug.roundRect(x, y, w, h, 6); ug.fill();
       ug.strokeStyle = 'rgba(255,107,107,.5)'; ug.lineWidth = 1; ug.stroke();
       ug.fillStyle = '#f2ebe0'; ug.fillText(txt, x + w / 2, y + h / 2 + 1);

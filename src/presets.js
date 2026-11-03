@@ -311,11 +311,163 @@ function chip(id, p, vi) {   /* nhãn ô lưu test: đang ở điểm lưu nào 
   window.__chip = { open: () => open, set, place };   /* móc test */
 }
 
+/* p72:preset:begin */
+/* p72 (plan-51 S3): linh thú đấu như Chấn Thú — đội Ấn Linh (Kỳ Lân Lửa Lv19 dạng gốc, 4 chiêu) + Chấn Thú bệ Làng; linh thú được gọi ra đi cùng nên ra trận trước.
+   Link thử: ?preset=lt_duel_test&reset&lang=vi (thêm &team=3v3 → đấu 3 con linh thú; &team=6v6 → 3 linh thú + 2 Chấn Thú + bù). Huấn luyện viên đứng cạnh lối vào Làng. */
+PRESETS.lt_duel_test = { vi: 'Linh thú đấu như Chấn Thú (Kỳ Lân Lửa)', en: 'Spirit beasts battle as Chấn Thú (Fire Qilin)', desc: 'plan-51 (p72). Làng, có đủ 11 linh thú (đổi đội ở thẻ Ấn Linh — mỗi con có khối ⚔ Chấn Thú); đội Ấn Linh: Kỳ Lân Lửa Lv19 · Tê Tê Lv20 · Hạc Lv20 (đang đi cùng bạn) + đội Chấn Thú 2 con (Bánh Bao, Lôi Hồ). Con Lv20 chưa hoá sẽ TIẾN HOÁ sau trận. E cạnh huấn luyện viên ở lối vào → Đồng ý: Kỳ Lân được thu vào Ấn Linh rồi ra sân đấu (4 chiêu: Phun Lửa · Lốc Lửa · Lao Lửa · Nắng Gắt; tuyệt chiêu Núi Lửa mở ở Lv20). Hết trận: cộng kinh nghiệm, thắng / thua ghi vào thẻ Ấn Linh, thú tự ra lại. &team=3v3 → đấu 3 đấu 3.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 20, xp: 0, hp: null },
+    sys: { pet: ROCKY(), linhthu: { v: 1, owned: { kylan: { lv: 19, xp: 0, evo: 0, lk: 0 }, tete: { lv: 20, xp: 0, evo: 0, lk: 0 }, hac: { lv: 20, xp: 0, evo: 0, lk: 0 }, coc: { lv: 18, xp: 0, evo: 0, lk: 0 }, cachep: { lv: 22, xp: 0, evo: 1, lk: 0 }, de: { lv: 16, xp: 0, evo: 0, lk: 0 }, saola: { lv: 21, xp: 0, evo: 1, lk: 0 }, chuichui: { lv: 20, xp: 0, evo: 0, lk: 0 }, daibang: { lv: 20, xp: 0, evo: 0, lk: 0 }, tacke: { lv: 20, xp: 0, evo: 0, lk: 0 }, kimquy: { lv: 24, xp: 0, evo: 1, lk: 0 } }, active: 'kylan', team: ['kylan', 'tete', 'hac'], orbLv: 3, food: {} },
+      chanthu: { v: 1, starter: 'banhbao', team: [{ id: 1, sp: 'banhbao', lv: 19, name: 'Bánh Bao' }, { id: 2, sp: 'loiho', lv: 19, name: 'Tia Chớp' }], box: [], anThu: 3, nextId: 3, caught: 0 } } }),
+  after: async C => { kit(C, 200); await wait(500); if (C.linhthu && C.linhthu.press) C.linhthu.press(); } };
+/* p72:preset:end */
+/* p73:preset:begin */
+/* p73 (8 chiêu độc lạ ★): trận thử từng loài có chiêu mới — đứng cạnh huấn luyện viên ở lối vào Làng, E → Đồng ý. Đổi loài bằng &my=…&foe=… trên link:
+   chuichui (Vòng Dư Chấn) · rongdo (Bẫy Lò Than) · cachep (Đổi Dòng) · diepnhan (Hình Nhân Lá) · bovimach (Hoàn Tác) · de (Khúc Tàn Canh) · culibong (Rình Sơ Hở) · tacke (Gương Hồi Quang).
+   Link: ?preset=chieumoi_test&reset&lang=vi&team=1v1&my=chuichui&foe=golem — phím 1–5 (điện thoại: nút dưới màn) gọi chiêu theo thứ tự bộ chiêu. */
+PRESETS.chieumoi_test = { vi: 'Chiêu độc lạ — thử 8 chiêu mới', en: 'Odd moves — try the 8 new moves', desc: 'p73. Làng, huấn luyện viên đứng cạnh lối vào (bạn đứng ngay trước mặt). E → Đồng ý → đấu 1v1 với loài trên link (&my=…). Loài có chiêu mới: Chuột Chũi (Vòng Dư Chấn), Xích Long / Hoả Hùng (Bẫy Lò Than), Cá Chép (Đổi Dòng), Diệp Nhẫn Giả (Hình Nhân Lá), Bọ Vi Mạch (Hoàn Tác), Dế (Khúc Tàn Canh), Cu Li Bóng (Rình Sơ Hở), Tắc Kè (Gương Hồi Quang).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), sys: { pet: ROCKY() } }),
+  after: async C => { kit(C, 50); await wait(400); try { const p = C.S.player; if (window.__duel && __duel.host) { const h = __duel.host(); if (h) { p.x = h.x - 14; p.y = h.y + 2; p.dir = 2; } } } catch (e) { } } };
+/* p73:preset:end */
+/* p97:preset:begin */
+/* p97 (plan-93): Chấn Thú ẾCH OA LÌ. Link:
+   ?preset=p97_bat&reset&lang=vi   — M1, trời MƯA, đứng cạnh ao: Oa Lì hiếm hiện → E → trận 1v1 → ≤ 30 % máu ném Ấn Thu (5 viên).
+   ?preset=p97_dau&reset&lang=vi&team=1v1&my=oali&foe=bachkinh — Làng: đấu thử Oa Lì Lv20 (đổi &my=oalipho / laooa để xem 2 dạng tiến hoá).
+   ?preset=p97_tienhoa&reset&lang=vi — Làng: Oa Lì Lv15 + 200 Tiềm Năng Triều → phím T (✦ Tiềm Năng) rót 1 lần → Lv16 TIẾN HOÁ thành Oa Lì Phố; rót tiếp tới Lv32 → Lão Oa Đại Ca. */
+const EN97 = () => { try { return new URLSearchParams(location.search).get('lang') === 'en'; } catch (e) { return false; } };
+function pondSpot97(C) {   /* ô đất khô cách ô nước gần lối vào nhất 2–3 ô */
+  const m = C.S.map, T = C.T || {}, e = (m.entries && m.entries.default) || { x: m.w >> 1, y: m.h >> 1 }; let best = null; if (T.WATER == null) return null;
+  const dry = (x, y) => x > 0 && y > 0 && x < m.w - 1 && y < m.h - 1 && !C.isSolid(m, x, y) && C.getG(m, x, y) !== T.WATER && C.getG(m, x, y) !== T.DEEP;
+  for (let y = 1; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) { const g = C.getG(m, x, y); if (g !== T.WATER) continue; const d = Math.hypot(x - e.x, y - e.y); if (best && d >= best.d) continue;
+    for (const [i, j] of [[0, 3], [3, 0], [-3, 0], [0, -3], [2, 2], [-2, 2]]) if (dry(x + i, y + j) && dry(x + i, y + j + 1)) { best = { d, x: x + i, y: y + j }; break; } }
+  return best;
+}
+PRESETS.p97_bat = { vi: 'Ếch Oa Lì — bắt ở ao lúc mưa (M1)', en: 'Croaksmug — catch it by a pond in the rain (M1)', desc: 'p97 (plan-93). M1, trời mưa, bạn đứng cạnh ao. Oa Lì (Hiếm, hệ Triều) chỉ hiện ở ao / đầm khi mưa: 1 dòng thông báo + biểu tượng hiếm trên đầu. E cạnh nó → trận 1v1 (Lôi Hồ Lv20 của bạn). Còn ≤ 30 % máu → ném Ấn Thu (5 viên).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'm1', entry: 'default', story: STORY('noxx'), badges: [1], hero: { lv: 12, xp: 0, hp: null }, clock: { season: 'spring', day: 1, year: 1, min: 360 },
+    sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'loiho', team: [{ id: 1, sp: 'loiho', lv: 20, name: EN97() ? 'Volt Fox' : 'Lôi Hồ' }], box: [], anThu: 5, nextId: 2, caught: 0, tn: {} } } }),
+  after: async C => { kit(C, 200); const s = pondSpot97(C); if (s) { C.S.player.x = s.x * 16 + 8; C.S.player.y = s.y * 16 + 12; } if (C.clock && C.clock.set) C.clock.set({ hour: 12, minute: 0 }); await wait(300);
+    if (C.chanthu && C.chanthu.setWx) C.chanthu.setWx({ night: false, dawn: false, rain: true, storm: false }); } };
+PRESETS.p97_dau = { vi: 'Ếch Oa Lì — đấu thử 5 chiêu', en: 'Croaksmug — try its 5 moves', desc: 'p97 (plan-93). Làng, huấn luyện viên cạnh lối vào. E → Đồng ý → 1v1: Oa Lì đấu loài trên link (&foe=…). 5 chiêu: Bọt Ộp · Bụng Phệ Đè (lao tới) · Kính Đen Lì Đòn · Lưỡi Kéo Về (chiêu riêng) · Cốc Lũ Vô Đáy (tuyệt chiêu). &my=oalipho / laooa: 2 dạng tiến hoá.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), sys: { pet: ROCKY() } }),
+  after: async C => { kit(C, 50); await wait(400); try { const p = C.S.player; if (window.__duel && __duel.host) { const h = __duel.host(); if (h) { p.x = h.x - 14; p.y = h.y + 2; p.dir = 2; } } } catch (e) { } } };
+PRESETS.p97_tienhoa = { vi: 'Ếch Oa Lì — nâng cấp + tiến hoá', en: 'Croaksmug — level up + evolve', desc: 'p97 (plan-93). Làng. Đội: Oa Lì Lv15 (ra đầu) + 200 Tiềm Năng Triều. Phím T / chạm ✦ Tiềm Năng → rót vào Oa Lì: Lv16 TIẾN HOÁ thành Oa Lì Phố (mũ đỏ + khăn), rót tiếp tới Lv32 → Lão Oa Đại Ca (mũ phớt, kính đen, tẩu; thêm hệ Âm, chiêu Vòng Khói Tẩu).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 6, xp: 0, hp: null },
+    sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'oali', team: [{ id: 1, sp: 'oali', lv: 15, name: EN97() ? 'Croaksmug' : 'Oa Lì' }, { id: 2, sp: 'loiho', lv: 20, name: EN97() ? 'Volt Fox' : 'Lôi Hồ' }], box: [], anThu: 5, nextId: 3, caught: 1, tn: { trieu: 200 } } } }),
+  after: async C => { kit(C, 200); } };
+/* p97:preset:end */
+/* p74:preset:begin */
+/* p74 (plan-74 đợt 0): Làng có Chấn Thú hoang thay quái — Chuột Chũi (Chấn, phá hoại: đêm hung + khó) + Cóc (Triều).
+   Đội: Lôi Hồ Lv20 (khởi đầu) + Chuột Chũi Lv3 + Cóc Lv3 (đã bắt, để thử Tiềm Năng cùng hệ), 5 Ấn Thu, kiếm cấp 2. Cạnh bạn sẵn 1 Chuột Chũi + 1 Cóc.
+   Link: ?preset=p74_lang&reset&lang=vi (ban ngày 9:00) · ?preset=p74_dem&reset&lang=vi (ban đêm 21:00). */
+const EN = () => { try { return new URLSearchParams(location.search).get('lang') === 'en'; } catch (e) { return false; } };   /* tên đặt sẵn theo ngôn ngữ link */
+const P74 = (hour) => ({
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 6, xp: 0, hp: null },
+    sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'loiho', team: [{ id: 1, sp: 'loiho', lv: 20, name: EN() ? 'Volt Fox' : 'Lôi Hồ' }, { id: 2, sp: 'chuichui', lv: 3, name: EN() ? 'Molly' : 'Chũi Con' }, { id: 3, sp: 'coc', lv: 3, name: EN() ? 'Toadie' : 'Cóc Con' }], box: [], anThu: 5, nextId: 4, caught: 2, tn: {} } } }),
+  after: async C => { kit(C, 300, { sword: 2 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour, minute: 0 }); await wait(900);
+    if (window.__fct) { window.__fct.spawn('chuichui', 56, -10); window.__fct.spawn('coc', -60, 14); } } });
+PRESETS.p74_lang = { vi: 'Chấn Thú hoang ở Làng (ban ngày)', en: 'Wild Chấn Thú in the Village (day)', desc: 'p74 (plan-74 đợt 0). Làng 9:00: quái thường đã thành Chấn Thú hoang — Chuột Chũi + Cóc. Ban ngày trung lập: chém nó thì nó (và đồng loại gần đó) đánh lại bằng chiêu như sàn đấu. Còn ≤ 30 % máu → choáng, nút Ấn Thu dưới chân. Thú chưa nổi giận: đến gần bấm E → đấu 1v1. Hạ thú → Tiềm Năng theo hệ (chạm ✦ Tiềm Năng / phím T) để nâng cấp Chấn Thú cùng hệ.', ...P74(9) };
+PRESETS.p74_dem = { vi: 'Chấn Thú hoang ở Làng (ban đêm)', en: 'Wild Chấn Thú in the Village (night)', desc: 'p74 (plan-74 đợt 0). Làng 21:00: Chuột Chũi (loài phá hoại) hung và khó hơn rõ (máu ×1,7, sức ×1,4, ra chiêu dày hơn, cấp +2), tự lao vào đánh, gặm cây trồng, săn dân. Cóc vẫn trung lập.', ...P74(21) };
+/* p74:preset:end */
+/* p78:preset:begin */
+/* p78 (plan-78 đợt mẫu): KHO CHIÊU hệ Chấn. Đội Chấn Thú đã xếp bộ (mv / ult), Rocky Lv25 biết 3 chiêu Chấn, 30 Tiềm Năng Chấn, Chũi Lv19 sắp tiến hoá.
+   ?preset=p78_chan&reset&lang=en — Làng 9:00, huấn luyện viên cạnh lối vào (E → đấu), Chũi hoang Lv30 gần đó (biết Đào Hầm Vồ + Đá Vụn Bắn).
+   ?preset=p78_duel&reset&lang=vi&team=1v1&my=chuichui2&foe=tete2&lv78=32 — trận thử: cả 2 đội tự xếp bộ theo cấp (đứng trước huấn luyện viên → E, E). */
+const EN78 = () => { try { return new URLSearchParams(location.search).get('lang') === 'en'; } catch (e) { return false; } };
+const P78T = () => [
+  { id: 1, sp: 'chuichui2', lv: 32, name: EN78() ? 'Crystal Mole King' : 'Chũi Vương Pha Lê', mv: ['da_vun_ban', 'dao_ham_vo', 'vong_du_chan', 'thu_the'], ult: 'dai_dia_chan' },
+  { id: 2, sp: 'nguuson', lv: 40, name: EN78() ? 'Mountain Ox' : 'Ngưu Sơn', mv: ['nem_da', 'lan_xa', 'dia_tu', 'gam'], ult: 'son_bang' },
+  { id: 3, sp: 'tete2', lv: 36, name: EN78() ? 'Stone-Plate Pangolin' : 'Tê Tê Giáp Đá', mv: ['cat_lun', 'dao_ham_vo', 'lan_xa', 'gong_chiu'], ult: 'dai_dia_chan' },
+  { id: 4, sp: 'golem', lv: 40, name: EN78() ? 'Quake Golem' : 'Thạch Chấn Vương', mv: ['da_vun_ban', 'dia_tu', 'ngu_bu', 'cot_da'], ult: 'son_bang' },
+  { id: 5, sp: 'chuichui', lv: 19, name: EN78() ? 'Molly' : 'Chũi Con' } ];
+const ROCKY78 = () => ({ pet: { name: 'Rocky', hunger: 100, bond: 30, born: Date.now(), xp: xpForLevel(40), hp: maxHpOf(40), cmd: 'protect', skills: { punch: 5, ha: 5, super: 3 }, lvMig: 1, eq: ['da_vun_ban', 'vong_du_chan', 'dao_ham_vo'], hoc: ['da_vun_ban', 'vong_du_chan', 'dao_ham_vo'] } });   /* Rocky Lv40: 4 ô chung, Siêu Cấp bậc 3 */
+PRESETS.p78_chan = { vi: 'Kho chiêu hệ Chấn (Sắp Chiêu · chiêu mới · Rocky)', en: 'Quake move pool (Moves · new moves · Rocky)', desc: 'p78 (plan-78 đợt mẫu). Làng 9:00. Đội 5 Chấn Thú hệ Chấn đã xếp bộ chiêu mới (bảng Đội → ⚙ Sắp Chiêu). Huấn luyện viên cạnh lối vào: E → đấu. Chũi hoang Lv30 gần đó ra Đào Hầm Vồ / Đá Vụn Bắn. Rocky Lv25 tự dùng Đá Vụn Bắn · Vòng Dư Chấn · Đào Hầm Vồ. Có 30 Tiềm Năng Chấn: rót cho Chũi Con Lv19 → Lv20 tiến hoá (cảnh Thức Tỉnh).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 12, xp: 0, hp: null }, sys: { pet: ROCKY78(), chanthu: { v: 1, starter: 'chuichui', team: P78T(), box: [], anThu: 8, nextId: 6, caught: 3, tn: { chan: 30 } } } }),
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 9, minute: 0 }); await wait(900);
+    try { const p = C.S.player; if (window.__duel && __duel.spawnHost) { __duel.spawnHost(p.x + 30, p.y - 4); } if (window.__k78) __k78.spawnLv('chuichui', 30, -70, 26); } catch (e) { } } };
+PRESETS.p78_duel = { vi: 'Thử trận kho chiêu (cấp theo link)', en: 'Move-pool battle test (level from link)', desc: 'p78. Làng, huấn luyện viên ngay trước mặt: E, E → trận. Link: &team=1v1&my=<loài>&foe=<loài>&lv78=<cấp> (cả 2 bên tự xếp bộ theo cấp) &mv78=<4 chiêu>,<tuyệt chiêu> (ép bộ bên mình).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), sys: { pet: ROCKY() } }),
+  after: async C => { kit(C, 50); await wait(400); try { const p = C.S.player; if (window.__duel && __duel.spawnHost) { __duel.spawnHost(p.x + 18, p.y - 2); const h = __duel.host(); if (h) { p.x = h.x - 14; p.y = h.y + 2; p.dir = 2; } } } catch (e) { } } };
+/* p78:preset:end */
+/* p79:preset:begin */
+/* p79 (plan-79 đợt 1): ?preset=p79_lang&reset&lang=vi — Làng 9:00, đội 5 Chấn Thú (p78), KHÔNG còn huấn luyện viên; Chũi + Cóc hoang gần lối vào.
+   Phím J / ô Ấn Chấn: thả Chũi Vương ra (đi theo, tự cắn quái thường). Gặp Chũi / Cóc hoang: bấm E → đấu TẠI CHỖ. */
+PRESETS.p79_lang = { vi: 'Thả Chấn Thú · đấu tại chỗ (Làng)', en: 'Send out your Quake Beast · battle on the spot (Village)', desc: 'p79 (plan-79 đợt 1). Làng 9:00. Phím J / ô Ấn Chấn: thả con đầu đội ra đi theo bạn, tự đánh quái thường. Gặp Chũi / Cóc hoang: lại gần bấm E → đấu ngay tại chỗ, không chuyển sân. Không còn huấn luyện viên ngoài map.',
+  save: d => ({ ...PRESETS.p78_chan.save(d) }),
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 9, minute: 0 }); await wait(900);
+    try { if (window.__fct) { window.__fct.spawn('chuichui', 70, -10); window.__fct.spawn('coc', -70, 16); } } catch (e) { } } };
+/* p79:preset:end */
+/* p80:preset:begin */
+/* p80 (plan-80 đợt 1): ?preset=p80_old&reset&lang=vi — save CŨ: Rìu 2, Cuốc 3, Xẻng 1, Liềm 1, Dao 1, Đuốc 1 + Kiếm 2 + Cần câu 1, thanh công cụ xếp theo kiểu cũ.
+   Vào game: 6 món gộp thành 1 Búa Seismic cấp 3 (cấp cao nhất cũ), Kiếm / Cần câu giữ nguyên. Chặt cây / đập đá / cày đất / cắt cỏ đều bằng Búa. */
+PRESETS.p80_old = { vi: 'Búa Seismic — save cũ có 6 dụng cụ', en: 'Seismic Hammer — old save with 6 tools', desc: 'p80 (plan-80 đợt 1). Làng 9:00. Save kiểu cũ có Rìu 2, Cuốc 3, Xẻng, Liềm, Dao, Đuốc → vào game tự gộp thành 1 Búa Seismic cấp 3. Đi tới cây / đá / đất bấm E: Búa tự làm đúng việc.',
+  save: d => ({ ...PRESETS.p78_chan.save(d), toolTier: { axe: 2, pickaxe: 3, shovel: 1, scythe: 1, knife: 1, torch: 1, sword: 2, rod: 1 }, tools: { axe: true, rod: true, rodBought: true },
+    hotbar: ['sword', 'axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'torch', 'rod', null, null, null, null], hotSel: 1, hbSeen: ['sword', 'axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'torch', 'rod'] }),
+  after: async C => { C.bag.add('stone', 100); if (C.clock && C.clock.set) C.clock.set({ hour: 9, minute: 0 }); } };
+/* p80:preset:end */
+/* p81:preset:begin */
+/* p81 (plan-79 đợt 3): ?preset=p81_san&reset&lang=vi — Đấu Trường Leader (lối mép Tây Làng), đội 5 Chấn Thú p78, đứng giữa cổng Nam. E cạnh Leader → thách đấu 3v3 trên sân cỏ; Bạn tập cạnh cổng → đấu luyện tập. */
+PRESETS.p81_san = { vi: 'Đấu Trường Leader — thách đấu + bạn tập', en: 'Leader Arena — challenges + sparring partner', desc: 'p81 (plan-79 đợt 3). Sân vận động bầu dục (lối mép Tây Làng), 15 Leader đứng quanh sân: E → thách đấu Chấn Thú 3v3, thắng lần đầu được đá + huy hiệu. Bạn tập cạnh cổng Nam: đấu luyện tập, thắng thua không mất gì.',
+  save: d => ({ ...PRESETS.p78_chan.save(d), zone: 'leader_arena', entry: 'default' }),
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.clock && C.clock.set) C.clock.set({ hour: 15, minute: 0 }); } };
+/* p81:preset:end */
+/* p100:preset:begin */
+/* p100 (plan-94 §9): CHOG — Chấn Thú từ mascot cộng đồng Monad (mặt trắng bờm gai tím, đứng 2 chân, hệ Mã, Hiếm) + 2 dạng tiến hoá.
+   ?preset=chog_duel&reset&lang=vi&team=1v1&my=chog&foe=hacgiac — trận thử (huấn luyện viên ngay trước mặt: E, E). my=chog2 / chog3 cho 2 dạng sau.
+   ?preset=chog_bat&reset&lang=vi — M6 Thành Nghiêng 8:00 (giờ bản tin sáng): Chog HIẾM hiện trong khung nhìn, có Lôi Hồ Lv24 + 5 Ấn Thu (E → đấu, ≤ 30 % máu → ném Ấn Thu).
+   ?preset=chog_evo&reset&lang=vi — Làng: Chog Lv19 + Chog Phóng Viên Lv29 trong đội, 40 Tiềm Năng Mã (phím T → rót → tiến hoá). */
+const EN100 = () => { try { return new URLSearchParams(location.search).get('lang') === 'en'; } catch (e) { return false; } };
+PRESETS.chog_duel = { vi: 'Chog — thử trận Chấn Thú mới (Monad)', en: 'Chog — new Quake Beast battle test (Monad)', desc: 'p100. Làng, huấn luyện viên ngay trước mặt: E, E → trận 1v1. Link: &team=1v1&my=chog&foe=hacgiac (my=chog2 / chog3: 2 dạng tiến hoá). Chog tự ra 5 chiêu: Tin Nóng Lướt Tới, Bờm Gai Nhiễu Sóng, Phỏng Vấn Bất Ngờ, Cười Tít Lách Mã, tuyệt chiêu Bản Tin Lịch Sử.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), sys: { pet: ROCKY() } }),
+  after: async C => { kit(C, 50); await wait(400); try { const p = C.S.player; if (window.__duel && __duel.spawnHost) { __duel.spawnHost(p.x + 18, p.y - 2); const h = __duel.host(); if (h) { p.x = h.x - 14; p.y = h.y + 2; p.dir = 2; } } } catch (e) { } } };
+PRESETS.chog_bat = { vi: 'Chog hiếm — bắt ở M6 Thành Nghiêng (bản tin sáng)', en: 'Rare Chog — catch it in M6 Leaning City (morning news)', desc: 'p100. M6 8:00 (giờ bản tin sáng 6–10 h): Chog HIẾM hiện trong khung nhìn (biểu tượng ✦ trên đầu, ghim bản đồ M). Có Lôi Hồ Lv24 + 5 Ấn Thu: lại gần bấm E → đấu, máu nó ≤ 30 % → ném Ấn Thu (phím C / E).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'm6', entry: 'default', story: STORY('noxx'), badges: [1, 2, 3, 4, 5], hero: { lv: 18, xp: 0, hp: null }, sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'loiho', team: [{ id: 1, sp: 'loiho', lv: 24, name: EN100() ? 'Volt Fox' : 'Tia Chớp' }], box: [], anThu: 5, nextId: 2, caught: 0, tn: {} } } }),
+  after: async C => { kit(C, 200); if (C.clock && C.clock.set) C.clock.set({ hour: 8, minute: 0 }); await wait(900);
+    try { if (C.chanthu) { C.chanthu.setWx({}); C.chanthu.rareTick(); const r = C.chanthu.rare().find(x => x.sp === 'chog'); if (r) { C.S.player.x = r.x - 30; C.S.player.y = r.y; C.S.player.dir = 2; } } } catch (e) { } } };
+PRESETS.chog_evo = { vi: 'Chog — tiến hoá (Tiềm Năng Mã)', en: 'Chog — evolution (Code Potential)', desc: 'p100. Làng 9:00. Đội: Chog Lv19 + Chog Phóng Viên Lv29, 40 Tiềm Năng Mã. Phím T (hoặc bảng Đội → ✦ Tiềm Năng) → rót cho Chog → Lv20 tiến hoá thành Chog Phóng Viên; rót cho Phóng Viên → Lv30 thành Chog Đại Mưu.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 12, xp: 0, hp: null },
+    sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'chog', team: [{ id: 1, sp: 'chog', lv: 19, name: 'Chog' }, { id: 2, sp: 'chog2', lv: 29, name: EN100() ? 'Reporter Chog' : 'Chog Phóng Viên' }], box: [], anThu: 5, nextId: 3, caught: 1, tn: { ma: 40 } } } }),
+  after: async C => { kit(C, 300); if (C.clock && C.clock.set) C.clock.set({ hour: 9, minute: 0 }); await wait(600); } };
+/* p100:preset:end */
+/* p99:preset:begin */
+/* p99 (plan-94 §8): MOYAKI — Chấn Thú từ mascot cộng đồng Monad (mèo-cá tím, hệ Triều, Hiếm, bậc Nhỏ) + 2 dạng tiến hoá.
+   ?preset=moyaki_duel&reset&lang=vi&team=1v1&my=moyaki&foe=hacgiac — trận thử (huấn luyện viên ngay trước mặt: E, E). my=moyaki2 / moyaki3 cho 2 dạng sau.
+   ?preset=moyaki_bat&reset&lang=vi — M1 Bãi Bồi Yên 10:00: Moyaki HIẾM hiện ven nước trong khung nhìn, có Lôi Hồ Lv20 + 5 Ấn Thu (E → đấu, ≤ 30 % máu → ném Ấn Thu).
+   ?preset=moyaki_evo&reset&lang=vi — Làng: Moyaki Lv19 + Moyaki Vượt Thác Lv29 trong đội, 40 Tiềm Năng Triều (phím T → rót → tiến hoá). */
+const EN99 = () => { try { return new URLSearchParams(location.search).get('lang') === 'en'; } catch (e) { return false; } };
+PRESETS.moyaki_duel = { vi: 'Moyaki — thử trận Chấn Thú mới (Monad)', en: 'Moyaki — new Quake Beast battle test (Monad)', desc: 'p99. Làng, huấn luyện viên ngay trước mặt: E, E → trận 1v1. Link: &team=1v1&my=moyaki&foe=hacgiac (my=moyaki2 / moyaki3: 2 dạng tiến hoá). Moyaki tự ra 5 chiêu: Quẫy Vây Lướt, Bong Bóng Trề Môi, Liếc Khinh Khỉnh, Bơi Ngược Dòng, tuyệt chiêu Cá Chép Vượt Vũ Môn.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), sys: { pet: ROCKY() } }),
+  after: async C => { kit(C, 50); await wait(400); try { const p = C.S.player; if (window.__duel && __duel.spawnHost) { __duel.spawnHost(p.x + 18, p.y - 2); const h = __duel.host(); if (h) { p.x = h.x - 14; p.y = h.y + 2; p.dir = 2; } } } catch (e) { } } };
+PRESETS.moyaki_bat = { vi: 'Moyaki hiếm — bắt ở M1 Bãi Bồi Yên (ven nước, ban ngày)', en: 'Rare Moyaki — catch it in M1 Calm Shoals (by the water, daytime)', desc: 'p99. M1 10:00, trời quang: Moyaki HIẾM hiện sát mép nước trong khung nhìn (biểu tượng ✦ trên đầu, ghim bản đồ M). Có Lôi Hồ Lv20 + 5 Ấn Thu: lại gần bấm E → đấu, máu nó ≤ 30 % → ném Ấn Thu (phím C / E).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'm1', entry: 'default', story: STORY('noxx'), badges: [1], hero: { lv: 10, xp: 0, hp: null }, sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'loiho', team: [{ id: 1, sp: 'loiho', lv: 20, name: EN99() ? 'Volt Fox' : 'Tia Chớp' }], box: [], anThu: 5, nextId: 2, caught: 0, tn: {} } } }),
+  after: async C => { kit(C, 200); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 }); await wait(900);
+    try { if (C.chanthu) { C.chanthu.setWx({}); C.chanthu.rareTick(); const r = C.chanthu.rare().find(x => x.sp === 'moyaki'); if (r) { C.S.player.x = r.x - 30; C.S.player.y = r.y; C.S.player.dir = 2; } } } catch (e) { } } };
+PRESETS.moyaki_evo = { vi: 'Moyaki — tiến hoá (Tiềm Năng Triều)', en: 'Moyaki — evolution (Tide Potential)', desc: 'p99. Làng 9:00. Đội: Moyaki Lv19 + Moyaki Vượt Thác Lv29, 40 Tiềm Năng Triều. Phím T (hoặc bảng Đội → ✦ Tiềm Năng) → rót cho Moyaki → Lv20 tiến hoá thành Moyaki Vượt Thác; rót cho Vượt Thác → Lv30 thành Moyaki Long Ngư.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 12, xp: 0, hp: null },
+    sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'moyaki', team: [{ id: 1, sp: 'moyaki', lv: 19, name: 'Moyaki' }, { id: 2, sp: 'moyaki2', lv: 29, name: EN99() ? 'Rapids Moyaki' : 'Moyaki Vượt Thác' }], box: [], anThu: 5, nextId: 3, caught: 1, tn: { trieu: 40 } } } }),
+  after: async C => { kit(C, 300); if (C.clock && C.clock.set) C.clock.set({ hour: 9, minute: 0 }); await wait(600); } };
+/* p99:preset:end */
+/* p96:preset:begin */
+/* p96 (plan-94): MOLANDAK — Chấn Thú từ mascot cộng đồng Monad (hệ Chấn, Hiếm, bậc Nhỏ) + 2 dạng tiến hoá.
+   ?preset=molandak_duel&reset&lang=vi&team=1v1&my=molandak&foe=hacgiac — trận thử (huấn luyện viên ngay trước mặt: E, E). my=molandak2 / molandak3 cho 2 dạng sau.
+   ?preset=molandak_bat&reset&lang=vi — M4 Mỏ Đá Lở 10:00: Molandak HIẾM hiện trong khung nhìn, có Lôi Hồ Lv20 + 5 Ấn Thu (E → đấu, ≤ 30 % máu → ném Ấn Thu).
+   ?preset=molandak_evo&reset&lang=vi — Làng: Molandak Lv19 + Molandak Lão Luyện Lv29 trong đội, 40 Tiềm Năng Chấn (phím T → rót → tiến hoá). */
+const EN96 = () => { try { return new URLSearchParams(location.search).get('lang') === 'en'; } catch (e) { return false; } };
+PRESETS.molandak_duel = { vi: 'Molandak — thử trận Chấn Thú mới (Monad)', en: 'Molandak — new Quake Beast battle test (Monad)', desc: 'p96. Làng, huấn luyện viên ngay trước mặt: E, E → trận 1v1. Link: &team=1v1&my=molandak&foe=hacgiac (my=molandak2 / molandak3: 2 dạng tiến hoá). Molandak tự ra 5 chiêu: Lăn Gai Húc, Bắn Gai Quạt, Trề Môi Khinh Khỉnh, Cuộn Gai Thủ, tuyệt chiêu Cầu Gai Vượt Ải.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), sys: { pet: ROCKY() } }),
+  after: async C => { kit(C, 50); await wait(400); try { const p = C.S.player; if (window.__duel && __duel.spawnHost) { __duel.spawnHost(p.x + 18, p.y - 2); const h = __duel.host(); if (h) { p.x = h.x - 14; p.y = h.y + 2; p.dir = 2; } } } catch (e) { } } };
+PRESETS.molandak_bat = { vi: 'Molandak hiếm — bắt ở M4 Mỏ Đá Lở (ban ngày)', en: 'Rare Molandak — catch it in M4 Rockfall Mine (daytime)', desc: 'p96. M4 10:00, trời quang: Molandak HIẾM hiện trong khung nhìn (biểu tượng ✦ trên đầu, ghim bản đồ M). Có Lôi Hồ Lv20 + 5 Ấn Thu: lại gần bấm E → đấu, máu nó ≤ 30 % → ném Ấn Thu (phím C / E).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'm4', entry: 'default', story: STORY('noxx'), badges: [1, 2, 3], hero: { lv: 14, xp: 0, hp: null }, sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'loiho', team: [{ id: 1, sp: 'loiho', lv: 20, name: EN96() ? 'Volt Fox' : 'Tia Chớp' }], box: [], anThu: 5, nextId: 2, caught: 0, tn: {} } } }),
+  after: async C => { kit(C, 200); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 }); await wait(900);
+    try { if (C.chanthu) { C.chanthu.setWx({}); C.chanthu.rareTick(); const r = C.chanthu.rare().find(x => x.sp === 'molandak'); if (r) { C.S.player.x = r.x - 30; C.S.player.y = r.y; C.S.player.dir = 2; } } } catch (e) { } } };
+PRESETS.molandak_evo = { vi: 'Molandak — tiến hoá (Tiềm Năng Chấn)', en: 'Molandak — evolution (Quake Potential)', desc: 'p96. Làng 9:00. Đội: Molandak Lv19 + Molandak Lão Luyện Lv29, 40 Tiềm Năng Chấn. Phím T (hoặc bảng Đội → ✦ Tiềm Năng) → rót cho Molandak → Lv20 tiến hoá thành Molandak Lão Luyện; rót cho Lão Luyện → Lv30 thành Molandak Vương.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 12, xp: 0, hp: null },
+    sys: { pet: ROCKY(), chanthu: { v: 1, starter: 'molandak', team: [{ id: 1, sp: 'molandak', lv: 19, name: 'Molandak' }, { id: 2, sp: 'molandak2', lv: 29, name: EN96() ? 'Veteran Molandak' : 'Molandak Lão Luyện' }], box: [], anThu: 5, nextId: 3, caught: 1, tn: { chan: 40 } } } }),
+  after: async C => { kit(C, 300); if (C.clock && C.clock.set) C.clock.set({ hour: 9, minute: 0 }); await wait(600); } };
+/* p96:preset:end */
 export async function runPreset({ q, S, CTX, startGame, defaultSave, UI }) {
   const id = q.get('preset'), p = PRESETS[id];
   if (!p) { console.error('preset: không có mốc', id, Object.keys(PRESETS)); return false; }
   useSlot(id);
-  if (q.has('reset')) { clearSave(); history.replaceState(null, '', `?preset=${id}${q.get('lang') ? '&lang=' + q.get('lang') : ''}${['team', 'my', 'foe'].filter(k => q.get(k)).map(k => '&' + k + '=' + q.get(k)).join('')}`); }   /* p67b: giữ cả my / foe (link chọn đội) */
+  if (q.has('reset')) { clearSave(); history.replaceState(null, '', `?preset=${id}${q.get('lang') ? '&lang=' + q.get('lang') : ''}${['team', 'my', 'foe', 'lv78', 'mv78', 'host', 'sty89', 'cam89', 'music'].filter(k => q.get(k)).map(k => '&' + k + '=' + q.get(k)).join('')}`); }   /* p67b: giữ cả my / foe (link chọn đội) */
   let sv = loadSave(), fresh = !sv;
   if (fresh) { sv = p.save(defaultSave()); sv.lang = q.get('lang') || 'vi'; }   /* 2026-10-14: defaultSave có lang 'en' → mốc mới mặc định tiếng Việt */
   { const lg = q.get('lang') || sv.lang; if ((lg === 'vi' || lg === 'en') && UI.lang() !== lg && UI.setLang) { UI.setLang(lg); if (UI.applyStaticText) UI.applyStaticText(); } }   /* ngôn ngữ theo ô lưu preset (không theo save chính) */
@@ -325,3 +477,101 @@ export async function runPreset({ q, S, CTX, startGame, defaultSave, UI }) {
   window.__preset = { id, fresh };
   return true;
 }
+/* p95:preset:begin */
+/* p95 (plan-95): ELYZIUMA bảo vệ người chơi. ?preset=elyz95&reset&lang=vi — Làng mới (p89) 10:00, đội có Elyziuma Lv50 đứng đầu (đã thả ra, đi theo).
+   Vài giây sau: 4 Chấn Thú côn đồ (Hắc Giác, Hoả Hùng, Lôi Hồ, Ngưu Sơn) lao vào đánh người chơi → Elyziuma tự lao vào đánh, nhiều con một lúc.
+   Lệnh thử: __ely.gang(n) gọi thêm n con · __ely.cast('stamp'|'meet'|'flare'|'fire'|'ult') · __ely.state(). Phím J / ô Ấn Chấn: thu / thả. */
+const ELYT = () => [{ id: 1, sp: 'elyziuma', lv: 50, name: 'Elyziuma' }, ...P78T().slice(0, 2).map((m, i) => ({ ...m, id: i + 2 }))];
+PRESETS.elyz95 = { vi: 'Elyziuma bảo vệ người chơi (Làng)', en: 'Elyziuma guards you (Village)', desc: 'p95 (plan-95). Làng 10:00. Elyziuma — Chấn Thú Huyền Thoại hệ Mã + Triều — đang thả ra đi theo bạn. Vài giây sau 4 Chấn Thú côn đồ lao vào đánh bạn: Elyziuma tự xông vào, ưu tiên con đang đánh bạn, đánh nhiều con cùng lúc bằng 5 chiêu (Ký Duyệt, Họp Khẩn, Kính Lóe, Sa Thải, Tái Cấu Trúc). Phím J: thu / thả.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 20, xp: 0, hp: null }, sys: { pet: { ...ROCKY78(), pet: { ...ROCKY78().pet, cmd: 'follow' } }, p79: { out: true }, chanthu: { v: 1, starter: 'chuichui', team: ELYT(), box: [], anThu: 8, nextId: 9, caught: 3, tn: {} } } }),
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 }); await wait(1200);
+    try { if (window.__ely) window.__ely.gang(4); } catch (e) { } } };
+PRESETS.elyz95_test = { vi: 'Elyziuma (thử, không gọi côn đồ)', en: 'Elyziuma (test, no rogues)', desc: 'p95: như elyz95 nhưng không tự gọi côn đồ (bài test tự gọi bằng __ely.gang).', save: d => PRESETS.elyz95.save(d),
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 }); } };
+/* p95:preset:end */
+/* p104:preset:begin */
+/* p104 (plan-104): gọi + ra lệnh nhiều Chấn Thú, bảo vệ người chơi. ?preset=p104&reset&lang=vi — Làng mới 10:00, đội 6 con (chưa thả).
+   J thả / thu (chưa chọn: thả con kế tiếp, đủ 3 thì thu cả đội) · bấm chân dung: chọn con · G tấn công mục tiêu khoá · U chế độ · H chiêu.
+   Lệnh thử: __sq.foes(n) côn đồ bắn xa · __sq.foes(n,'melee') côn đồ cận chiến · __sq.state() · __fct.spawn('chuichui') + __fct.duel(id) đấu tại chỗ. */
+const P104T = () => { const t = P78T(); return [t[0], t[1], t[3], t[2], { id: 6, sp: 'elyziuma', lv: 50, name: 'Elyziuma' }, t[4]]; };
+const P104S = out => d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 20, xp: 0, hp: null }, sys: { pet: { ...ROCKY78(), pet: { ...ROCKY78().pet, cmd: 'follow' } }, p79: { out: false }, p104: { v: 1, out, mode: 'guard', per: {}, sel: null }, chanthu: { v: 1, starter: 'chuichui', team: P104T(), box: [], anThu: 8, nextId: 9, caught: 3, tn: {} } } });
+const P104A = async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 }); };
+PRESETS.p104 = { vi: 'Gọi + ra lệnh Chấn Thú (Làng)', en: 'Call + command Quake Beasts (Village)', desc: 'p104 (plan-104). Làng 10:00, đội 6 Chấn Thú chưa thả. J: thả lần lượt (tối đa 3 con) · bấm chân dung để chọn 1 con · khoá quái (Tab) rồi G: cả đội tấn công · U: Bảo vệ / Tấn công tự do / Theo sau · H: chiêu của con đang chọn. Chế độ Bảo vệ: Chấn Thú chắn và đỡ đòn cho bạn.', save: P104S([]), after: P104A };
+PRESETS.p104_3 = { vi: 'Đã thả 3 Chấn Thú + côn đồ tấn công (Làng)', en: '3 Quake Beasts out + rogues attack (Village)', desc: 'p104: đã thả 3 con (Chũi Vương, Ngưu Sơn, Thạch Chấn Vương). Vài giây sau 3 côn đồ cận chiến + 2 côn đồ bắn xa lao vào đánh bạn — Chấn Thú chắn, đỡ đòn, dùng chiêu bảo vệ.', save: P104S([1, 2, 4]),
+  after: async C => { await P104A(C); await wait(1500); try { if (window.__sq) { window.__sq.foes(3, 'melee'); window.__sq.foes(2, 'ranged'); } } catch (e) { } } };
+PRESETS.p104_ely = { vi: 'Elyziuma + 2 Chấn Thú cùng thả (Làng)', en: 'Elyziuma + 2 beasts out (Village)', desc: 'p104: Elyziuma (bộ não riêng elyz95) đi cùng Ngưu Sơn + Thạch Chấn Vương; côn đồ lao tới sau vài giây.', save: P104S([6, 2, 4]),
+  after: async C => { await P104A(C); await wait(1500); try { if (window.__sq) window.__sq.foes(4, 'melee'); } catch (e) { } } };
+PRESETS.p104_test = { vi: 'p104 thử (không côn đồ)', en: 'p104 test (no rogues)', desc: 'p104: như p104 (bài test tự thả / gọi côn đồ).', save: P104S([]), after: P104A };
+/* p104:preset:end */
+/* p105:preset:begin */
+/* p105 (plan-105): MÔI TRƯỜNG THEO HỆ. ?preset=envfx105&reset&lang=vi — Làng mới (p89) 10:00, người chơi đứng cạnh cây lẻ + bãi hoa.
+   Lệnh thử: __envfx.hit(x, y, r, 'nham'|'trieu'|'suong'|…, pw) · __envfx.spot() · __envfx.state() · __envfx.set({ var: { nham: 'b' } }).
+   envfx105_duel: như trên + đội Chấn Thú (đấu tại chỗ với thú hoang bằng E). */
+const P105GO = async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 });
+  for (let i = 0; i < 40 && !(window.__envfx && __envfx.spot); i++) await wait(100);
+  try { const s = window.__envfx && __envfx.spot(); if (s) { const p = C.S.player; p.x = s.fx - 40; p.y = s.fy + 30; p.dir = 0; } } catch (e) { } };
+PRESETS.envfx105 = { vi: 'Môi trường theo hệ chiêu (Làng)', en: 'Elemental terrain (Village)', desc: 'p105 (plan-105). Làng 10:00, đứng cạnh cây + bãi hoa. Chiêu Chấn Thú / linh thú trúng hoa cỏ, cây: cháy sém, ướt thẫm, đóng băng… rồi hồi lại.',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 20, xp: 0, hp: null }, sys: { pet: ROCKY78() } }), after: P105GO };
+PRESETS.envfx105_duel = { vi: 'Môi trường theo hệ + đội Chấn Thú', en: 'Elemental terrain + beast team', desc: 'p105: như envfx105, có đội Chấn Thú (thả J, gặp thú hoang bấm E đấu tại chỗ).',
+  save: d => ({ ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 20, xp: 0, hp: null }, sys: { pet: ROCKY78(), p79: { out: true }, chanthu: { v: 1, starter: 'chuichui', team: P78T().slice(0, 3).map((m, i) => ({ ...m, id: i + 1 })), box: [], anThu: 8, nextId: 9, caught: 3, tn: {} } } }), after: P105GO };
+/* p105:preset:end */
+/* p103:preset:begin */
+/* p103 (plan-103): CẢNH QUAY FARM QUÁI trên Làng mới — người chơi + Rocky (golem, Chấn Thú loài 'rocky', p90, thả bằng comp79) + Elyziuma (p95, elyz95) cùng đánh quái.
+   Đội: team[0] = Rocky Lv40 (comp79 lo), team[1] = Elyziuma Lv50 — cờ sys.p79.duo103 cho elyz95 chạy khi Elyziuma ở ô 2 (vá p103, tạm chờ squad104).
+   Thú cưng cũ (Rocky Jr cam, pet.js) để 'home' + ẩn dòng HUD — không ra cảnh, không Siêu Cấp.
+   Link quay (KHÔNG kèm &reset để giữ sty89 / cam89 trên URL — máy quay tự xoá dữ liệu trang trước khi mở):
+     ?preset=video_farm&lang=vi&sty89=d&cam89=auto
+   Tham số thêm: &bot103=0 (người chơi đứng yên) · &wave103=0 (không gọi quái) · &clean103=0 (HIỆN lại bảng 'E · …' / hộp hướng dẫn — mặc định ẩn theo anh 02/11).
+   Phần đạo diễn (chỗ đứng bờ ao, đợt quái nước / bờ / bay, bot người chơi) ở src/farm103.js — window.__farm103. */
+PRESETS.video_farm = { vi: 'Quay video: farm quái cùng Rocky + Elyziuma (Làng)', en: 'Video: farming with Rocky + Elyziuma (Village)',
+  desc: 'p103 (plan-103). Làng mới 10:00, trời đẹp. Đứng bờ ao. Rocky (golem) + Elyziuma cùng thả ra đi theo. Quái đến theo đợt: dưới nước (cua, cá nóc, lươn trong ao), trên bờ (nhầy, sói, yêu đá), biết bay (quạ, mòng biển). Người chơi tự đi dọc bờ, đánh con gần nhất.',
+  save: d => { const s = PRESETS.elyz95.save(d), R = ROCKY78(), ch = s.sys.chanthu;
+    const team = [{ id: 1, sp: 'rocky', lv: 40, name: 'Rocky' }, { id: 2, sp: 'elyziuma', lv: 50, name: 'Elyziuma' }];
+    return { ...s, hero: { lv: 30, xp: 0, hp: null }, sys: { ...s.sys, pet: { ...R, pet: { ...R.pet, cmd: 'home' } }, p79: { out: true, duo103: true }, ki: { v: 3, auto: true, tut: 1 }, chanthu: { ...ch, team, nextId: 9 } } }; },
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 });
+    try { const F = await import('./farm103.js'); F.start(C); } catch (e) { console.error('farm103', e); } } };
+/* p103:preset:end */
+/* p110:preset:begin */
+/* p110 (bản CHIẾN ĐẤU gộp): Làng mới, đội Rocky golem + Elyziuma + Ngưu Sơn thả bằng squad104 (p104), Chấn Thú hoang + thủ lĩnh theo vùng (p106),
+   lao nhanh (p107), môi trường theo hệ (p105), HUD Saiyan + noprompt (p91), tiếng chiêu (p108), cỡ Chấn Thú (p98), Rocky ×2 (p90).
+   Link: ?preset=farm110&reset&lang=vi&sty89=d&cam89=auto  (&reset nay giữ sty89 / cam89). Thú cưng cũ để 'home'.
+   J thả / thu con đang chọn · bấm chân dung chọn con, chuột phải chân dung thả / thu · X thu cả đội · Tab khoá + G cả đội đánh · U chế độ · H chiêu. */
+PRESETS.farm110 = { vi: 'Chiến đấu: đội 3 Chấn Thú farm theo vùng (Làng mới)', en: 'Battle: 3-beast squad zone farming (Village)',
+  desc: 'p110 — bản gộp chiến đấu. Làng mới 10:00. Rocky (golem) + Elyziuma + Ngưu Sơn đã thả, theo bạn, tự đánh và bảo vệ bạn. Mỗi vùng con có Chấn Thú hoang + thủ lĩnh; lại gần hoặc đánh thì chúng nổi giận. J thả / thu · Tab khoá + G cả đội đánh · U đổi chế độ · H chiêu.',
+  save: d => { const R = ROCKY78(), N = (P78T().find(m => m.sp === 'nguuson') || { sp: 'nguuson', lv: 30, name: 'Ngưu Sơn' });
+    const team = [{ id: 1, sp: 'rocky', lv: 40, name: 'Rocky' }, { id: 2, sp: 'elyziuma', lv: 50, name: 'Elyziuma' }, { ...N, id: 3 }];
+    return { ...d, name: 'Hùng', nation: 'Vietnamese', zone: 'village', entry: 'default', story: STORY('noxx'), hero: { lv: 30, xp: 0, hp: null },
+      sys: { pet: { ...R, pet: { ...R.pet, cmd: 'home' } }, ki: { v: 3, auto: true, tut: 1 }, p79: { out: false }, p104: { v: 1, out: [2], mode: 'guard', per: {}, sel: null }   /* anh: khởi đầu chỉ thả Elyziuma — Rocky + Ngưu Sơn gọi ra bằng chân dung / J, X thu cả đội */,
+        chanthu: { v: 1, starter: 'chuichui', team, box: [], anThu: 8, nextId: 9, caught: 3, tn: {} } } }; },
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 });
+    const m = C.S.map, p = C.S.player, ok = (tx, ty) => tx > 1 && ty > 1 && tx < m.w - 1 && ty < m.h - 1 && !C.isSolid(m, tx, ty);
+    let best = null; for (let r = 0; r < 12 && !best; r++) for (let j = -r; j <= r && !best; j++) for (let i = -r; i <= r && !best; i++) { const tx = 112 + i, ty = 60 + j; if (ok(tx, ty) && ok(tx - 1, ty) && ok(tx + 1, ty) && ok(tx, ty + 1)) best = [tx, ty]; }
+    if (best) { p.x = best[0] * 16 + 8; p.y = best[1] * 16 + 12; p.dir = 0; p.autoPath = null; }
+    try { const F = await import('./farm103.js'); if (F.spacing) F.spacing(C); } catch (e) { console.error('farm110 spacing', e); }
+    try {   /* trình duyệt chỉ cho phát tiếng sau cú bấm đầu tiên → nhắc nhỏ (tiếng Anh khi lang=en), tự tắt khi bấm */
+      if (!(window.__audio && __audio.state && __audio.state().ctx === 'running')) {
+        const el = document.createElement('div'), en = C.lang && C.lang() === 'en'; el.id = 'snd110'; el.textContent = en ? '🔊 Click to enable sound' : '🔊 Bấm để bật âm thanh';
+        el.style.cssText = 'position:fixed;left:12px;bottom:96px;z-index:50;font:14px VT323,monospace;background:rgba(20,14,26,.82);color:#ffe9a0;padding:4px 10px;border:1px solid #a0703a;border-radius:4px;pointer-events:none';
+        document.body.appendChild(el); const off = () => { el.remove(); for (const ev of ['pointerup', 'touchend', 'keydown']) removeEventListener(ev, off, true); };
+        for (const ev of ['pointerup', 'touchend', 'keydown']) addEventListener(ev, off, true);
+      }
+    } catch (e) { } } };
+PRESETS.video110 = { vi: 'Quay video v6: đội 3 Chấn Thú farm bầy thú vùng + ngập (Làng mới)', en: 'Video v6: squad farming + flood (Village)',
+  desc: 'p110 video v6: như farm110 nhưng có đạo diễn tự chạy (farm103.start110): đi dọc suối → khiêu khích bầy → khoá thủ lĩnh + G → Elyziuma tuyệt chiêu (ngập) → đánh trong vùng ngập → bầy tan. Khung sạch (ẩn dòng nhiệm vụ / thông báo).',
+  save: d => PRESETS.farm110.save(d),
+  after: async C => { await PRESETS.farm110.after(C); try { const F = await import('./farm103.js'); F.start110(C); } catch (e) { console.error('video110', e); } } };
+/* p110:preset:end */
+/* p106:preset:begin */
+/* p106 (plan-106): FARM CHẤN THÚ THEO VÙNG trên Làng mới — Rocky golem Lv40 (đầu đội, comp79) + Elyziuma Lv50 (ô 2, elyz95, cờ duo103) cùng thả;
+   người chơi đứng bờ Tây suối (vùng Bờ Suối Ao Sen), 10:00. Thú hoang theo vùng do src/systems/farm106.js (window.__f106).
+   Link: ?preset=farm_vung&reset&lang=vi */
+PRESETS.farm_vung = { vi: 'Farm Chấn Thú theo vùng cùng Elyziuma + Rocky (Làng mới)', en: 'Zone beast farming with Elyziuma + Rocky (Village)',
+  desc: 'p106 (plan-106). Làng mới 10:00. Mỗi vùng con (trừ Quảng Trường) có 3–5 Chấn Thú hoang đi lang thang. Lại quá gần / đánh chúng → nổi giận đuổi theo, kéo bầy. Rocky golem Lv40 + Elyziuma Lv50 đang thả tự đánh thú đang giận; hạ được thì nhận XP. Đứng bờ suối (Bờ Suối Ao Sen).',
+  save: d => { const s = PRESETS.video_farm.save(d); return { ...s, sys: { ...s.sys, p79: { out: true, duo103: true } } }; },
+  after: async C => { kit(C, 300, { sword: 3 }); if (C.hold) C.hold('sword'); if (C.clock && C.clock.set) C.clock.set({ hour: 10, minute: 0 });
+    const m = C.S.map, p = C.S.player, ok = (tx, ty) => tx > 1 && ty > 1 && tx < m.w - 1 && ty < m.h - 1 && !C.isSolid(m, tx, ty);
+    let best = null; for (let r = 0; r < 12 && !best; r++) for (let j = -r; j <= r && !best; j++) for (let i = -r; i <= r && !best; i++) { const tx = 112 + i, ty = 60 + j; if (ok(tx, ty) && ok(tx - 1, ty) && ok(tx + 1, ty) && ok(tx, ty + 1) && (!window.__f106 || __f106.at(tx * 16 + 8, ty * 16 + 12) === 'stream')) best = [tx, ty]; }
+    if (best) { p.x = best[0] * 16 + 8; p.y = best[1] * 16 + 12; p.dir = 0; p.autoPath = null; }
+    await wait(600);
+    try { const E = C.elyz95 && C.elyz95.E && C.elyz95.E(); if (E) { E.x = p.x - 22; E.y = p.y + 4; } const f = C.comp79 && C.comp79.f && C.comp79.f(); if (f) { f.x = p.x + 20; f.y = p.y + 4; } } catch (e) { } } };
+/* p106:preset:end */

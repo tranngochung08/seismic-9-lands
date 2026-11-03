@@ -4,13 +4,14 @@ import { TS, T, O, PAL, tiles, buildTiles, buildObjects, charSheet, lookFor, rng
 import { loadRoster, membersOfLevel, pickNpcs, LEVEL_COLORS, isLeader, isBooster, ROSTER, byId, nationOf, findMember, nationGroups, nationStats } from './data.js';
 import { ZONES, ZONE_LIST, freeTiles, getG, setG, isSolid, setSolid, removeObject, zoneTier, place, computeReach, hasObjectAt, rebuildPlot, tierCap, MAX_TIER, FLOW } from './world.js';
 import { SYSTEMS } from './systems/index.js';
+import { noxx120, fresh120 } from './systems/noxx120.js'; if (!SYSTEMS.includes(noxx120)) SYSTEMS.push(noxx120);   /* p120 (plan-118 §8): người mới gặp Noxx ở Làng mới, chọn Chấn Thú */
 import { drawWeather69, drawFireflies69 } from './systems/weather69.js';   /* plan-69: thời tiết / môi trường vẽ code */
 import * as AUDIO from './audio.js';
-import { ITEMS, TOOLS, BAG_CAP, itemName, itemIcon } from './items.js';
+import { ITEMS, TOOLS, BAG_CAP, itemName, itemIcon, MERGED, toolOf } from './items.js';
 import { obj as defineObject } from './gfx.js';
 import { setNationLang } from './data.js';
 import { Player, NPC } from './entities.js';
-import { loadSave, writeSave, defaultSave, clearSave, useSlot } from './save.js';
+import { loadSave, writeSave, defaultSave, clearSave, useSlot, mergeTools80 } from './save.js';
 import { nextStep } from './nextstep.js';   /* plan-44 D3: dòng Việc kế tiếp */
 import { drawZoneMap, planZoneWalk } from './zonemap.js';   /* plan-44 D4: bản đồ Vùng này (+ đợt D: chạm bản đồ → tự đi) */
 import { CONFIG } from './config.js';
@@ -33,6 +34,23 @@ const cv = $('#c'), g = cv.getContext('2d');
 const uiCv = $('#ui'), ugUI = uiCv.getContext('2d'); let ug = ugUI; // full-resolution overlay for crisp text labels   /* plan-42 A1: ug = ugUI (lớp #ui) hoặc g (vẽ thẳng lên canvas chính khi cùng độ phân giải) */
 const seis = $('#seis'), sg = seis.getContext('2d', { willReadFrequently: true });
 let scale = 3, VW = 320, VH = 200;
+/* p89 (plan-89 vòng 3–4): lùi camera kiểu Saiyan. ?cam89=0 tắt · 1 = ×1,5 · 2 = ×2 · auto (hoặc sty89=d không kèm cam89) = máy tính ×2, điện thoại ×1,5; scaleUI = tỉ lệ trước khi lùi → chữ / nhãn giữ cỡ đọc được */
+let scaleUI = 3; const CAM89 = (() => { const q = new URLSearchParams(location.search), v = q.get('cam89'); return v === '1' ? 1.5 : v === '2' ? 2 : v === 'auto' || (v === null && (q.get('sty89') ?? 'd') === 'd') ? -1 : 1; })();
+const SMOOTH113 = new URLSearchParams(location.search).get('smooth113') !== '0';   /* đi mượt dưới 1 px logic (patch-smooth.py) */
+globalThis.__R89 = Math.round;
+const DUEL89FAR = new URLSearchParams(location.search).get('duel89') !== 'near';
+const DAN89 = new URLSearchParams(location.search).get('dan89') === '1';
+let ZOOM110 = (() => { try { const v = +localStorage.getItem('seismic.zoom110'); return v >= 1 && v <= 3 ? v : null; } catch (e) { return null; } })();   /* p110: mức góc nhìn người chơi chọn (null = mức chốt) */
+const cam89F = (w, h) => ZOOM110 != null ? ZOOM110 : cam89F0(w, h);
+const cam89F0 = (w, h) => CAM89 !== -1 ? CAM89 : (Math.min(w, h) < 600 || (window.matchMedia && matchMedia('(pointer:coarse)').matches)) ? 1.5 : 2;
+const OPT89 = new URLSearchParams(location.search).get('opt89') !== '0', K89FULL = !OPT89 || new URLSearchParams(location.search).get('k89') === 'full';   /* &opt89=0 tắt 3 tối ưu vòng 4 (canvas K = hi, dải vật, đọc nền thưa) để đo A/B */   /* vòng 4 hiệu năng: canvas vẽ ở K = ART.hi (ảnh art 1:1) rồi CSS phóng pixelated lên K thiết bị; &k89=full = vẽ thẳng độ phân giải thiết bị (để so) */
+const cam89K = (su, dpr, f) => { const t = su * dpr / f, e = Math.max(2, 2 * Math.round(t / 2)); return Math.abs(e - t) / t <= 0.12 ? e : Math.max(1, Math.round(t)); };   /* K nguyên (chẵn nếu được) */
+/* p110: đổi mức góc nhìn (dir > 0 = lùi xa). Kd = điểm ảnh thiết bị / ô logic, nguyên, từ gốc (scaleUI·dpr) xuống ≥ 2 và view ≤ 2,5. */
+let zoomT110 = 0; function zoom110(dir) { const dpr = window.devicePixelRatio || 1, KM = Math.max(2, Math.round(scaleUI * dpr)), cur = S.cam89 ? S.cam89.Kd : KM, Kmin = Math.max(2, Math.ceil(scaleUI * dpr / 2.5)); const K = Math.max(Kmin, Math.min(KM, cur + (dir > 0 ? -1 : 1))); if (K !== cur) { ZOOM110 = K >= KM ? 1 : scaleUI * dpr / K; try { localStorage.setItem('seismic.zoom110', String(ZOOM110)); } catch (e) { } resize(); } const v = S.cam89 ? scaleUI / scale : 1, t = (UI.lang && UI.lang() === 'en' ? 'Zoom: ×' : 'Góc nhìn: ×') + (Math.round(v * 100) / 100).toString().replace('.', UI.lang && UI.lang() === 'en' ? '.' : ','); let el = document.getElementById('zoom110'); if (!el) { el = document.createElement('div'); el.id = 'zoom110'; el.style.cssText = 'position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:60;padding:3px 10px;background:rgba(13,11,20,.72);color:#ffd45e;font:16px VT323,monospace;border-radius:4px;pointer-events:none'; document.body.appendChild(el); } el.textContent = t; el.style.display = ''; clearTimeout(zoomT110); zoomT110 = setTimeout(() => { el.style.display = 'none'; }, 1000); return v; }
+window.addEventListener('keydown', e => { if (!S || S.mode !== 'play' || e.repeat || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return; if (e.code === 'Minus' || e.code === 'NumpadSubtract' || e.code === 'BracketLeft') zoom110(1); else if (e.code === 'Equal' || e.code === 'NumpadAdd' || e.code === 'BracketRight') zoom110(-1); });
+let zoomW110 = 0; window.addEventListener('wheel', e => { if (!(e.ctrlKey || e.altKey) || !S || S.mode !== 'play') return; e.preventDefault(); e.stopImmediatePropagation(); const now = performance.now(); if (now - zoomW110 < 180) return; zoomW110 = now; zoom110(e.deltaY > 0 ? 1 : -1); }, { passive: false, capture: true });
+window.__zoom110 = d => zoom110(d);
+window.__cam89 = () => ({ f: CAM89, cam: S.cam89, scale, scaleUI, VW, VH, cw: cv.width, ch: cv.height, dpr: window.devicePixelRatio || 1, view: +(scaleUI / scale).toFixed(3) });
 
 const S = { mode: 'title', save: null, zone: null, map: null, player: null, npcs: [], guide: null, time: 0, near: null, gateLock: true, seisY: 0, quakeOn: 0, shakeAmp: 0, flash: 0, boltNext: 4, hazards: [], hazNext: 3, talking: null, lore: null };
 const input = { up: false, down: false, left: false, right: false };
@@ -111,7 +129,7 @@ const CTX = {
   npcSheet: m => charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), NPC, charSheetOf: c => charSheet({ skin: '#f6d3b5', hair: '#2b1d14', shirt: '#ffffff', pants: '#2f3b5e', ...c }),   /* plan-25: tượng đá dân = hình của chính người đó tô đá */
   peekNpcs: (id, map) => { const z = ZONES[id]; if (!z || !map) return []; const { members, placed } = placeNpcs(z, id, map, map.entries.default); return members.filter(m => placed.has(m)).map(m => { const sp = placed.get(m); return { id: m.id, name: m.n, lv: m.lv, x: sp.x * TS + 8, y: sp.y * TS + 14, leader: isLeader(m), elder: !!m.elder }; }); },   /* plan-32 A: trinh sát từ trời */
   respawnNpc: (m, x, y) => { const n = new NPC(m, x, y, charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), rngFrom(hashStr(m.id))); S.npcs.push(n); return n; },   /* plan-21: hồi sinh dân */
-  tool: { tier: id => (S.save.toolTier || {})[id] || (S.save.tools?.[id] ? 1 : 0), set: (id, t) => { (S.save.toolTier ||= {})[id] = t; if (S.save.tools) S.save.tools[id] = t > 0; if (id === 'rod' && t > 0) S.save.tools.rodBought = true; persist(); } },
+  tool: { tier: id => { id = toolOf(id); return (S.save.toolTier || {})[id] || (S.save.tools?.[id] ? 1 : 0); }, set: (id, t) => { if (MERGED.includes(id)) { t = Math.max(t, (S.save.toolTier || {}).bua || 0); id = 'bua'; }   /* p80: mua / chế / ban dụng cụ cũ = nâng Búa (không hạ cấp) */ (S.save.toolTier ||= {})[id] = t; if (S.save.tools) S.save.tools[id] = t > 0; if (id === 'rod' && t > 0) S.save.tools.rodBought = true; persist(); } },
   defineObject: (name, w, h, fw, fh, fn, opts) => { if (!O[name]) defineObject(name, w, h, fw, fh, fn, opts); return name; },
   sfx: name => AUDIO.sfx(name),
   duelSfx: (name, d) => AUDIO.duelSfx(name, d),   /* p49c: tiếng Đấu Chấn Thú (file mp3, bản nháp audio.js) */
@@ -234,7 +252,7 @@ async function boot() {
   UI.setLang(qLang === 'vi' || qLang === 'en' ? qLang : (sv ? sv.lang : 'en')); UI.applyStaticText();
   $('#t-cont').hidden = !sv;
   if (sv) $('#t-name').value = sv.name || '';
-  $('#t-play').onclick = () => { if (loadSave() && !confirm(UI.L.newConfirm)) return; clearSave(); startGame(defaultSave()); };
+  $('#t-play').onclick = () => { if (loadSave() && !confirm(UI.L.newConfirm)) return; clearSave(); startGame(fresh120(defaultSave())); };   /* p120: ván mới vào thẳng Làng cạnh Noxx (không mở đầu ở Biển) */
   $('#t-cont').onclick = () => { const s = loadSave(); if (s) startGame(s); };
   $('#t-lang').onclick = () => { const l = UI.L === UI.STR.vi ? 'en' : 'vi'; UI.setLang(l); UI.applyStaticText(); TITLE.applyText(); if (S.save) { S.save.lang = l; writeSave(S.save); } };
   $('#t-find-btn').onclick = findMe; $('#t-find').addEventListener('keydown', e => { if (e.key === 'Enter') findMe(); });
@@ -284,12 +302,12 @@ function startGame(sv) {
   S.save = sv; sv.name = $('#t-name').value.trim().slice(0, 24) || sv.name; sv.lang = UI.L === UI.STR.vi ? 'vi' : 'en';
   sv.outfit = sv.outfit || { ...DEFAULT_OUTFIT }; if (sv.outfit.hero === undefined) sv.outfit.hero = DEFAULT_OUTFIT.hero;   /* save cũ → nhận nhân vật riêng */ sv.tasks = sv.tasks || {}; sv.flags = sv.flags || {}; sv.owned = sv.owned || []; sv.achievements = sv.achievements || [];
   const d = defaultSave(); sv.inv = { ...d.inv, ...(sv.inv || {}) }; sv.tools = { ...d.tools, ...(sv.tools || {}), rod: !!(sv.tools && sv.tools.rodBought) }; sv.cards = sv.cards || []; sv.sys = sv.sys || {}; sv.districts = sv.districts || {};
-  sv.toolTier = { axe: 1, ...(sv.toolTier || {}) }; if (sv.tools.rod && !sv.toolTier.rod) sv.toolTier.rod = 1;
+  mergeTools80(sv); sv.toolTier = { bua: 1, ...(sv.toolTier || {}) };   /* p80: save nào nạp vào (cả preset) cũng chuyển 6 dụng cụ → Búa; bắt đầu với Búa Seismic (thay Rìu) */ if (sv.tools.rod && !sv.toolTier.rod) sv.toolTier.rod = 1;
   normalizeStory(sv); CLOCK.init(sv);   /* F01: save cũ không có clock → Xuân · Ngày 1 · 6:00 */
   S.player = new Player(0, 0, charSheet(sv.outfit));
   enterZone(sv.zone in ZONES ? sv.zone : 'village', sv.entry);
   $('#title').hidden = true; TITLE.hideTitle(); $('#hud').hidden = false; setMode('play');
-  if (sv.nation === undefined && !new URLSearchParams(location.search).has('auto') && CTX.openNationPicker) { setMode('pause'); CTX.openNationPicker(() => { setMode('play'); persist(); }); }   /* plan-18: chọn tên + quốc gia (ván mới / save cũ chưa chọn) */
+  if (sv.nation === undefined && !(sv.flags && sv.flags.p120new && !sv.flags.p120done) && !new URLSearchParams(location.search).has('auto') && CTX.openNationPicker) {   /* p120: người mới chọn tên sau hội thoại Noxx */ setMode('pause'); CTX.openNationPicker(() => { setMode('play'); persist(); }); }   /* plan-18: chọn tên + quốc gia (ván mới / save cũ chưa chọn) */
 }
 function setMode(m) { S.mode = m; $('#pause').hidden = m !== 'pause'; }
 function persist() { if (!S.save) return; S.save.zone = S.zone.id; writeSave(S.save); }
@@ -368,6 +386,8 @@ function enterZone(id, entry) {
   const e = map.entries[entry] || map.entries.default;
   S.player.x = e.x * TS + 8; S.player.y = e.y * TS + 14; S.player.dir = 0;
   const { members, placed } = placeNpcs(z, id, map, e);
+  if (id === 'village' && !DAN89) { const qa = new Set(((S.save.sys && S.save.sys.quests && S.save.sys.quests.active) || []).filter(q => q.zone === 'village').map(q => q.npcId)), tg = S.save.target, n0 = placed.size;   /* p89 vòng 5: dân Làng → khán giả Sàn Leader */
+    for (const mm of [...placed.keys()]) if (!(isLeader(mm) || mm.elder || mm.id === tg || qa.has(mm.id))) placed.delete(mm); S.dan89 = { before: n0, kept: [...placed.keys()].map(mm => mm.id) }; }
   S.npcs = members.filter(m => placed.has(m)).map(m => { const s = placed.get(m); return new NPC(m, s.x * TS + 8, s.y * TS + 14, charSheet(lookFor(m.id, LEVEL_COLORS[m.lv])), rngFrom(hashStr(m.id))); });
   AUDIO.setZone(z);
   S.guide = null;
@@ -525,13 +545,16 @@ function resize() {
   VW = Math.ceil(w / scale); VH = Math.ceil(h / scale);
   if (ART.on) scale = Math.max(ART.hi, Math.round(scale / ART.hi) * ART.hi), VW = Math.ceil(w / scale), VH = Math.ceil(h / scale); // bội của hi → mỗi pixel art = số nguyên pixel màn hình
   if (ART.on && S.zoomOut) { const z = scale - ART.hi * S.zoomOut; if (z >= 2 && Math.ceil(w / z) <= 760) { scale = z; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); } }   /* 2026-10-14 trùm khổng lồ: thu nhỏ khung nhìn (bớt 1 bậc pixel) để thấy trọn con trùm — CTX.setZoomOut */
-  let K = ART.hi; S.dgZoom = 0;
+  scaleUI = scale; S.cam89 = null;
+  { const f = cam89F(w, h), dpr = window.devicePixelRatio || 1; if (ART.on && f > 1 && !S.zoomOut && !S.dz89 && !(S.map && S.map.dungeon)) { const Ki = cam89K(scale, dpr, f); scale = Ki / dpr; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); S.cam89 = { K: (K89FULL || SMOOTH113) ? Ki : Math.min(Ki, ART.hi), Kd: Ki, f, view: scaleUI / scale }; } }
+  let K = S.cam89 ? S.cam89.K : ART.hi; S.dgZoom = 0;
   if (ART.on && !S.zoomOut && S.map && S.map.dungeon && DG.DUNGEON.zoom > 1) { scale *= DG.DUNGEON.zoom; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); K = Math.min(scale, ART.hi * DG.DUNGEON.zoom * 2); S.dgZoom = DG.DUNGEON.zoom; }   /* plan-46 C: vùng hầm gần 1,25× — canvas ≈ độ phân giải màn (K) để pixel lẻ 2,5× đều hơn; UI/HUD (DOM, #ui) không phóng */
+  if (SMOOTH113 && S.cam89) { VW += 1; VH += 1; }   /* đi mượt: thừa 1 cột / hàng để phép dịch phần lẻ camera không hở mép */
   CVW = Math.round(VW * K); CVH = Math.round(VH * K); let KX = K, KY = K;
   if (S.dgZoom && K === scale) { CVW = w; CVH = h; KX = w / VW; KY = h / VH; }   /* canvas đúng bằng màn → nhãn vẽ thẳng (plan-42 A1), lệch < 1 px */
-  CVR = null; cv.width = CVW; cv.height = CVH; cv.style.width = w + 'px'; cv.style.height = h + 'px'; g.setTransform(KX, 0, 0, KY, 0, 0); g.imageSmoothingEnabled = false;
+  CVR = null; cv.width = CVW; cv.height = CVH; cv.style.width = (S.cam89 ? VW * scale : w) + 'px'; cv.style.height = (S.cam89 ? VH * scale : h) + 'px'; g.setTransform(KX, 0, 0, KY, 0, 0); g.imageSmoothingEnabled = false; CTX.K113 = SMOOTH113 && S.cam89 && KX === KY && !S.dgZoom && KX > 1 ? KX : 0; globalThis.__R89 = CTX.K113 ? (v => Math.round(v * CTX.K113) / CTX.K113) : Math.round;
   uiCv.width = w; uiCv.height = h; uiCv.style.width = w + 'px'; uiCv.style.height = h + 'px';
-  CTX.VW = VW; CTX.VH = VH; CTX.scale = scale; CTX.zoomM = Math.max(1, Math.round(w / CVW)); CTX.cssK = w / VW; CTX.zoomView = () => CTX._zv || null;   /* plan-49a: m = điểm ảnh màn / điểm ảnh canvas (nấc phóng k/m) */
+  CTX.VW = VW; CTX.VH = VH; CTX.scale = scale; CTX.zoomM = Math.max(1, Math.round(w / CVW)); CTX.cssK = S.cam89 ? scale : w / VW; CTX.scaleUI = scaleUI; CTX.opt89 = OPT89; CTX.zoomView = () => CTX._zv || null;   /* plan-49a: m = điểm ảnh màn / điểm ảnh canvas (nấc phóng k/m) */
   CTX.mouseTile = () => S.vm ? { tx: Math.floor(S.vm.wx / TS), ty: Math.floor(S.vm.wy / TS), wx: S.vm.wx, wy: S.vm.wy } : MOUSE.on && CTX.cam ? { tx: Math.floor((CTX.cam.cx + MOUSE.sx) / TS), ty: Math.floor((CTX.cam.cy + MOUSE.sy) / TS), wx: CTX.cam.cx + MOUSE.sx, wy: CTX.cam.cy + MOUSE.sy } : null;
 }
 
@@ -687,6 +710,7 @@ function interact(fromLock) {
   const npc = n.npc; S.player.faceTo(npc.x, npc.y); S.talking = npc;
   { const nat = npc.m && !npc.m.guide ? nationOf(npc.m) : null; if (nat) { (S.save.talks ||= {})[nat.key] = ((S.save.talks || {})[nat.key] || 0) + 1; } }   /* plan-15: nước hay trò chuyện → người cứu */
   if (npc.m.guide) {
+    if (CTX.noxx120 && CTX.noxx120.talk()) return;   /* p120: Noxx hướng dẫn + bảng chọn Chấn Thú cho người mới */
     const first = !S.save.seenGuide, st = S.save.story; S.save.seenGuide = true;
     let pages;
     if (st.flashback) { st.flashback = false; pages = UI.L.guideFlashback.concat(UI.L.guideStory); }        // old save: the tale of the raft and the Kraken, then the errand
@@ -859,13 +883,20 @@ function update(dt) {
   PERF.lap('u.hudDom');
 }
 
+/* p89 vòng 4: chỉ mục vật theo dải 8 hàng ô; dựng lại khi số vật đổi hoặc mỗi 30 khung (vật di chuyển ≤ vài ô vẫn trong dải kề nhờ biên ±1 dải) */
+let OB89 = null, OB89f = 0;
+function objBands89(m) { if (OB89 && OB89.m === m && OB89.n === m.objects.length && ++OB89f < 30) return OB89; OB89f = 0; const H = Math.ceil(m.h / 8) + 1, bnd = Array.from({ length: H }, () => []); for (const o of m.objects) bnd[Math.max(0, Math.min(H - 1, Math.floor(o.y / 8)))].push(o); return (OB89 = { m, n: m.objects.length, b: bnd }); }
+const JIT110 = new URLSearchParams(location.search).get('jit110') === '0';   /* &jit110=0 = camera cũ (đo so) */
 function render() {
   const m = S.map, p = S.player;
+  if (CAM89 !== 1 && !DUEL89FAR) { const dz = !!(CTX.duel && CTX.duel.active && CTX.duel.active()); if (dz !== !!S.dz89) { S.dz89 = dz; resize(); } }   /* p89 vòng 4: trận đấu thú dùng camera gốc */
   const mw = m.w * TS, mh = m.h * TS;
-  let cx = Math.round(p.x - VW / 2 + (S.camDX || 0)), cy = Math.round(p.y - 8 - VH / 2 + (S.camDY || 0));   /* plan-30: S.camDX — camera trận trùm (bosscam.js) giữ cả người + trùm trong khung */   /* plan-29: S.camDY — cảnh gọi Rồng Thần nhìn lên trời */
+  let cx = JIT110 ? Math.round(p.x - VW / 2 + (S.camDX || 0)) : Math.round(p.x) - (VW >> 1) + Math.round(S.camDX || 0), cy = JIT110 ? Math.round(p.y - 8 - VH / 2 + (S.camDY || 0)) : Math.round(p.y) - 8 - (VH >> 1) + Math.round(S.camDY || 0);   /* p110 khựng/rung: camera theo vị trí người ĐÃ làm tròn (cùng Math.round khi vẽ người) → người đứng yên trên màn khi đi */   /* plan-30: S.camDX — camera trận trùm (bosscam.js) giữ cả người + trùm trong khung */   /* plan-29: S.camDY — cảnh gọi Rồng Thần nhìn lên trời */
+  let sfx89 = 0, sfy89 = 0; if (CTX.K113 && !JIT110) { const Kq = CTX.K113, Rq = v => Math.round(v * Kq) / Kq, xf = Rq(p.x) - (VW >> 1) + Rq(S.camDX || 0), yf = Rq(p.y) - 8 - (VH >> 1) + Rq(S.camDY || 0); cx = Math.floor(xf); cy = Math.floor(yf); sfx89 = xf - cx; sfy89 = yf - cy; }   /* đi mượt: camera theo lưới 1/K, phần lẻ dịch cả canvas */
   /* 2026-10-13 anh: nhân vật LUÔN ở giữa màn hình (không kẹp camera ở mép bản đồ) — ngoài mép: nối tiếp nền ô mép rồi tối dần (sương), xem vẽ ở vòng ô dưới */
   if (S.shakeAmp > 0) { cx += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); cy += Math.round((Math.random() - 0.5) * S.shakeAmp * 2); }
   g.fillStyle = '#0d0b14'; g.fillRect(0, 0, VW, VH);
+  if (CTX.K113) g.setTransform(CTX.K113, 0, 0, CTX.K113, -sfx89 * CTX.K113, -sfy89 * CTX.K113); CTX.camF = { cx: cx + sfx89, cy: cy + sfy89 };
   const AV = CTX.altView ? CTX.altView() : null, COVER = !!(CTX.fsCover && CTX.fsCover());   /* plan-37: COVER — hệ vẽ cảnh phủ kín màn (tha bay) → bỏ nền + vật */   /* 2026-10-14 độ cao liền mạch: dải Trên cao — đất thu nhỏ theo bậc, chỉ vẽ thứ đang bay */
   const wf = Math.floor(S.time * 2) % 2;
   const x0 = Math.floor(cx / TS) - 1, y0 = Math.floor(cy / TS) - 1, x1 = Math.ceil((cx + VW) / TS) + 1, y1 = Math.ceil((cy + VH) / TS) + 1;
@@ -907,7 +938,8 @@ function render() {
   for (const o of m.objects) if (o.exit) o.type = !o.exit.requires || S.save.badges.includes(o.exit.requires) ? 'exit_sign' : 'exit_sign_lock';   /* 2026-10-11: biển lối chuyển vùng — có huy hiệu là tự mở */
   // depth-sorted drawables
   const draws = DRAWS; draws.length = 0; let pO = 0, pN = 0;   /* plan-42 A5: dùng lại mảng + mục vẽ (trước: 1 closure / vật / khung ≈ 90 KB rác mỗi khung) */
-  if (!AV) for (const o of m.objects) { if (o.ghost) continue; const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; const it = POOL_O[pO] || (POOL_O[pO] = { y: 0, p42o: null, d: null, by: 0 }); pO++; it.y = o.ruined ? o.y * TS + 1 : by; it.p42o = o; it.d = d; it.by = by; draws.push(it); }
+  if (!AV) { const OB = S.cam89 && OPT89 ? objBands89(m) : null, b0 = OB ? Math.max(0, Math.floor(cy / TS / 8) - 1) : 0, b1 = OB ? Math.min(OB.b.length - 1, Math.floor((cy + VH + 48) / TS / 8) + 1) : 0;   /* p89 vòng 4: dải 8 hàng ô */
+    for (let bi = b0; bi <= b1; bi++) for (const o of OB ? OB.b[bi] : m.objects) { if (o.ghost) continue; const d = O[o.type]; const by = (o.y + d.fh) * TS; if (by < cy - 8 || o.y * TS > cy + VH + 48 || o.x * TS > cx + VW || (o.x + d.fw) * TS < cx) continue; const it = POOL_O[pO] || (POOL_O[pO] = { y: 0, p42o: null, d: null, by: 0 }); pO++; it.y = o.ruined ? o.y * TS + 1 : by; it.p42o = o; it.d = d; it.by = by; draws.push(it); } }
   if (!AV) { const st = S.staff || [], np = allNpcs(); for (let i = 0, N = np.length + st.length; i < N; i++) { const n = i < np.length ? np[i] : st[i - np.length]; if (n.x < cx - 48 || n.x > cx + VW + 48 || n.y < cy - 16 || n.y > cy + VH + 72) continue; const it = POOL_N[pN] || (POOL_N[pN] = { y: 0, n: null }); pN++; it.y = n.y; it.n = n; draws.push(it); } }   /* plan-37: bỏ vẽ dân ngoài màn */
   draws.push({ y: p.y + (p.sortUp || 0), n: p, self: true });   /* p.sortUp (sky.js): bay cao hơn vật → vẽ người (+ Rocky bay cùng) trên cây / nhà / cột */
   for (const h of S.hazards) {
@@ -970,7 +1002,7 @@ function render() {
   if (S.flash > 0) { g.fillStyle = `rgba(255,255,255,${(S.flash * 0.8).toFixed(2)})`; g.fillRect(0, 0, VW, VH); }
   if (fade > 0) { g.fillStyle = `rgba(0,0,0,${fade <= 1 ? fade : 2 - fade})`; g.fillRect(0, 0, VW, VH); }
   PERF.lap('r.post');
-  S.altSys = AV ? AV.sys : null; if (!(S.camZoom > 1.01) || S.camZoomUI) drawLabels(cx, cy); else drawLabelsZoom(cx, cy);   /* plan-48 review7: S.camZoomUI = hệ tự vẽ UI theo camZoom (sân đấu) → vẫn vẽ lớp UI mỗi khung */   /* dải Trên cao: chỉ nhãn của hệ đang bay */
+  S.altSys = AV ? AV.sys : null; if (!(S.camZoom > 1.01) || S.camZoomUI) { if (CTX.K113) g.setTransform(CTX.K113, 0, 0, CTX.K113, 0, 0); drawLabels(cx + sfx89, cy + sfy89); } else { if (CTX.K113) g.setTransform(CTX.K113, 0, 0, CTX.K113, 0, 0); drawLabelsZoom(cx + sfx89, cy + sfy89); }   /* plan-48 review7: S.camZoomUI = hệ tự vẽ UI theo camZoom (sân đấu) → vẫn vẽ lớp UI mỗi khung */   /* dải Trên cao: chỉ nhãn của hệ đang bay */
   PERF.lap('r.labels');
   drawSeis(tr());
   PERF.lap('r.seis');
@@ -980,7 +1012,7 @@ const DRAWS = [], POOL_O = [], POOL_N = [], RIMG = [];
 function drawObjItem(o, d, by, cx, cy) {   /* plan-42 A5: thân hàm cũ trong closure f() của từng vật — y nguyên */
   const rs = ruinStage(o), ri = rs && ART.ruinOf ? ART.ruinOf(o.orig || o.type, rs) : null;   /* plan-23: hư hỏng / đổ nát (PixelLab) */
   if (ri) { const od = O[o.orig || o.type] || d, rby = (o.y + od.fh) * TS; g.drawImage(ri, o.x * TS - cx + (od.ox || 0), rby - ri.height / ART.hi - cy + (od.oy || 0)); return; }
-  const im = o.artImg || (d.frames ? d.frames[loopFrame(d.frames.length, d.animFlag ? FPS.flag : FPS.loop, o.x * 3 + o.y)] : d.img); g.drawImage(im, o.x * TS - cx + (o.artImg ? 0 : (d.ox || 0)), by - (o.artImg ? im.height / ART.hi : d.h) - cy + (o.artImg ? 0 : (d.oy || 0)));
+  let im = o.artImg || (d.frames ? d.frames[loopFrame(d.frames.length, d.animFlag ? FPS.flag : FPS.loop, o.x * 3 + o.y)] : d.img); if (o.env105 && CTX.envfx) im = CTX.envfx.img(o, im);   /* p105: vật đổi màu theo hệ chiêu */ const dr105 = () => g.drawImage(im, o.x * TS - cx + (o.artImg ? 0 : (d.ox || 0)), by - (o.artImg ? im.height / ART.hi : d.h) - cy + (o.artImg ? 0 : (d.oy || 0))); if (o.fl105 && CTX.envfx && CTX.envfx.sink) CTX.envfx.sink(g, o, by - cy, dr105); else dr105();   /* p105 ngập: vật trong vùng ngập chìm chân */
 }
 let VIG = null;
 function cssZoom(v) {   /* plan-49a: phóng nấc lẻ bằng CSS transform của #c (translate tròn điểm ảnh màn); null = bỏ */
@@ -1042,7 +1074,7 @@ function lblPlace(x, y, w, h, t, k) {
   LB45.push({ x0: x, y0: y1, x1: x + w, y1: y1 + h, t: t || '', k: k || '' }); return y1 - y;
 }
 function staffTagBoxes(cx, cy) {
-  if (!S.staff) return; const vi = UI.lang() === 'vi', f = Math.max(12, Math.round(scale * 4.2)); ug.save(); ug.font = `${f}px VT323, monospace`;
+  if (!S.staff) return; const vi = UI.lang() === 'vi', f = Math.max(12, Math.round(scaleUI * 4.2)); ug.save(); ug.font = `${f}px VT323, monospace`;
   for (const n of S.staff) { const tt = STAFF_T45[n.m.staff] || (n.m.tag ? [n.m.tag, n.m.tag] : null); if (!tt) continue;
     const sx = Math.round((n.x - cx) * scale), sy = Math.round((n.y - 30 - cy) * scale); if (sx < -100 || sy < -40 || sx > uiCv.width + 100 || sy > uiCv.height + 40) continue;
     const w = Math.ceil(ug.measureText(tt[vi ? 0 : 1]).width) + 10, h = f + 4; LB45.push({ x0: sx - w / 2 - 2, y0: sy - h / 2 - 2, x1: sx + w / 2 + 2, y1: sy + h / 2 + 2, t: tt[vi ? 0 : 1], k: 'staff' }); }
@@ -1053,7 +1085,7 @@ function nearA(x, y, r0, r1) { const p = S.player; if (!p) return 1; const d = M
 CTX.lblPlace = lblPlace; CTX.nearA = nearA;
 if (typeof window !== 'undefined') window.__lbl45 = () => LB45.map(b => ({ ...b }));   /* móc test */
 function drawLabels0(cx, cy) {
-  const p = S.player, fs = Math.max(10, scale * 3);
+  const p = S.player, fs = Math.max(10, scaleUI * 3);
   if (credits) { drawCredits(); return; }
   ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
   LB45.length = 0;   /* plan-45 D5: bộ xếp nhãn tránh chồng — mỗi khung đăng ký hộp nhãn, nhãn sau đụng nhãn trước thì đẩy LÊN */
@@ -1071,17 +1103,18 @@ function drawLabels0(cx, cy) {
   const av = selfAvatar();
   const headUp = ((p.sheet && p.sheet.skin && p.sheet.skin.headUp) || 0) + (p.labelUp || 0);   /* plan-31: p.labelUp — đang cưỡi Rocky bay (sky.js) thì tên lên trên đầu */   /* plan-29: ngoại hình cao (Chad) → tên/ảnh đại diện lên trên đầu */
   ug.font = `bold ${fs}px VT323, monospace`;
-  if (av) { let [sx, sy] = lxy(p.x, p.y - 22 - headUp, cx, cy); const r = Math.round(scale * 4); sy += lblPlace(sx - r, sy - 2 * r, 2 * r, 2 * r, 'me', 'me'); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
+  if (av) { let [sx, sy] = lxy(p.x, p.y - 22 - headUp, cx, cy); const r = Math.round(scaleUI * 4); sy += lblPlace(sx - r, sy - 2 * r, 2 * r, 2 * r, 'me', 'me'); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
   else if (S.save.name) label(S.save.name, p.x, p.y - headUp, '#ffd45e', false, 'me');   /* plan-45 D5: tên người chơi xếp TRƯỚC (giữ chỗ), nhãn khác né */
   if (!S.altSys) for (const n of S.staff || []) if (n.bubble) UI.drawBubble(ug, n, lxy(n.x, n.y - 20, cx, cy)[0], lxy(n.x, n.y - 20, cx, cy)[1] - fs - 6, fs);
   if (!S.altSys) for (const n of allNpcs()) {
     if (n.bubble) UI.drawBubble(ug, n, lxy(n.x, n.y - 20, cx, cy)[0], lxy(n.x, n.y - 20, cx, cy)[1] - fs - 6, fs);   /* plan-12: bong bóng nổi */
     if (CTX.lblHide && CTX.lblHide(n.x, n.y)) continue;   /* plan-48: ẩn tên dân trong ~120 px quanh 2 thú đang đấu (linhduel.js đặt CTX.lblHide) */
     const mm = n.m, met = !mm.guide && S.save.met.includes(mm.id), isT = S.save.target === mm.id;
+    let na89 = 1; if (S.cam89 && !(isT || mm.guide || mm.friend || mm.elder || isLeader(mm) || (S.near && S.near.npc === n) || (TGT.npc && TGT.npc() === n))) { const r0 = S.cam89.f > 1.7 ? 104 : 80; na89 = nearA(n.x, n.y, r0, r0 + 24); if (na89 <= 0) continue; }   /* p89 vòng 4: lùi camera → tên dân chỉ hiện quanh người chơi (mờ dần 24 px), NPC quan trọng luôn hiện */
     const pre = mm.guide ? '' : mm.friend ? '♥ ' : isT ? '➤ ' : isLeader(mm) ? '★ ' : mm.elder ? '☆ ' : isBooster(mm) ? '⚡ ' : '';
-    label(pre + (mm.guide ? UI.L.guideName : mm.n), n.x, n.y - (mm.elder ? 8 : 0), isT ? '#ffd45e' : met ? '#9ad' : (mm.guide || mm.friend ? '#ffd45e' : '#fff'), S.near && S.near.npc === n, 'npc');
+    if (na89 < 1) ug.globalAlpha = na89; label(pre + (mm.guide ? UI.L.guideName : mm.n), n.x, n.y - (mm.elder ? 8 : 0), isT ? '#ffd45e' : met ? '#9ad' : (mm.guide || mm.friend ? '#ffd45e' : '#fff'), S.near && S.near.npc === n, 'npc'); ug.globalAlpha = 1;
   }
-  ug.font = `${Math.max(9, scale * 2.6)}px VT323, monospace`;
+  ug.font = `${Math.max(9, scaleUI * 2.6)}px VT323, monospace`;
   if (!S.altSys) for (const o of S.map.objects) if (o.flag && o.label) {   /* plan-45 D5: nhãn cờ (nhãn phụ) chỉ hiện khi tới gần ≤ 6 ô, mờ dần 6–8 ô */
     const fx = o.x * TS + 24, fy = o.y * TS - 14, a = nearA(fx, fy, 96, 128); if (a <= 0) continue;
     const grp = S.nations.find(n => n.key === o.flag); ug.globalAlpha = a; label(UI.flagLabel(o.flag) + (grp ? ` · ${grp.members.length}` : ''), fx, fy, '#f2ebe0', false, 'flag'); ug.globalAlpha = 1; }
@@ -1095,12 +1128,14 @@ function drawLabels0(cx, cy) {
       ug.fillStyle = 'rgba(13,11,20,.7)'; ug.beginPath(); ug.roundRect(x0, y0, w, h, 3); ug.fill(); ug.fillStyle = lk ? '#ff9a9a' : '#ffd45e'; ug.fillText(text, x0 + w / 2, y0 + h - 2); } }
   ug.font = `bold ${fs}px VT323, monospace`;
   if (S.pops && S.pops.length) {   /* plan-14: số nổi bay lên rồi mờ (dùng label() sẵn có cho chắc) */
-    ug.font = `bold ${Math.max(11, Math.round(scale * 3.6))}px VT323, VT323, monospace`;
+    ug.font = `bold ${Math.max(11, Math.round(scaleUI * 3.6))}px VT323, VT323, monospace`;
     for (const q of S.pops) { const k = q.t / 1.1; ug.globalAlpha = k < 0.7 ? 1 : Math.max(0, 1 - (k - 0.7) / 0.3); label(q.text, q.x, q.y + 12 - k * 18, q.color, false, 'pop', true); }
     ug.globalAlpha = 1; ug.font = `bold ${fs}px VT323, monospace`;
   }
+  window.__u89 = S.cam89 ? (s => s === scale ? scaleUI : s) : null;   /* p89 vòng 4: cỡ chữ của hệ theo tỉ lệ trước khi lùi */
   for (const sys of S.sys) { if (S.altSys && !S.altSys(sys.id) && !/^(hero|aircombat|bakunawa|sky|lyronFinale)$/.test(sys.id)) continue; try { sys.drawUI?.(ug, CTX, cx, cy, scale); } catch (e) { console.error(sys.id, e); } }
   try { TGT.drawUI(ug, cx, cy, scale); } catch (e) { console.error('target', e); }
+  window.__u89 = null;
 }
 function drawCredits() {
   const W = uiCv.width, H = uiCv.height, cols = W < 600 ? 2 : 4, colW = W / cols, lh = 22 * (scale / 2), fs = Math.max(11, scale * 4);

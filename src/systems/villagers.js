@@ -192,11 +192,11 @@ export const villagers = {
       const sx = (n.x - cx) * scale, sy = (n.y - 10 - cy) * scale;
       if (sx > 20 && sy > 20 && sx < W - 20 && sy < H - 20) continue;
       const mx = W / 2, my = H / 2, a = Math.atan2(sy - my, sx - mx), r = Math.min(W, H) / 2 - 34, ax = mx + Math.cos(a) * r * (W / Math.min(W, H)) * 0.95, ay = my + Math.sin(a) * r;
-      const x = Math.max(28, Math.min(W - 28, ax)), y = Math.max(28, Math.min(H - 28, ay)), k = 9 * Math.max(1, scale / 3) * (1 + 0.15 * Math.sin(ctx.S.time * 8));
+      const x = Math.max(28, Math.min(W - 28, ax)), y = Math.max(28, Math.min(H - 28, ay)), k = 9 * Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) / 3) * (1 + 0.15 * Math.sin(ctx.S.time * 8));
       ug.save(); ug.translate(x, y); ug.rotate(a); ug.fillStyle = '#e84a3a'; ug.strokeStyle = '#352022'; ug.lineWidth = 2;
       ug.beginPath(); ug.moveTo(k * 1.6, 0); ug.lineTo(-k, k); ug.lineTo(-k * 0.4, 0); ug.lineTo(-k, -k); ug.closePath(); ug.fill(); ug.stroke(); ug.restore();
       const dist = Math.round(Math.hypot(n.x - ctx.S.player.x, n.y - ctx.S.player.y) / 16);
-      ug.font = `${Math.round(15 * Math.max(1, scale / 3))}px VT323, monospace`; ug.fillStyle = '#fff'; ug.textAlign = 'center'; ug.fillText(`${dist}m`, x, y - 14 * Math.max(1, scale / 3));
+      ug.font = `${Math.round(15 * Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) / 3))}px VT323, monospace`; ug.fillStyle = '#fff'; ug.textAlign = 'center'; ug.fillText(`${dist}m`, x, y - 14 * Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) / 3));
     }
   },
 };

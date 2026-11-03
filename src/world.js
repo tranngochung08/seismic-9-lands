@@ -1,5 +1,6 @@
 // world.js — map data structure + the "nation districts" zone generator used by all 10 lands
 import { T, O, flagName, rockyObj, obj as defObj } from './gfx.js';
+import { layout88, VW as VW88, VH as VH88, VCX as VCX88, ER as ER88, REGIONS as REGIONS88 } from './village88.js';   /* p88: Làng mới */
 
 export function makeMap(w, h, fill) {
   return { w, h, ground: new Uint8Array(w * h).fill(fill), solid: new Uint8Array(w * h), objects: [], gates: [], entries: {}, npcArea: null, specials: [], reserved: [], plots: [], roads: new Uint8Array(w * h) };
@@ -141,6 +142,7 @@ function districtZone(rng, ctx, t) {
   m.npcArea = { x: 3, y: 4, w: W - 6, h: H - 9 };
   m.specials = t.guide ? [{ kind: 'guide', x: CX + 3, y: H - 8 }] : [];
   if (t.arenaExit) arenaExit(m);
+  if (t.leaderExit) leaderExit(m);   /* plan-48 §12: lối mép TÂY → Đấu Trường Leader */
   if (t.riftCrack) riftCrackM2(m, t.riftCrack === true ? 'rift2' : t.riftCrack);   /* plan-30 trùm 2 (M2 → rift2) · trùm 3 (M6 → rift3) · trùm 4 (M4 → rift4) · trùm 5 (M7 → rift5) */
   return m;
 }
@@ -157,6 +159,78 @@ function arenaExit(m) {   /* anh 2026-10-11: không cửa/cổng — chỉ con �
   m.reserved.push({ x: W - 4, y: y0 }, { x: W - 4, y: y0 + 1 }, { x: W - 5, y: y0 + 1 });
   const sx = W - 3, sy = y0 - 1;
   place(m, 'arena_sign', sx, sy, { tag: S('Underground Ring →', 'Sàn Đấu Ngầm →'), text: S('Underground Ring →\nSparring with Xealist\'s partners. Lose and you just get back up — no items lost.', 'Sàn Đấu Ngầm →\nĐấu tập với các bạn tập của Xealist. Thua thì đứng dậy tập tiếp — không mất đồ.') });
+}
+
+/* plan-48 §12 (2026-10-28): lối vào ĐẤU TRƯỜNG LEADER ở mép TÂY Làng, cuối đường hàng 48–49 (đối xứng lối Sàn Đấu Ngầm mép Đông).
+   Không cổng: đường đất chạy ra mép + biển exit_sign_w = ảnh PixelLab exit_sign_t8 LẬT GƯƠNG (mũi tên chỉ sang TRÁI cho lối Tây; exit_sign / arena_sign đều chỉ sang phải). */
+defObj('exit_sign_w', 16, 24, 1, 1, g => { px1(g, 4, 10, '#4a3324', 3, 14); px1(g, 1, 3, '#2a1a10', 14, 9); px1(g, 2, 4, '#c8945a', 12, 7); });
+function leaderExit(m) {
+  const y0 = ARENA_ROW;
+  for (const o of m.objects.filter(o => o.x <= 2 && o.y >= y0 - 1 && o.y <= y0 + 2)) removeObject(m, o);
+  for (let y = y0; y <= y0 + 1; y++) for (let x = 0; x <= 3; x++) { setG(m, x, y, T.DIRT, false); m.roads[idx(m, x, y)] = 1; }
+  for (let y = y0; y <= y0 + 1; y++) if (!hasObjectAt(m, 0, y)) place(m, 'tree', 0, y);   /* đường khuất vào hàng cây cột đầu (mép bản đồ không lộ khoảng đen) */
+  m.gates.push({ x: 1, y: y0, w: 1, h: 2, to: 'leader_arena', entry: 'default', requires: null });
+  m.entries.leader_arena = { x: 4, y: y0 + 1 };
+  m.reserved.push({ x: 3, y: y0 }, { x: 3, y: y0 + 1 }, { x: 4, y: y0 + 1 });
+  const nm = S('Leader Arena', 'Đấu Trường Leader');
+  place(m, 'exit_sign_w', 2, y0 + 2, { tag: S(nm.en + ' ←', nm.vi + ' ←'), text: S('Leader Arena ←\nAll 15 Seismic Leaders wait in the stadium. Challenge them to a spirit-beast duel.', 'Đấu Trường Leader ←\nCả 15 Leader của Seismic chờ trong sân vận động. Thách đấu linh thú với họ.') });
+}
+
+// ---------------- plan-48 §12 (2026-10-28): ĐẤU TRƯỜNG LEADER (vùng 'leader_arena') — sân vận động bầu dục.
+// Nền cả vùng = 1 ảnh ghép từ texture PixelLab (tools/px-p48b-compose.py → zones/leader_arena/bg.png; leaderarena.js vẽ ở drawGround).
+// Hình học LA_GEO khớp ảnh: sân cỏ elip (FRX×FRY) → vòng gạch đỏ-trắng (CURB) → lối đi đá (tới APRON) → tường chắn → khán đài bậc ghế tới mép bản đồ.
+// Sân cỏ + lối đi đá đi được; khán đài cứng (tâm ô cách mép sân ≥ APRON − 3). Hành lang cổng Nam (cột 15–17) xuyên khán đài → về Làng (lối 'leader_arena').
+export const LA_GEO = { W: 33, H: 27, CX: 16 * 16 + 8, CY: 13 * 16 + 8, FRX: 120, FRY: 80, CURB: 8, APRON: 48, WALL: 6, ROWP: 11, TUN: [15, 17] };
+export function laOffset(x, y) {   /* t (px logic) sao cho (x, y) nằm trên elip (FRX + t, FRY + t) — cùng công thức với px-p48b-compose.py */
+  const G = LA_GEO, dx = Math.abs(x - G.CX), dy = Math.abs(y - G.CY); let lo = -79.9, hi = 900;
+  for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2, v = (dx / (G.FRX + mid)) ** 2 + (dy / (G.FRY + mid)) ** 2; if (v > 1) lo = mid; else hi = mid; }
+  return (lo + hi) / 2;
+}
+/* bản vẽ code chỉ là dự phòng khi chưa nạp ảnh; ảnh thật = PixelLab td8 hướng nam (zones/leader_arena.json) */
+defObj('la_score', 64, 48, 4, 1, g => { px1(g, 6, 2, '#2a2a36', 52, 34); px1(g, 9, 5, '#1e2a52', 46, 28); px1(g, 14, 36, '#3a3a44', 4, 12); px1(g, 46, 36, '#3a3a44', 4, 12); });
+defObj('la_flood', 48, 56, 3, 1, g => { px1(g, 2, 2, '#55555e', 44, 22); for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) px1(g, 6 + i * 10, 6 + j * 9, '#fff3c8', 7, 6); px1(g, 20, 24, '#6a6a72', 6, 30); });
+defObj('la_post', 16, 28, 1, 1, g => { px1(g, 3, 6, '#cfc6b4', 10, 22); px1(g, 4, 10, '#c83a3a', 8, 6); px1(g, 4, 18, '#c83a3a', 8, 4); px1(g, 7, 0, '#e09030', 4, 4); });
+defObj('la_box', 32, 32, 2, 1, g => { px1(g, 4, 2, '#b02a30', 24, 8); px1(g, 6, 10, '#b8862c', 2, 20); px1(g, 24, 10, '#b8862c', 2, 20); px1(g, 4, 26, '#8a5a30', 24, 6); });
+defObj('la_vip', 24, 24, 1, 1, g => { px1(g, 3, 2, '#b8862c', 18, 20); px1(g, 5, 4, '#c0303a', 14, 7); px1(g, 5, 13, '#c0303a', 14, 6); });
+function buildLeaderArena() {
+  const G = LA_GEO, W = G.W, H = G.H, TS = 16, m = makeMap(W, H, T.STONE);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const o = laOffset(x * TS + 8, y * TS + 8), tun = x >= G.TUN[0] && x <= G.TUN[1] && y > 13;
+    if (tun) setG(m, x, y, T.STONE, false);
+    else if (o < 0) setG(m, x, y, T.GRASS, false);
+    else if (o < G.APRON - 3) setG(m, x, y, T.STONE, false);
+    else setG(m, x, y, T.DARK, true);   /* khán đài: cứng, không vật — leaderarena.js vẽ khán giả lên đây */
+  }
+  for (let x = G.TUN[0]; x <= G.TUN[1]; x++) setG(m, x, H - 1, T.CHASM, true);   /* cuối hành lang chìm vào bóng tối */
+  m.gates.push({ x: G.TUN[0], y: H - 2, w: 3, h: 1, to: 'village', entry: 'leader_arena', requires: null });
+  m.entries = { default: { x: 16, y: H - 4 }, back: { x: 16, y: H - 4 } };
+  m.reserved.push(m.entries.default);
+  m.stadium = { bg: 'zones/leader_arena/bg.png', geo: G };
+  m.duelField = { x: G.CX, y: G.CY, rx: G.FRX, ry: G.FRY };   /* sân cỏ giữa cho trận linh thú (ctx.duel.start field 'leader_arena') */
+  /* vật PixelLab (td8 hướng nam) đứng TRÊN ô khán đài (vốn cứng) → không tạo ô cứng tàng hình trên lối đi */
+  place(m, 'la_score', 14, 2);
+  for (const [x, y] of [[0, 3], [W - 3, 3], [0, H - 3], [W - 3, H - 3]]) place(m, 'la_flood', x, y);
+  place(m, 'la_post', G.TUN[0] - 1, 22); place(m, 'la_post', G.TUN[1] + 1, 22);
+  /* 15 chỗ đứng Leader trên lối đi đá: từ tây (hơi dưới ngang) vòng qua BẮC tới đông; ghế VIP ngay sau lưng trên mép khán đài */
+  const spots = [], taken = new Set(), N = 15, r = 32;   /* sát mép khán đài: chừa phần trong lối đi để đi vòng qua trước mặt Leader */
+  for (let i = 0; i < N; i++) {
+    const a = Math.PI - 0.22 + (Math.PI + 0.44) * i / (N - 1);   /* màn hình: y xuống → sin < 0 = phía bắc */
+    const px = G.CX + Math.cos(a) * (G.FRX + r), py = G.CY + Math.sin(a) * (G.FRY + r);
+    let tx = Math.floor(px / TS), ty = Math.floor(py / TS), ok = false;
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) { const k = (tx + dx) + ',' + (ty + dy), oo = laOffset((tx + dx) * TS + 8, (ty + dy) * TS + 8); if (!isSolid(m, tx + dx, ty + dy) && !taken.has(k) && getG(m, tx + dx, ty + dy) === T.STONE && oo >= 24) {   /* chỉ đứng nửa ngoài lối đi (≥ 24 px từ mép sân) */ tx += dx; ty += dy; ok = true; break; } }
+    if (!ok) continue;
+    taken.add(tx + ',' + ty);
+    const nx = Math.cos(a) / (G.FRX + r), ny = Math.sin(a) / (G.FRY + r), nl = Math.hypot(nx, ny);   /* pháp tuyến elip → ghế ở phía khán đài */
+    let chair = null;
+    for (let d = 12; d <= 40 && !chair; d += 4) { const cx = Math.floor((tx * TS + 8 + nx / nl * d) / TS), cy = Math.floor((ty * TS + 8 + ny / nl * d) / TS); if (isSolid(m, cx, cy) && !hasObjectAt(m, cx, cy) && getG(m, cx, cy) === T.DARK) chair = { x: cx, y: cy }; }
+    if (chair && i === (N >> 1) && isSolid(m, chair.x + 1, chair.y) && !hasObjectAt(m, chair.x + 1, chair.y) && getG(m, chair.x + 1, chair.y) === T.DARK) { place(m, 'la_box', chair.x, chair.y); chair.box = true; }   /* Leader mạnh nhất (giữa bắc): lô VIP có mái */
+    else if (chair) place(m, 'la_vip', chair.x, chair.y);
+    spots.push({ x: tx, y: ty, a, chair });
+  }
+  m.leaderSpots = spots;
+  place(m, 'sign', G.TUN[1] + 1, H - 4, { tag: S('← Harbor Village', '← Làng Xuất Phát'), text: S('Leader Arena.\nWalk up to a Leader and press E to challenge them to a spirit-beast duel (3 vs 3).\nSouth tunnel → Harbor Village', 'Đấu Trường Leader.\nĐến cạnh một Leader, bấm E để thách đấu linh thú (3 đấu 3).\nHành lang phía Nam → Làng Xuất Phát') });
+  m.npcArea = { x: 8, y: 8, w: 17, h: 10 }; m.theme = { tier: 0 }; m.tier = 0;
+  return m;
 }
 
 // ---------------- 2026-10-11: Sàn Đấu Ngầm (arena) — hang đá dưới Làng, sàn cát tròn ở giữa (đường kính 15 ô), cột đá có chậu lửa quanh sàn,
@@ -376,7 +450,7 @@ export function rebuildPlot(m, idx, tier) {
 // ---------------- ZONES ----------------
 const S = (en, vi) => ({ en, vi });
 const themes = {
-  village: { aveClear: true /* plan-43d B2: bia + giường ra khỏi đại lộ như M1 */, tier: 0, base: T.GRASS, scatter: [[T.GRASS2, .12], [T.FLOWER, .05]], plot: T.GRASS2, path: T.DIRT, border: 'tree', decor: [['tree', .04], ['bush', .03]], light: 'lantern', houses: false /* 2026-09-25 anh bỏ nhà trang trí không tính năng khỏi Làng */, guide: true, next: 'road1', prev: 'sea', arenaExit: true,
+  village: { aveClear: true /* plan-43d B2: bia + giường ra khỏi đại lộ như M1 */, tier: 0, base: T.GRASS, scatter: [[T.GRASS2, .12], [T.FLOWER, .05]], plot: T.GRASS2, path: T.DIRT, border: 'tree', decor: [['tree', .04], ['bush', .03]], light: 'lantern', houses: false /* 2026-09-25 anh bỏ nhà trang trí không tính năng khỏi Làng */, guide: true, next: 'road1', prev: 'sea', arenaExit: true, leaderExit: true,
     fixed: [{ obj: 'well', x: CX + 8, y: 7 }, { obj: 'crate', x: CX - 9, y: 7 }, { obj: 'crate', x: CX - 10, y: 7 }, { obj: 'crate', x: CX - 9, y: 8 }],
     sign: S('Harbor Village — start of the journey.\nEvery fenced yard belongs to one country. Read the board inside.\nNorth road → M1 · Calm Shoals', 'Làng Xuất Phát — nơi bắt đầu hành trình.\nMỗi khu rào là của một quốc gia. Đọc bảng trong khu.\nĐường Bắc → M1 · Bãi Bồi Yên') },
   m1: { aveClear: true, tier: 1, base: T.SAND, scatter: [[T.SAND2, .15]], plot: T.DIRT, path: T.DIRT, border: (x, y) => y < 2 || y > H - 3 ? 'palm' : 'rock', water: 8, decor: [['palm', .04], ['rock', .015], ['shell', .03], ['rock_s', .02]], light: 'torch', prev: 'road1', next: 'road2', lv: 1,
@@ -810,6 +884,61 @@ function buildSkyOver(below, w, h) {
     return m;
   };
 }
+/* ===== p88 = plan-88 đợt 1 (02/11/2026): LÀNG MỚI kiểu Saiyan Online — anh: 'map đơn giản, không rối', 'rộng càng tốt', BỎ HẲN MUA ĐẤT.
+   Bố cục trong village88.js (thuần, in được lưới ký tự). Ở đây: ô → ground / solid / roads; vật thể; lối ra mép; điểm vào; chỗ cho hệ khác (m.spots).
+   Vật mới (ảnh PixelLab td8 hướng nam, _wip/p88/assets/px/zones/village/p88): vách đá ghép mảnh cliff88_L/A/B/R (2 ô × 2 hàng ô cứng, ảnh cao 36 px logic),
+   lều tent88, khúc gỗ log88; bậc thang / cầu / xương nằm ở lớp nền (systems/village88.js drawGround, đi được). Đá rock88 / rocks88 = ảnh đá M3 (tên riêng). */
+const px88 = (g, x, y, c, w = 1, h = 1) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+for (const k of 'LABR') defObj('cliff88_' + k, 32, 36, 2, 2, g => { px88(g, 0, 4, '#7a4a2a', 32, 32); px88(g, 0, 0, '#5a9a3a', 32, 5); px88(g, 0, 18, '#5a3420', 32, 1); });
+defObj('tent88', 24, 24, 1, 1, g => { for (let y = 0; y < 22; y++) px88(g, 12 - (y >> 1), y + 2, '#8a5a32', (y >> 1) * 2 + 1, 1); px88(g, 10, 14, '#2a1a10', 5, 10); });
+defObj('log88', 22, 12, 1, 1, g => { px88(g, 1, 2, '#3a2416', 20, 9); px88(g, 2, 3, '#8a5a32', 18, 7); px88(g, 17, 3, '#c8945a', 3, 7); });
+defObj('rock88', 16, 16, 1, 1, g => { px88(g, 2, 4, '#4a4a52', 12, 10); px88(g, 3, 5, '#8a8a92', 10, 8); });
+defObj('rocks88', 16, 16, 1, 1, g => { px88(g, 4, 8, '#4a4a52', 8, 6); px88(g, 5, 9, '#8a8a92', 6, 4); });
+export function buildVillage88(rng, ctx = {}) {
+  const L = layout88(), t = themes.village, m = makeMap(L.W, L.H, T.GRASS), Wd = L.W, Hd = L.H, CXv = VCX88, ER = ER88;
+  const TT = { '.': T.GRASS, '^': T.GRASS, ',': T.GRASS2, ':': T.FLOWER, '=': T.DIRT, '#': T.STONE, '~': T.WATER, 'b': T.BRIDGE, 'T': T.GRASS, 'C': T.GRASS, 'S': T.DIRT };
+  for (let i = 0; i < Wd * Hd; i++) { const c = L.g[i]; m.ground[i] = TT[c] ?? T.GRASS; m.solid[i] = c === 'T' || c === '~' || c === 'C' ? 1 : 0; m.roads[i] = L.roads[i]; }
+  m.theme = t; m.tier = 0; m.v88 = { plaza: L.plaza, cliff: L.cliff, pond: L.pond, regions: REGIONS88 }; m.plaza88 = { x: L.plaza.x, y: L.plaza.y };
+  /* vách: chuỗi mảnh L A B A B … B R — sát bậc thang dùng mảnh giữa (bậc thang có vách riêng hai bên) */
+  const C = L.cliff, runs = [[C.x0, C.stairs - 1, true, false], [C.stairs + 2, C.x1, false, true]];
+  for (const [a, z, capL, capR] of runs) { const n = Math.floor((z - a + 1) / 2); for (let k = 0; k < n; k++) { const x = a + k * 2, last = k === n - 1;
+    const kind = capL && k === 0 ? 'L' : capR && last ? 'R' : ((k - (capL ? 1 : 0)) % 2 === 0 ? 'A' : 'B'); place(m, 'cliff88_' + kind, x, C.y, { cliff88: true }); } }
+  m.decals88 = [{ img: 'zones/village/p88/stairs2.png', x: C.stairs * 16 + 16, y: (C.y + 2) * 16, w: 29, h: 36, kind: 'stairs' }];
+  for (let y = 0; y < Hd; y++) for (let x = 0; x < Wd; x++) if (L.g[y * Wd + x] === 'b' && L.g[y * Wd + x - 1] !== 'b' && L.g[(y - 1) * Wd + x] !== 'b') {   /* góc trên-trái mỗi khúc cầu */
+    let w = 0, h = 0; while (L.g[y * Wd + x + w] === 'b') w++; while (L.g[(y + h) * Wd + x] === 'b') h++;
+    m.decals88.push({ img: 'zones/village/p88/bridge.png', x: x * 16 + w * 8, y: (y + h) * 16 + 3, w: Math.max(37, w * 16 + 8), h: 24, kind: 'bridge', tiles: { x, y, w, h } }); }
+  for (const o of L.objs) {
+    if (o.flat) { m.decals88.push({ img: 'zones/village/p88/bones.png', x: o.x * 16 + 8, y: o.y * 16 + 13, w: 13, h: 10, kind: 'bones' }); continue; }
+    if (!O[o.type || o.t]) continue; const { t: ty, x, y, ...ex } = o; if (ty !== 'tree' && hasObjectAt(m, x, y)) continue;
+    place(m, ty, x, y, ex);
+  }
+  /* lối ra mép (không cổng — đường ra mép + biển, như 2026-10-11) */
+  const clearAt = (x, y) => { for (const o of m.objects.filter(o => o.x === x && o.y === y)) removeObject(m, o); setSolid(m, x, y, 0); };
+  const nmN = (() => { const z = ZONES[t.next], zr = z && z.road ? ZONES[z.road.upper] : null; return zr ? S('Pass · ' + zr.name.en, 'Đèo · ' + zr.name.vi) : S('Pass', 'Đèo'); })(), nmS = ZONES[t.prev] ? ZONES[t.prev].name : S('Sea', 'Biển');
+  m.gates.push({ x: CXv - 1, y: 0, w: 3, h: 2, to: t.next, entry: 'default', requires: null, path: true });
+  m.gates.push({ x: CXv - 1, y: Hd - 1, w: 3, h: 1, to: t.prev, entry: 'back', requires: null, path: true });
+  clearAt(CXv + 2, 9); place(m, 'exit_sign', CXv + 2, 9, { exit: { to: t.next, requires: null, name: nmN, ar: ' ↑' }, text: S(nmN.en + ' ↑', nmN.vi + ' ↑') });
+  clearAt(CXv - 3, Hd - 9); place(m, 'exit_sign', CXv - 3, Hd - 9, { exit: { to: t.prev, requires: null, name: nmS, ar: ' ↓' }, text: S(nmS.en + ' ↓', nmS.vi + ' ↓') });
+  for (const y of [ER, ER + 1]) { clearAt(0, y); place(m, 'tree', 0, y); clearAt(Wd - 1, y); place(m, 'tree', Wd - 1, y); }   /* đường khuất vào hàng cây mép (không lộ khoảng đen) */
+  m.gates.push({ x: 1, y: ER, w: 1, h: 2, to: 'leader_arena', entry: 'default', requires: null });
+  m.gates.push({ x: Wd - 2, y: ER, w: 1, h: 2, to: 'arena', entry: 'default', requires: null });
+  const nmL = S('Leader Arena', 'Đấu Trường Leader');
+  clearAt(8, ER + 2); place(m, 'exit_sign_w', 8, ER + 2, { tag: S(nmL.en + ' ←', nmL.vi + ' ←'), text: S('Leader Arena ←\nAll 15 Seismic Leaders wait in the stadium. Challenge them to a spirit-beast duel.', 'Đấu Trường Leader ←\nCả 15 Leader của Seismic chờ trong sân vận động. Thách đấu linh thú với họ.') });
+  clearAt(Wd - 9, ER - 1); place(m, 'arena_sign', Wd - 9, ER - 1, { tag: S('Underground Ring →', 'Sàn Đấu Ngầm →'), text: S('Underground Ring →\nSparring with Xealist\'s partners. Lose and you just get back up — no items lost.', 'Sàn Đấu Ngầm →\nĐấu tập với các bạn tập của Xealist. Thua thì đứng dậy tập tiếp — không mất đồ.') });
+  m.entries = { default: { x: CXv, y: Hd - 6 }, back: { x: CXv, y: 5 }, arena: { x: Wd - 7, y: ER + 1 }, leader_arena: { x: 6, y: ER + 1 } };
+  m.reserved.push(...Object.values(m.entries));
+  for (let y = 2; y < Hd - 2; y++) if (m.roads[y * Wd + CXv]) m.reserved.push({ x: CXv, y });
+  /* biển chỉ đường quảng trường (lối Nam vào quảng trường) + NPC hướng dẫn */
+  const P = L.plaza; clearAt(P.x + 4, P.y + 9);
+  place(m, 'sign', P.x + 4, P.y + 9, { text: S('Harbor Village — start of the journey.\nNorth road → Pass → M1 · Calm Shoals.\nWest → Leader Arena · East → Underground Ring.\nStairs in the north-west cliff → Mole Camp · cross the stream bridge → Toad Camp.',
+    'Làng Xuất Phát — nơi bắt đầu hành trình.\nĐường Bắc → Đèo → M1 · Bãi Bồi Yên.\nTây → Đấu Trường Leader · Đông → Sàn Đấu Ngầm.\nBậc thang vách Tây Bắc → Trại Chũi · qua cầu suối → Trại Cóc.') });
+  m.specials = t.guide ? [{ kind: 'guide', x: P.x - 4, y: P.y + 9 }] : [];
+  m.npcArea = { x: P.x - 16, y: P.y - 12, w: 32, h: 28 };   /* dân làng quanh quảng trường (không rải khắp map rộng) */
+  m.camps = L.camps.map(c => ({ ...c, rect: { x: c.x - c.rx, y: c.y - c.ry, w: c.rx * 2 + 1, h: c.ry * 2 + 1 } }));
+  m.spots = { stall: { x: P.x + 4, y: P.y + 4 }, coop: { x: P.x + 16, y: P.y - 2 }, bench: [{ x: P.x - 15, y: P.y - 2 }, { x: P.x - 15, y: P.y + 2 }] };
+  return m;
+}
+
 export const ZONES = {
   u1: { id: 'u1', lv: -2, order: 98, hidden: true, under: true, uLv: [2, 3], name: S('Shallow Coral Reef', 'Rạn San Hô Nông'), tremor: 0, build: buildU1,
     systems: ['underwater', 'petgun', 'monsters', 'hero', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(40,170,200,.12)',   /* hero phải có trong danh sách, không thì máu/ngất không chạy (bẫy cũ của Vực Kraken) */
@@ -834,6 +963,9 @@ export const ZONES = {
   arena: { id: 'arena', lv: -2, order: 0.5, hidden: true, name: S('Underground Ring', 'Sàn Đấu Ngầm'), tremor: 0, build: buildArena, arena: true,
     systems: ['hero', 'monsters', 'knock', 'spar', 'xealist', 'arena', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(30,12,4,.28)', vignette: true,
     flavor: S(['Sand on the floor, sweat in the air. Somebody is always training down here.'], ['Cát dưới chân, mồ hôi trong không khí. Dưới này lúc nào cũng có người đang tập.']) },
+  leader_arena: { id: 'leader_arena', lv: -2, order: 0.45, hidden: true, stadium: true, name: S('Leader Arena', 'Đấu Trường Leader'), tremor: 0, build: buildLeaderArena,   /* plan-48 §12 */
+    systems: ['hero', 'leaderarena', 'linhduel', 'drops', 'vfx', 'pet', 'photo'],
+    flavor: S(['The whole of Seismic came to watch. No pressure.'], ['Cả Seismic kéo đến xem. Không áp lực gì đâu.']) },
   rift1: { id: 'rift1', lv: -2, order: 0.55, hidden: true, rift: true, name: S('Magnitude Rift · Shadow Rocky', 'Khe Nứt · Hắc Rocky'), tremor: 0, build: buildRift1,
     systems: ['hero', 'monsters', 'knock', 'arena', 'hacrocky', 'drops', 'vfx', 'pet', 'photo'], tint: 'rgba(60,0,90,.38)', vignette: true,
     flavor: S(['Your own shadow looks back at you. It has your Rocky’s eyes — only white.'], ['Bóng của chính bạn nhìn lại. Nó có đôi mắt của Rocky — chỉ là trắng dã.']) },
@@ -851,7 +983,7 @@ export const ZONES = {
     flavor: S(['Every gear in this forge turns the wrong way.'], ['Mọi bánh răng trong lò rèn này đều quay ngược chiều.']) },
   sea: { id: 'sea', lv: -2, order: -1, name: S('Sea of Origins', 'Biển Khởi Nguồn'), tremor: 0, build: buildSea, sea: true,
     flavor: S(['The sea brought you here. It will take you home too.', 'Read the currents. They know the way to the dock.', 'Every artist washed up on this shore once.'], ['Biển đưa bạn tới đây. Biển cũng sẽ đưa bạn về.', 'Đọc dòng chảy đi. Nó biết đường ra bến.', 'Nghệ sĩ nào cũng từng dạt vào bờ này.']) },
-  village: { id: 'village', lv: -1, order: 0, name: S('Harbor Village', 'Làng Xuất Phát'), tremor: 0, build: build('village'),
+  village: { id: 'village', lv: -1, order: 0, name: S('Harbor Village', 'Làng Xuất Phát'), tremor: 0, build: (rng, ctx) => buildVillage88(rng, ctx),   /* p88 (plan-88 đợt 1): bố cục mới, không lô đất */
     flavor: S(['I have not earned a Magnitude role yet. Someday.', "Quiet here, isn't it? Wait until you reach the fault lines.", 'Every big artist started in this village.'], ['Mình chưa có role Magnitude. Một ngày nào đó.', 'Ở đây yên bình nhỉ? Đợi tới khi bạn đến các đứt gãy xem.', 'Nghệ sĩ lớn nào cũng khởi đầu từ ngôi làng này.']) },
   m1: { id: 'm1', lv: 1, order: 1, name: S('M1 · Calm Shoals', 'M1 · Bãi Bồi Yên'), tremor: 0.05, build: build('m1'), quest: { meet: 5 },
     flavor: S(['The ground is calm at Magnitude 1. Enjoy it — it will not stay that way.', 'First badge is the hardest. Or the easiest. I forget.', 'The sea here never trembles. Yet.'], ['Đất ở Magnitude 1 còn lặng lắm. Tận hưởng đi — không lâu đâu.', 'Huy hiệu đầu tiên là khó nhất. Hoặc dễ nhất. Mình quên rồi.', 'Biển ở đây chưa bao giờ rung. Chưa thôi.']) },
@@ -879,7 +1011,7 @@ ROADS.forEach((R, i) => { const up = ZONES[R.upper];
     flavor: S(['The pass is narrow. Someone big is waiting halfway up.'], ['Đường đèo hẹp. Lưng chừng dốc có người to con đang chờ.']) }; });
 /* plan-31 (2026-10-13): khoảng trời của từng vùng ngoài trời — id: Làng → 'sky' (giữ id cũ cho save / preset), còn lại 'sky_<vùng>' */
 for (const lo of ['sea', 'village', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', ...ROADS.map(R => R.id)]) {
-  const Z = ZONES[lo], id = lo === 'village' ? 'sky' : 'sky_' + lo, rd = /^road/.test(lo), w = rd ? ROAD.W : W, h = rd ? ROAD.len + 6 : H;
+  const Z = ZONES[lo], id = lo === 'village' ? 'sky' : 'sky_' + lo, rd = /^road/.test(lo), w = rd ? ROAD.W : lo === 'village' ? VW88 : W, h = rd ? ROAD.len + 6 : lo === 'village' ? VH88 : H;   /* p88: trời Làng cùng cỡ Làng mới */
   ZONES[id] = { id, lv: -2, order: (Z.order || 0) + 0.7, hidden: true, name: S('Sky over ' + Z.name.en, 'Trời ' + Z.name.vi), tremor: 0, build: buildSkyOver(lo, w, h), sky: true,
     systems: ['hero', 'sky', 'vfx', 'pet', 'photo'], flavor: S(['Far below, the land drifts under the mist.'], ['Xa phía dưới, mặt đất trôi dưới lớp sương.']) };
 }

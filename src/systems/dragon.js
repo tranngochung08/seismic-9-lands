@@ -18,7 +18,7 @@ import { maxHp, MAX_LV } from './hero.js';
 import * as LV from './petlv.js';
 
 const WISHES = ['chad', 'power', 'rocky', 'treasure', 'skill'];
-const TOOL_MAX = { sword: 6, axe: 3, pickaxe: 3, rod: 3, knife: 3, shovel: 1, scythe: 1, torch: 1 };
+const TOOL_MAX = { sword: 6, bua: 3, rod: 3 };   /* p80 đợt 3: Búa Seismic thay 6 dụng cụ cây / đất */
 const SKILL_CD = 90, POLO_SECS = 30;
 const STR = {
   vi: {
@@ -281,7 +281,7 @@ function drawScene(g, ctx, cx, cy) {
    · treasure: rương rơi từ trời xuống cạnh người → vàng bung, đồ (đá, viên hồi máu, viên thở, dụng cụ) bay lả tả rồi hút vào người (túi).
    · skill: bóng rồng lượn 1 vòng quanh người → lao vào người, cột sáng ngọc → icon chiêu bay ra góc nút chiêu. */
 const WFX = { chad: { dur: 3.0, grant: 0.95 }, power: { dur: 2.8, grant: 1.15 }, rocky: { dur: 3.1, grant: 0.8 }, treasure: { dur: 3.0, grant: 0.5 }, skill: { dur: 3.0, grant: 1.6 } };
-const WF_ITEMS = ['stone', 'pill_hp', 'pill_l', 'axe', 'pickaxe', 'knife'];
+const WF_ITEMS = ['stone', 'pill_hp', 'pill_l', 'bua'];   /* p80: icon Búa (PixelLab ui/items/bua.png) bay vào túi */
 const WF_SFX = { chad: [[0.15, 'whoosh_big'], [0.7, 'pop'], [1.05, 'win']], power: [[0.1, 'rumble'], [1.15, 'slam']], rocky: [[0.15, 'whoosh_big'], [0.7, 'slam'], [0.85, 'rocky_happy']],
   treasure: [[0.33, 'slam'], [0.42, 'coin'], [1.6, 'stone_gain']], skill: [[0.05, 'whoosh_big'], [0.75, 'roar'], [1.55, 'slam'], [2.6, 'pickup']] };
 const easeO = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
@@ -394,7 +394,7 @@ function wishDraw(g, ctx, sc, layer, psx, psy, cx, cy) {
 /* chữ trong cảnh ban ước (canvas phân giải đầy đủ, nét pixel VT323) */
 function wishUI(ug, ctx, scale) {
   const sc = ST.sc, w = sc && sc.wf; if (!w || sc.ph !== 'roar' || !ST.stage) return; const t = sc.pt, W = WFX[w.id] || { dur: 2 }, vi = ctx.lang() === 'vi', st = ST.stage;
-  const fade = clamp01((W.dur - t) / 0.35), fs = Math.max(16, Math.round(scale * 5.5)), L1 = 11, L2 = 9;
+  const fade = clamp01((W.dur - t) / 0.35), fs = Math.max(16, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 5.5)), L1 = 11, L2 = 9;
   const say = (txt, x, y, col, size, a) => { if (a <= 0) return; ug.save(); ug.globalAlpha = a * fade; ug.font = `bold ${size}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     ug.lineWidth = Math.max(2, Math.round(size / 6)); ug.strokeStyle = '#1a0e08'; ug.strokeText(txt, Math.round(x * scale), Math.round(y * scale)); ug.fillStyle = col; ug.fillText(txt, Math.round(x * scale), Math.round(y * scale)); ug.restore(); };
   const headY = st.y + 22;   /* chữ dưới chân (trên đầu là mặt rồng) */

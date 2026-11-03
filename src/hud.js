@@ -13,6 +13,7 @@ function iconMap() {
   if (ICON) return ICON;
   ICON = new Map(); const items = (deps.ART.man && deps.ART.man.ui && deps.ART.man.ui.items) || {};
   const put = (emo, id) => { if (emo && items[id] && !ICON.has(emo)) ICON.set(emo, 'assets/px/' + items[id]); };
+  if (!items.bua) items.bua = 'ui/items/bua.png';   /* p80: icon Búa Seismic (như hotbar.js gắn lúc chạy) */
   put('🪨', 'stone'); put('⚔', 'sword_t1'); put('🕯', 'revive'); put('✨', 'soul');
   /* biểu tượng trạng thái → icon đồ PixelLab gần nghĩa nhất */
   for (const [e, id] of [['⛽', 'charcoal'], ['🥚', 'egg'], ['🫧', 'pearl'], ['🪵', 'wood'], ['🐾', 'meat'], ['🏊', 'fish'], ['⛵', 'sailcloth'], ['🛶', 'plank'], ['🦑', 'squid'], ['🏁', 'flower'], ['🐋', 'fish'], ['🎈', 'rope'], ['🛠', 'pickaxe'], ['👷', 'axe'], ['📜', 'trenchmap'], ['🐎', 'saddle'], ['🦊', 'fur'], ['🐰', 'rabbit'], ['🐏', 'sheep'], ['🖼', 'bottle'],
@@ -96,6 +97,7 @@ export function initHud(d) {
 /* ---- thông báo ---- */
 export function notify(text, big) {
   if (!root) return false;
+  if (!big && globalThis.__np91Hint && globalThis.__np91Hint(text)) return true;   /* noprompt91: bỏ hộp nhắc tutorial góc trái */
   if (big) { const b = root.querySelector('#px-banner'); b.innerHTML = pxText(text); b.hidden = false; bannerT = 2.2; return true; }
   const m = /^\+(\d+)\s*(.+)$/.exec(String(text).trim());   /* gộp "+N món" cùng loại */
   const T = noteTime(text);   /* plan-44 Q4: câu dài ở lâu hơn (đọc kịp) */
@@ -150,7 +152,7 @@ function layoutInfo() {
 /* ---- nhãn hành động ---- */
 export function setLabel(text, sx, sy) {
   const lb = root.querySelector('#px-label');
-  if (!text) { if (!lb.hidden) lb.hidden = true; sig.lb = ''; return; }
+  if (!text || (globalThis.__lbl91 && globalThis.__lbl91(text))) { if (!lb.hidden) lb.hidden = true; sig.lb = ''; return; }   /* noprompt91 (anh 02/11): bỏ bảng 'E · …' to — đánh dấu góc xanh + tên + phím + icon; chỉ còn tooltip cạnh chuột */
   if (sig.lb !== text) { sig.lb = text; lb.innerHTML = pxText(text); }
   if (lb.hidden) lb.hidden = false; const L = Math.round(sx), T = Math.round(sy); if (sig.lbx !== L) { sig.lbx = L; lb.style.left = L + 'px'; } if (sig.lby !== T) { sig.lby = T; lb.style.top = T + 'px'; }   /* plan-37: chỉ ghi style khi đổi */
 }

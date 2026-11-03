@@ -2,12 +2,12 @@
  "version": 1,
  "built": "2026-10-14",
  "tile": 16,
- "note": "Toạ độ thế giới (px) góc trên-trái từng vùng; Làng = (0,0); Bắc = y âm. Trời dùng chung toạ độ vùng dưới (mục sky). Sinh bởi tools/build-worldlayout.js — đừng sửa tay.",
+ "note": "Toạ độ thế giới (px) góc trên-trái từng vùng; Làng = (0,0); Bắc = y âm. Trời dùng chung toạ độ vùng dưới (mục sky). Sinh bởi tools/build-worldlayout.js — đừng sửa tay. · p88 (plan-88 đợt 1): Làng 160×128 ô, lệch x −640 cho cột giữa trùng đèo 1; Biển dời xuống y 2048 (sửa tay trong lớp nháp p88).",
  "bounds": {
-  "x0": 0,
+  "x0": -640,
   "y0": -15840,
-  "x1": 1280,
-  "y1": 2048
+  "x1": 1920,
+  "y1": 3072
  },
  "band": {
   "x0": 0,
@@ -15,12 +15,12 @@
  },
  "zones": {
   "village": {
-   "x": 0,
+   "x": -640,
    "y": 0,
-   "w": 1280,
-   "h": 1024,
-   "tw": 80,
-   "th": 64,
+   "w": 2560,
+   "h": 2048,
+   "tw": 160,
+   "th": 128,
    "n": "road1",
    "s": "sea",
    "kind": "land"
@@ -225,7 +225,7 @@
   },
   "sea": {
    "x": 0,
-   "y": 1024,
+   "y": 2048,
    "w": 1280,
    "h": 1024,
    "tw": 80,

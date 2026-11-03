@@ -119,7 +119,7 @@ function drawDeco(g, W, H, ctx) {
 }
 // wave: hand beside the shoulder + ♥ above the head (overlay coords)
 function drawWave(g, ctx, cx, cy, scale) {
-  const p = ctx.S.player, t = ctx.S.time, u = Math.max(1, Math.round(scale));
+  const p = ctx.S.player, t = ctx.S.time, u = Math.max(1, Math.round((globalThis.__u89?globalThis.__u89(scale):scale)));
   const sx = Math.round((p.x - cx) * scale), sy = Math.round((p.y - cy) * scale);
   const skin = (ctx.S.save.outfit && ctx.S.save.outfit.skin) || '#f0c8a0';
   const wob = Math.round(Math.sin(t * 9) * u), hx = sx + 9 * u + wob, hy = sy - 16 * u - Math.abs(wob);

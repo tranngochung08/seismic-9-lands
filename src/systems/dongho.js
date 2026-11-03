@@ -786,18 +786,18 @@ export const dongho = {
         yb += sz + 4; const fs2 = Math.max(13, bh * 0.28); ug.font = font(fs2); ug.textAlign = 'center';
         const soon = ST.gear.off <= 0 && (ST.rw || ST.cd.rewind < 5), tip = ST.gear.off > 0 ? t.rwNo : soon ? t.back : t.hint; ug.fillStyle = '#000'; ug.fillText(tip, tcx + 1, yb + 1, bw); ug.fillStyle = soon ? '#ffe070' : '#f0e6d0'; ug.fillText(tip, tcx, yb, bw); yb += fs2 + 4;
       }
-      ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, scale); ug.restore();
+      ST.uiTop = yb; ST.uiTopL = yb / Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale)); ug.restore();
     }
     if (rwOn()) {   /* ◀◀ TUA LẠI (chỉ trong 3 s) */
-      const fs = Math.max(20, Math.min(W / 14, scale * 10)), s = `${t.rw} ${(REW.dur - ST.rw.t).toFixed(1)}s`; ug.save(); ug.font = font(fs); ug.textAlign = 'left'; ug.textBaseline = 'top';
+      const fs = Math.max(20, Math.min(W / 14, (globalThis.__u89?globalThis.__u89(scale):scale) * 10)), s = `${t.rw} ${(REW.dur - ST.rw.t).toFixed(1)}s`; ug.save(); ug.font = font(fs); ug.textAlign = 'left'; ug.textBaseline = 'top';
       const x = Math.max(10, W * 0.04), y = Math.max(yb + 4, H * 0.2); ug.fillStyle = '#000'; ug.fillText(s, x + 2, y + 2); ug.fillStyle = '#e8fff8'; ug.fillText(s, x, y); ug.restore();
     }
     if (ST.ult && ST.ult.ph === 'count') {   /* chữ La Mã đếm ngược phát sáng */
-      const NUM = ['XII', 'XI', 'X', 'IX', 'VIII', 'VII', 'VI', 'V', 'IV', 'III', 'II', 'I'], s = NUM[Math.max(0, Math.min(11, ST.ult.k))], fs = Math.max(26, Math.min(W / 9, scale * 14));
+      const NUM = ['XII', 'XI', 'X', 'IX', 'VIII', 'VII', 'VI', 'V', 'IV', 'III', 'II', 'I'], s = NUM[Math.max(0, Math.min(11, ST.ult.k))], fs = Math.max(26, Math.min(W / 9, (globalThis.__u89?globalThis.__u89(scale):scale) * 14));
       ug.save(); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle'; ug.shadowColor = '#ffc040'; ug.shadowBlur = 12; ug.fillStyle = '#fff2b0'; ug.fillText(s, W / 2, H * 0.72); ug.restore();
     }
     if (ST.banner) {
-      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, scale * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
+      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, (globalThis.__u89?globalThis.__u89(scale):scale) * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
       const y = Math.max(H * 0.24, yb + fs * 0.8); const tw = Math.min(W - 10, ug.measureText(ST.banner.txt).width + 24); ug.fillStyle = 'rgba(30,18,6,.72)'; ug.fillRect((W - tw) / 2, y - fs * 0.6, tw, fs * 1.2);
       ug.fillStyle = '#000'; ug.fillText(ST.banner.txt, W / 2 + 2, y + 2, W - 16); ug.fillStyle = '#fff2d8'; ug.fillText(ST.banner.txt, W / 2, y, W - 16); ug.restore();
     }

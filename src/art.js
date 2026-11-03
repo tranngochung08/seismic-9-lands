@@ -7,8 +7,12 @@ import { tiles, O, T, mkCanvas, HOOK, FLAG_COLORS, flagName } from './gfx.js';
 
 export const ART = { on: false, hi: 1, man: null, packs: {}, zone: null, pack: null, ground: null, groundDone: null };
 const BASE = 'assets/px/';
+/* p89 (plan-89 style ít màu): ?sty89=a|b|c → ảnh Làng đã LỌC do server nháp _wip/p89/serve_p89.py trả (theo Referer có sty89); ở đây chỉ đọc assets/px/_sty89/<v>/list.json → hệ số mật độ decor theo file. Không tham số = bản gốc. */
+const STY89 = { v: null, decor: {}, cliff: false }; const SQ89 = u => (STY89.v && typeof u === 'string' && !/^(data|blob):/.test(u) ? u + (u.includes('?') ? '&' : '?') + 'sty89=' + STY89.v : u);   /* p89 vòng 4: preset &reset viết lại URL trang (mất sty89 ở Referer) → gắn thẳng sty89 vào URL ảnh / json */
+/* p89 vòng 2 (sty89=d, CHỈ để chơi thử): HUD gọn — dòng nhiệm vụ / Cứu Lyron thu nhỏ + mờ (rê chuột hiện rõ), thông báo dài (hướng dẫn Ki) nhỏ lại và tự mờ sau 4 s. Không bỏ chức năng nào. */
+function sty89HUD() { const st = document.createElement('style'); st.textContent = 'body.sty89d .hud-tl #h-quest,body.sty89d .hud-tl #h-story,body.sty89d .hud-tl #h-task{transform:scale(.8);transform-origin:0 0;opacity:.72;margin-bottom:-5px;transition:opacity .2s}body.sty89d .hud-tl:hover #h-quest,body.sty89d .hud-tl:hover #h-story{opacity:1}body.sty89d #px-notes .pn.long{transform:scale(.8);transform-origin:0 100%;animation:p89fade .5s 4s forwards}@keyframes p89fade{to{opacity:0;visibility:hidden}}'; document.head.appendChild(st); document.body.classList.add('sty89d'); }
 
-const load1 = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('art: ' + src)); i.src = src; });
+const load1 = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('art: ' + src)); i.src = SQ89(src); });
 // tải ảnh: thử lại 3 lần (server tĩnh hay rớt khi nạp hàng nghìn ảnh cùng lúc); thất bại → ảnh 1×1 trong suốt, không kéo cả gói xuống
 const BLANK = mkCanvas(2, 2);
 const LOADS = new Map();   /* bộ nhớ đệm theo URL: tải trước song song (prefetchPack) rồi các bước sau lấy lại, không tải lần 2 */
@@ -37,7 +41,8 @@ const MASKED = {}, FLIPS = {};   /* plan-42 A3: cùng 1 bộ Wang dùng ở nhi�
 const h2 = (a, b) => (((a * 73856093) ^ (b * 19349663) ^ 0x9e3779b9) >>> 0);
 
 export async function initArt(q) {
-  if (q.get('art') === 'code') return false;   /* 2026-09-28 (deploy): PixelLab là mặc định; ?art=code để xem bản vẽ code */
+  if (q.get('art') === 'code') return false;
+  { const v = (q.get('sty89') ?? 'd'); if (v && v !== '0' && /^[a-z0-9]+$/.test(v)) try { const j = await fetch(BASE + '_sty89/' + v + '/list.json').then(r => r.json()); STY89.v = v; STY89.decor = j.decor || {}; STY89.cliff = !!j.cliffShadow; if (j.hud) sty89HUD(); ART.sty89 = v; } catch (e) { console.warn('sty89', e); } }   /* 2026-09-28 (deploy): PixelLab là mặc định; ?art=code để xem bản vẽ code */
   let man; try { man = await fetch(BASE + 'manifest.json').then(r => r.json()); } catch (e) { console.warn('art: no manifest', e); return false; }
   ART.on = true; ART.hi = man.scale || 2; ART.man = man;
   installShim();
@@ -74,7 +79,7 @@ export async function initArt(q) {
 const wangDirCache = {};
 function loadWangDir(dir) {   /* tải 16 ô Wang của 1 thư mục, cache theo dir (nhiều gói tham chiếu cùng bộ → 1 lần fetch, đỡ nghẽn server) */
   return wangDirCache[dir] ||= (async () => {
-    const meta = await fetch(BASE + dir + '/meta.json').then(r => r.json()); const byKey = {};
+    const meta = await fetch(SQ89(BASE + dir + '/meta.json')).then(r => r.json()); const byKey = {};
     await Promise.all(meta.tiles.map(async t => {
       const c = t.corners, key = [c.NW, c.NE, c.SW, c.SE].map(v => v === 'upper' ? 1 : 0).join('');
       const im = await load(BASE + dir + '/' + String(t.i).padStart(2, '0') + '.png'); byKey[key] = toCanvas(im); byKey[key].__src = im;   /* plan-42 A3: __src = ảnh gốc → maskLower đọc điểm ảnh từ ảnh, không kéo canvas GPU về */
@@ -88,7 +93,7 @@ function prefetchPack(j) {
   walk(j); for (const L of j.wang || []) loadWangDir(L.dir);
 }
 async function loadPack(file, id) {
-  const j = await fetch(BASE + file).then(r => r.json());
+  const j = await fetch(SQ89(BASE + file)).then(r => r.json());
   prefetchPack(j);
   const p = { id, inherit: j.inherit || null, classes: j.classes || {}, layers: [], decor: {}, tiles: {}, objects: {}, files: {}, rocky: {}, chars: [] };
   for (const L of j.wang || []) {   // { dir, upper }
@@ -102,7 +107,7 @@ async function loadPack(file, id) {
     }
     p.layers.push({ upper: L.upper, byKey });
   }
-  for (const [tile, list] of Object.entries(j.decor || {})) p.decor[tile] = await Promise.all(list.map(async f => ({ img: toCanvas(await load(BASE + f.file)), p: f.p ?? 1, n: f.n ?? 1 })));
+  for (const [tile, list] of Object.entries(j.decor || {})) p.decor[tile] = await Promise.all(list.map(async f => ({ img: toCanvas(await load(BASE + f.file)), p: (f.p ?? 1) * (STY89.decor[f.file] ?? 1), n: f.n ?? 1 })));
   for (const [tile, files] of Object.entries(j.tiles || {})) { const arr = await Promise.all(files.map(f => load(BASE + f).then(toCanvas))); arr.pick = (tx, ty) => arr[h2(tx, ty) % arr.length]; p.tiles[tile] = arr; }
   await Promise.all(Object.entries(j.objects || {}).map(async ([name, spec]) => {
     const f = typeof spec === 'string' ? spec : spec.file; const img = await load(BASE + f);
@@ -396,6 +401,10 @@ function groundStatic(g, m, tx, ty, sx, sy, c) {
     const key = (c[0] === L.upper ? '1' : '0') + (c[1] === L.upper ? '1' : '0') + (c[2] === L.upper ? '1' : '0') + (c[3] === L.upper ? '1' : '0');
     if (!drawn || key !== '0000') { let img = L.byKey[key]; const v = L.byKey[key + 'v']; if (v) img = v[h2(tx, ty) % v.length]; if (img) { g.drawImage(img, sx - 8, sy - 8); drawn = true; } }
   }
+  if (STY89.cliff && drawn) {   /* p89 d: bóng đổ dưới chân vách lên cỏ (vách trông cao hơn) */
+    const sh = m.__sh89 || (m.__sh89 = (() => { const s = new Set(); for (const o of m.objects || []) if (o.cliff88) for (let i = 0; i < 2; i++) s.add((o.y + 2) * m.w + o.x + i); if (m.v88 && m.v88.cliff && m.v88.cliff.tall) for (const d of m.decals88 || []) if (d.kind === 'stairs' && !/sty89/.test(d.img)) { d.w = 41; d.h = 54.5; d.img += '?sty89=d'; } /* p89 v4: bac thang cao (stairsT1 82x109) */ return s; })());
+    if (sh.has(ty * m.w + tx)) { g.fillStyle = 'rgba(14,26,6,0.45)'; g.fillRect(sx, sy, 16, 2); g.fillStyle = 'rgba(14,26,6,0.28)'; g.fillRect(sx, sy + 2, 16, 3); g.fillStyle = 'rgba(14,26,6,0.13)'; g.fillRect(sx, sy + 5, 16, 2); }
+  }
   const dec = WANG.decor[tileName(m.ground[ty * m.w + tx])];
   if (dec && drawn) for (let i = 0; i < dec.length; i++) {
     const d = dec[i], h = h2(tx * 7 + i, ty * 13 + i);
@@ -418,6 +427,10 @@ function groundCell(g, m, tx, ty, sx, sy) {
     const t = performance.now() / 1000, h = h2(tx, ty), ph = ((t * 0.35 + (h % 100) / 100) % 1);
     g.fillStyle = 'rgba(255,255,255,0.28)'; g.fillRect(sx + Math.round(2 + ph * 10), sy + (h >>> 4) % 12 + 2, 3, 1);
     g.fillRect(sx + Math.round(12 - ph * 8), sy + ((h >>> 9) % 12) + 3, 2, 1);
+  }
+  if (STY89.cliff && drawn) {   /* p89 d: bóng đổ dưới chân vách lên cỏ (vách trông cao hơn) */
+    const sh = m.__sh89 || (m.__sh89 = (() => { const s = new Set(); for (const o of m.objects || []) if (o.cliff88) for (let i = 0; i < 2; i++) s.add((o.y + 2) * m.w + o.x + i); if (m.v88 && m.v88.cliff && m.v88.cliff.tall) for (const d of m.decals88 || []) if (d.kind === 'stairs' && !/sty89/.test(d.img)) { d.w = 41; d.h = 54.5; d.img += '?sty89=d'; } /* p89 v4: bac thang cao (stairsT1 82x109) */ return s; })());
+    if (sh.has(ty * m.w + tx)) { g.fillStyle = 'rgba(14,26,6,0.45)'; g.fillRect(sx, sy, 16, 2); g.fillStyle = 'rgba(14,26,6,0.28)'; g.fillRect(sx, sy + 2, 16, 3); g.fillStyle = 'rgba(14,26,6,0.13)'; g.fillRect(sx, sy + 5, 16, 2); }
   }
   const dec = WANG.decor[tileName(m.ground[ty * m.w + tx])];
   if (dec && drawn) for (let i = 0; i < dec.length; i++) {

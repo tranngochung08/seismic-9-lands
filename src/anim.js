@@ -21,7 +21,7 @@ export const WATER = { depth: null };
 export function waterDraw(g, wx, wy, sx, sy, fn) {   /* sx, sy: toạ độ vẽ của chân (cùng hệ toạ độ với fn) */
   const d = WATER.depth ? WATER.depth(wx, wy) : 0;
   if (!d) { fn(); return; }
-  const line = Math.round(sy) + 2 - d, x = Math.round(sx), t = clock.t;
+  const line = (globalThis.__R89||Math.round)(sy) + 2 - d, x = (globalThis.__R89||Math.round)(sx), t = clock.t;
   g.save(); g.beginPath(); g.rect(x - 80, line - 240, 160, 240); g.clip(); fn(); g.restore();
   g.fillStyle = 'rgba(230,246,255,.8)';
   for (let i = -7; i <= 7; i += 3) g.fillRect(x + i, line + Math.round(Math.sin(t * 4 + i)), 2, 1);

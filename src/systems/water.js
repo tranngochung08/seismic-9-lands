@@ -374,6 +374,7 @@ function entsInWater(ctx) {
   try { const r = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent(); if (r && near(r)) put(r, 'r'); } catch (e) { }
   try { if (ctx.ltPets) for (const c of ctx.ltPets()) if (near(c)) put(c, 'l', LTK[c.id] || (LTK[c.id] = 'lt' + c.id)); } catch (e) { }
   try { if (ctx.monsters && ctx.monsters.list) for (const mo of ctx.monsters.list()) if (mo.hp > 0 && near(mo)) put(mo, 'm'); } catch (e) { }
+  try { if (ctx.waterExtra) for (const c of ctx.waterExtra()) if (near(c)) put(c, 'c'); } catch (e) { }   /* p105: Chấn Thú (đội, đi theo, trận tại chỗ, Elyziuma) */
   return out;
 }
 function updateInteract(ctx, dt) {
@@ -385,9 +386,11 @@ function updateInteract(ctx, dt) {
     const dx = e.x - s.lx, dy = e.y - s.ly, d = Math.hypot(dx, dy); s.lx = e.x; s.ly = e.y;
     if (d > 0.05) { s.hx = s.hx * 0.8 + dx / d * 0.2; s.hy = s.hy * 0.8 + dy / d * 0.2; }
     if (d > 20) continue;   /* dịch chuyển tức thời (warp) */
+    const z105 = +(e.alt || e.lift || 0) || 0, land105 = s.z105 > 5 && z105 <= 1.5; s.z105 = z105;   /* p105: đáp từ trên cao */
     const depth = WATER.depth ? WATER.depth(e.x, e.y) : 0, wet = it.kind === 'ride' ? wetAt(e.x, e.y) : depth > 0 && wetAt(e.x, e.y - 1);
     if (!wet) { s.in = false; continue; }
     if (!s.in && it.kind !== 'ride' && s.seen > 2) { if (ST.frame > 20) splash(e.x, e.y, 0.55); }
+    if (land105) { splash(e.x, e.y, 1.15); ripple(e.x, e.y, 16, 1.4, 3); }   /* p105: nhảy / đè xuống nước → tóe to */
     s.in = true;
     const moving = d > 0.04, hl = Math.hypot(s.hx, s.hy) || 1, hx = s.hx / hl, hy = s.hy / hl;
     if (it.kind === 'ride') {
@@ -398,6 +401,7 @@ function updateInteract(ctx, dt) {
     const swim = depth > 8;
     if (moving) {
       if ((s.acc += dt) > (swim ? 0.26 : 0.34)) { s.acc = 0; ripple(e.x, e.y, swim ? 8 : 6, swim ? 1.1 : 0.9, 2); }
+      if (!swim && (it.kind === 'c' || it.kind === 'p') && d / Math.max(dt, 1e-3) > 50) { s.wk = (s.wk || 0) + dt; while (s.wk > 0.07) { s.wk -= 0.07; for (const sd of SD) addWake(e.x - hx * 3 - hy * sd * 3, e.y - hy * 1.5 + hx * sd * 2, -hy * sd * 3 - hx * 1.5, hx * sd * 2 - hy, 0.9); } if (d / Math.max(dt, 1e-3) > 120 && R() < 0.3) splash(e.x - hx * 4, e.y - hy * 2, 0.35); }   /* p105: rẽ nước khi đi / lao chỗ nông */
       if (swim) { s.wk = (s.wk || 0) + dt; while (s.wk > 0.08) { s.wk -= 0.08; for (const sd of SD) addWake(e.x - hx * 4 - hy * sd * 4, e.y - hy * 2 + hx * sd * 2.5, -hy * sd * 4 - hx * 2, hx * sd * 2.5 - hy, 1.1); } }
     } else if ((s.idle -= dt) <= 0) { s.idle = 1.9 + R() * 0.8; ripple(e.x, e.y, swim ? 9 : 7, 1.6, 3); }
   }
@@ -415,12 +419,13 @@ function updateInteract(ctx, dt) {
     ST.heroHp = H;
   } catch (e) { }
 }
-const SCH = new Map(), THR = [];
+const SCH = new Map(), THR = [], SCARE = [];   /* p105: chỗ chiêu trúng mặt nước — cá tản ra */
 function threats(ctx) {
   const out = THR, S = ctx.S, p = S.player; out.length = 0;
   out.push(p.x, p.y, S.sea && S.sea.riding === 'raft' ? 30 : 22);
   for (const [k, s] of ST.ents) if (s.in && s.seen === ST.frame && k !== p) out.push(s.lx, s.ly, 16);
   try { const r = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent(); if (r) out.push(r.x, r.y, 20); } catch (e) { }
+  for (const q of SCARE) if (q.until > ST.t) out.push(q.x, q.y, q.r);   /* p105 */
   return out;
 }
 function bait() {
@@ -689,6 +694,7 @@ export const water = {
     ctx.waterBubbles = (x, y, n) => bubbles(x, y, n);
     ctx.waterRipple = (x, y, r) => ripple(x, y, r || 7);
     ctx.waterAt = (x, y) => waterAt(x, y);
+    ctx.waterScare = (x, y, r, d) => { SCARE.push({ x, y, r: r || 40, until: ST.t + (d || 1.5) }); if (SCARE.length > 12) SCARE.shift(); };   /* p105 */
     if (typeof window !== 'undefined') window.__water = {
       stat: () => statNow(),
       set: o => { if (o && 'on' in o) { WFX.on = !!o.on; ART.waterNew = WFX.on; } return { on: WFX.on }; },

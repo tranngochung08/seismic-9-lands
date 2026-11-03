@@ -19,7 +19,7 @@ const STR = {
   en: {
     till: 'Till soil', sow: s => `Sow ${s}`, water: 'Water', harvest: 'Harvest', pull: 'Pull dead crop',
     placeScare: 'Place scarecrow', takeScare: 'Take scarecrow',
-    needShovel: 'Needs a shovel — craft it at the workbench (4 wood)',
+    needShovel: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)',
     handWater: 'Water by hand — pick an empty slot or hold seeds', notMine: "Fields only inside your own nation's yard",
     wrongSeason: 'Wrong season for these seeds', full: 'This yard already has 60 field tiles',
     tilled: 'Soil tilled', sown: 'Seeds sown', watered: 'Watered', pulled: 'Dead crop removed', placed: 'Scarecrow placed', taken: 'Scarecrow taken back',
@@ -28,7 +28,7 @@ const STR = {
   vi: {
     till: 'Cày đất', sow: s => `Gieo ${s}`, water: 'Tưới', harvest: 'Thu hoạch', pull: 'Nhổ cây héo',
     placeScare: 'Đặt bù nhìn', takeScare: 'Gỡ bù nhìn',
-    needShovel: 'Cần xẻng — chế ở Bàn mộc (4 gỗ)',
+    needShovel: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)',
     handWater: 'Tưới bằng tay — chọn ô trống hoặc cầm hạt', notMine: 'Ruộng chỉ đặt trong khu của nước mình',
     wrongSeason: 'Hạt sai mùa, chưa gieo được', full: 'Khu này đã đủ 60 ô ruộng',
     tilled: 'Đã cày đất', sown: 'Đã gieo hạt', watered: 'Đã tưới', pulled: 'Đã nhổ cây héo', placed: 'Đã đặt bù nhìn', taken: 'Đã gỡ bù nhìn',
@@ -306,7 +306,7 @@ function tileCand(ctx, tx, ty, aim) {
     /* 2026-10-11 anh: cầm hạt mà ô ĐẤT TRỐNG (phá/đào ra, trông như đất cày) không gieo được → tự xới + gieo luôn 1 lần */
     if (hs && ctx.getG(ctx.S.map, tx, ty) === T.DIRT) { const crop = hs.slice(5); if (!ctx.bag.has(hs, 1)) return null; return cropOk(ctx, crop) ? { kind: 'sow', label: t.sow(ctx.itemName(hs)), tx, ty, seed: { crop, id: hs }, autoTill: true } : { kind: 'deny', label: t.wrongSeason, tx, ty, why: t.wrongSeason }; }
     /* ô cỏ trống: không cầm xẻng → để click = đi tới (không tự chọn xẻng, kẻo đi đâu cũng cày) */
-    if (aim === 'touch' && !shovel && ctx.tool && ctx.tool.tier('shovel') > 0) return need(ctx, 'shovel', tx, ty);   /* điện thoại: nút A theo ngữ cảnh — đứng trên đất của mình → tự cầm xẻng cày */
+    if ((aim === 'touch' || globalThis.__f91) && !shovel && ctx.tool && ctx.tool.tier('shovel') > 0) return need(ctx, 'shovel', tx, ty);   /* p91 đợt F */   /* điện thoại: nút A theo ngữ cảnh — đứng trên đất của mình → tự cầm xẻng cày */
     if (!ctx.holding && pickSeed(ctx).any) return { kind: 'deny', label: t.till, tx, ty, why: t.needShovel };
     return null;
   }

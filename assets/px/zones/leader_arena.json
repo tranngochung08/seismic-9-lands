@@ -1,0 +1,30 @@
+{
+ "inherit": "village",
+ "objects": {
+  "la_score": {
+   "file": "zones/leader_arena/obj/la_score.png",
+   "ox": 6,
+   "oy": 0
+  },
+  "la_flood": {
+   "file": "zones/leader_arena/obj/la_flood.png",
+   "ox": 1,
+   "oy": 0
+  },
+  "la_post": {
+   "file": "zones/leader_arena/obj/la_post.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "la_vip": {
+   "file": "zones/leader_arena/obj/la_vip.png",
+   "ox": -4,
+   "oy": 0
+  },
+  "la_box": {
+   "file": "zones/leader_arena/obj/la_box.png",
+   "ox": 3,
+   "oy": 0
+  }
+ }
+}

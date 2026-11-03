@@ -110,7 +110,7 @@ export const drops = {
     return out;
   },
   drawUI(ug, ctx, cx, cy, scale) {   /* số lượng trên cục đồ (>1) */
-    ug.save(); ug.font = `${Math.max(10, Math.round(scale * 3.4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle';
+    ug.save(); ug.font = `${Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4))}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle';
     for (const d of ST.list) {
       if (d.st !== 'rest' || d.n <= 1) continue;
       const sx = Math.round((d.x + 5 - cx) * scale), sy = Math.round((d.y - 2 - cy) * scale);

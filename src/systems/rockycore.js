@@ -336,7 +336,7 @@ function mashPress(ctx) { const O = ST.orb; if (!O || O.kind !== 'beam' || !O.go
 function bossesDone(ctx) { const a = (ctx.S.save && ctx.S.save.achievements) || []; return LV.CORE_BOSSES.filter(b => a.includes(b)); }
 function migrate(ctx, pt) {
   if (pt.coreMig) return; pt.cores = pt.cores || []; pt.eq = pt.eq || []; pt.corePend = pt.corePend || [];
-  const got = bossesDone(ctx).filter(b => !pt.cores.includes(b)); for (const b of got) { pt.cores.push(b); const id = LV.coreSkillOf(b); if (id && pt.eq.length < LV.EQ_MAX) pt.eq.push(id); }
+  const got = bossesDone(ctx).filter(b => !pt.cores.includes(b)); for (const b of got) { pt.cores.push(b); const id = LV.coreSkillOf(b); if (id && pt.eq.length < LV.eqMaxOf(pt)) pt.eq.push(id); }
   pt.coreMig = 1; if (got.length) { setTimeout(() => ctx.toast(L(ctx).migr(got.length)), 2500); log('migrate ' + got.join(',')); } if (ctx.persist) ctx.persist();
 }
 function scanNew(ctx, pt) {
@@ -364,7 +364,7 @@ function eatTick(ctx, pt, e, C) {
   if (!C.f2 && C.t >= 0.7) {
     C.f2 = true; const b = S.boss, id = LV.coreSkillOf(b); fx(ctx, 'absorb', e.x, e.y - 8 - rkLift(ctx, e)); ctx.sfx('rocky_happy');
     pt.cores = pt.cores || []; if (!pt.cores.includes(b)) pt.cores.push(b); pt.corePend = (pt.corePend || []).filter(q => q !== b);
-    pt.skills = pt.skills || {}; if (id && !(pt.skills[id] > 0)) pt.skills[id] = 1; pt.eq = pt.eq || []; if (id && !pt.eq.includes(id) && pt.eq.length < LV.EQ_MAX) pt.eq.push(id);
+    pt.skills = pt.skills || {}; if (id && !(pt.skills[id] > 0)) pt.skills[id] = 1; pt.eq = pt.eq || []; if (id && !pt.eq.includes(id) && pt.eq.length < LV.eqMaxOf(pt)) pt.eq.push(id);
     const lvOk = LV.levelFromXp(pt.xp || 0).lv >= 20; if (ctx.toast) ctx.toast(L(ctx).learned(BN(ctx, b), SN(ctx, id)) + (lvOk ? '' : L(ctx).needLv), true);
     ST.stats.ate++; ST.shard = null; log('ate ' + b); if (ctx.persist) ctx.persist();
   }
@@ -376,7 +376,7 @@ function toggle(ctx, id) {
   if (!LV.hasCore(pt, id)) { ctx.toast(t.notLearned(SN(ctx, id), BN(ctx, LV.CORE_SKILLS[id].core))); return false; }
   pt.eq = LV.equipped(pt);
   if (pt.eq.includes(id)) pt.eq = pt.eq.filter(q => q !== id);
-  else { if (pt.eq.length >= LV.EQ_MAX) { ctx.toast(t.full); ctx.sfx('fail'); return false; } pt.eq.push(id); }
+  else { if (pt.eq.length >= LV.eqMaxOf(pt)) { ctx.toast(t.full); ctx.sfx('fail'); return false; } pt.eq.push(id); }
   ctx.toast(t.equipped(pt.eq.map(q => SN(ctx, q)).join(' · ') || '—')); ctx.sfx('pickup'); if (ctx.persist) ctx.persist(); return true;
 }
 function coreHtml(ctx) {
@@ -388,7 +388,7 @@ function coreHtml(ctx) {
       <div class="slot ${has ? '' : 'off'}" ${has ? `data-rkeq="${id}"` : ''} data-tip="${esc(tip)}" style="width:44px;height:44px;cursor:${has ? 'pointer' : 'default'};${on ? 'outline:3px solid var(--gold);outline-offset:1px;' : ''}">${ic ? `<img src="assets/px/${ic}" alt="" draggable="false" style="width:32px;height:32px;image-rendering:pixelated">` : `<span class="emo">${S.icon}</span>`}${has ? `<b class="n">${tier}</b>` : ''}</div>
       <span style="font:15px VT323,monospace;color:${on ? 'var(--gold)' : has ? '#e8dcc0' : 'var(--dim)'};text-align:center;line-height:1">${esc(SN(ctx, id))}</span><span class="mhint" style="font-size:12px;text-align:center">${on ? '★ ' + t.worn : has ? (lv < 20 ? t.lvNeed : t.learnedTag) : esc(t.lockedBy(BN(ctx, S.core)))}</span></div>`;
   }).join('');
-  return `<h3>${t.eqTitle} <span class="mhint" style="font-size:14px">(${eq.length}/${LV.EQ_MAX})</span></h3><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:space-around">${cells}</div><p class="mhint" style="margin-top:4px">${t.eqHint}</p>`;
+  return `<h3>${t.eqTitle} <span class="mhint" style="font-size:14px">(${eq.length}/${LV.eqMaxOf(pt)})</span></h3><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:space-around">${cells}</div><p class="mhint" style="margin-top:4px">${t.eqHint}</p>`;
 }
 
 /* ---------------- chat: gọi chiêu ---------------- */
@@ -443,9 +443,9 @@ export const rockycore = {
     if (!(ctx.chatHooks ||= []).includes(chatHook)) ctx.chatHooks.push(chatHook);
     if (typeof window !== 'undefined') window.__rc = {
       state: () => { const pt = petOf(ctx); return { cores: pt ? pt.cores || [] : [], eq: pt ? LV.equipped(pt) : [], pend: pt ? pt.corePend || [] : [], tiers: pt ? Object.fromEntries(LV.CORE_IDS.map(id => [id, tierOf(pt, id)])) : {}, cast: ST.cast ? { id: ST.cast.id, t: +ST.cast.t.toFixed(2) } : null, cd: { ...ST.cd }, shard: ST.shard && { boss: ST.shard.boss, x: Math.round(ST.shard.x), y: Math.round(ST.shard.y) }, slab: ST.slab && { blocks: ST.slab.blocks, t: +ST.slab.t.toFixed(2) }, stone: !!ST.stone, orb: ST.orb && { kind: ST.orb.kind, b: +(ST.orb.b || 0).toFixed(2), res: ST.orb.res || null, presses: ST.orb.presses || 0, go: !!ST.orb.go }, slow: +(Math.max(0, ST.slow.until - now(ctx))).toFixed(2), stats: JSON.parse(JSON.stringify(ST.stats)), stop: ST.stopOn, thinkN: ST.thinkN || 0, why: ST.why || '' }; },
-      give: (bosses, eq) => { const pt = petOf(ctx); if (!pt) return null; pt.cores = [...new Set([...(pt.cores || []), ...(bosses || LV.CORE_BOSSES)])]; pt.coreMig = 1; if (eq) pt.eq = eq.slice(0, LV.EQ_MAX); for (const b of pt.cores) { const id = LV.coreSkillOf(b); pt.skills[id] = Math.max(1, pt.skills[id] || 0); } if (ctx.persist) ctx.persist(); return LV.equipped(pt); },
+      give: (bosses, eq) => { const pt = petOf(ctx); if (!pt) return null; pt.cores = [...new Set([...(pt.cores || []), ...(bosses || LV.CORE_BOSSES)])]; pt.coreMig = 1; if (eq) pt.eq = eq.slice(0, LV.eqMaxOf(pt)); for (const b of pt.cores) { const id = LV.coreSkillOf(b); pt.skills[id] = Math.max(1, pt.skills[id] || 0); } if (ctx.persist) ctx.persist(); return LV.equipped(pt); },
       tier: (id, n) => { const pt = petOf(ctx); if (pt) { pt.skills[id] = n; if (ctx.persist) ctx.persist(); } return pt && tierOf(pt, id); },
-      eq: list => { const pt = petOf(ctx); if (!pt) return null; pt.eq = list.slice(0, LV.EQ_MAX); return LV.equipped(pt); },
+      eq: list => { const pt = petOf(ctx); if (!pt) return null; pt.eq = list.slice(0, LV.eqMaxOf(pt)); return LV.equipped(pt); },
       pend: b => { const pt = petOf(ctx); if (!pt) return null; pt.corePend = [...new Set([...(pt.corePend || []), b])]; return pt.corePend; },
       cast: id => cast(ctx, id, true), clearCd: () => { ST.cd = {}; }, mash: () => mashPress(ctx), log: () => ST.log.slice(), hitStop: ms => hitStop(ctx, ms || 80),
       slowMul: () => (ctx.S.time < ST.slow.until ? ST.slow.mul : 1), combo: () => { const m = mons(ctx)[0]; if (m) { ST.comboCd = 0; combo(ctx, m); } return ST.stats.combos; },
@@ -494,7 +494,7 @@ export const rockycore = {
   },
   drawUI(ug, ctx, cx, cy, scale) {
     const O = ST.orb; if (!O || O.kind !== 'beam' || !O.go || O.res) return;   /* thanh giằng co nhỏ trên đầu người chơi (không che cảnh) */
-    const p = ctx.S.player, W = ug.canvas.width, sx = (p.x - cx) * scale, sy = (p.y - 40 - cy) * scale, w = Math.min(W * 0.45, scale * 40), h = Math.max(6, scale * 2.2);
+    const p = ctx.S.player, W = ug.canvas.width, sx = (p.x - cx) * scale, sy = (p.y - 40 - cy) * scale, w = Math.min(W * 0.45, scale * 40), h = Math.max(6, (globalThis.__u89?globalThis.__u89(scale):scale) * 2.2);
     ug.fillStyle = 'rgba(20,10,30,.75)'; ug.fillRect(sx - w / 2 - 1, sy - 1, w + 2, h + 2); ug.fillStyle = '#7a3cff'; ug.fillRect(sx - w / 2, sy, w, h); ug.fillStyle = '#8fd3ff'; ug.fillRect(sx - w / 2, sy, w * O.b, h);
     ug.fillStyle = '#fff'; ug.fillRect(Math.round(sx - 1), sy - 2, 2, h + 4);
   },

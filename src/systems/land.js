@@ -228,7 +228,7 @@ export const land = {
   },
   drawUI(ug, ctx, cx, cy, scale) {   /* tên chủ đất trên biển */
     if (!lands(ctx).length) return;
-    const t = L(ctx), nm = ctx.S.save.name || '', fs = Math.max(10, Math.round(scale * 3.2));
+    const t = L(ctx), nm = ctx.S.save.name || '', fs = Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.2));
     ug.save(); ug.font = `${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'middle';
     for (const l of lands(ctx)) {
       const sx = Math.round(((l.x + 1) * 16 + 8 - cx) * scale), sy = Math.round((l.y * 16 - 4 - cy) * scale), txt = t.sign(nm), w = ug.measureText(txt).width + 8;

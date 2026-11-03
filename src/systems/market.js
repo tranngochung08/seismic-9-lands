@@ -76,6 +76,7 @@ function findSpot0(ctx, map) {
   };
   /* plan-43f (theme gateClear, hiện chỉ M4): người bán đứng ở (x+1, y+1,5) — không đứng trong làn cột cổng trên (cột q.x+4..q.x+5) ngay trên khu rào */
   const gateFront = (x, y) => !!(map.theme && map.theme.gateClear) && (map.plots || []).some(q => y + 1 >= q.y - 3 && y + 1 < q.y && (x + 1) * 16 + 5 > (q.x + 4) * 16 && (x + 1) * 16 - 5 < (q.x + 6) * 16);
+  if (map.spots && map.spots.stall) { const s = map.spots.stall; if (mk(false)(s.x, s.y)) return { x: s.x, y: s.y }; }   /* p88: Làng mới — quầy ở mép Đông Nam quảng trường */
   for (const strict of [true, false]) {
     const ok = mk(strict);
     for (const y of [8, 7, 9]) for (const x of [47, 48, 49, 46, 50, 33, 32, 31, 30, 34]) if (ok(x, y)) return { x, y };
@@ -277,7 +278,7 @@ export const market = {
     const sx = Math.round((stall.x * TILE + TILE - cx) * scale), sy = Math.round((stall.y * TILE - 6 - cy) * scale);
     if (sx < -120 || sx > ug.canvas.width + 120 || sy < -40 || sy > ug.canvas.height + 40) return;
     ug.save();
-    const fs = Math.max(10, scale * 3);
+    const fs = Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3);
     ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     const txt = '🏪 ' + S.sign, w = ug.measureText(txt).width + 10, h = fs + 6;
     ug.fillStyle = 'rgba(13,11,20,.72)'; ug.beginPath(); ug.roundRect(sx - w / 2, sy - h, w, h, 4); ug.fill();

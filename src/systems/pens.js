@@ -39,7 +39,7 @@ const STR = {
     notMine: 'Pens can only be built inside your own nation\'s yard', built: 'Pen built! Carry animals to the gate, put hay in the trough',
     bad: { free: 'Not enough room here — stand on a clear 4×3 patch inside the yard (walls, road, trees and other pens in the way)', edge: 'Too close to the yard wall — step further inside', gate: 'The gate needs open ground below it' },
     release: n => `Put ${n} in the pen`, full: 'Pen is full', fullMsg: 'Pen is full — craft a Stone pen (furnace: 8 rock + 4 iron) or build another pen',
-    released: n => `${n} settles into the pen`, feed: (n, m) => `Feed 🌾 (${n}/${m} fed)`, feedNeed: 'Needs hay 🌾 (cut tall grass with a scythe) or corn 🌽',
+    released: n => `${n} settles into the pen`, feed: (n, m) => `Feed 🌾 (${n}/${m} fed)`, feedNeed: 'Needs hay 🌾 (cut tall grass with the Seismic Hammer) or corn 🌽',
     allFed: 'Everyone in the pen has eaten today', noAnimals: 'The pen is empty — carry an animal to the gate first',
     pet: n => `Pet ${n}`, petted: n => `${n} is happy ♥`, board: 'Pen board', boardN: n => `Pen board · ${n} to collect`,
     collect: 'Collect', got: s => `Collected: ${s}`, bagFull: 'Bag is full — some products stay in the pen',
@@ -54,7 +54,7 @@ const STR = {
     notMine: 'Chuồng chỉ dựng được trong khu của nước mình', built: 'Đã dựng chuồng! Bế thú tới cổng để thả, bỏ rơm vào máng',
     bad: { free: 'Chỗ này không đủ trống — đứng trên bãi trống 4×3 ô trong khu (vướng tường, đường, cây hoặc chuồng khác)', edge: 'Sát tường khu quá — bước vào trong thêm', gate: 'Dưới cổng phải là đất trống' },
     release: n => `Thả ${n} vào chuồng`, full: 'Chuồng đầy', fullMsg: 'Chuồng đầy — chế Chuồng đá (Lò nung: 8 đá + 4 sắt) hoặc dựng thêm chuồng',
-    released: n => `${n} đã vào chuồng`, feed: (n, m) => `Cho ăn 🌾 (${n}/${m} no)`, feedNeed: 'Cần rơm 🌾 (cắt cỏ cao bằng liềm) hoặc bắp 🌽',
+    released: n => `${n} đã vào chuồng`, feed: (n, m) => `Cho ăn 🌾 (${n}/${m} no)`, feedNeed: 'Cần rơm 🌾 (cắt cỏ cao bằng Búa Seismic) hoặc bắp 🌽',
     allFed: 'Cả chuồng đã no hôm nay', noAnimals: 'Chuồng trống — bế thú tới cổng thả vào trước',
     pet: n => `Vuốt ve ${n}`, petted: n => `${n} vui ♥`, board: 'Bảng chuồng', boardN: n => `Bảng chuồng · ${n} sản phẩm chờ`,
     collect: 'Lấy', got: s => `Thu: ${s}`, bagFull: 'Túi đầy — phần còn lại để ở chuồng',
@@ -166,7 +166,7 @@ function placePen(ctx, rec, i) {
   put('pen_gate', g.x, g.y); put('pen_trough', t.x, t.y); put('pen_sign', s.x, s.y);
   const pen = { rec, i, objs, ents: [] };
   const rng = ctx.rngFrom(ctx.hashStr('pen:' + ctx.S.zone.id + ':' + rec.x + ',' + rec.y));
-  for (const a of rec.animals) pen.ents.push(mkEnt(pen, a, rng));
+  for (const a of [] /* p106nopet2: chuồng để trống, dữ liệu save cũ giữ nguyên */) pen.ents.push(mkEnt(pen, a, rng)); void rec.animals;
   PENS.push(pen);
   return pen;
 }

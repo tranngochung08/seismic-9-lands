@@ -12,6 +12,8 @@
 //  · DẤU: CHỈ 1 mũi tên vàng PixelLab (ui.target.arrow) trên đầu mục tiêu + số máu "35/60" — tĩnh, không khung, không viền.
 //  · KHÔNG khóa → mọi thứ y như cũ (findNear, ưu tiên, INFO_KINDS…). Không lưu gì vào save.
 //  · Bảng luật click + con trỏ: xem khối chú thích lớn ở cuối file.
+//  · p91 (plan-91 đợt A, anh duyệt 2026-11-02): ESC BỎ KHOÁ (click đất vẫn KHÔNG bỏ). Dấu khoá mới = vòng cam TĨNH dưới chân + khung mục tiêu
+//    giữa trên + thanh máu trên đầu — vẽ ở systems/target91.js (khi target91 chạy, globalThis.__t91 = true → mũi tên vàng + số máu ở đây tắt).
 import { ART } from '../art.js';
 import { isWreck } from './monsters.js';
 import { krNearTent } from './kraken.js';
@@ -120,12 +122,12 @@ export function lock(t, quiet) {
   if (same(t, ST.t)) return;
   ST.t = t;
   if (!quiet) {
-    D.CTX.sfx('target_lock');
+    if (!(globalThis.__sfx108 && globalThis.__sfx108.at(D.CTX, 'sel_target', undefined, undefined, { vol: 0.55 }))) D.CTX.sfx('target_lock');   /* p108: tiếng chọn đối tượng (file) */
     const touch = !D.mouseOn(); const first = !ST.taught; ST.taught = true;
     if (D.S.time - ST.toastT > 0.6 || first) { ST.toastT = D.S.time; D.CTX.toast(TXT().locked(nameOf(t)) + (first ? (touch ? TXT().hintTouch : TXT().hint) : '')); }
   }
 }
-export function clear() { const had = !!ST.t; ST.t = null; return had; }   /* chỉ dùng nội bộ / test — người chơi không có thao tác "bỏ khóa" */
+export function clear() { const had = !!ST.t; ST.t = null; return had; }   /* p91: Esc gọi (target91.key) — click đất vẫn không bỏ khoá */
 
 /* ---------- trỏ chuột / chạm: thứ gì nằm dưới điểm trỏ ---------- */
 export function pickAt(mt) {
@@ -257,7 +259,7 @@ function arrowImg() {
 function arrowTop(t) { const q = pos(t); return { x: q.x, y: q.y - height(t) - (t.kind === 'mon' ? 6 : 1) }; }   /* quái: chừa thanh máu sẵn có của nó */
 const arrowSize = t => Math.max(5, Math.min(8, Math.round(height(t) * 0.2)));   /* người ≈ 6, quái nhỏ 5, trùm to ≤ 8 (logic px) */
 export function drawWorld(g, cx, cy) {
-  const t = get(); if (!t || D.S.mode !== 'play') return;
+  const t = get(); if (!t || D.S.mode !== 'play' || globalThis.__t91) return;
   const a = arrowTop(t), im = arrowImg(), sz = arrowSize(t), x = Math.round(a.x - cx - sz / 2), y = Math.round(a.y - cy) - sz;   /* 2026-10-11 anh: mũi tên nhỏ, cân đối với mục tiêu */
   if (im) g.drawImage(im, 0, 0, 16, 16, x, y, sz, sz);   /* ảnh 16 px gốc (không __hi) → vẽ sz×sz logic */
   else { g.fillStyle = '#5a3a1c'; g.fillRect(x, y, sz, Math.ceil(sz / 2)); g.fillStyle = '#ffd45e'; g.fillRect(x + 1, y + 1, sz - 2, Math.max(1, Math.ceil(sz / 2) - 2)); }
@@ -270,8 +272,8 @@ function tagAt(ug, txt, sx, sy, fs, color) {
 }
 function hpText(t) { const r = t.mo || t.ref; if (t.kind === 'mon' || t.kind === 'tent') return `${Math.max(0, Math.ceil(r.hp))}/${r.max}`; if (t.kind === 'obj' && t.ref.hp != null && t.ref.hpMax) return `${t.ref.hp}/${t.ref.hpMax}`; return null; }
 export function drawUI(ug, cx, cy, scale) {
-  if (D.S.mode !== 'play') return;
-  const fs = Math.max(10, Math.round(scale * 2.8)), t = get(), hv = ST.hover;
+  if (D.S.mode !== 'play' || globalThis.__t91) return;
+  const fs = Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.8)), t = get(), hv = ST.hover;
   if (!t) return;
   const hp = hpText(t); if (!hp) return;   /* số máu ngay trên mũi tên */
   const a = arrowTop(t); tagAt(ug, hp, Math.round((a.x - cx) * scale), Math.round((a.y - arrowSize(t) - 1 - cy) * scale), fs, '#ffd45e');
@@ -363,4 +365,5 @@ export function hoverLabel() {
   return v ? `🎯 Khóa mục tiêu: ${n}` : `🎯 Lock target: ${n}`;
 }
 export function setCur(k) { ST.cur = k; }
-export function debug() { const t = get(); return { locked: !!t, kind: t && t.kind, name: t && nameOf(t), applies: !!(t && appliesTo(t)), mode: mode(), held: heldClass(), dist: t ? Math.round(dist(t)) : null, cand: candidates().map(nameOf), btn: ST.nCand, cursor: ST.cur || null, conf: !!ST.conf, far: tooFar(D.S.near) ? farLabel() : null, marker: t ? (hpText(t) ? 'arrow+hp' : 'arrow') : null }; }
+export function debug() { const t = get(); return { locked: !!t, kind: t && t.kind, name: t && nameOf(t), applies: !!(t && appliesTo(t)), mode: mode(), held: heldClass(), dist: t ? Math.round(dist(t)) : null, cand: candidates().map(nameOf), btn: ST.nCand, cursor: ST.cur || null, conf: !!ST.conf, far: tooFar(D.S.near) ? farLabel() : null, marker: t ? (globalThis.__t91 ? 'ring' : hpText(t) ? 'arrow+hp' : 'arrow') : null }; }
+export { height as heightOf, hpText };

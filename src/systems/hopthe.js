@@ -183,7 +183,7 @@ function drawOrb69(g, s, cx, cy) {
   for (let yy = -R; yy <= R; yy += 0.5) for (let xx = -R; xx <= R; xx += 0.5) { const d = Math.sqrt(xx * xx + yy * yy) / R; if (d > 1) continue; px69(g, x + xx, y + yy, d > 0.86 ? ORBP[5] : d > 0.62 ? ORBP[3] : d > 0.36 ? ORBP[1] : (xx < 0 && yy < 0 ? '#ffffff' : ORBP[0])); }
 }
 function castHacha(ctx) {
-  const p = ctx.S.player, tg = nearestMo(ctx);
+  const p = ctx.S.player, lk = ctx.target && ctx.target.get && ctx.target.get(), lm = lk && (lk.kind === 'mon' || lk.kind === 'tent') ? (lk.mo || lk.ref) : null, tg = (lm && lm.hp > 0 && Math.hypot(lm.x - p.x, lm.y - p.y) < 220 ? lm : null) || nearestMo(ctx);   /* p91 đợt C: Hắc-ha nhắm con đang khoá */
   const dir = V8[ST.f8 ?? DIR4TO8[p.dir || 0]], far = { x: p.x + dir[0] * 120, y: p.y + dir[1] * 120 };   /* không có mục tiêu → bắn theo hướng 8 đang quay */
   const pts = curvePath(ctx, p, tg || far, bodyMid(ctx) + 2);   /* đạn ra từ ngang ngực (theo chiều cao Hợp Thể mới) */
   ST.shots.push({ pts, i: 0, x: pts[0].x, y: pts[0].y, vx: dir[0] * 175, vy: dir[1] * 175, sp: 190, home: tg ? 2.5 : 0, life: tg ? 3.5 : 1.4, t: 0, tg: tg || null, born: { x: p.x, y: p.y } });

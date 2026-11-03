@@ -70,7 +70,7 @@ export const diff = {
     if (!isEasy(ctx.S.save) || ctx.S.mode !== 'play') { if (typeof window !== 'undefined') window.__diffTag = null; return; }
     const B = lastBossBar(); if (!B || !B.box) { if (typeof window !== 'undefined') window.__diffTag = null; return; }
     const now = typeof performance !== 'undefined' ? performance.now() : 0; if (now - B.t > 800) { if (typeof window !== 'undefined') window.__diffTag = null; return; }
-    const b = B.box, fs = Math.max(11, Math.round(scale * 3)), y = b.y + (b.h || 24) + 2;
+    const b = B.box, fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3)), y = b.y + (b.h || 24) + 2;
     easyTag(ug, b.x + b.w - 6, y, fs, ctx.lang() === 'vi'); if (typeof window !== 'undefined') window.__diffTag = { x: b.x + b.w - 6, y };
   },
 };

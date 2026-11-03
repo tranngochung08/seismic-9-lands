@@ -1,0 +1,173 @@
+{
+ "eye": {
+  "S": [
+   -0.3,
+   -24.4
+  ],
+  "SE": [
+   2.1,
+   -23.6
+  ],
+  "E": [
+   6.3,
+   -27.9
+  ]
+ },
+ "scale15": {
+  "target": 60,
+  "ref": 43
+ },
+ "rot": {
+  "file": "chanthu/elyziuma/ely_rot.png",
+  "cw": 67,
+  "ch": 64,
+  "n": 1,
+  "ax": 33,
+  "ay": [
+   61,
+   60,
+   63,
+   63,
+   63
+  ],
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north"
+  ],
+  "k": 1.395
+ },
+ "idle": {
+  "file": "chanthu/elyziuma/ely_idle.png",
+  "cw": 67,
+  "ch": 64,
+  "n": 4,
+  "ax": 33,
+  "ay": [
+   61,
+   60,
+   63,
+   63,
+   63
+  ],
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north"
+  ],
+  "k": 1.395
+ },
+ "walk": {
+  "file": "chanthu/elyziuma/ely_walk.png",
+  "cw": 71,
+  "ch": 71,
+  "n": 8,
+  "ax": 36,
+  "ay": [
+   64,
+   63,
+   67,
+   66,
+   68
+  ],
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north"
+  ],
+  "k": 1.395
+ },
+ "atk": {
+  "file": "chanthu/elyziuma/ely_atk.png",
+  "cw": 75,
+  "ch": 67,
+  "n": 8,
+  "ax": 38,
+  "ay": [
+   61,
+   64,
+   66,
+   63,
+   66
+  ],
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north"
+  ],
+  "k": 1.395
+ },
+ "cast": {
+  "file": "chanthu/elyziuma/ely_cast.png",
+  "cw": 71,
+  "ch": 67,
+  "n": 8,
+  "ax": 35,
+  "ay": [
+   61,
+   63,
+   66,
+   63,
+   66
+  ],
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north"
+  ],
+  "k": 1.395
+ },
+ "dash": {
+  "file": "chanthu/elyziuma/ely_dash.png",
+  "cw": 97,
+  "ch": 97,
+  "n": 9,
+  "ax": 48,
+  "ay": [
+   81,
+   81,
+   81,
+   83,
+   76
+  ],
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north"
+  ],
+  "k": 2.308
+ },
+ "idle_s": {
+  "file": "chanthu/elyziuma/ely_idle_s.png",
+  "cw": 48,
+  "ch": 46,
+  "n": 4,
+  "ax": 24,
+  "ay": [
+   44,
+   43,
+   45,
+   45,
+   45
+  ],
+  "rows": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north"
+  ]
+ }
+}

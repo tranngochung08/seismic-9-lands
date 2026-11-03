@@ -13,7 +13,7 @@ const STR = {
     full: 'Hands full — sell at the trader',
     got: n => `+ ${n}`, outOfAir: n => n ? `Out of air! Dropped ${n}` : 'Out of air!',
     shark: '🦈 Shark!', sharkHit: n => n ? `The shark got you — lost ${n}, raft −1` : 'The shark got you — raft −1',
-    waiting: 'Waiting for a bite…', castHint: 'Esc · reel in', biteHint: 'E · hook it!', bite: '!',
+    waiting: 'Waiting for a bite…', castHint: 'Esc / click ✕ · reel in', biteHint: 'E · hook it!', bite: '!',
     reelTitle: 'Reel it in!', reelBig: 'A big one — reel!', reelSquid: 'A squid — reel!', reelGold: 'Something glows — reel!',
     reelHint: 'E / Space / Enter · reel   ·   do not mash, the line snaps',
     tension: 'Line tension', gotAway: 'It got away', snapped: 'Line snapped!', ok: 'CAUGHT!', bad: 'MISSED',
@@ -25,7 +25,7 @@ const STR = {
     full: 'Đầy tay rồi — đem bán ở Thương nhân',
     got: n => `+ ${n}`, outOfAir: n => n ? `Hết hơi! Rơi mất ${n}` : 'Hết hơi!',
     shark: '🦈 Cá mập!', sharkHit: n => n ? `Cá mập đớp — mất ${n}, bè −1` : 'Cá mập đớp — bè −1',
-    waiting: 'Đợi cá cắn câu…', castHint: 'Esc · thu cần', biteHint: 'E · giật cần!', bite: '!',
+    waiting: 'Đợi cá cắn câu…', castHint: 'Esc / bấm ✕ · thu cần', biteHint: 'E · giật cần!', bite: '!',
     reelTitle: 'Thu cần!', reelBig: 'Cá to — thu mạnh!', reelSquid: 'Mực — thu cần!', reelGold: 'Có gì phát sáng — thu cần!',
     reelHint: 'E / Space / Enter · thu   ·   đừng bấm loạn, đứt cước',
     tension: 'Độ căng cước', gotAway: 'Hụt rồi', snapped: 'Đứt cước!', ok: 'ĐƯỢC RỒI!', bad: 'HỤT',
@@ -480,10 +480,10 @@ export const seaDive = {
 
   drawUI(ug, ctx, cx, cy, scale) {
     if (!seaOK(ctx)) return;
-    const S = L(ctx), W = ug.canvas.width, H = ug.canvas.height, fs = Math.max(12, scale * 4), small = `${Math.max(10, scale * 3)}px VT323, monospace`;
+    const S = L(ctx), W = ug.canvas.width, H = ug.canvas.height, fs = Math.max(12, (globalThis.__u89?globalThis.__u89(scale):scale) * 4), small = `${Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3)}px VT323, monospace`;
     ug.save(); ug.textAlign = 'center'; ug.textBaseline = 'middle';
     if (dive) {                                                   // oxygen bar, top centre
-      const bw = Math.min(W * 0.4, 320), bh = Math.max(10, scale * 3.2), bx = (W - bw) / 2, by = Math.max(54, scale * 18), k = Math.max(0, dive.t / O2_MAX);
+      const bw = Math.min(W * 0.4, 320), bh = Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3.2), bx = (W - bw) / 2, by = Math.max(54, (globalThis.__u89?globalThis.__u89(scale):scale) * 18), k = Math.max(0, dive.t / O2_MAX);
       ug.fillStyle = 'rgba(13,11,20,.75)'; ug.beginPath(); ug.roundRect(bx - 10, by - fs * 1.4, bw + 20, bh + fs * 1.9, 8); ug.fill();
       ug.font = `bold ${fs * 0.9}px VT323, monospace`; ug.fillStyle = '#dff6ff'; ug.fillText(`${S.air} · ${Math.ceil(dive.t)}s`, W / 2, by - fs * 0.6);
       ug.fillStyle = '#2b2440'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, bh / 2); ug.fill();
@@ -497,9 +497,9 @@ export const seaDive = {
         ug.fillStyle = 'rgba(13,11,20,.65)'; ug.beginPath(); ug.arc(bx, by, fs * (bite ? 1.1 : 0.9), 0, TAU); ug.fill();
         ug.fillStyle = bite ? '#ffd45e' : '#cfd8e6'; ug.fillText(bite ? S.bite : '…', bx, by + 2);
       }
-      const bw = Math.min(W * (W < 520 ? 0.86 : 0.62), 460), bh = Math.max(18, scale * 7), bx = (W - bw) / 2, th = Math.max(6, scale * 2.2);
-      const extra = f.phase === 'reel' ? th + 6 + fs : 0, by = H - Math.max(96, scale * 34) - extra, pad = Math.max(8, scale * 3);
-      ug.fillStyle = 'rgba(13,11,20,.82)'; ug.beginPath(); ug.roundRect(bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, 10); ug.fill();
+      const bw = Math.min(W * (W < 520 ? 0.86 : 0.62), 460), bh = Math.max(18, (globalThis.__u89?globalThis.__u89(scale):scale) * 7), bx = (W - bw) / 2, th = Math.max(6, (globalThis.__u89?globalThis.__u89(scale):scale) * 2.2);
+      const extra = f.phase === 'reel' ? th + 6 + fs : 0, by = H - Math.max(96, (globalThis.__u89?globalThis.__u89(scale):scale) * 34) - extra, pad = Math.max(8, (globalThis.__u89?globalThis.__u89(scale):scale) * 3);
+      ug.fillStyle = 'rgba(13,11,20,.82)'; ug.beginPath(); ug.roundRect(bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, 10); ug.fill(); globalThis.__mg91 = { mode: 'seafish', phase: f.phase, x: bx - pad, y: by - fs * 2.2 - pad, w: bw + pad * 2, h: bh + fs * 3.4 + pad * 2 + extra, cv: ug.canvas, at: performance.now() };   /* p91 mouseesc91: khung bảng câu cho nút ✕ / bấm chuột */
       ug.strokeStyle = 'rgba(255,212,94,.35)'; ug.lineWidth = 2; ug.stroke();
       ug.font = `bold ${fs}px VT323, monospace`;
       if (f.phase === 'done') { ug.fillStyle = f.ok ? '#8fe08a' : '#ff8c8c'; ug.font = `bold ${fs * 1.5}px VT323, monospace`; ug.fillText(f.text, W / 2, by + bh / 2); }

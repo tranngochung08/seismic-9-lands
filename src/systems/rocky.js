@@ -221,7 +221,7 @@ export const rockyControl = {
     ug.save();
     // the nation's artists cheer
     ug.textAlign = 'center'; ug.textBaseline = 'middle';
-    ug.font = `bold ${Math.max(13, Math.round(scale * 4.2))}px VT323, monospace`;
+    ug.font = `bold ${Math.max(13, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 4.2))}px VT323, monospace`;
     nationNpcs(ctx, nation).forEach((n, i) => {
       const sx = Math.round((n.x - cx) * scale), sy = Math.round((n.y - 30 - cy) * scale) - Math.round(Math.abs(Math.sin(t * 3 + i)) * scale * 2.5);
       if (sx < -40 || sx > W + 40 || sy < -20 || sy > H + 20) return;
@@ -230,14 +230,14 @@ export const rockyControl = {
       ug.fillText(i % 2 ? '★' : '♥', sx, sy);
     });
     // timer bar
-    const bw = Math.max(170, Math.min(380, Math.round(W * 0.34))), bh = Math.max(16, Math.round(scale * 5.5));
+    const bw = Math.max(170, Math.min(380, Math.round(W * 0.34))), bh = Math.max(16, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 5.5));
     const bx = Math.round((W - bw) / 2), by = Math.min(Math.max(122, Math.round(H * 0.17)), Math.max(60, H - 90)); // clear of the toast (top: 60px)
     const k = Math.max(0, Math.min(1, left / DURATION));
     ug.fillStyle = 'rgba(13,11,20,.78)'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, 5); ug.fill();
     ug.fillStyle = k < 0.2 ? 'rgba(255,31,75,.55)' : 'rgba(255,212,94,.45)';
     ug.beginPath(); ug.roundRect(bx + 2, by + 2, Math.max(0, (bw - 4) * k), bh - 4, 4); ug.fill();
     ug.strokeStyle = '#ffd45e'; ug.lineWidth = 1; ug.beginPath(); ug.roundRect(bx + .5, by + .5, bw - 1, bh - 1, 5); ug.stroke();
-    ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px VT323, monospace`;
+    ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4))}px VT323, monospace`;
     ug.fillText(L(ctx).bar(Math.ceil(left), ctx.S.save.inv.stone || 0), bx + bw / 2, by + bh / 2 + 1);
     ug.restore();
   }

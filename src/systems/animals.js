@@ -17,7 +17,7 @@ const STR = {
     full: 'Hands full — sell at the trader',
     needRod: 'Need a fishing rod — buy it at the village trader (🪨 stones)',
     cast: 'Cast the line',
-    waiting: 'Waiting for a bite…', castHint: 'Esc · reel in',
+    waiting: 'Waiting for a bite…', castHint: 'Esc / click ✕ · reel in',
     biteHint: 'E · hook it!', bite: '!',
     reelTitle: 'Reel it in!', reelBig: 'A big one — reel!', reelHint: 'E / Space / A · reel   ·   do not mash, the line snaps',
     tension: 'Line tension', gotAway: 'It got away', snapped: 'Line snapped!',
@@ -30,7 +30,7 @@ const STR = {
     full: 'Đầy tay rồi — đem bán ở Thương nhân',
     needRod: 'Cần cần câu — mua ở Thương nhân Làng (trả bằng 🪨 đá)',
     cast: 'Thả câu',
-    waiting: 'Đợi cá cắn câu…', castHint: 'Esc · thu cần',
+    waiting: 'Đợi cá cắn câu…', castHint: 'Esc / bấm ✕ · thu cần',
     biteHint: 'E · giật cần!', bite: '!',
     reelTitle: 'Thu cần!', reelBig: 'Cá to — thu mạnh!', reelHint: 'E / Space / A · thu   ·   đừng bấm loạn, đứt cước',
     tension: 'Độ căng cước', gotAway: 'Hụt rồi', snapped: 'Đứt cước!',
@@ -660,6 +660,12 @@ function nine(ug, x, y, w, h, b) {
   ug.imageSmoothingEnabled = ss;
 }
 function fishUi() { const f = ART.on && ART.man && ART.man.ui && ART.man.ui.fish; return f || null; }
+function fishLock91(ctx, on) {   /* p91 (anh 02/11): câu cá chỉ khoá NGƯỜI CHƠI (không đi, không đánh); chế độ vẫn 'play' nên mọi hệ khác (đội Chấn Thú, quái, thú hoang, nước, giờ…) vẫn chạy */
+  const p = ctx.S.player; if (!p) return;
+  if (on && fishing && fishing.sea) { ctx.setMode('fish'); return; }   /* câu ngoài biển (bè) giữ như cũ */
+  if (on) { ctx.S.fish91 = true; if (!Object.prototype.hasOwnProperty.call(p, 'update')) { p.update = function (dt) { this.moving = false; this.autoPath = null; if (this.animate) this.animate(dt); }; p.__f91 = true; } }
+  else { ctx.S.fish91 = false; if (p.__f91) { delete p.update; delete p.__f91; } }
+}
 function startCast(ctx, t) {
   const S = L(ctx);   /* 2026-10-11: cá vào túi vô hạn → không còn chặn 'đầy xô' */
   const d = densityAt(ctx, t.bx, t.by);
@@ -669,8 +675,8 @@ function startCast(ctx, t) {
   fishing = { phase: 'wait', t: wait, wob: 0, bx: t.bx * TILE + 8, by: t.by * TILE + 9, dens: d, ent: null, prog: 0, tens: 0, presses: [], pull: 0, big: false, yank: 0, life: 0 };
   splash(fishing.bx, fishing.by, 0.8);
   { const pl = ctx.S.player; if (pl.act) { pl.faceTo(fishing.bx, fishing.by); if (pl.hasAct('cast')) { pl.act('cast', 0.7); fishing.castT = 0.7; } else if (pl.hasAct('fish')) pl.act('fish', 1.0, true); } }   /* vung cần (clip cast) rồi giữ tư thế chờ (fish) */
-  ctx.setMode('fish');
-  ctx.registerCloser('fish', () => { fishing = null; if (ctx.S.player.endAct) ctx.S.player.endAct('fish'); ctx.setMode('play'); });
+  fishLock91(ctx, true);
+  ctx.registerCloser('fish', () => { fishing = null; fishLock91(ctx, false); if (ctx.S.player.endAct) ctx.S.player.endAct('fish'); if (ctx.S.mode === 'fish') ctx.setMode('play'); });
 }
 function biteNow(ctx) {
   fishing.phase = 'bite'; fishing.t = 1.2;                       // 1.2 s to hook it
@@ -689,13 +695,14 @@ function startReel(ctx) {
   fishing.big = Math.random() < 0.15 + d * 0.45;                 // crowded water → better odds of a big one
   if (fishing.sea) { const r = Math.random(); fishing.special = r < 0.05 ? 'goldfish' : r < 0.2 ? 'squid' : null; if (fishing.special) fishing.big = false; }   /* biển: cá vàng / mực như trước */
   { const pl = ctx.S.player; if (pl.act && pl.hasAct('reel')) pl.act('reel', 0.6); }   /* giật kéo cá */
+  if (!fishing.special) fishing.ct = ctPick(ctx);   /* p80: mắc Chấn Thú hệ Triều? (kéo nặng hơn cá to) */ if (fishing.ct) fishing.big = true;
   fishing.phase = 'reel'; fishing.prog = 0.28; fishing.tens = 0; fishing.presses = []; fishing.life = 30;
   // the fish pulls back 0.05..0.11 of the bar per second, scaled by its size
   fishing.pull = fishing.big ? 0.085 + Math.random() * 0.025 : 0.05 + Math.random() * 0.03;
   splash(fishing.bx, fishing.by, 0.9);
 }
 function endFish(ctx) {
-  fishing = null; if (ctx.S.player.endAct) ctx.S.player.endAct('fish'); if (ctx.S.mode === 'fish') ctx.setMode('play');
+  fishing = null; fishLock91(ctx, false); if (ctx.S.player.endAct) ctx.S.player.endAct('fish'); if (ctx.S.mode === 'fish') ctx.setMode('play');
   if (SHOW && SHOW.pending) {   /* thẻ cá vừa đóng → giơ con cá lên đầu 2,6 s cho người chơi thấy rồi mới bay vào túi */
     SHOW.pending = false; SHOW.until = ctx.S.time + 2.6;
     const p = ctx.S.player; if (p.hasAct && p.hasAct('carry') && p.act) p.act('carry', 2.2);
@@ -708,7 +715,34 @@ function failFish(ctx, msg) {
   ctx.toast(msg || S.gotAway);
   fishing = { ...fishing, phase: 'done', ok: false, t: 0.9, text: msg === S.snapped ? S.snapped : S.bad };
 }
+/* p80 (plan-80 đợt 4): lúc cá cắn câu, có xác suất thứ mắc câu là CHẤN THÚ HỆ TRIỀU. Kéo lên được → nó nhảy lên bờ, vào trận TẠI CHỖ (p79) với con đầu đội:
+   bắt bằng Ấn Thu được, thắng được Tiềm Năng Triều. Cấp cần câu mở loài: 1 Cá Chép / Cóc · 2 + Bạch Kình · 3 + Cóc Thần Vũ / Long Ngư (hiếm). */
+const CT_POOL = [['cachep', 1, 5], ['coc', 1, 4], ['bachkinh', 2, 3], ['coc2', 3, 1.5], ['cachep2', 3, 1]];   /* chỉ loài hệ Triều ĐÃ CÓ ảnh đấu (Bọt Bơi / Triều Đăng / Hải Tâm mới là ý tưởng p48, chưa có sprite) */
+let CT_FORCE = null;
+function ctPick(ctx) {
+  const tier = Math.max(1, ctx.tool.tier('rod') || 1), chance = 0.22 + 0.06 * (tier - 1) + (fishing && fishing.sea ? 0.1 : 0);
+  if (!CT_FORCE && Math.random() >= chance) return null; if (!ctx.chanthu || !ctx.duel) return null;
+  const pool = CT_POOL.filter(q => q[1] <= tier); let sp = CT_FORCE; CT_FORCE = null;
+  if (!sp) { let x = Math.random() * pool.reduce((a, q) => a + q[2], 0); for (const q of pool) { x -= q[2]; if (x <= 0) { sp = q[0]; break; } } sp = sp || pool[0][0]; }
+  const zl = Math.max(0, (ctx.S.zone && ctx.S.zone.lv) | 0); return { sp, lv: Math.max(3, Math.min(60, zl * 5 + 3 + Math.floor(Math.random() * 5))), tier };
+}
+function ctCaught(ctx) {
+  const C = fishing.ct, vi = ctx.lang() === 'vi', p = ctx.S.player, bx = fishing.bx, by = fishing.by;
+  splash(bx, by, 1.8); puff(bx, by - 6, 8, '#dff0ff'); ctx.sfx('catch_rare');
+  fishing = null; fishLock91(ctx, false); if (p.endAct) { p.endAct('reel'); p.endAct('fish'); } if (ctx.S.mode === 'fish') ctx.setMode('play');
+  const d = ctx.chanthu.ensure(), me = d && d.team && d.team[0], nm = ctx.ldKit && ctx.ldKit.name ? ctx.ldKit.name(C.sp) : C.sp;
+  if (!me) { ctx.toast(vi ? `Mắc câu ${nm}! Nhưng bạn chưa có Chấn Thú để đấu — nó lặn mất.` : `Hooked a ${nm}! But you have no Quake Beast to battle — it swam away.`); return; }
+  ctx.toast(vi ? `Câu trúng Chấn Thú ${nm}! Nó nhảy lên bờ!` : `You hooked a ${nm}! It leaps ashore!`, true);
+  if (ctx.comp79 && !ctx.comp79.out()) ctx.comp79.press();   /* chưa thả → tự thả con đầu đội ra đấu */
+  const ul = Math.hypot(bx - p.x, by - p.y) || 1, at = { x: p.x + (bx - p.x) / ul * Math.min(26, ul * 0.5), y: p.y + (by - p.y) / ul * Math.min(26, ul * 0.5) }, q = ctx.ldKit && ctx.ldKit.near ? ctx.ldKit.near(at.x, at.y) : at, key = 'fish:' + ctx.S.zone.id + ':' + Date.now();
+  CT_LAST = { sp: C.sp, lv: C.lv, x: Math.round(q.x), y: Math.round(q.y) };
+  setTimeout(() => { try { ctx.duel.start({ wild: { sp: C.sp, lv: C.lv, key }, wildAt: { x: q.x, y: q.y }, mode: '1v1', lv: me.lv, team: [{ sp: me.sp, lv: me.lv, name: me.name, mv: me.mv || null, ult: me.ult || null }], foeTeam: [{ sp: C.sp, lv: C.lv }],
+    onCatch: () => { const where = ctx.chanthu.add(C.sp, C.lv); const dd = ctx.chanthu.ensure(); dd.caught = (dd.caught | 0) + 1; ctx.persist(); return where; },
+    onWin: () => { if (ctx.fieldct && ctx.fieldct.tnAdd) ctx.fieldct.tnAdd('trieu', 2 + C.tier, { x: q.x, y: q.y }); }, onFlee: () => { }, onLose: () => { } }); } catch (e) { console.error('p80 cá Chấn Thú', e); } }, 350);
+}
+let CT_LAST = null;
 function succeedFish(ctx) {
+  if (fishing && fishing.ct) return ctCaught(ctx);   /* p80 */
   const S = L(ctx);
   if (fishing.ent) { const i = list.indexOf(fishing.ent); if (i >= 0) list.splice(i, 1); }
   splash(fishing.bx, fishing.by, 1.4);
@@ -749,6 +783,7 @@ function fishAction(ctx) {
 }
 function updateFishing(dt, ctx) {
   const S = L(ctx), f = fishing;
+  { const hh = ctx.hero ? ctx.hero.hp : null; if (ctx.S.fish91 && f.hp91 != null && hh != null && hh < f.hp91 - 0.01 && f.phase !== 'done') { const c = ctx.S.closers && ctx.S.closers.fish; if (c) c(); else { fishing = null; fishLock91(ctx, false); } return; } f.hp91 = hh; }   /* p91: bị đánh lúc câu → tự thu cần, nhận đòn bình thường */
   f.wob += dt * (f.phase === 'bite' ? 7 : 2);
   { const pl = ctx.S.player;   /* động tác theo pha: vung xong thì tư thế chờ; đang kéo thì lặp clip reel */
     if (f.castT > 0) { f.castT -= dt; if (f.castT <= 0 && pl.hasAct && pl.hasAct('fish') && (f.phase === 'wait' || f.phase === 'bite')) pl.act('fish', 0.3, true); }
@@ -814,7 +849,7 @@ export const animals = {
     list = []; fx = []; fishing = null; splashT = 0.6;
     if (ctx.S.mode === 'fish' || ctx.S.mode === 'catch') ctx.setMode('play');
     ctx.onAction('fish', () => fishAction(ctx));     // E / Space / Enter / touch A while reeling
-    ctx.registerCloser('fish', () => { fishing = null; ctx.setMode('play'); });
+    fishLock91(ctx, false); ctx.registerCloser('fish', () => { fishing = null; fishLock91(ctx, false); if (ctx.S.mode === 'fish') ctx.setMode('play'); });
     /* cá trên tay giữ nguyên tới khi bấm T (anh 2026-10-11); xô của save cũ đã được save.js dropBucket dọn */
     { const sa = sysS(ctx), m = sa.migr; if (m) { delete sa.migr; ctx.persist(); const vi = ctx.lang() === 'vi';   /* save cũ có lồng / xe chở (save.js dropBucket) → báo 1 lần */
       setTimeout(() => ctx.toast(vi ? `Đã bỏ lồng/xe chở: ${m.bag || 0} con thú chuyển vào túi${m.freed ? `, ${m.freed} con được thả ra` : ''} (bấm T cất thú trên đầu vào túi)` : `Cages and carts are gone: ${m.bag || 0} animals moved to your bag${m.freed ? `, ${m.freed} released` : ''} (press T to stow the one on your head)`, true), 1200); } }
@@ -825,9 +860,7 @@ export const animals = {
     const id = ctx.S.zone.id, th = THEME[id]; if (!th) return;
     const rng = ctx.rngFrom(ctx.hashStr('animals:' + id) ^ 0x5eed);
     const n = r => r[0] + ((rng() * (r[1] - r[0] + 1)) | 0);
-    if (th.cow) spawnLand(ctx, rng, 'cow', n(th.cow));
-    if (th.chicken) spawnLand(ctx, rng, 'chicken', n(th.chicken));
-    if (th.bird) spawnBirds(ctx, rng, n(th.bird));
+    /* p106nopet2 */ /* anh 02/11: bỏ bò / gà / chim đi bộ (không phải quái) — chỉ còn cá để câu */
     if (th.fish) spawnFishByDensity(ctx, rng);
     // test / demo hooks
     if (typeof window !== 'undefined') window.__animalsRaw = () => list;   /* móc test plan-11 */
@@ -837,7 +870,7 @@ export const animals = {
       raw: kind => list.find(o => o.kind === kind) || null,
       warp: (kind, dx = 14) => { const a = list.find(x => x.kind === kind); if (!a) return null; ctx.S.player.x = a.x + dx; ctx.S.player.y = a.y + 4; return { x: a.x, y: a.y }; },
       bring: kind => { const a = list.find(x => x.kind === kind), p = ctx.S.player; if (!a) return null; a.x = p.x + 16; a.y = p.y; a.st = 'idle'; a.t = 5; if (a.perch) { a.perch.x = a.x; a.perch.y = a.y; } return { x: a.x, y: a.y }; },
-      spots: () => spots.slice(), fishing: () => fishing,
+      spots: () => spots.slice(), fishing: () => fishing, ctForce: sp => { CT_FORCE = sp || 'cachep'; return CT_FORCE; }, ctLast: () => CT_LAST,   /* p80 test */
       shore: () => { // a dry tile next to water, as close to the richest hot spot as possible: {tx, ty, dir}
         const m = ctx.S.map, s = spots[0]; if (!s) return null; let best = null, bd = 1e9;
         for (let ty = 1; ty < m.h - 1; ty++) for (let tx = 1; tx < m.w - 1; tx++) {
@@ -851,7 +884,7 @@ export const animals = {
   },
 
   onZoneLeave(ctx) {
-    if (fishing) { fishing = null; if (ctx.S.mode === 'fish') ctx.setMode('play'); }
+    if (fishing) { fishing = null; fishLock91(ctx, false); if (ctx.S.mode === 'fish') ctx.setMode('play'); }
     SHOW = null;   /* cá đã ở trong túi từ lúc câu */
     list = []; fx = []; dens = null; spots = []; waterTiles = [];
   },
@@ -943,21 +976,21 @@ export const animals = {
       const bx = Math.round((f.bx - cx) * scale), by = Math.round((f.by - 22 - cy) * scale);
       const bite = f.phase === 'bite';
       ug.font = `bold ${fs * (bite ? 2 : 1.3)}px VT323, monospace`;
-      const rr = Math.round(fs * (bite ? 1.1 : 0.9)); nine(ug, bx - rr, by - rr, rr * 2, rr * 2, Math.max(4, scale * 2));   /* ô giấy PixelLab */
+      const rr = Math.round(fs * (bite ? 1.1 : 0.9)); nine(ug, bx - rr, by - rr, rr * 2, rr * 2, Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale) * 2));   /* ô giấy PixelLab */
       ug.fillStyle = bite ? '#c0392b' : '#3b2412';
       ug.fillText(bite ? S.bite : '…', bx, by + 2);
     }
     /* polish 2026-10-10: màn hẹp (điện thoại dọc ~390 px) → khung gần hết bề ngang; nhãn 'Độ căng' + gợi ý không đủ chỗ thì gợi ý xuống dòng riêng (thu chữ nếu vẫn dài);
        cảm ứng: khung nhấc lên trên nút A. Desktop (≥ 600 px) giữ y như cũ. */
-    const pad = Math.max(8, scale * 3), narrow = W < 600;
-    const bw = narrow ? Math.max(120, W - pad * 2 - 24) : Math.min(W * 0.62, 460), bh = Math.max(18, scale * 7), bx = (W - bw) / 2;
-    const th = Math.max(6, scale * 2.2);                        /* tension meter height */
+    const pad = Math.max(8, (globalThis.__u89?globalThis.__u89(scale):scale) * 3), narrow = W < 600;
+    const bw = narrow ? Math.max(120, W - pad * 2 - 24) : Math.min(W * 0.4, 320), bh = Math.max(18, (globalThis.__u89?globalThis.__u89(scale):scale) * 7), bx = (W - bw) / 2;
+    const th = Math.max(6, (globalThis.__u89?globalThis.__u89(scale):scale) * 2.2);                        /* tension meter height */
     const smallPx = Math.max(narrow ? 12 : 10, scale * 3), small = `${smallPx}px VT323, monospace`;
     const reelHint = keyHint(S.reelHint); let wrap = false, hintFont = small;
     if (f.phase === 'reel') { ug.font = small; const tw = ug.measureText(S.tension).width, hw = ug.measureText(reelHint).width; if (tw + hw + 16 > bw) { wrap = true; if (hw > bw) hintFont = `${Math.max(8, Math.floor(smallPx * bw / hw))}px VT323, monospace`; } }
     const extra = f.phase === 'reel' ? th + 6 + fs + (wrap ? fs * 0.9 : 0) : 0;   /* the reel panel is taller: bar + tension + labels */
-    const by = H - (narrow && isTouchUI() ? 190 : Math.max(96, scale * 34)) - extra;
-    nine(ug, bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, Math.max(8, scale * 3));   /* khung giấy PixelLab (ui/hud/box.png), không bo góc */
+    const by = H - (narrow && isTouchUI() ? 190 : Math.max(96, (globalThis.__u89?globalThis.__u89(scale):scale) * 34)) - extra;
+    nine(ug, bx - pad, by - fs * 2.2 - pad, bw + pad * 2, bh + fs * 3.4 + pad * 2 + extra, Math.max(8, (globalThis.__u89?globalThis.__u89(scale):scale) * 3)); globalThis.__mg91 = { mode: 'fish', phase: f.phase, x: bx - pad, y: by - fs * 2.2 - pad, w: bw + pad * 2, h: bh + fs * 3.4 + pad * 2 + extra, cv: ug.canvas, at: performance.now() };   /* p91 mouseesc91: khung bảng câu cho nút ✕ / bấm chuột */   /* khung giấy PixelLab (ui/hud/box.png), không bo góc */
     ug.font = `bold ${fs}px VT323, monospace`;
     if (f.phase === 'done') {
       ug.fillStyle = f.ok ? '#2e7d32' : '#c0392b';
@@ -993,6 +1026,7 @@ export const animals = {
   },
 
   near(ctx) {
+    if (fishing && ctx.S.fish91) return { label: '', x: ctx.S.player.x, y: ctx.S.player.y, limit: 9999, priority: 99, mouse: false, isLock: true, data: { fishAct: true } };   /* p91: đang câu (chế độ vẫn play) → E / A = giật / kéo */
     if (fishing || ctx.S.map.sea) return null;       // sea fishing lives in sea_dive.js
     const S = L(ctx), p = ctx.S.player;
     let best = null, bd = Infinity;
@@ -1003,18 +1037,21 @@ export const animals = {
       if (d < 26 && d < bd) { bd = d; best = a; }
     }
     if (best) return { label: S[best.kind], x: best.x, y: best.y, limit: 26, data: { animal: best } };
+    if (globalThis.__ww91) return null;   /* p91: vừa bấm chuột TRÁI lên nước → đang đi tới đó, không thả câu */
     const t = castTarget(ctx);
     if (!t) return null;
     if (!hasRod(ctx)) return { label: S.needRod, x: t.x, y: t.y, limit: 30, data: { hint: true } };
     if (!holdRod(ctx)) { const mt = ctx.mouseTile && ctx.mouseTile(), p = ctx.S.player;   /* có cần mà không cầm: chỉ khi TRỎ CHUỘT vào nước gần → click tự cầm cần câu */
-      if (mt && ctx.needHold && isWaterT(ctx, mt.tx, mt.ty) && Math.hypot(mt.wx - p.x, mt.wy - p.y) < 56) return { label: ctx.needHold('rod'), x: mt.wx, y: mt.wy, limit: 60, mouse: true, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };
+      if (mt && ctx.needHold && isWaterT(ctx, mt.tx, mt.ty) && Math.hypot(mt.wx - p.x, mt.wy - p.y) < 56) return { label: globalThis.__rf91 ? ctx.needHold('rod') : '', x: mt.wx, y: mt.wy, limit: 60, mouse: true, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };   /* p91: rê chuột lên nước = chỉ con trỏ cần câu, không bảng chữ */
       if (ctx.touchA && ctx.touchA() && ctx.needHold) return { label: ctx.needHold('rod'), x: t.x, y: t.y, limit: 30, mouse: false, cursor: 'tool', need: true, needId: 'rod', data: { need: true } };   /* điện thoại: đứng cạnh nước → nút A tự cầm cần câu */
       return null; }
+    { const mt9 = ctx.mouseTile && ctx.mouseTile(); if (mt9 && !globalThis.__rf91 && isWaterT(ctx, mt9.tx, mt9.ty)) return { label: '', x: t.x, y: t.y, limit: 30, data: { cast: t } }; }   /* p91: rê chuột lên nước → không bảng chữ */
     return { label: S.cast, x: t.x, y: t.y, limit: 30, data: { cast: t } };
   },
 
   interact(ctx, cand) {
     const d = cand && cand.data; if (!d) return;
+    if (d.fishAct) { fishAction(ctx); return; }
     if (d.hint) { ctx.toast(L(ctx).needRod); return; }
     if (d.cast) { startCast(ctx, d.cast); return; }
     if (d.animal) catchLand(ctx, d.animal);

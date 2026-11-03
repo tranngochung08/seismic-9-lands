@@ -768,8 +768,8 @@ export const storySea = {
     const b = st.bubble;
     if (b && (st.phase === 'ride' || st.phase === 'arrive')) {          // Lyron's speech bubble above the raft (crisp text, ≤ 2 lines)
       const p = ctx.S.player, n = st.lyron, ax = Math.round(((n ? n.x : p.x) - cx) * scale), ay = Math.round(((n ? n.y : p.y) - 30 - cy) * scale);
-      const fs = Math.max(11, Math.round(scale * 3.4)); ug.font = `bold ${fs}px VT323, monospace`;
-      const lines = wrapLines(ug, b.text, Math.max(180, scale * 110)), lh = fs + 3;
+      const fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4)); ug.font = `bold ${fs}px VT323, monospace`;
+      const lines = wrapLines(ug, b.text, Math.max(180, (globalThis.__u89?globalThis.__u89(scale):scale) * 110)), lh = fs + 3;
       const w = Math.max(...lines.map(l => ug.measureText(l).width)) + fs * 1.4, h = lines.length * lh + fs * 0.9;
       let bx = ax - w / 2; bx = Math.max(6, Math.min(W - w - 6, bx)); const by = ay - h - 10;
       ug.globalAlpha = Math.min(1, b.t / 0.5);
@@ -782,7 +782,7 @@ export const storySea = {
       ug.globalAlpha = 1;
     }
     if (st.phase === 'cut' && ctx.S.mode === 'cutscene') {
-      const fs = Math.max(11, Math.round(scale * 3)); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'right'; ug.textBaseline = 'bottom';
+      const fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3)); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'right'; ug.textBaseline = 'bottom';
       ug.fillStyle = 'rgba(13,11,20,.6)'; const tw = ug.measureText(t.skip).width + 12; ug.beginPath(); ug.roundRect(W - tw - 12, H - fs - 22, tw, fs + 8, 5); ug.fill();
       ug.fillStyle = '#f2ebe0'; ug.fillText(t.skip, W - 18, H - 16);
     }

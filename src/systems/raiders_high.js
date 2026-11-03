@@ -17,7 +17,7 @@ const STR = {
     cry: { drake: 'A roar rolls across the ash…', yeti: 'The snow hisses on the slope…', naga: 'The core hums a low, hungry note…' },
     npc: { drake: n => `${n}: "Get everyone away from the walls!"`, yeti: n => `${n}: "Hide the food — and find a fish!"`, naga: n => `${n}: "It wants our light. Wake the drum!"` },
     hit: { drake: n => `The fire drake dives on ${n}!`, yeti: n => `The Yeti crashes into ${n}'s yard!`, naga: n => `The Moon Serpent coils around ${n}'s yard!` },
-    stone: 'Throw stone (🪨1)', noStone: 'No stones left — mine rocks with a pickaxe or sell animals at the trader 🪨', stoneHit: (k, n) => `Hit! ${k}/${n}`,
+    stone: 'Throw stone (🪨1)', noStone: 'No stones left — break rocks with the Seismic Hammer or sell animals at the trader 🪨', stoneHit: (k, n) => `Hit! ${k}/${n}`,
     fish: 'Offer fish (🐟)', fishNeed: 'The Yeti sniffs the air — it wants a fish 🐟 (fish at a shore with the rod)', fishOk: 'The Yeti takes the fish, grunts, and lumbers off.',
     drum: 'Beat the ritual drum', leaders: k => `The Leaders must know you (${k}/15)`,
     drumTitle: 'Ritual drum', drumHint: 'E / Space · keep the beat', drumMiss: 'The beat slipped — start again', drumWin: 'The drum answers — the Moon Serpent gives the light back!',
@@ -32,7 +32,7 @@ const STR = {
     cry: { drake: 'Tiếng gầm vọng qua tro tàn…', yeti: 'Tuyết rít trên sườn núi…', naga: 'Lõi ngân lên một nốt trầm đói khát…' },
     npc: { drake: n => `${n}: "Tránh xa tường ra!"`, yeti: n => `${n}: "Giấu đồ ăn đi — và kiếm một con cá!"`, naga: n => `${n}: "Nó muốn ánh sáng của ta. Đánh trống lên!"` },
     hit: { drake: n => `Hỏa Long lao xuống khu ${n}!`, yeti: n => `Người Tuyết đạp vào khu ${n}!`, naga: n => `Rắn Trăng cuộn quanh khu ${n}!` },
-    stone: 'Ném đá (🪨1)', noStone: 'Hết đá rồi — đập đá bằng cuốc hoặc bán thú ở Thương nhân 🪨', stoneHit: (k, n) => `Trúng! ${k}/${n}`,
+    stone: 'Ném đá (🪨1)', noStone: 'Hết đá rồi — đập đá bằng Búa Seismic hoặc bán thú ở Thương nhân 🪨', stoneHit: (k, n) => `Trúng! ${k}/${n}`,
     fish: 'Cho cá (🐟)', fishNeed: 'Người Tuyết hít hà — nó muốn một con cá 🐟 (câu ở bờ nước bằng cần câu)', fishOk: 'Người Tuyết cầm cá, gầm gừ rồi bỏ đi.',
     drum: 'Gõ trống nghi lễ', leaders: k => `Các Leader phải biết bạn (${k}/15)`,
     drumTitle: 'Trống nghi lễ', drumHint: 'E / Space · giữ nhịp', drumMiss: 'Lỡ nhịp — gõ lại từ đầu', drumWin: 'Trống vang lên — Rắn Trăng trả lại ánh sáng!',
@@ -708,10 +708,10 @@ export const raidersHigh = {
       if (sx > -80 && sx < W + 80 && sy > -40 && sy < H + 40) {
         ug.save();
         ug.textAlign = 'center'; ug.textBaseline = 'alphabetic';
-        ug.font = `bold ${Math.max(11, Math.round(scale * 3.4))}px VT323, monospace`;
+        ug.font = `bold ${Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4))}px VT323, monospace`;
         ug.fillStyle = 'rgba(13,11,20,.6)'; ug.fillText(S[r.kind], sx + 1, sy - Math.round(scale * 3) + 1);
         ug.fillStyle = '#ffd45e'; ug.fillText(S[r.kind], sx, sy - Math.round(scale * 3));
-        const pw = Math.max(5, Math.round(scale * 2.2)), gap = Math.round(pw * 0.5), tot = r.max * pw + (r.max - 1) * gap;
+        const pw = Math.max(5, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.2)), gap = Math.round(pw * 0.5), tot = r.max * pw + (r.max - 1) * gap;
         for (let i = 0; i < r.max; i++) {
           const x = sx - tot / 2 + i * (pw + gap), y = sy - Math.round(scale * 1.2);
           ug.fillStyle = 'rgba(13,11,20,.75)'; ug.fillRect(x - 1, y - 1, pw + 2, pw + 2);
@@ -723,16 +723,16 @@ export const raidersHigh = {
     }
     if (!ritual) return;
     // ---- ritual drum: beat bar
-    const bw = Math.max(220, Math.min(430, Math.round(W * 0.42))), bh = Math.max(56, Math.round(scale * 19));
+    const bw = Math.max(220, Math.min(430, Math.round(W * 0.42))), bh = Math.max(56, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 19));
     const bx = Math.round((W - bw) / 2), by = Math.round(Math.min(H * 0.62, H - bh - 70));
     ug.save();
     ug.fillStyle = 'rgba(13,11,20,.86)'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, 7); ug.fill();
     ug.strokeStyle = ritual.miss > 0 ? '#ff1f4b' : '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.roundRect(bx + 1, by + 1, bw - 2, bh - 2, 7); ug.stroke();
     ug.textAlign = 'center'; ug.textBaseline = 'middle';
-    ug.font = `bold ${Math.max(12, Math.round(scale * 3.6))}px VT323, monospace`;
+    ug.font = `bold ${Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.6))}px VT323, monospace`;
     ug.fillStyle = '#fff'; ug.fillText(`🥁 ${S.drumTitle} ${ritual.hits}/${BEATS}`, bx + bw / 2, by + Math.round(bh * 0.28));
     // pips
-    const n = BEATS, pw = Math.max(10, Math.round(scale * 4)), gap = Math.round(pw * 0.6), tot = n * pw + (n - 1) * gap;
+    const n = BEATS, pw = Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 4)), gap = Math.round(pw * 0.6), tot = n * pw + (n - 1) * gap;
     for (let i = 0; i < n; i++) {
       const x = bx + (bw - tot) / 2 + i * (pw + gap), y = by + Math.round(bh * 0.52);
       ug.fillStyle = i < ritual.hits ? (ritual.flash > 0 && i === ritual.hits - 1 ? '#ffffff' : '#ffd45e') : 'rgba(255,255,255,.16)';
@@ -740,10 +740,10 @@ export const raidersHigh = {
     }
     // the shrinking window you must hit inside
     const k = ritual.hits > 0 ? clamp(1 - ritual.since / BEAT_WINDOW, 0, 1) : 1;
-    const wx = bx + 12, ww = bw - 24, wy = by + bh - Math.max(9, Math.round(scale * 2.6)) - 5, wh = Math.max(5, Math.round(scale * 1.7));
+    const wx = bx + 12, ww = bw - 24, wy = by + bh - Math.max(9, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.6)) - 5, wh = Math.max(5, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 1.7));
     ug.fillStyle = 'rgba(255,255,255,.12)'; ug.fillRect(wx, wy, ww, wh);
     ug.fillStyle = k > .35 ? '#4fc7a8' : '#ff1f4b'; ug.fillRect(wx, wy, Math.round(ww * k), wh);
-    ug.font = `${Math.max(10, Math.round(scale * 2.8))}px VT323, monospace`;
+    ug.font = `${Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.8))}px VT323, monospace`;
     ug.fillStyle = 'rgba(255,255,255,.75)'; ug.textAlign = 'right';
     ug.fillText(S.drumHint, bx + bw - 12, by + Math.round(bh * 0.28));
     ug.restore();

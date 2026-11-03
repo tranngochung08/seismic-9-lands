@@ -74,6 +74,7 @@ ITEMS.rkbook_fly = { ...I('📘', "Book: Rocky Jet (Fly)", "Sách Rocky: Bay", 0
   desc: { vi: 'Sách cũ — tự đổi thành 2 chong chóng tre (luật bay mới).', en: 'Old book — automatically traded for 2 bamboo copters (new flying rules).' } };
 // Tools have tiers: 0 = not owned, 1..3 = wood/iron/obsidian quality. `save.toolTier`.
 export const TOOLS = {
+  bua: I('🔨', 'Seismic Hammer', 'Búa Seismic', 0),   /* p80 (plan-80, anh duyệt 02/11): 1 công cụ thay Rìu / Cuốc / Xẻng / Liềm / Dao / Đuốc */
   axe: I('🪓', 'Axe', 'Rìu', 0), pickaxe: I('⛏', 'Pickaxe', 'Cuốc', 0), rod: I('🎣', 'Fishing rod', 'Cần câu', 0), shovel: I('🥄', 'Shovel', 'Xẻng', 0), scythe: I('🌾', 'Scythe', 'Liềm', 0),
   knife: I('🔪', 'Knife', 'Dao', 0), torch: I('🔦', 'Torch', 'Đuốc', 0),   /* 2026-10-11 anh bỏ xe chở vật nuôi, thòng lọng, bẫy, yên ngựa (save.js dropBucket gỡ khỏi save cũ) */
   sword: I('⚔', 'Sword', 'Kiếm', 0)   /* plan-21: 6 cấp (gỗ → đá → sắt → obsidian → pha lê → Seismic) */
@@ -88,3 +89,7 @@ export const PILLS = { pill_s: { secs: 60, price: 20 }, pill_l: { secs: 180, pri
 export const BREATH_CAP = 600;
 export function itemName(id, lang) { const d = ITEMS[id] || TOOLS[id]; return d ? d.name[lang] || d.name.en : id; }
 export function itemIcon(id) { const d = ITEMS[id] || TOOLS[id]; return d ? d.icon : '▪'; }
+
+/* p80: 6 dụng cụ cây / đất gộp vào Búa Seismic — mã cũ vẫn dùng được trong code (quy về 'bua'), không còn là món riêng trong túi / thanh công cụ */
+export const MERGED = ['axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'torch'];
+export const toolOf = id => (MERGED.includes(id) ? 'bua' : id);

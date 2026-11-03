@@ -489,8 +489,8 @@ export const sumo = {
   drawUI(ug, ctx, cx, cy, scale) {
     if (!ai || phase === 'back') return;
     const S = L(ctx), W = ug.canvas.width, H = ug.canvas.height;
-    const bw = Math.max(210, Math.min(420, Math.round(W * 0.38))), bh = Math.max(34, Math.round(scale * 11));
-    const bx = Math.round((W - bw) / 2), by = Math.min(Math.max(122, Math.round(H * 0.17)), Math.max(60, H - 120)) + Math.max(20, Math.round(scale * 7));   // under rocky.js's pilot bar
+    const bw = Math.max(210, Math.min(420, Math.round(W * 0.38))), bh = Math.max(34, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 11));
+    const bx = Math.round((W - bw) / 2), by = Math.min(Math.max(122, Math.round(H * 0.17)), Math.max(60, H - 120)) + Math.max(20, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 7));   // under rocky.js's pilot bar
     ug.save();
     ug.fillStyle = 'rgba(13,11,20,.78)'; ug.beginPath(); ug.roundRect(bx, by, bw, bh, 6); ug.fill();
     ug.strokeStyle = '#e6d5ab'; ug.lineWidth = 1; ug.beginPath(); ug.roundRect(bx + .5, by + .5, bw - 1, bh - 1, 6); ug.stroke();
@@ -498,11 +498,11 @@ export const sumo = {
     ug.fillStyle = k < 0.2 ? 'rgba(255,31,75,.55)' : 'rgba(230,213,171,.35)';
     ug.beginPath(); ug.roundRect(bx + 3, by + bh - 7, Math.max(0, (bw - 6) * k), 4, 2); ug.fill();
     ug.textBaseline = 'middle';
-    const fs = Math.max(11, Math.round(scale * 3.3));
+    const fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.3));
     ug.font = `bold ${fs}px VT323, monospace`;
     ug.textAlign = 'left'; ug.fillStyle = '#8fd3ff'; ug.fillText(myKey ? `${S.you} · ${fullName(ctx, myKey)}` : S.you, bx + 10, by + bh / 2 - 3);
     ug.textAlign = 'right'; ug.fillStyle = '#ffd45e'; ug.fillText(ai.name, bx + bw - 10, by + bh / 2 - 3);
-    ug.textAlign = 'center'; ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(13, Math.round(scale * 4.2))}px VT323, monospace`;
+    ug.textAlign = 'center'; ug.fillStyle = '#fff'; ug.font = `bold ${Math.max(13, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 4.2))}px VT323, monospace`;
     const t = phase === 'duel' || phase === 'end' ? Math.max(0, Math.ceil(left)) : DUEL_LEN;
     ug.fillText(phase === 'walk' ? '…' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`, bx + bw / 2, by + bh / 2 - 3);
     ug.restore();

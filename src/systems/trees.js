@@ -15,16 +15,16 @@ const STR = {
   en: {
     chop: 'Chop', cards: 'Art cards', dealer: 'Art dealer', tabDealer: 'Dealer',
     mine: n => `My collection (${n})`, buy: 'Buy', owned: '✓ Owned', price: 'price',
-    got: n => `+${n} wood`, bought: name => `Art card: ${name}`, poor: n => `Need ${n} wood — chop trees with the axe`,
-    close: 'Close', imgs: 'artworks', leader: '★ Leader', noAxe: 'Needs an axe — craft Axe I at the workbench (5 wood)',
+    got: n => `+${n} wood`, bought: name => `Art card: ${name}`, poor: n => `Need ${n} wood — chop trees with the Seismic Hammer`,
+    close: 'Close', imgs: 'artworks', leader: '★ Leader', noAxe: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock)',
     note: 'Real artworks appear here once the roster includes image links.',
     empty: 'No cards yet — buy one from the dealer.', nobody: 'No artists walking this land right now.'
   },
   vi: {
     chop: 'Chặt cây', cards: 'Thẻ tranh', dealer: 'Nhà buôn tranh', tabDealer: 'Người bán',
     mine: n => `Bộ sưu tập (${n})`, buy: 'Mua', owned: '✓ Đã có', price: 'giá',
-    got: n => `+${n} gỗ`, bought: name => `Thẻ tranh: ${name}`, poor: n => `Cần ${n} gỗ — chặt cây bằng rìu`,
-    close: 'Đóng', imgs: 'tranh', leader: '★ Leader', noAxe: 'Cần rìu — chế Rìu I ở Bàn mộc (5 gỗ)',
+    got: n => `+${n} gỗ`, bought: name => `Thẻ tranh: ${name}`, poor: n => `Cần ${n} gỗ — chặt cây bằng Búa Seismic`,
+    close: 'Đóng', imgs: 'tranh', leader: '★ Leader', noAxe: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)',
     note: 'Tranh thật sẽ hiện khi danh sách có link ảnh.',
     empty: 'Chưa có thẻ nào — mua ở nhà buôn tranh.', nobody: 'Chưa có nghệ sĩ nào đi trong vùng này.'
   }
@@ -375,7 +375,7 @@ export const trees = {
     // progress pips over trees that have been hit + the tree we are standing at
     const near = ctx.S.near, list = ST.pips.slice();
     if (near && near.kind === 'sys' && near.cand && near.cand.data && near.cand.data.kind === 'tree' && !list.includes(near.cand.data.o)) list.push(near.cand.data.o);
-    const r = Math.max(2, scale * 1.1), gap = r * 3;
+    const r = Math.max(2, (globalThis.__u89?globalThis.__u89(scale):scale) * 1.1), gap = r * 3;
     for (const o of list) {
       const sx = Math.round((o.x * TS + 8 - cx) * scale), sy = Math.round((o.y * TS - 20 - cy) * scale);
       if (sx < -40 || sx > ug.canvas.width + 40 || sy < -20 || sy > ug.canvas.height + 20) continue;
@@ -383,7 +383,7 @@ export const trees = {
         const x = sx + (i - 1) * gap;
         ug.beginPath(); ug.arc(x, sy, r, 0, 7);
         ug.fillStyle = i < (o.chop || 0) ? '#ffd45e' : 'rgba(13,11,20,.65)'; ug.fill();
-        ug.strokeStyle = 'rgba(13,11,20,.85)'; ug.lineWidth = Math.max(1, scale / 3); ug.stroke();
+        ug.strokeStyle = 'rgba(13,11,20,.85)'; ug.lineWidth = Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) / 3); ug.stroke();
       }
     }
     // floating dealer sign
@@ -392,7 +392,7 @@ export const trees = {
       const t = L(ctx), text = t.dealer;
       const sx = Math.round((s.x * TS + 16 - cx) * scale), sy = Math.round((s.y * TS - 18 - cy) * scale);
       if (sx > -160 && sx < ug.canvas.width + 160 && sy > -40 && sy < ug.canvas.height + 40) {
-        const fs = Math.max(10, scale * 3);
+        const fs = Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3);
         ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
         const w = ug.measureText('🖼 ' + text).width + 10, h = fs + 5;
         ug.fillStyle = 'rgba(13,11,20,.72)'; ug.beginPath(); ug.roundRect(sx - w / 2, sy - h, w, h, 4); ug.fill();

@@ -2263,7 +2263,7 @@ export const lyronFinale = {
     const W = ug.canvas.width, H = ug.canvas.height, t = L(ctx), font = px => `${Math.round(px)}px VT323, monospace`;
     if (ST.pull || ST.arrive) drawPull(ug, ctx);
     if (ST.hov && inMind(ctx)) {   /* chip nhỏ 🚁 khi đang bay lơ lửng */
-      const fs = Math.max(12, Math.round(scale * 2.8)), pl = ctx.S.player, y = Math.round((pl.y - 34 - cy) * scale), tx = '🚁';   /* gắn cạnh người chơi, không trôi giữa màn */
+      const fs = Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.8)), pl = ctx.S.player, y = Math.round((pl.y - 34 - cy) * scale), tx = '🚁';   /* gắn cạnh người chơi, không trôi giữa màn */
       ug.save(); ug.font = `bold ${fs}px VT323, monospace`; const w = ug.measureText(tx).width + 14; ug.fillStyle = 'rgba(20,14,30,.62)'; const X0 = Math.round((pl.x - cx) * scale + 12 * scale); ug.beginPath(); ug.roundRect(X0, y, w, fs + 6, 6); ug.fill();
       ug.fillStyle = '#ffe3a0'; ug.textAlign = 'left'; ug.textBaseline = 'top'; ug.fillText(tx, X0 + 7, y + 3); ug.restore(); }
     if (typeof document !== 'undefined') {   /* tâm trí: đi bộ — ẩn nút chong chóng / độ cao của sky.js bằng 1 lớp CSS trên body (không sửa sky.js) */
@@ -2280,13 +2280,13 @@ export const lyronFinale = {
       ug.save(); ug.globalAlpha = 0.55 * a; ug.fillStyle = '#1a0c06'; ug.fillRect(0, 0, W, H); ug.globalAlpha = a; ug.imageSmoothingEnabled = false;
       if (im) { const z = Math.max(1, Math.floor(Math.min(W * 0.7 / im.naturalWidth, H * 0.55 / im.naturalHeight))), w = im.naturalWidth * z, h = im.naturalHeight * z, x = (W - w) / 2, y = H * 0.42 - h / 2;
         ug.fillStyle = '#f4e4c0'; ug.fillRect(x - 6, y - 6, w + 12, h + 12); ug.drawImage(im, x, y, w, h);
-        const fs = Math.max(16, scale * 6); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'top'; ug.fillStyle = '#000'; ug.fillText(t.mem[M.i], W / 2 + 1, y + h + 13, W - 20); ug.fillStyle = '#ffe9c0'; ug.fillText(t.mem[M.i], W / 2, y + h + 12, W - 20); }
+        const fs = Math.max(16, (globalThis.__u89?globalThis.__u89(scale):scale) * 6); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'top'; ug.fillStyle = '#000'; ug.fillText(t.mem[M.i], W / 2 + 1, y + h + 13, W - 20); ug.fillStyle = '#ffe9c0'; ug.fillText(t.mem[M.i], W / 2, y + h + 12, W - 20); }
       ug.restore(); return;
     }
     if (ST.cs) {   /* hộp thoại + chân dung cận cảnh */
       const c = ST.cs, s = c.steps[c.i];
       if (s && s.text) {   /* plan-45 CD1: cùng khung gỗ với hộp thoại chung (style.css .dlg.px: dlg_frame viền 24 / 14 px, nền --panel, bảng tên dlg_plate, chân dung bên PHẢI trong dlg_port) */
-        const k = W / Math.max(1, ug.canvas.clientWidth || W), cssW = W / k, fs = Math.max(16, Math.min(W / 30, scale * 6.2)), bh = Math.round(H * 0.11), bw = Math.round((cssW <= 640 ? 14 : 24) * k), pb = Math.round((cssW <= 640 ? 6 : 8) * k), PW = Math.round((cssW <= 640 ? 72 : 128) * k), pw = s.port ? PW : 0,   /* khung chân dung 128 / 72 px như #d-port */ boxH = Math.max(fs * 4.2, PW + 2 * pb + 2 * bw - 8 * k), y0 = H > W * 1.2 ? Math.round(H * 0.66 - boxH) : H - bh - boxH - 6,   /* điện thoại dọc: hộp thoại nằm TRÊN cần điều khiển */ X0 = 8, BW = W - 16;
+        const k = W / Math.max(1, ug.canvas.clientWidth || W), cssW = W / k, fs = Math.max(16, Math.min(W / 30, (globalThis.__u89?globalThis.__u89(scale):scale) * 6.2)), bh = Math.round(H * 0.11), bw = Math.round((cssW <= 640 ? 14 : 24) * k), pb = Math.round((cssW <= 640 ? 6 : 8) * k), PW = Math.round((cssW <= 640 ? 72 : 128) * k), pw = s.port ? PW : 0,   /* khung chân dung 128 / 72 px như #d-port */ boxH = Math.max(fs * 4.2, PW + 2 * pb + 2 * bw - 8 * k), y0 = H > W * 1.2 ? Math.round(H * 0.66 - boxH) : H - bh - boxH - 6,   /* điện thoại dọc: hộp thoại nằm TRÊN cần điều khiển */ X0 = 8, BW = W - 16;
         ug.save(); ug.imageSmoothingEnabled = false; ug.fillStyle = '#1a1626'; ug.fillRect(X0 + bw / 2, y0 + bw / 2, BW - bw, boxH - bw); nine(ug, img('ui/dlg_frame.png'), 20, X0, y0, BW, boxH, bw);
         if (s.port) { const im = img('ui/lyron/' + (PORT_C[s.port] || s.port) + '.png'); const px0 = X0 + BW - bw - pw - 2 * pb, py0 = y0 + (boxH - pw - 2 * pb) / 2; ug.fillStyle = '#120f1c'; ug.fillRect(px0 + pb, py0 + pb, pw, pw); nine(ug, img('ui/dlg_port.png'), 8, px0, py0, pw + 2 * pb, pw + 2 * pb, pb);
           if (im) { const z = Math.max(1, Math.floor(pw / im.naturalWidth)), w = im.naturalWidth * z, sl = Math.max(0, 1 - c.t / 0.18), same = c.i > 0 && c.steps[c.i - 1] && c.steps[c.i - 1].port === s.port; ug.globalAlpha = same ? 1 : 1 - sl; ug.save(); ug.beginPath(); ug.rect(px0 + pb, py0 + pb, pw, pw); ug.clip(); ug.drawImage(im, Math.round(px0 + pb + (pw - w) / 2 + (same ? 0 : sl * 30)), Math.round(py0 + pb + (pw - w) / 2), w, w); ug.restore(); ug.globalAlpha = 1; } }   /* chân dung trượt vào khi đổi người nói */
@@ -2305,22 +2305,22 @@ export const lyronFinale = {
       const ix = bx + bw * 72 / 481, iy = by + bh * 24 / 74, iw = bw * (440 - 72) / 481, ih = bh * 28 / 74, k = Math.max(0, b.hp / b.max), isR = b === ST.rkMo;
       ug.save(); ug.imageSmoothingEnabled = false; if (fr) ug.drawImage(fr, bx, by, bw, bh); else { ug.fillStyle = '#12061c'; ug.fillRect(ix, iy, iw, ih); }
       const gr = ug.createLinearGradient(0, iy, 0, iy + ih); gr.addColorStop(0, isR ? '#ff6a9a' : '#ff4a5a'); gr.addColorStop(1, isR ? '#8a1040' : '#7a0a20'); ug.fillStyle = gr; ug.fillRect(ix, iy, iw * k, ih);
-      if (isR) for (const m of ST.memAt) { ug.fillStyle = 'rgba(255,255,255,.6)'; ug.fillRect(Math.round(ix + iw * m), iy, Math.max(1, scale * 0.4), ih); }
-      else for (const m of ST.ult) { ug.fillStyle = 'rgba(255,230,120,.7)'; ug.fillRect(Math.round(ix + iw * m), iy, Math.max(1, scale * 0.4), ih); }
+      if (isR) for (const m of ST.memAt) { ug.fillStyle = 'rgba(255,255,255,.6)'; ug.fillRect(Math.round(ix + iw * m), iy, Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) * 0.4), ih); }
+      else for (const m of ST.ult) { ug.fillStyle = 'rgba(255,230,120,.7)'; ug.fillRect(Math.round(ix + iw * m), iy, Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) * 0.4), ih); }
       const fs = Math.max(14, bh * 0.36); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'top';
       const nm = isR ? `${t.rkName} · ${t.bindName}${exposed(b) ? ' · ' + (ctx.lang() === 'vi' ? 'NÚT KHĂN LỘ' : 'KNOT EXPOSED') : ''}` : `${t.lyName} · ${t.lyTitle}${b.tiredT > 0 ? ' · ' + (ctx.lang() === 'vi' ? 'KIỆT SỨC' : 'SPENT') : ''}`;
       ug.fillStyle = '#000'; ug.fillText(nm, BB.cx + 1, by + bh + 1, bw); ug.fillStyle = '#ffd0e0'; ug.fillText(nm, BB.cx, by + bh, bw); ST.uiTop = by + bh + fs + 4; ug.restore();
     }
     { const ly = ST.lyMo || ST.ly; if (ly && !ly.stone) {   /* nhãn tên nhỏ trên đầu Lyron (bám nhân vật) */
-      const lf = (ly.lift ?? lift(ctx)), sx = (ly.x - cx) * scale, sy = (ly.y - lf - lyTop() - 4 - cy) * scale, fs = Math.max(12, scale * 4.2); const pl = ctx.S.player; if (sy - fs < (ST.uiTop || 0) + 2 || Math.hypot(pl.x - ly.x, pl.y - ly.y) < 56) { /* nhãn sẽ đè thanh máu / tên người chơi → bỏ */ } else {
+      const lf = (ly.lift ?? lift(ctx)), sx = (ly.x - cx) * scale, sy = (ly.y - lf - lyTop() - 4 - cy) * scale, fs = Math.max(12, (globalThis.__u89?globalThis.__u89(scale):scale) * 4.2); const pl = ctx.S.player; if (sy - fs < (ST.uiTop || 0) + 2 || Math.hypot(pl.x - ly.x, pl.y - ly.y) < 56) { /* nhãn sẽ đè thanh máu / tên người chơi → bỏ */ } else {
       ug.save(); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'bottom'; const tx = '⚡ Lyron', tw = ug.measureText(tx).width + 10;
       ug.fillStyle = 'rgba(30,6,20,.72)'; ug.fillRect(sx - tw / 2, sy - fs, tw, fs + 2); ug.fillStyle = '#ffd36a'; ug.fillText(tx, sx, sy + 1); ug.restore(); } } }
     if (ST.rkMo && ST.rkMo.callWin) {   /* cửa sổ gọi Rocky: vạch thời gian nhỏ trên đầu Rocky (bám nhân vật) */
-      const mo = ST.rkMo, k = Math.max(0, mo.callWin.t / 5.5), sx = (mo.x - cx) * scale, sy = (mo.y - cy - 46) * scale, w = scale * 26, h = Math.max(4, scale * 1.4);
+      const mo = ST.rkMo, k = Math.max(0, mo.callWin.t / 5.5), sx = (mo.x - cx) * scale, sy = (mo.y - cy - 46) * scale, w = scale * 26, h = Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale) * 1.4);
       ug.save(); ug.fillStyle = 'rgba(20,6,16,.8)'; ug.fillRect(sx - w / 2 - 2, sy - 2, w + 4, h + 4); ug.fillStyle = '#ff8fc0'; ug.fillRect(sx - w / 2, sy, w * k, h); ug.restore();
     }
     if (ST.callout) {   /* 'Lyron dùng: <chiêu> (<trùm>)' — dòng nhỏ ngay dưới thanh máu */
-      const fs = H > W * 1.2 ? Math.max(16, Math.min(W / 19, scale * 6)) : Math.max(13, Math.min(W / 26, scale * 4.2)), v = BBC && BBC.v; let y = v ? v.y + v.h + fs * 0.9 : (ST.uiTop || 60) + fs;
+      const fs = H > W * 1.2 ? Math.max(16, Math.min(W / 19, (globalThis.__u89?globalThis.__u89(scale):scale) * 6)) : Math.max(13, Math.min(W / 26, (globalThis.__u89?globalThis.__u89(scale):scale) * 4.2)), v = BBC && BBC.v; let y = v ? v.y + v.h + fs * 0.9 : (ST.uiTop || 60) + fs;
       for (const r of domBlocks(ug)) if (r.y0 < y + fs * 0.62 && r.y1 > y - fs * 0.62) y = r.y1 + fs * 0.8;   /* thông báo to của game (vd 'SIÊU CẤP ROCKY!') đang hiện → dòng 'Lyron dùng' xuống dưới, không chồng */ ug.save(); ug.globalAlpha = Math.min(1, ST.callout.t * 3); ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
       const ic = (ST.callout.icons || []).map(b => img(UIL('g_' + b + '_' + ((FPICK.glyph || {})[b] || 'a')))).filter(Boolean), isz = Math.round(fs * 1.15), iw = ic.length ? ic.length * (isz + 2) + 6 : 0;
       const tw = Math.min(W - 10, ug.measureText(ST.callout.txt).width + 18 + iw), cxx = v ? v.cx : W / 2; ug.fillStyle = 'rgba(30,8,44,.72)'; ug.fillRect(cxx - tw / 2, y - fs * 0.7, tw, fs * 1.4); ug.fillStyle = '#e8c8ff'; ug.fillText(ST.callout.txt, cxx + iw / 2, y, W - 20 - iw);
@@ -2328,7 +2328,7 @@ export const lyronFinale = {
       ug.restore();
     }
     if (ST.banner) {
-      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, scale * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
+      const a = Math.min(1, ST.banner.t * 2), fs = Math.max(20, Math.min(W / 18, (globalThis.__u89?globalThis.__u89(scale):scale) * 8.5)); ug.save(); ug.globalAlpha = a; ug.font = font(fs); ug.textAlign = 'center'; ug.textBaseline = 'middle';
       const y = H > W * 1.2 ? Math.max(H * 0.47, (ST.uiTop || 60) + fs) : Math.max(H * 0.2, (ST.uiTop || 60) + fs * 0.8);   /* điện thoại dọc: băng chữ giữa màn, tránh cột nút HUD bên phải */ ug.fillStyle = 'rgba(20,4,14,.65)'; const tw = Math.min(W - 10, ug.measureText(ST.banner.txt).width + 24); ug.fillRect((W - tw) / 2, y - fs * 0.6, tw, fs * 1.2);
       ug.fillStyle = '#000'; ug.fillText(ST.banner.txt, W / 2 + 2, y + 2, W - 20); ug.fillStyle = '#ffc8d8'; ug.fillText(ST.banner.txt, W / 2, y, W - 20); ug.restore();
     }

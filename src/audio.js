@@ -9,9 +9,10 @@
 import { createMixer } from './audio/mixer.js';
 import { SFX_LIB, SFX_ALIAS } from './audio/sfxlib.js';
 import { TRACKS, STINGERS } from './audio/songs.js';
+import * as S108 from './sfx108.js';   /* p108: tiếng riêng từng chiêu Chấn Thú + cổng chồng tiếng + __sfxlog */
 
 let ac = null, M = null, timer = null, hidden = false;
-let musicOn = true;
+let musicOn = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('music') === '0');   /* p110m: &music=0 → tắt nhạc nền (không lưu), giữ tiếng chiêu */
 
 /* ---------------- âm lượng (0–1; 0,5 = mức chuẩn; khoá cũ 'seismic.vol' vẫn được đọc) ---------------- */
 const clamp01 = v => Math.max(0, Math.min(1, Number(v) || 0));
@@ -97,7 +98,7 @@ export function setZone(z) {
   if (M) M.ambience(ambWant);
   refreshMusic(1.0, false);
 }
-export function setEnabled(on) {   /* nút "♪ Nhạc: bật/tắt" — chỉ tắt nhạc, tiếng động vẫn còn (có thanh âm lượng riêng) */
+export function setEnabled(on) {   /* p110m */ if (on && typeof location !== 'undefined' && new URLSearchParams(location.search).get('music') === '0') on = false;   /* nút "♪ Nhạc: bật/tắt" — chỉ tắt nhạc, tiếng động vẫn còn (có thanh âm lượng riêng) */
   musicOn = !!on; applyLevels();
   if (!M) return;
   if (!musicOn) { M.stopMusic(0.4); playing = null; } else { want = null; refreshMusic(1.2); }
@@ -390,7 +391,7 @@ if (typeof document !== 'undefined') {
    move_start → <hệ chiêu>_cast (không có thì move_start; đánh thường 'huc' im) · hit / hit_big → <hệ>_hit (+ hit_big chồng khi đòn mạnh) · sự kiện khác → file cùng tên. Nhật ký cho test: __audio.duelLog(). */
 const DUEL_DIR = 'assets/sfx/duel/', DUEL_EV = ['move_start', 'hit', 'hit_big', 'clash_start', 'clash_boom', 'beam_fire', 'lightning_strike', 'ko_freeze', 'ko_burst', 'ko_bounce', 'ko_land', 'ult_cast', 'boulder_land', 'wave_crash', 'dig_down', 'dig_up', 'orb_throw', 'orb_pop', 'recall', 'catch_shake', 'catch_ok', 'catch_fail'];   /* plan-58: gọi / thu hồi Chấn Thú bằng Ấn Chấn */
 const DUEL_TYPES = ['chan', 'nham', 'trieu', 'loi', 'phong', 'moc', 'suong', 'tinh', 'ma', 'am', 'anh', 'quang'];
-const DUEL_FILES = DUEL_EV.concat(DUEL_TYPES.map(t => t + '_cast'), DUEL_TYPES.map(t => t + '_hit'));
+const DUEL_FILES = DUEL_EV.concat(DUEL_TYPES.map(t => t + '_cast'), DUEL_TYPES.map(t => t + '_hit'), S108.FILES108);
 const DUEL_BUF = new Map(), DUEL_LAST = new Map(), DUEL_LOG = []; let duelVoices = 0, duelPre = false;
 function duelLoad(n) {
   let p = DUEL_BUF.get(n); if (p) return p;
@@ -399,18 +400,23 @@ function duelLoad(n) {
 }
 export function duelPreload() { if (duelPre || !ac || sVol <= 0) return; duelPre = true; for (const n of DUEL_FILES) duelLoad(n); }
 function duelPlay(n, o = {}) {
-  const now = performance.now(); if (now - (DUEL_LAST.get(n) || -1e9) < 60) return false; DUEL_LAST.set(n, now);
+  const now = performance.now(); if (!S108.gate(n, o)) return false; DUEL_LAST.set(n, now);   /* p108: ≤ 4 tiếng cùng lúc, cùng tên ≥ 80 ms; qua cổng = ghi window.__sfxlog (trộn video) */
   const e = { n, t: Math.round(now), played: false }; DUEL_LOG.push(e); if (DUEL_LOG.length > 300) DUEL_LOG.shift();
   if (sVol <= 0 || !M || !ac || ac.state !== 'running' || duelVoices >= 6) return true;   /* tắt tiếng / chưa có âm thanh / đủ 6 tiếng: chỉ ghi nhật ký, không tải file */
   duelPreload(); duelVoices++; e.played = true; let done = false; const rel = () => { if (!done) { done = true; duelVoices--; } };
   duelLoad(n).then(buf => {
-    if (!buf || sVol <= 0) return rel(); const src = ac.createBufferSource(); src.buffer = buf; const g = ac.createGain(); g.gain.value = o.vol ?? 0.8; src.connect(g); g.connect(M.sfxVol);
-    src.onended = () => { rel(); try { g.disconnect(); } catch (er) { } }; src.start();
+    if (!buf || sVol <= 0) return rel(); const src = ac.createBufferSource(); src.buffer = buf; const g = ac.createGain(); g.gain.value = o.vol ?? 0.8; src.connect(g); let pn = null;
+    if (o.pan && ac.createStereoPanner) { pn = ac.createStereoPanner(); pn.pan.value = o.pan; g.connect(pn); pn.connect(M.sfxVol); } else g.connect(M.sfxVol);   /* p108: pan theo vị trí ngoài map */
+    src.onended = () => { rel(); try { g.disconnect(); if (pn) pn.disconnect(); } catch (er) { } }; src.start();
   }).catch(rel);
   return true;
 }
+S108.bind(duelPlay);   /* p108: tiếng ngoài map (__sfx108.at) đi chung đường phát + cổng */
 export function duelSfx(name, d) {
-  const ty = d && d.type;
+  const ty = d && d.type, mv = d && (d.mv || d.id), own = mv ? S108.name(mv, name === 'move_start' ? 'cast' : 'hit') : null;   /* p108: tiếng riêng của chiêu (null → tiếng hệ chung) */
+  if (name === 'move_start' && own) { duelPlay(own, { vol: 0.85 }); return; }
+  if ((name === 'hit' || name === 'hit_big') && own) { duelPlay(own, { vol: 0.85 }); if (name === 'hit_big') duelPlay('hit_big', { vol: 0.55 }); return; }
+  if (name === 'ult_cast' && d && S108.name(d.id, 'cast')) { duelPlay('ult_cast', { vol: 0.45 }); return; }
   if (name === 'move_start') { if (d && d.id === 'huc') return; if (!(ty && DUEL_TYPES.includes(ty) && duelPlay(ty + '_cast'))) duelPlay('move_start'); return; }
   if (name === 'hit' || name === 'hit_big') { const a = ty && DUEL_TYPES.includes(ty) ? duelPlay(ty + '_hit') : false; if (name === 'hit_big') duelPlay('hit_big', { vol: 0.7 }); else if (!a) duelPlay('hit'); return; }
   if (DUEL_EV.includes(name)) duelPlay(name);

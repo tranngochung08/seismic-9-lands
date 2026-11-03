@@ -135,7 +135,7 @@ function drawSky(g, mo, x, y) {
     g.filter = 'none';
   } else { g.fillStyle = c.col || '#cfd8ff'; g.fillRect(x - (c.w >> 1), y - 14 - lift, c.w, 12); }
   if (mo.hook && mo.hook.vy >= 0) hookFx();
-  if (mo.hp < mo.max) { const w = Math.min(36, c.w), top = y - lift - (c.vh || 22) - 3; g.fillStyle = '#352022'; g.fillRect(x - (w >> 1) - 1, top, w + 2, 3); g.fillStyle = mo.open ? '#ff9a3a' : '#e84a3a'; g.fillRect(x - (w >> 1), top + 1, Math.max(1, Math.round(w * mo.hp / mo.max)), 1); }
+  mo.__bt = -lift - (c.vh || 22) - 3; if (!globalThis.__t91 && mo.hp < mo.max) { const w = Math.min(36, c.w), top = y - lift - (c.vh || 22) - 3;   /* p91: thanh chung (target91) */ g.fillStyle = '#352022'; g.fillRect(x - (w >> 1) - 1, top, w + 2, 3); g.fillStyle = mo.open ? '#ff9a3a' : '#e84a3a'; g.fillRect(x - (w >> 1), top + 1, Math.max(1, Math.round(w * mo.hp / mo.max)), 1); }
   if ((mo.alt ?? 0) === 1 && !c.big) { g.fillStyle = 'rgba(120,190,255,.85)'; g.fillRect(x - 1, y - 2, 3, 1); }   /* chấm xanh dưới bóng: con này đang ở tầng CAO */
 }
 const mk = (key, o) => ({ key, sky: true, fly: true, aiFn: (ctx, mo, dt, p, dp, ch) => { if (!mo.hold) o.ai(ctx, mo, dt, p, dp, ch); },   /* mo.hold: móc test (đứng yên) */ drawFn: drawSky, armor: 4, day: 0, night: 0, c: ['#cfd8ff', '#7a86b0', '#ffffff'], ...o });

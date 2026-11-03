@@ -49,17 +49,17 @@ export class Entity {
     const a = this.action, sh = a && this.sheet.actions && this.sheet.actions[a.name];   // clip động tác PixelLab (art.js gắn vào sheet)
     const acts = this.sheet.actions, dg = acts && !a && this.diagRow ? this.diagRow() : -1;   /* p62: hướng chéo = hàng SE, SW, NE, NW của clip idle_d / walk_d; thân chưa có clip chéo thì 4 hướng như cũ */
     const idle = !a && !this.moving && this.idleT > 0 && acts && ((dg >= 0 && acts.idle_d) || acts.idle), irow = idle && idle === acts.idle_d ? dg : this.dir;
-    if (idle) { const f = Math.floor(this.idleT * FPS.idle / 2) % idle.n, ch = idle.ch || 20, cw = idle.cw || 16; g.drawImage(idle.img, f * cw, irow * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return; }   /* 8 FPS, mỗi khung giữ 2 nhịp → 1 hơi thở ≈ 1 s */
+    if (idle) { const f = Math.floor(this.idleT * FPS.idle / 2) % idle.n, ch = idle.ch || 20, cw = idle.cw || 16; g.drawImage(idle.img, f * cw, irow * ch, cw, ch, (globalThis.__R89||Math.round)(this.x) - (cw >> 1), (globalThis.__R89||Math.round)(this.y) - 18 - (ch - 20), cw, ch); return; }   /* 8 FPS, mỗi khung giữ 2 nhịp → 1 hơi thở ≈ 1 s */
     if (sh) {
       // walk (bế): clip AI mở đầu bằng khung giơ tay dần → chỉ dùng 3 khung cuối (tay đã giơ): đứng = khung n-3, bước = n-2/n-1 luân phiên
       const k = Math.floor(a.t * clipFps(a.name, sh)), f = a.walk ? sh.n - 3 + (this.moving ? CYCLE[Math.floor(this.animT * FPS.walk) % 4] : 0) : a.loop ? k % sh.n : Math.min(sh.n - 1, k);   /* plan-19: khung theo FPS chung (anim.js), không kéo giãn theo dur */   /* clip đi: 3 cột cuối = đứng/bước/bước như sheet đi */
-      const ch = sh.ch || 20, cw = sh.cw || 16; g.drawImage(sh.img, f * cw, this.dir * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return;   /* cw: ô động tác rộng 24 (px-actions 2026-09-28) */
+      const ch = sh.ch || 20, cw = sh.cw || 16; g.drawImage(sh.img, f * cw, this.dir * ch, cw, ch, (globalThis.__R89||Math.round)(this.x) - (cw >> 1), (globalThis.__R89||Math.round)(this.y) - 18 - (ch - 20), cw, ch); return;   /* cw: ô động tác rộng 24 (px-actions 2026-09-28) */
     }
     const wk = !a && this.moving && acts && ((dg >= 0 && acts.walk_d) || acts.walk), wrow = wk && wk === acts.walk_d ? dg : this.dir;   /* plan-47: đi bộ PixMiniMax 8 khung (manifest actions.walk); không có thì dùng sheet 3 khung cũ */
-    if (wk) { const f = Math.floor(this.animT * 10) % wk.n, ch = wk.ch || 20, cw = wk.cw || 16; g.drawImage(wk.img, f * cw, wrow * ch, cw, ch, Math.round(this.x) - (cw >> 1), Math.round(this.y) - 18 - (ch - 20), cw, ch); return; }
+    if (wk) { const f = Math.floor(this.animT * 10) % wk.n, ch = wk.ch || 20, cw = wk.cw || 16; g.drawImage(wk.img, f * cw, wrow * ch, cw, ch, (globalThis.__R89||Math.round)(this.x) - (cw >> 1), (globalThis.__R89||Math.round)(this.y) - 18 - (ch - 20), cw, ch); return; }
     const sk = this.sheet.skin;   /* plan-29: ngoại hình to (Chad) — sheet đi riêng ô sk.cw×sk.ch logic, đáy ô = chân (y+2), vẽ 1:1 */
-    const body = sk ? () => g.drawImage(sk.img, this.frame * sk.cw, this.dir * sk.ch, sk.cw, sk.ch, Math.round(this.x) - Math.floor(sk.cw / 2), Math.round(this.y) + 2 - sk.ch, sk.cw, sk.ch)
-      : () => g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, Math.round(this.x) - 8, Math.round(this.y) - 18, 16, 20);
+    const body = sk ? () => g.drawImage(sk.img, this.frame * sk.cw, this.dir * sk.ch, sk.cw, sk.ch, (globalThis.__R89||Math.round)(this.x) - Math.floor(sk.cw / 2), (globalThis.__R89||Math.round)(this.y) + 2 - sk.ch, sk.cw, sk.ch)
+      : () => g.drawImage(this.sheet, this.frame * 16, this.dir * 20, 16, 20, (globalThis.__R89||Math.round)(this.x) - 8, (globalThis.__R89||Math.round)(this.y) - 18, 16, 20);
     if (this instanceof Player) body(); else waterDraw(g, this.x, this.y, this.x, this.y, body);   /* NPC lội nước: che phần dưới (người chơi do swim.js lo) */
   }
   // Động tác: act('chop', 0.35) chạy 1 lần; act('fish', 1, true) lặp/giữ khung cuối tới khi endAct(). hasAct(name): có clip PixelLab không (module quyết định vẽ dụng cụ code hay không)

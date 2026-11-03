@@ -36,7 +36,7 @@ const STR = {
       garg: 'The statues are waking. Fight them under a lantern!'
     },
     strike: 'Strike', smash: 'Smash', bait: 'Drop bait', baitNo: 'Bait: bring an animal (catch a chicken/cow, or fish one)',
-    needAxe: 'Needs an axe — craft Axe I at the workbench (5 wood).',
+    needAxe: 'Needs the Seismic Hammer — craft Seismic Hammer I at the workbench (6 wood + 2 rock).',
     needBait: 'The worm only wants meat — catch a chicken/cow in the village or fish at a shore, then come back.',
     tooDark: 'Too dark to hit — lure it into lantern light',
     fearLight: 'The knockers fear the light',
@@ -68,7 +68,7 @@ const STR = {
       garg: 'Tượng đang thức. Đánh chúng dưới đèn lồng!'
     },
     strike: 'Đánh', smash: 'Đập', bait: 'Thả mồi', baitNo: 'Cần mồi: mang theo con vật (bắt gà/bò hoặc câu cá)',
-    needAxe: 'Cần rìu — chế Rìu I ở Bàn mộc (5 gỗ).',
+    needAxe: 'Cần Búa Seismic — chế Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá).',
     needBait: 'Sâu chỉ thèm thịt — về Làng bắt gà/bò hoặc câu cá ở bờ nước rồi quay lại.',
     tooDark: 'Tối quá, không đánh trúng — dụ nó vào ánh đèn',
     fearLight: 'Quỷ mỏ sợ ánh sáng',
@@ -667,14 +667,14 @@ export const raidersMid = {
     const S = L(ctx);
     ug.save();
     ug.textAlign = 'center'; ug.textBaseline = 'bottom';
-    ug.font = `bold ${Math.max(9, Math.round(scale * 2.7))}px VT323, monospace`;
+    ug.font = `bold ${Math.max(9, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.7))}px VT323, monospace`;
     for (const m of mobs) {
       if (m.st === 'wake' || m.st === 'rise' || m.st === 'dive') continue;
       const top = m.y - (m.z || 0) - (m.k === 'worm' ? 24 : m.k === 'garg' ? 28 : 24);
       const sx = Math.round((m.x - cx) * scale), sy = Math.round((top - cy) * scale);
       if (sx < -60 || sy < -30 || sx > ug.canvas.width + 60 || sy > ug.canvas.height + 30) continue;
       const max = m.k === 'worm' ? WORM_HITS : m.k === 'garg' ? GARG_HP : KNOCK_HP;
-      const w = Math.max(4, Math.round(scale * 1.8)), gap = Math.max(2, Math.round(scale * 0.7));
+      const w = Math.max(4, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 1.8)), gap = Math.max(2, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 0.7));
       const total = max * w + (max - 1) * gap, x0 = sx - total / 2;
       for (let i = 0; i < max; i++) {
         const on = i < m.hp;

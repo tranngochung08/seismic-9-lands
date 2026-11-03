@@ -32,6 +32,7 @@ function nearLand(ctx, tx, ty, r = 2) {
 }
 function depthAt(ctx, x, y) {   /* 'none' | 'wade' | 'swim' */
   const tx = tileOf(x), ty = tileOf(y - 4), g0 = ctx.getG(ctx.S.map, tx, ty);   /* 2026-10-11 anh: đứng trên bờ (chân chạm mép ô nước) đã bị vẽ như đang lội → xét điểm cao hơn chân 4 px: phải bước hẳn vào nước mới lội */
+  if (ctx.envfx && ctx.envfx.inFlood && ctx.envfx.inFlood(x, y - 4)) return 'wade';   /* p105: ngập = nước nông lội được, không bao giờ bơi / đuối */
   if (isDeep(ctx, g0)) return 'swim';
   if (isShallow(ctx, g0) || g0 === ctx.T.REEF) return nearLand(ctx, tx, ty) ? 'wade' : 'swim';
   return 'none';
@@ -137,7 +138,7 @@ export const swim = {
       if (want === 'none') { p.speedMul = 1; setCustom(ctx, null); }
     }
     st.t += dt; st.ripT += dt;
-    if (st.mode === 'wade') { p.speedMul = 0.65; setCustom(ctx, (g, e) => drawInWater(g, e, 6)); st.stam = Math.min(STAM_MAX, st.stam + REGEN * dt); if (p.moving && st.ripT > 0.35) { st.ripT = 0; ripple(ctx, p.x, p.y, 4); } }
+    if (st.mode === 'wade') { p.speedMul = ctx.envfx && ctx.envfx.inFlood && ctx.envfx.inFlood(p.x, p.y - 4) ? 0.7 : 0.65;   /* p105: lội vùng ngập chậm 30 % */ setCustom(ctx, (g, e) => drawInWater(g, e, 6)); st.stam = Math.min(STAM_MAX, st.stam + REGEN * dt); if (p.moving && st.ripT > 0.35) { st.ripT = 0; ripple(ctx, p.x, p.y, 4); } }
     else if (st.mode === 'swim') {
       p.speedMul = 0.5; setCustom(ctx, (g, e) => drawInWater(g, e, 11)); st.stam -= dt;
       if (p.moving && st.ripT > 0.25) { st.ripT = 0; ripple(ctx, p.x, p.y, 5); }

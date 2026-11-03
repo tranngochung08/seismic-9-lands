@@ -2,7 +2,7 @@
 // Không dừng thế giới: mode 'menu' chỉ khóa điều khiển người chơi (main.js), hệ thống vẫn chạy; nội dung tự làm mới mỗi 1,5 s.
 // Asset PixelLab qua manifest.ui (assets/px/ui/*): khung viền 9 mảnh, icon vật phẩm, icon thẻ/trạng thái. Không có ảnh → emoji + viền CSS.
 import { ART } from './art.js';
-import { ITEMS, TOOLS, itemName } from './items.js';
+import { ITEMS, TOOLS, itemName, MERGED } from './items.js';   /* p80: 6 dụng cụ đã gộp vào Búa Seismic */
 import { ZONE_LIST } from './world.js';
 import { membersOfLevel } from './data.js';
 import * as UI from './ui.js';
@@ -28,9 +28,9 @@ const STR = {
     locked: 'Not crafted yet', weight: 'weight', count: 'count', sell: 'Sell at the village trader', sell1: 'Sell 1', sellAll: 'Sell all', toBar: k => `To slot ${k}`, onBar: (n, k) => `${n} → hotbar slot ${k}`, eat: 'Eat', ate: n => `Yum, ${n}! You feel lively — walking faster for 30 s`, sellHere: 'sell right from the bag', material: 'Crafting / building material', story: 'Story item',
     fl: { raft: 'Raft', sail: 'Sail', wax: 'Ski wax', tires: 'Obsidian tires', cape: 'Rocky cape', armor: 'Rocky armour', coat: 'Warm coat', lamps: 'Crystal lamps', charged: 'Rocky charges' },
     stats: { str: 'Tools', agi: 'Agility', def: 'Defense', skill: 'Skill', rep: 'Reputation' },
-    statHint: { str: 'Axe & pickaxe tiers', agi: 'Walk · ski wax · obsidian tires · sail · tamed horse', def: 'Rocky armour · warm coat', skill: 'Fishing rod · crystal lamps · Rocky charges', rep: 'Artists met · badges' },
+    statHint: { str: 'Seismic Hammer tier', agi: 'Walk · ski wax · obsidian tires · sail · tamed horse', def: 'Rocky armour · warm coat', skill: 'Fishing rod · crystal lamps · Rocky charges', rep: 'Artists met · badges' },
     next: 'Next: ', up: 'up since last time', down: 'down since last time', same: '',
-    nextStr: { 1: 'Axe I at the workbench (5 wood) · Pickaxe I (6 wood + 2 rock)', 2: 'Axe/Pickaxe II at the furnace M4/M5 (3 iron + 2 wood)', 3: 'Axe/Pickaxe III at the forge M7/M8 (4 obsidian + 2 iron)' },
+    nextStr: { 1: 'Seismic Hammer I at the workbench (6 wood + 2 rock)', 2: 'Seismic Hammer II at the furnace M4/M5 (3 iron + 2 wood) or Quick buy', 3: 'Seismic Hammer III at the forge M7/M8 (4 obsidian + 2 iron) or Quick buy' },
     nextAgi: 'Ski wax (M8 workbench: 2 wax) · Obsidian tires (forge) · Sail (loom: 6 wool + 2 rope) · Tame a horse (M2: feed it 3 hay)',
     nextDef: 'Rocky armour (forge: worm hide + 4 obsidian) · Warm coat (loom: yeti fur + 4 wool)',
     nextSkill: 'Rod II (furnace) · Rod III (altar M9) · Crystal lamp (altar: 2 crystal + 1 glass) · Rocky charge (altar: 3 crystal)',
@@ -49,9 +49,9 @@ const STR = {
     locked: 'Chưa chế', weight: 'nặng', count: 'số lượng', sell: 'Bán ở Thương nhân Làng', sell1: 'Bán 1', sellAll: 'Bán hết', toBar: k => `Lên ô ${k}`, onBar: (n, k) => `${n} → ô ${k} trên thanh`, eat: 'Ăn', ate: n => `Ngon quá, ${n}! Thấy khoẻ khoắn — đi nhanh hơn 30 giây`, sellHere: 'bán ngay tại túi', material: 'Nguyên liệu chế tạo / xây dựng', story: 'Vật phẩm cốt truyện',
     fl: { raft: 'Bè', sail: 'Buồm', wax: 'Sáp trượt', tires: 'Lốp obsidian', cape: 'Áo choàng Rocky', armor: 'Giáp Rocky', coat: 'Áo ấm', lamps: 'Đèn tinh thể', charged: 'Pin Rocky' },
     stats: { str: 'Dụng cụ', agi: 'Nhanh nhẹn', def: 'Phòng thủ', skill: 'Kỹ năng', rep: 'Uy tín' },
-    statHint: { str: 'Cấp rìu và cuốc', agi: 'Đi bộ · sáp trượt · lốp obsidian · buồm · ngựa đã thuần', def: 'Giáp Rocky · áo ấm', skill: 'Cần câu · đèn tinh thể · pin Rocky', rep: 'Nghệ sĩ đã gặp · huy hiệu' },
+    statHint: { str: 'Cấp Búa Seismic', agi: 'Đi bộ · sáp trượt · lốp obsidian · buồm · ngựa đã thuần', def: 'Giáp Rocky · áo ấm', skill: 'Cần câu · đèn tinh thể · pin Rocky', rep: 'Nghệ sĩ đã gặp · huy hiệu' },
     next: 'Tăng tiếp: ', up: 'tăng so với lần trước', down: 'giảm so với lần trước', same: '',
-    nextStr: { 1: 'Rìu I ở Bàn mộc (5 gỗ) · Cuốc I (6 gỗ + 2 đá)', 2: 'Rìu/Cuốc II ở Lò nung M4/M5 (3 sắt + 2 gỗ)', 3: 'Rìu/Cuốc III ở Lò rèn M7/M8 (4 obsidian + 2 sắt)' },
+    nextStr: { 1: 'Búa Seismic I ở Bàn mộc (6 gỗ + 2 đá)', 2: 'Búa Seismic II ở Lò nung M4/M5 (3 sắt + 2 gỗ) hoặc Mua nhanh', 3: 'Búa Seismic III ở Lò rèn M7/M8 (4 obsidian + 2 sắt) hoặc Mua nhanh' },
     nextAgi: 'Sáp trượt (Bàn mộc M8: 2 sáp) · Lốp obsidian (Lò rèn) · Buồm (Khung dệt: 6 len + 2 dây) · Thuần ngựa (M2: cho ăn 3 rơm)',
     nextDef: 'Giáp Rocky (Lò rèn: da sâu + 4 obsidian) · Áo ấm (Khung dệt: lông yeti + 4 len)',
     nextSkill: 'Cần câu II (Lò nung) · Cần câu III (Bàn thờ M9) · Đèn tinh thể (Bàn thờ: 2 tinh thể + 1 kính) · Pin Rocky (Bàn thờ: 3 tinh thể)',
@@ -274,8 +274,8 @@ function moveTT(e) { if (!tt || tt.hidden) return; const w = tt.offsetWidth, x =
 function hideTT() { if (tt) tt.hidden = true; }
 
 // ---------------------------------------------------------------- mua nhanh (phím O)
-const TOOL_MAX = { axe: 3, pickaxe: 3, rod: 3, shovel: 1, scythe: 1, knife: 1, torch: 1, sword: 6 };   /* bỏ xe chở, thòng lọng, bẫy, yên 2026-10-11 */
-const TOOL_BASE = { axe: 20, pickaxe: 25, rod: 20, shovel: 15, scythe: 15, knife: 15, torch: 10, sword: 30 };
+const TOOL_MAX = { bua: 3, rod: 3, sword: 6 };   /* p80 đợt 3: Búa Seismic thay Rìu / Cuốc / Xẻng / Liềm / Dao / Đuốc */   /* bỏ xe chở, thòng lọng, bẫy, yên 2026-10-11 */
+const TOOL_BASE = { bua: 25, rod: 20, sword: 30 };   /* p80: Búa lấy giá Cuốc cũ → I 25 · II 75 · III 200 🪨 */
 const toolPrice = (id, tier) => (id === 'sword' ? 30 * tier * tier : TOOL_BASE[id] * [1, 3, 8][tier - 1]);
 const SUPPLY = [['pen1', 15, 1], ['pen2', 40, 1], ['scarecrow', 10, 1], ['hay', 1, 5], ['revive', 30, 1], ['stone_seed', 0, 0]];   /* [id, giá, số lượng]; hạt giống thêm theo mùa */
 function supplyList() {
@@ -286,7 +286,7 @@ function supplyList() {
 }
 function shopBody() {
   const t = L(), C = deps.CTX, lg = UI.lang(), stone = C.bag.count('stone');
-  const tools = Object.keys(TOOLS).map(id => {
+  const tools = Object.keys(TOOLS).filter(id => !MERGED.includes(id)).map(id => {
     const cur = C.tool.tier(id), max = TOOL_MAX[id] || 1, next = cur + 1, can = next <= max, pr = can ? toolPrice(id, next) : 0;
     return `<div class="hrow shoprow"><span style="width:26px">${icon(HB.iconId(id))}</span><span class="hwho"><b>${esc(itemName(id, lg))}</b>${cur ? ` <span class="dim tiny">${t.tier} ${ROMAN[cur] || cur}</span>` : ''}</span>
       ${can ? `<button class="btn${stone >= pr ? ' primary' : ''}" data-buy="tool:${id}:${next}"${stone >= pr ? '' : ' disabled'}>${pxText(t.buyT(ROMAN[next] || next, pr))}</button>` : `<span class="dim tiny">${t.maxT}</span>`}</div>`;
@@ -316,10 +316,10 @@ function statsOf() {
   const inLands = new Set(); for (const z of ZONE_LIST) for (const m of membersOfLevel(z.lv)) inLands.add(m.id);   /* nghệ sĩ có mặt trong các vùng (không tính cả roster) */
   const here = S.zone && S.zone.lv != null ? membersOfLevel(S.zone.lv) : [], metSet = new Set(S.save.met || []), hereMet = here.filter(m => metSet.has(m.id)).length;   /* Uy tín: đã gặp ở vùng này / số nghệ sĩ vùng này · tổng đã gặp */
   const met = (S.save.met || []).filter(id => inLands.has(id)).length, badges = (S.save.badges || []).filter(b => b >= 1).length, pilots = cnt('rocky', 'pilots');
-  const R = k => ROMAN[tt(k)] || '–', lo = Math.min(tt('axe'), tt('pickaxe'));
+  const R = k => ROMAN[tt(k)] || '–', lo = tt('bua');   /* p80: Sức mạnh = cấp Búa Seismic */
   const horse = !!(((sys.ecology || {}).horse || {}).tamed);   /* 2026-10-11 bỏ yên ngựa: điểm Nhanh nhẹn tính theo ngựa đã thuần (cưỡi không cần yên) */
   return [
-    { k: 'str', ic: '⚔', v: tt('axe') + tt('pickaxe'), max: 6, detail: `🪓 ${R('axe')} · ⛏ ${R('pickaxe')}`, next: lo < 3 ? t.nextStr[lo + 1] : '' },
+    { k: 'str', ic: '⚔', v: tt('bua') * 2, max: 6, detail: `${icon('bua')} ${R('bua')}`, next: lo < 3 ? t.nextStr[lo + 1] : '' },
     { k: 'agi', ic: '🏃', v: 1 + (fl('vehicles', 'wax') ? 1 : 0) + (fl('vehicles', 'tires') ? 1 : 0) + (fl('vehicles', 'sail') ? 1 : 0) + (horse ? 1 : 0), max: 5,
       detail: ['🚶', fl('vehicles', 'wax') ? '🎿' : '', fl('vehicles', 'tires') ? '🛞' : '', fl('vehicles', 'sail') ? '⛵' : '', horse ? '🐎' : ''].filter(Boolean).join(' '), next: t.nextAgi },
     { k: 'def', ic: '🛡', v: (fl('rocky', 'armor') ? 1 : 0) + (fl('ecology', 'coat') ? 1 : 0), max: 2,
@@ -342,7 +342,7 @@ function heroBody() {
   }).join('');
   const name = esc(S.save.name || (UI.lang() === 'vi' ? 'Bạn' : 'You')), zone = S.zone ? esc(S.zone.name[UI.lang()] || S.zone.name.en) : '';
   const C = deps.CTX, lg = UI.lang(), sys = S.save.sys || {};
-  const eq = Object.keys(TOOLS).map(id => {   /* plan-22: trang bị (kể cả chưa chế) + tiến độ chuyển từ túi sang đây */
+  const eq = Object.keys(TOOLS).filter(id => !MERGED.includes(id)).map(id => {   /* plan-22: trang bị (kể cả chưa chế) + tiến độ chuyển từ túi sang đây */
     const tier = C.tool.tier(id), nm = itemName(id, lg);
     return slot(HB.iconId(id), 0, tier ? '' : 'off', `<b>${esc(nm)}${tier ? ' ' + ROMAN[tier] : ''}</b> — ${tier ? esc(t.equip) : esc(t.locked)}`, tier ? `<b class="tier">${ROMAN[tier] || tier}</b>` : `<span class="lock">${stIcon('lock', '')}</span>`);
   });

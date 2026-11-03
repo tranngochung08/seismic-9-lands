@@ -122,8 +122,9 @@ function spawnLyron(ctx) {
 }
 function hangLanterns(ctx) {
   const S = ctx.S, m = S.map, busy = new Set(S.npcs.map(n => `${Math.floor(n.x / TS)},${Math.floor(n.y / TS)}`));
-  for (const y of LANTERN_ROWS) for (const dx of LANTERN_DX) {
-    const x = PLAZA_CX + dx;
+  const pl = m.plaza88;   /* p88: Làng mới — 2 hàng đèn trên / dưới quảng trường */
+  for (const y of (pl ? [pl.y - 6, pl.y + 6] : LANTERN_ROWS)) for (const dx of LANTERN_DX) {
+    const x = (pl ? pl.x : PLAZA_CX) + dx;
     if (ctx.isSolid(m, x, y) || ctx.hasObjectAt(m, x, y) || busy.has(`${x},${y}`)) continue;
     ctx.place(m, 'lantern', x, y, { festival: true });
   }

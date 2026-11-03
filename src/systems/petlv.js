@@ -33,10 +33,12 @@ export const CORE_SKILLS = {
 export const CORE_IDS = Object.keys(CORE_SKILLS);
 export const CORE_BOSSES = CORE_IDS.map(id => CORE_SKILLS[id].core);
 export const coreSkillOf = boss => CORE_IDS.find(id => CORE_SKILLS[id].core === boss) || null;
-export const EQ_MAX = 2;
+export const EQ_MAX = 4;   /* p78 (plan-78 §4): 4 ô CHUNG cho chiêu lõi trùm + chiêu kho — mở theo cấp (eqMaxOf), save cũ 2 ô vẫn nguyên */
+export const KHO_RK = { da_vun_ban: 5, vong_du_chan: 15, dao_ham_vo: 22 };   /* p78: chiêu Chấn của Rocky (học theo cấp) */
+export const eqMaxOf = p => { const lv = levelFromXp((p && p.xp) || 0).lv; return lv >= 40 ? 4 : lv >= 30 ? 3 : 2; };
 Object.assign(SKILLS, CORE_SKILLS);   /* SKILLS[id] dùng chung (sách, thẻ Rocky, readBook) — SKILL_IDS vẫn chỉ 3 chiêu gốc */
 export const hasCore = (p, id) => !CORE_SKILLS[id] || ((p && p.cores) || []).includes(CORE_SKILLS[id].core);
-export const equipped = p => ((p && p.eq) || []).filter(id => CORE_SKILLS[id] && hasCore(p, id)).slice(0, EQ_MAX);
+export const equipped = p => ((p && p.eq) || []).filter(id => (CORE_SKILLS[id] && hasCore(p, id)) || (KHO_RK[id] && ((p && p.hoc) || []).includes(id))).slice(0, eqMaxOf(p));   /* p78 */
 /* số liệu theo bậc t (1–8). mul = × sức đánh Rocky; cd = hồi chiêu (giây) */
 export const quakeOf = t => ({ r: 40 + 6 * (t - 1), mul: 1.4 + 0.25 * (t - 1), stun: +(0.6 + 0.1 * (t - 1)).toFixed(2), kb: 110 + 15 * (t - 1), cd: +(9 - 0.6 * (t - 1)).toFixed(1) });
 export const mirrorOf = t => ({ dur: +(1.3 + 0.1 * (t - 1)).toFixed(1), mul: 1.5 + 0.3 * (t - 1), max: t >= 4 ? 3 : 2, cd: +(12 - 0.8 * (t - 1)).toFixed(1) });

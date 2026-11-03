@@ -525,7 +525,7 @@ export const raidersSea = {
       if (t.st === 'dead') continue;
       const bx = Math.round((t.x - cx) * scale), by = Math.round((t.y - 36 - cy) * scale);
       if (bx < -40 || bx > ug.canvas.width + 40 || by < -20) continue;
-      const r = Math.max(2, Math.round(scale * 1.1)), gap = r * 3, x0 = bx - gap / 2;
+      const r = Math.max(2, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 1.1)), gap = r * 3, x0 = bx - gap / 2;
       for (let i = 0; i < TENT_HP; i++) { ug.beginPath(); ug.arc(x0 + i * gap, by, r, 0, TAU); ug.fillStyle = i < t.hp ? '#ff6b6b' : 'rgba(30,26,40,.55)'; ug.fill(); ug.strokeStyle = 'rgba(13,11,20,.75)'; ug.lineWidth = 1; ug.stroke(); }
     }
     ug.restore();

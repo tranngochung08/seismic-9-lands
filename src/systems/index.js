@@ -31,6 +31,12 @@ import { vfx } from './vfx.js';   /* plan-19: VFX sheet PixelLab */
 import { hero } from './hero.js';   /* plan-21: máu / cấp / kinh nghiệm */
 import { villagers } from './villagers.js';   /* plan-21: dân bị tấn công / chết / hồi sinh / Đài Tưởng Niệm */
 import { monsters } from './monsters.js';   /* plan-21: quái theo vùng */
+import { fieldct } from './fieldct.js';
+import { kho78 } from './kho78.js';
+import { comp79 } from './comp79.js';
+import { leaderarena } from './leaderarena.js';
+import { village88 } from './village88.js';   /* p88 (plan-88 đợt 1): Làng mới — hoàn đá đất cũ, bậc thang / cầu lớp nền, băng tên vùng con */   /* p81 (plan-79 đợt 3): Đấu Trường Leader — ghép từ nháp p48b */
+import { feed80 } from './feed80.js';   /* p80 (plan-80 đợt 2): cho Chấn Thú ăn = Tiềm Năng theo hệ */   /* p79 (plan-79): thả Chấn Thú ở mọi map — đi theo, tự đánh quái, đấu thú hoang tại chỗ */   /* p78: kho chiêu — Sắp Chiêu, học chiêu, VFX ngoài map, chiêu Chấn của Rocky, cảnh Thức Tỉnh */   /* plan-74 đợt 0 (p74): Chấn Thú hoang trên map — chiêu ngoài map, Ấn Thu tại chỗ, Tiềm Năng */
 import { wreck } from './wreck.js';
 import { drops } from './drops.js';
 import { land } from './land.js';
@@ -68,4 +74,13 @@ import { odo } from './odo.js';   /* plan-57: Ở Dơ — kẻ rình hút 20 % K
 import { chanthu } from './chanthu.js';   /* plan-58 C.2: con khởi đầu + Chấn Thú hoang + Ấn Thu (always) */
 import { linhduel } from './linhduel.js';   /* plan-48 Đ1: đấu linh thú tại chỗ (always) — cuối danh sách: HUD trên cùng */
 import { shadow } from './shadow.js';   /* plan-66: bóng dưới chân người chơi + dân (lớp nền); hệ khác gọi shadowAt trong hàm vẽ */
-export const SYSTEMS = [aircombat, terrain, nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, pet, hopthe, rubble, storySea, storyLand, krstory, hero, underwater, fortress, villagers, petgun, linhthu, monsters, odo, spar, road, arena, hacrocky, trongdong, guong, hoden, dongho, bakunawa, lyronFinale, knock, ki, wreck, drops, land, ponds, water, xealist, cloudshade, worldmosaic, rockycore, vfx, sky, stats, dragon, diff, chanthu, linhduel, shadow].filter(Boolean);
+import { target91 } from './target91.js';   /* p91 (plan-91 đợt A): máu trên đầu + vòng khoá + khung mục tiêu — cuối danh sách: vẽ UI trên cùng */   /* plan-66: bóng dưới chân người chơi + dân (lớp nền); hệ khác gọi shadowAt trong hàm vẽ */
+import { noprompt91 } from './noprompt91.js';   /* p91 r2 (anh 02/11): bỏ bảng 'E · …' + đánh dấu kiểu Saiyan */
+import { farm106 } from './farm106.js';   /* p106: Chấn Thú hoang theo vùng Làng mới — farm XP bằng Chấn Thú Huyền Thoại */
+import { elyz95 } from './elyz95.js';   /* p95: Elyziuma — Chấn Thú Huyền Thoại đi theo, tự đánh nhiều thú để bảo vệ người chơi */
+import { squad104 } from './squad104.js';   /* p104: bộ quản lý chung — thả ≤ 3 Chấn Thú, ra lệnh, bảo vệ người chơi */
+import { envfx105 } from './envfx105.js';   /* p105 (plan-105): môi trường phản ứng theo hệ chiêu (cháy / ướt / băng…), API ctx.envfx.hit */
+import { halloween119 } from './halloween119.js';   /* p119 (plan-119): Halloween Lang moi - trang tri + dem kieu Saiyan + mua code */
+import { pwoofer } from './pwoofer.js';   /* p101 (plan-92): Pwoofer — NPC Đại sứ Succinct ở Quảng Trường Làng mới */
+import { mouseesc91 } from './mouseesc91.js';   /* p91 (anh 02/11): bảng câu cá thoát / chơi bằng chuột */
+export const SYSTEMS = [village88, aircombat, terrain, nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, pet, hopthe, rubble, storySea, storyLand, krstory, hero, underwater, fortress, villagers, petgun, linhthu, monsters, fieldct, odo, spar, road, arena, hacrocky, trongdong, guong, hoden, dongho, bakunawa, lyronFinale, knock, ki, wreck, drops, land, ponds, water, envfx105, halloween119, xealist, cloudshade, worldmosaic, rockycore, vfx, sky, stats, dragon, diff, chanthu, kho78, comp79, elyz95, farm106, squad104, leaderarena, feed80, linhduel, shadow, pwoofer, target91, noprompt91, mouseesc91].filter(Boolean);

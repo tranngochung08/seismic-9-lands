@@ -387,7 +387,7 @@ export const odo = {
     const hidden = mo.st === 'hide' && !(mo.peek > 0), o = sv(ctx), T = tr(ctx);
     let x = ((mo.drawX != null ? mo.drawX + cx : mo.x) - cx) * scale; const y = (mo.y - FOOT - 3 - cy) * scale;
     if (x < -200 || x > ug.canvas.width + 200 || y < -60 || y > ug.canvas.height + 60) return;
-    const fs = Math.max(12, Math.round(scale * 3.4));
+    const fs = Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4));
     ug.save(); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     { const half = (ug.measureText(`${T.name} · ${T.stolen(o.stash)}`).width + fs * 1.6) / 2 + 6; x = Math.max(half, Math.min(ug.canvas.width - half, x)); }   /* nhãn / bong bóng không tràn ra mép khung */
     if (!hidden) {
@@ -395,11 +395,11 @@ export const odo = {
       ug.fillStyle = 'rgba(13,11,20,.62)'; ug.fillRect(Math.round(x - w / 2 - 4 - (ic ? isz / 2 + 2 : 0)), Math.round(y - fs - 2), Math.round(w + 8 + (ic ? isz + 4 : 0)), fs + 3);
       if (ic) { ug.imageSmoothingEnabled = false; const ih = Math.round(isz * ic.naturalHeight / ic.naturalWidth); ug.drawImage(ic, Math.round(x - w / 2 - isz / 2 - 6), Math.round(y - fs / 2 - 1 - ih / 2 - 2), isz, ih); }
       ug.fillStyle = o.stash > 0 ? '#c6ff6a' : '#e8dcc0'; ug.fillText(txt, Math.round(x + (ic ? isz / 2 + 2 : 0)), Math.round(y));
-      if (mo.st === 'fight' || mo.st === 'flee' || mo.hp < mo.max) { const bw = Math.round(14 * scale), bh = Math.max(3, Math.round(scale * 0.9)); ug.fillStyle = '#352022'; ug.fillRect(Math.round(x - bw / 2) - 1, Math.round(y + 1), bw + 2, bh + 2); ug.fillStyle = '#e84a3a'; ug.fillRect(Math.round(x - bw / 2), Math.round(y + 2), Math.max(1, Math.round(bw * mo.hp / mo.max)), bh); }
+      if (mo.st === 'fight' || mo.st === 'flee' || mo.hp < mo.max) { const bw = Math.round(14 * scale), bh = Math.max(3, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 0.9)); if (globalThis.__ob91) globalThis.__ob91(ug, Math.round(x - bw / 2), Math.round(y + 1), bw, mo.hp / mo.max, 'foe', ctx.scaleUI || scale); else { ug.fillStyle = '#352022'; ug.fillRect(Math.round(x - bw / 2) - 1, Math.round(y + 1), bw + 2, bh + 2); ug.fillStyle = '#e84a3a'; ug.fillRect(Math.round(x - bw / 2), Math.round(y + 2), Math.max(1, Math.round(bw * mo.hp / mo.max)), bh); } }   /* p91: thanh chung */
     }
     if (ST.bub) {   /* bong bóng lời ngắn (theo sự kiện) */
       const by = y - (hidden ? 0 : fs + 6), tw = ug.measureText(ST.bub.text).width;
-      ug.fillStyle = 'rgba(255,250,235,.94)'; ug.strokeStyle = '#352022'; ug.lineWidth = Math.max(1, scale * 0.4);
+      ug.fillStyle = 'rgba(255,250,235,.94)'; ug.strokeStyle = '#352022'; ug.lineWidth = Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) * 0.4);
       ug.beginPath(); ug.roundRect(Math.round(x - tw / 2 - 6), Math.round(by - fs - 6), Math.round(tw + 12), fs + 6, 5); ug.fill(); ug.stroke();
       ug.fillStyle = '#352022'; ug.fillText(ST.bub.text, Math.round(x), Math.round(by - 3));
     }

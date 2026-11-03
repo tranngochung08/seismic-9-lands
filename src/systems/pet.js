@@ -13,7 +13,7 @@ import { beamKey, chargeKey, sheet as bSheet, drawAt as bDraw, frameAt as bFrame
 // ---------------------------------------------------------------- strings
 const STR = {
   en: {
-    takeEgg: 'Take the core crystal for Rocky', needCrystals: 'Needs 3 crystals to wake it — mine crystals in M9 with Pickaxe II', eggTaken: 'The core crystal hums in your bag — keep walking, Rocky can feel it',
+    takeEgg: 'Take the core crystal for Rocky', needCrystals: 'Needs 3 crystals to wake it — mine crystals in M9 with Seismic Hammer II', eggTaken: 'The core crystal hums in your bag — keep walking, Rocky can feel it',
     swam: 'Rocky swam ashore and found you! Lyron asked it to look after you', grown: n => `${n} grew up — a grown Rocky now! It finds rarer things`,
     eggHud: p => `🔮 Core: ${p}%`, hatched: 'A Rocky hatched!', nameTitle: 'A Rocky hatched!', nameHint: 'Give it a name (max 12)',
     renameTitle: 'Rename your Rocky', ok: 'OK', cancel: 'Cancel', named: n => `${n} is now your buddy`, renamed: n => `Renamed to ${n}`,
@@ -30,7 +30,7 @@ const STR = {
     nestHome: n => `${n}'s nest`, read: (n, s, t) => `${n} read the book — ${s} tier ${t}!`,
   },
   vi: {
-    takeEgg: 'Lấy tinh thể Lõi cho Rocky', needCrystals: 'Cần 3 tinh thể để đánh thức — đào tinh thể ở M9 bằng Cuốc II', eggTaken: 'Tinh thể Lõi đang ngân trong túi — cứ đi tiếp, Rocky cảm nhận được',
+    takeEgg: 'Lấy tinh thể Lõi cho Rocky', needCrystals: 'Cần 3 tinh thể để đánh thức — đào tinh thể ở M9 bằng Búa Seismic II', eggTaken: 'Tinh thể Lõi đang ngân trong túi — cứ đi tiếp, Rocky cảm nhận được',
     swam: 'Rocky bơi vào bờ và tìm thấy bạn! Lyron đã dặn nó trông chừng bạn', grown: n => `${n} đã lớn — giờ là Rocky trưởng thành! Hay mang về đồ hiếm`,
     eggHud: p => `🔮 Tinh thể Lõi: ${p}%`, hatched: 'Một Rocky đã nở!', nameTitle: 'Một Rocky đã nở!', nameHint: 'Đặt tên cho bé (tối đa 12 ký tự)',
     renameTitle: 'Đổi tên Rocky', ok: 'Xong', cancel: 'Hủy', named: n => `${n} giờ là bạn của bạn`, renamed: n => `Đã đổi tên thành ${n}`,
@@ -600,6 +600,7 @@ function monsters(ctx) {
 const dst = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 function isThreat(ctx, mo) {   /* lệnh Bảo vệ: chỉ kẻ ĐANG tấn công bạn hoặc Rocky */
   const p = ctx.S.player, t = now(ctx);
+  if (mo.c && mo.c.fct && !mo.angry && !(mo.F && mo.F.nt) && !(mo.F && mo.F.cast)) return false;   /* p74: Chấn Thú hoang trung lập (chưa nổi giận, không phải thú đêm hung) — Bảo vệ không đánh */
   if (t - (mo.__rkP ?? -99) < THREAT_T || t - (mo.__rkR ?? -99) < THREAT_T) return true;   /* vừa đánh bạn / vừa đánh Rocky / Rocky đang đấm nó */
   if (mo.angry && dst(mo, p) < 220) return true;                                         /* bạn đã đánh nó → nó đuổi đánh bạn */
   if (mo.c.boss) return !!mo.warned && dst(mo, p) < 170;                                  /* trùm đã vào trận */
@@ -615,7 +616,7 @@ function eligible(ctx, pt) {   /* quái Rocky được phép nhắm theo lệnh 
 }
 function onPlayerHurt(ctx) {   /* bọc ctx.hero.hit: quái gần nhất lúc bạn trúng đòn = kẻ tấn công */
   const p = ctx.S.player; let best = null, bd = 1e9;
-  for (const mo of monsters(ctx)) { const d = dst(mo, p) - (mo.c.boss ? 40 : 0); if (d < 60 && d < bd) { bd = d; best = mo; } }
+  for (const mo of monsters(ctx)) { if (mo.c && mo.c.fct && !mo.angry && !(mo.F && mo.F.nt)) continue;   /* p74: thú trung lập đứng gần không phải kẻ đánh */ const d = dst(mo, p) - (mo.c.boss ? 40 : 0); if (d < 60 && d < bd) { bd = d; best = mo; } }
   if (best) best.__rkP = now(ctx);
 }
 function wrapHero(ctx) {
@@ -627,7 +628,7 @@ function dealDmg(ctx, mo, dmg, kb, fx) {
   if (!ctx.monsters || !ctx.monsters.damage) return; mo.__rkR = now(ctx); mo.__rkHit = now(ctx);
   const dd = Math.max(1, Math.round(dmg * shellK(mo))); mo.__rkDmg = (mo.__rkDmg || 0) + Math.min(dd, Math.max(0, mo.hp));   /* máu Rocky đã gây (chia XP khi người chơi kết liễu) */
   ST.rkStrike = mo; try { ctx.monsters.damage(mo, dd, ST.ent || ctx.S.player, 1, mo.c.boss ? 0 : kb, true); } finally { ST.rkStrike = null; }   /* rkStrike: đòn này của Rocky → nếu quái ngã thì Rocky là người kết liễu */
-  if (fx) vfx1(ctx, fx, mo.x, mo.y + 3, 'wood_chips');
+  if (fx) vfx1(ctx, fx, mo.x, mo.y + 3, 'wood_chips'); if (ctx.envfx) { try { ctx.envfx.hit(mo.x, mo.y + 2, ST.he105 ? 12 : 8, ST.he105 || 'chan', ST.he105 ? 0.7 : 0.45, { noObj: !ST.he105 && !fx }); } catch (e) { } }   /* p105: đòn Rocky lên hoa cỏ */
 }
 function punchHit(ctx, pt, h) {
   const mo = h.mo, e = ST.ent; if (!e || !monsters(ctx).includes(mo)) return;
@@ -730,7 +731,7 @@ function beamTick(ctx, pt, dt) {
     const bl = blastBeam(ctx, o.x, o.y, ang, b.range, H.pierce, H.pow); b.len = bl.len; b.objHits = bl.hits;
     if (ctx.haFilter) { try { const fl = ctx.haFilter(o.x, o.y, ang, b.len, b.w, b.tier); if (fl != null && fl < b.len) b.len = Math.max(6, fl); } catch (e) { console.error('haFilter', e); } }   /* plan-30 trùm 3 (guong.js): gương chặn + phản xạ luồng — trả độ dài tới mặt gương (null = không chặn) */
     const mh = lineHits(ctx, o, ang, b.len, b.w, monsters(ctx));
-    for (const mo of mh) { dealDmg(ctx, mo, st.atk * H.mul, 0); if (!mo.c.boss) mo.kb = { vx: vx * H.kb, vy: vy * H.kb, t: 0.15 }; b.hits = (b.hits || 0) + 1; }
+    for (const mo of mh) { ST.he105 = 'quang'; dealDmg(ctx, mo, st.atk * H.mul, 0); ST.he105 = null; if (!mo.c.boss) mo.kb = { vx: vx * H.kb, vy: vy * H.kb, t: 0.15 }; b.hits = (b.hits || 0) + 1; }
     /* đầu luồng nổ khi chạm vật / quái (rk_haboom: vòng sóng + tia lửa + bụi) */
     if (bl.len < b.range - 3) { const hz = bl.hits && bl.hits[bl.hits.length - 1], od = hz && hz.stop && ctx.O && ctx.O[hz.type], gy = e.y + vy * bl.len;   /* ky: khoá chiều sâu = chân điểm nổ (chiếu xuống đất); dừng ở vật → vẽ trước mặt vật đó */
       ST.booms.push({ x: o.x + vx * bl.len, y: o.y + vy * bl.len + 4, t: -0.08, ky: od ? Math.max(gy, (hz.y + (od.fh || 1)) * TS + 0.5) : gy }); }
@@ -746,6 +747,7 @@ function startSuper(ctx, pt) {
   ST.cine = { t: 0, last: performance.now(), swapped: false, tier }; ST.beam = null; e.moving = false; e.sit = false; e.face = 'ds'; e.diag = null; e.sec8 = null;
   if (ctx.hero && ctx.hero.iframes) ctx.hero.iframes(2);
   ctx.S.timeScale = 0.25; ctx.S.camFocus = { x: e.x, y: e.y - 10 }; ctx.S.camZoom = 1; ctx.sfx('rocky_happy'); if (ctx.quake) ctx.quake(0.15);
+  if (ctx.rkSuperFx) try { ctx.rkSuperFx(e, tier); } catch (er) { console.error('rkSuperFx', er); }   /* p78 Saiyan A: cảnh Thức Tỉnh (kho78) */
   return true;
 }
 function cineTick(ctx, pt) {   /* cảnh biến hình ngắn ~1,3 s thời gian thật (kiểu Sừng Bò): chậm + phóng to + đổi bộ hình */
@@ -791,6 +793,7 @@ function combatTick(ctx, pt, dt, e, spd) {   /* true = Rocky đang bận đánh 
   if (ctx.rkMute && ctx.rkMute()) { ST.tgt = null; return false; }   /* plan-30 trùm 2: Trống Đồng 'Câm Lặng' — Rocky không dùng chiêu (không đấm / ha / Siêu Cấp), chỉ đi theo */
   const pool = eligible(ctx, pt), p = ctx.S.player;
   if (ST.tgt && (!pool.includes(ST.tgt))) ST.tgt = null;
+  { const lk = ctx.target && ctx.target.get && ctx.target.get(), lm = lk && (lk.kind === 'mon' || lk.kind === 'tent') ? (lk.mo || lk.ref) : null; if (lm && pt.cmd !== 'follow' && pt.cmd !== 'home' && monsters(ctx).includes(lm) && lm.hp > 0 && dst(lm, p) < LEASH + 10) { if (!pool.includes(lm)) pool.push(lm); ST.tgt = lm; } }   /* p91 đợt C: Rocky đánh con người chơi đang khoá (kể cả khi nó chưa đánh mình) */
   if (!ST.tgt && pool.length) { let bd = 1e9; for (const mo of pool) { const d = dst(mo, e) + (mo.c.boss ? 30 : 0); if (d < bd) { bd = d; ST.tgt = mo; } } }
   if (ctx.rkSkill) { try { if (ctx.rkSkill(pt, e, pool, ST.tgt, dt)) { e.moving = false; return true; } } catch (er) { console.error('rkSkill', er); } }   /* plan-38: chiêu học từ trùm (rockycore.js) — true = Rocky đang ra chiêu */
   /* chiêu bậc cao nhất đã mở + sẵn sàng: Siêu Cấp (mục tiêu trong ~100 px) > Rocky-ha > Đấm */
@@ -1112,7 +1115,7 @@ export const pet = {
     }
     ST.lastP = { x: p.x, y: p.y };
     updateFx(dt);
-    if (!s.pet && ctx.story) {
+    if (!s.pet && ctx.story && !(ctx.S.save && ctx.S.save.flags && ctx.S.save.flags.p120new)) {   /* p120: người mới đội trống, không có Rocky cam đi theo (chọn Chấn Thú ở Noxx) */
       const st = ctx.story() || {};
       if ((st.act || 0) >= 2) { if (!(ctx.S.map && ctx.S.map.sea) && ctx.S.mode === 'play') giveRocky(ctx, true); }
       else if ((st.step || 0) & 1) giveRocky(ctx, false);
@@ -1172,11 +1175,11 @@ export const pet = {
       const im = ctx.ART && ctx.ART.uiImg && ctx.ART.uiImg('rocky_nest'), n = ST.nest;
       if (im && n.x - cx > -40 && n.x - cx < ctx.VW + 40 && n.y - cy > -40 && n.y - cy < ctx.VH + 40) {
         const hi = ctx.ART.hi || 2, w = im.width / hi, h = im.height / hi;
-        out.push({ y: n.y - 3, f: () => ctx.g.drawImage(im, Math.round(n.x - w / 2) - cx, Math.round(n.y + 3 - h) - cy, w, h) });   /* 5 tham số: canvas __hi — shim không nhân đôi toạ độ nguồn (bài học 2026-09-25) */
+        out.push({ y: n.y - 3, f: () => ctx.g.drawImage(im, (globalThis.__R89||Math.round)(n.x - w / 2) - cx, (globalThis.__R89||Math.round)(n.y + 3 - h) - cy, w, h) });   /* 5 tham số: canvas __hi — shim không nhân đôi toạ độ nguồn (bài học 2026-09-25) */
       }
     }
     if (s.pet && e) haDrawables(ctx, out, cx, cy);   /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): tụ năng + luồng + nổ Rocky-ha sắp theo chiều sâu cùng Rocky */
-    if (!s.pet || !e || e.state === 'mount') return out;   /* plan-31: đang chở người bay — sky.js vẽ */
+    if (!s.pet || !e || e.state === 'mount' || e.p78under) return out;   /* p78: Rocky đang chui đất (Đào Hầm Vồ) — chỉ còn ụ đất (kho78 / fx78) */   /* plan-31: đang chở người bay — sky.js vẽ */
     const g = ctx.g, sx = e.x - cx, sy = e.y - cy;
     if (sx < -40 || sy < -50 || sx > ctx.VW + 40 || sy > ctx.VH + 40) return out;
     const pt = s.pet, scarfSet = frames(scarfFor(ctx)), pk = pickImg(ctx, pt, e, scarfSet), img = pk.img, setPx = pk.px || !!scarfSet.px;
@@ -1188,16 +1191,16 @@ export const pet = {
     out.push({
       y: e.y + (e.state === 'ride' ? 0.6 : 0), skill: 'rk_body', f: () => {
         const wet = e.state !== 'ride' && WATER.depth && WATER.depth(e.x, e.y);
-        if (AIR) ctx.air.shadow(g, Math.round(e.x) - cx, Math.round(e.y) - cy + 1, 0.9);
-        else if (!wet) { if (SHADOW.on) shadowFor(g, e.x, e.y, Math.round(e.x) - cx, Math.round(e.y) - cy + 1, Math.max(8, Math.round(iw * 0.62)), Math.round(e.lift || 0) + hop); else g.fillStyle = 'rgba(0,0,0,.25)', g.beginPath(), g.ellipse(Math.round(e.x) - cx, Math.round(e.y) - cy, Math.max(5, iw * 0.3), 2, 0, 0, TAU), g.fill(); }   /* plan-66: ảnh bóng chung, nhỏ + nhạt khi nhảy / bị hất */
+        if (AIR) ctx.air.shadow(g, (globalThis.__R89||Math.round)(e.x) - cx, (globalThis.__R89||Math.round)(e.y) - cy + 1, 0.9);
+        else if (!wet) { if (SHADOW.on) shadowFor(g, e.x, e.y, (globalThis.__R89||Math.round)(e.x) - cx, (globalThis.__R89||Math.round)(e.y) - cy + 1, Math.max(8, Math.round(iw * 0.62)), Math.round(e.lift || 0) + hop); else g.fillStyle = 'rgba(0,0,0,.25)', g.beginPath(), g.ellipse((globalThis.__R89||Math.round)(e.x) - cx, (globalThis.__R89||Math.round)(e.y) - cy, Math.max(5, iw * 0.3), 2, 0, 0, TAU), g.fill(); }   /* plan-66: ảnh bóng chung, nhỏ + nhạt khi nhảy / bị hất */
         const kr = AIR && e.kfly && e.kfly.air ? e.kfly.ang : 0; if (kr) { g.save(); g.translate(x0 - cx + iw / 2, y0 - cy + ih / 2); g.rotate(kr); g.translate(-(x0 - cx + iw / 2), -(y0 - cy + ih / 2)); }
         if (pt.superT > 0) {   /* hào quang CHỈ trong lúc Siêu Cấp (plan-27, anh chốt) — sheet PixelLab rk_aura_t*, vẽ 1:1 sau lưng */
           const a = sheetFrame(ctx, `rk_aura_t${LV.vfxTier(Math.max(1, LV.tierOf(pt, 'super')))}`, ctx.S.time) || sheetFrame(ctx, 'rk_aura_t1', ctx.S.time);
-          if (a) { g.globalAlpha = 0.6; g.drawImage(a.img, a.loopF * a.w * a.hi, 0, a.w * a.hi, a.h * a.hi, Math.round(e.x - a.w / 2) - cx + ldx, Math.round(e.y + 3 - a.h) - cy - hop + ldy - Math.round(e.lift || 0) - AL, a.w, a.h); g.globalAlpha = 1; }   /* 2026-10-15 (anh: VFX sau lưng Rocky bị lệch): bám theo thân — cộng độ cao bay (AL), nhảy (hop / lift), lao đấm (ldx / ldy) như ảnh Rocky */
+          if (a) { g.globalAlpha = 0.6; g.drawImage(a.img, a.loopF * a.w * a.hi, 0, a.w * a.hi, a.h * a.hi, (globalThis.__R89||Math.round)(e.x - a.w / 2) - cx + ldx, (globalThis.__R89||Math.round)(e.y + 3 - a.h) - cy - hop + ldy - Math.round(e.lift || 0) - AL, a.w, a.h); g.globalAlpha = 1; }   /* 2026-10-15 (anh: VFX sau lưng Rocky bị lệch): bám theo thân — cộng độ cao bay (AL), nhảy (hop / lift), lao đấm (ldx / ldy) như ảnh Rocky */
         }
-        waterDraw(g, e.x, e.y, Math.round(e.x) - cx, Math.round(e.y) - cy, () => {
+        waterDraw(g, e.x, e.y, (globalThis.__R89||Math.round)(e.x) - cx, (globalThis.__R89||Math.round)(e.y) - cy, () => {
           const darkP = !!(ctx.isDarkPath && ctx.isDarkPath()), dark = darkP || (ctx.rkEvil && ctx.rkEvil()), au = darkP && ctx.ART && ctx.ART.vfx && ctx.ART.vfx.dark_aura;   /* plan-25: Rocky Bóng Tối — hào quang tím PixelLab sau lưng; plan-30 (2026-10-13): Rocky bị trùm kéo đổi phe (rkEvil) CHỈ đổi màu, không hào quang lặp */
-          if (au && au.img) { const n = au.n || 8, f = Math.floor(ctx.S.time * (au.fps || 12)) % n, hi = au.img.__hi ? 1 : 2, w = au.w * 0.5, h = au.h * 0.5; g.globalAlpha = 0.45; g.drawImage(au.img, f * au.w * hi, 0, au.w * hi, au.h * hi, Math.round(e.x - w / 2) - cx + ldx, Math.round(e.y - h + 2) - cy - hop + ldy - Math.round(e.lift || 0) - AL, w, h); g.globalAlpha = 1; }   /* 2026-10-15: bám thân như hào quang Siêu Cấp */
+          if (au && au.img) { const n = au.n || 8, f = Math.floor(ctx.S.time * (au.fps || 12)) % n, hi = au.img.__hi ? 1 : 2, w = au.w * 0.5, h = au.h * 0.5; g.globalAlpha = 0.45; g.drawImage(au.img, f * au.w * hi, 0, au.w * hi, au.h * hi, (globalThis.__R89||Math.round)(e.x - w / 2) - cx + ldx, (globalThis.__R89||Math.round)(e.y - h + 2) - cy - hop + ldy - Math.round(e.lift || 0) - AL, w, h); g.globalAlpha = 1; }   /* 2026-10-15: bám thân như hào quang Siêu Cấp */
           if (dark) g.filter = 'hue-rotate(230deg) saturate(1.3) brightness(0.75)';
           else if (e.hurt > 0) g.filter = 'brightness(1.6) saturate(0.6)';
           if (ghost) g.globalAlpha = 0.55;
@@ -1212,7 +1215,7 @@ export const pet = {
         if (AIR && setPx) { const tp = ctx.air.topOf(img, 0, 0, img.width, img.height); ctx.air.copter(g, x0 - cx + tp.cx, y0 - cy + tp.top); }
         if (kr) g.restore();
         const helm = lvOf(pt) < 5 && !(pt.superT > 0) && ctx.isUnderwater && ctx.isUnderwater() && ctx.ART   /* anh 2026-10-12: Rocky cấp 5+ lặn không cần mũ */ && ctx.ART.uiImg && ctx.ART.uiImg('bubble_helm');
-        if (helm) { const hw = Math.round(Math.max(16, iw + 5)), hh = Math.round(hw * helm.height / helm.width); g.drawImage(helm, Math.round(e.x - hw / 2) - cx, Math.round(e.y - Math.min(hh, ih + 4) * 0.98) - hop - cy, hw, hh); }
+        if (helm) { const hw = Math.round(Math.max(16, iw + 5)), hh = Math.round(hw * helm.height / helm.width); g.drawImage(helm, (globalThis.__R89||Math.round)(e.x - hw / 2) - cx, Math.round(e.y - Math.min(hh, ih + 4) * 0.98) - hop - cy, hw, hh); }
         if (ST.holding) {
           const c = { stone: '#8a8a96', wood: '#8a5a2e', rock: '#6f6a7a', leaf: '#4caa4f', flower: '#ff8fc8', berry: '#d0304a', shell: '#f5e6d0', pearl: '#ffffff' }[ST.holding.id] || '#ffd45e';
           const hx = x0 - cx + Math.round(iw / 2) - 2, hy = y0 - cy - 4 + Math.round(Math.sin(ctx.S.time * 4) * 1);
@@ -1240,7 +1243,7 @@ export const pet = {
       }
     }
     if (ST.sparkle) {
-      const sp = ST.sparkle, x = Math.round(sp.x) - cx, y = Math.round(sp.y) - 3 - cy, ph = sp.ph || 0;
+      const sp = ST.sparkle, x = (globalThis.__R89||Math.round)(sp.x) - cx, y = Math.round(sp.y) - 3 - cy, ph = sp.ph || 0;
       const k = 0.55 + 0.45 * Math.sin(ph * 6), r = 3 + Math.round(k * 2);
       g.fillStyle = `rgba(255,240,150,${(0.25 + k * 0.2).toFixed(2)})`; g.beginPath(); g.arc(x, y, r + 3, 0, TAU); g.fill();
       g.fillStyle = '#ffd45e'; g.fillRect(x - r, y, r * 2 + 1, 1); g.fillRect(x, y - r, 1, r * 2 + 1);
@@ -1249,7 +1252,7 @@ export const pet = {
     }
     /* 2026-10-16 (QUY TẮC LỚP VẼ CHIÊU): tụ năng / luồng / nổ Rocky-ha đã chuyển sang drawables (haDrawables) — bắn lên nằm sau Rocky, bắn xuống nằm trước */
     for (const p of ST.fx) {
-      const k = Math.max(0, p.t / p.life), x = Math.round(p.x) - cx, y = Math.round(p.y) - cy;
+      const k = Math.max(0, p.t / p.life), x = (globalThis.__R89||Math.round)(p.x) - cx, y = (globalThis.__R89||Math.round)(p.y) - cy;
       g.globalAlpha = Math.min(1, k * 1.5);
       if (p.k === 'heart') drawHeart(g, x - 2, y - 2, p.c);
       else if (p.k === 'dust') { g.fillStyle = p.c; g.fillRect(x, y, 2, 2); }
@@ -1265,34 +1268,34 @@ export const pet = {
     for (const p of ST.fx) {
       if (p.k !== 'note') continue;
       const k = Math.max(0, p.t / p.life);
-      ug.globalAlpha = Math.min(1, k * 1.6); ug.fillStyle = '#ffd45e'; ug.font = `bold ${Math.max(11, scale * 4)}px VT323, monospace`;
+      ug.globalAlpha = Math.min(1, k * 1.6); ug.fillStyle = '#ffd45e'; ug.font = `bold ${Math.max(11, (globalThis.__u89?globalThis.__u89(scale):scale) * 4)}px VT323, monospace`;
       ug.fillText('♪', (p.x - cx) * scale, (p.y - cy) * scale);
     }
     ug.globalAlpha = 1;
     const ih = Math.max(14, pickImg(ctx, pt, e, frames(scarfFor(ctx))).img.height || 14);
     if (pt.hunger < HUNGRY_AT && e.state !== 'ride' && e.state !== 'home' && !ST.bubble) {
-      const bx = Math.round((e.x + 8 - cx) * scale), by = Math.round((e.y - ih - 8 - cy) * scale), r = Math.max(7, scale * 3.2);
+      const bx = (globalThis.__R89||Math.round)((e.x + 8 - cx) * scale), by = (globalThis.__R89||Math.round)((e.y - ih - 8 - cy) * scale), r = Math.max(7, (globalThis.__u89?globalThis.__u89(scale):scale) * 3.2);
       ug.fillStyle = 'rgba(255,255,255,.92)'; ug.beginPath(); ug.arc(bx, by, r, 0, TAU); ug.fill();
       ug.beginPath(); ug.arc(bx - r * 0.7, by + r * 0.9, r * 0.28, 0, TAU); ug.fill(); ug.beginPath(); ug.arc(bx - r * 1.05, by + r * 1.35, r * 0.16, 0, TAU); ug.fill();
-      ug.fillStyle = '#1c1a24'; ug.font = `${Math.max(10, scale * 3.6)}px VT323, monospace`;
+      ug.fillStyle = '#1c1a24'; ug.font = `${Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3.6)}px VT323, monospace`;
       ug.fillText('🍖', bx, by + 1);
     }
     if ((tgtShown(pt) || pt.hp < st.max * 0.999) && e.state !== 'home' && e.state !== 'ride') {   /* thanh máu nhỏ khi đang đánh / bị thương */
-      const w = Math.round(16 * scale), x = Math.round((e.x - cx) * scale - w / 2), k = Math.max(0, Math.min(1, pt.hp / st.max));
+      const w = Math.round(16 * scale), x = (globalThis.__R89||Math.round)((e.x - cx) * scale - w / 2), k = Math.max(0, Math.min(1, pt.hp / st.max));
       /* plan-45 D11: Rocky đứng sát DƯỚI người chơi → đầu Rocky ngang hông người, thanh máu (lớp UI, trên mọi thứ) vẽ đè thân người → dời xuống dưới chân Rocky. Luật lớp vẽ sprite giữ nguyên. */
-      const pl = ctx.S.player, by0 = e.y - ih - 3, bh = Math.max(4, scale) / scale + 2 / scale;
+      const pl = ctx.S.player, by0 = e.y - ih - 3, bh = Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale)) / scale + 2 / scale;
       const onMe = pl && Math.abs(e.x - pl.x) < 7 + 8 && by0 + bh > pl.y - 22 && by0 < pl.y + 1;
-      const y = Math.round(((onMe ? e.y + 2 : by0) - cy) * scale);
-      if (typeof window !== 'undefined') window.__p45rkBar = { x: x - 1, y: y - 1, w: w + 2, h: Math.max(4, scale) + 2, shown: true, moved: !!onMe };   /* móc test */
-      ug.fillStyle = '#3a1c0c'; ug.fillRect(x - 1, y - 1, w + 2, Math.max(4, scale) + 2); ug.fillStyle = '#5a2a2a'; ug.fillRect(x, y, w, Math.max(4, scale));
-      ug.fillStyle = k > 0.5 ? '#7bd04a' : k > 0.25 ? '#ffd45e' : '#ff5a5a'; ug.fillRect(x, y, Math.round(w * k), Math.max(4, scale));
+      const y = (globalThis.__R89||Math.round)(((onMe ? e.y + 2 : by0) - cy) * scale);
+      if (typeof window !== 'undefined') window.__p45rkBar = { x: x - 1, y: y - 1, w: w + 2, h: Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale)) + 2, shown: true, moved: !!onMe };   /* móc test */
+      if (globalThis.__ob91) globalThis.__ob91(ug, x, y, w, k, 'ally', ctx.scaleUI || scale); else { ug.fillStyle = '#3a1c0c'; ug.fillRect(x - 1, y - 1, w + 2, Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale)) + 2); ug.fillStyle = '#5a2a2a'; ug.fillRect(x, y, w, Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale)));
+      ug.fillStyle = k > 0.5 ? '#7bd04a' : k > 0.25 ? '#ffd45e' : '#ff5a5a'; ug.fillRect(x, y, Math.round(w * k), Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale))); }   /* p91: thanh chung (target91.overBar) */
     }
-    if ((pt.koT || 0) > 0 && e.state === 'home') { ug.fillStyle = '#e8f0ff'; ug.font = `bold ${Math.max(12, scale * 4)}px VT323, monospace`; ug.fillText('z Z', (e.x + 8 - cx) * scale, (e.y - ih - 4 - cy) * scale); }
-    for (const q of ST.pops) { ug.globalAlpha = Math.min(1, q.t * 1.5); ug.font = `bold ${Math.max(14, scale * 5)}px VT323, monospace`; ug.lineWidth = Math.max(2, scale * 0.8); ug.strokeStyle = '#3a1c0c'; ug.strokeText(q.txt, (q.x - cx) * scale, (q.y - cy) * scale); ug.fillStyle = q.c; ug.fillText(q.txt, (q.x - cx) * scale, (q.y - cy) * scale); }
+    if ((pt.koT || 0) > 0 && e.state === 'home') { ug.fillStyle = '#e8f0ff'; ug.font = `bold ${Math.max(12, (globalThis.__u89?globalThis.__u89(scale):scale) * 4)}px VT323, monospace`; ug.fillText('z Z', (e.x + 8 - cx) * scale, (e.y - ih - 4 - cy) * scale); }
+    for (const q of ST.pops) { ug.globalAlpha = Math.min(1, q.t * 1.5); ug.font = `bold ${Math.max(14, (globalThis.__u89?globalThis.__u89(scale):scale) * 5)}px VT323, monospace`; ug.lineWidth = Math.max(2, (globalThis.__u89?globalThis.__u89(scale):scale) * 0.8); ug.strokeStyle = '#3a1c0c'; ug.strokeText(q.txt, (q.x - cx) * scale, (q.y - cy) * scale); ug.fillStyle = q.c; ug.fillText(q.txt, (q.x - cx) * scale, (q.y - cy) * scale); }
     ug.globalAlpha = 1;
     if (ST.bubble) {   /* bong bóng lời Rocky */
-      const fs = Math.max(13, Math.round(scale * 4.2)); ug.font = `${fs}px VT323, monospace`;
-      const txt = ST.bubble.text, tw = Math.min(ug.measureText(txt).width, 260), pad = 6, bw = tw + pad * 2, bh = fs + pad, bx = Math.round((e.x - cx) * scale - bw / 2), by = Math.round((e.y - ih - 12 - cy) * scale - bh);
+      const fs = Math.max(13, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 4.2)); ug.font = `${fs}px VT323, monospace`;
+      const txt = ST.bubble.text, tw = Math.min(ug.measureText(txt).width, 260), pad = 6, bw = tw + pad * 2, bh = fs + pad, bx = (globalThis.__R89||Math.round)((e.x - cx) * scale - bw / 2), by = (globalThis.__R89||Math.round)((e.y - ih - 12 - cy) * scale - bh);
       ug.globalAlpha = Math.min(1, ST.bubble.t * 3);
       ug.fillStyle = '#3a1c0c'; ug.fillRect(bx - 2, by - 2, bw + 4, bh + 4); ug.fillStyle = '#fff8e8'; ug.fillRect(bx, by, bw, bh);
       ug.fillStyle = '#3a1c0c'; ug.fillRect(Math.round(bx + bw / 2 - 3), by + bh + 2, 6, 2); ug.fillRect(Math.round(bx + bw / 2 - 1), by + bh + 4, 2, 2);

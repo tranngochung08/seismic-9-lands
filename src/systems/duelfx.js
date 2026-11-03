@@ -10,6 +10,8 @@
      sóng xung kích vòng trên đất + vết nứt / cháy ở cú nặng, bụi trượt khi bị hất — mọi thứ chỉ bật theo sự kiện rồi tắt. */
 import { createFull, FKIT } from './pxfx_full.js';
 import { PAL_SRC } from './pxfx.js';
+import { clash79, setClash79, clashVar79 } from './clash79.js';   /* p79 */
+if (typeof window !== 'undefined') window.__clash79 = setClash79;
 const { DBuf, DLBuf, RES } = FKIT;
 
 export const VFX_OLD = (() => { try { return new URLSearchParams(location.search).get('vfx') === 'old'; } catch (e) { return false; } })();
@@ -22,7 +24,8 @@ let ENV = null;   /* móc engine: { ST, mouth(f), foeOf(f), hitstop(s), quake(s)
 export function init(SET5, env) { ENV = env; for (const [t, ids] of Object.entries(SET5)) ids.forEach((id, i) => { SCN[id] = t + (i < 4 ? '_sk' + (i + 1) : '_ult'); TYPE[id] = t; }); }
 /* p67:addscene:begin */
 /* p67: chiêu riêng — gắn id chiêu với cảnh code (kind = <hệ>_sig<loài>) */
-export function addScene(id, kind) { SCN[id] = kind; TYPE[id] = kind.split('_')[0]; }
+export function addScene(id, kind, pal) { SCN[id] = kind; TYPE[id] = pal || kind.split('_')[0]; if (pal) PALO[id] = pal; }   /* p72: pal = bảng màu hệ khác (chiêu A dùng lại cảnh của hệ khác) */
+const PALO = {};
 /* p67:addscene:end */
 export const sceneOf = id => (CODE && SCN[id]) || null;
 
@@ -83,7 +86,7 @@ export function spawn(id, f, foe, t0 = 0, o = {}) {
     hit: p => onHit(sc, p ?? 1), knock: () => onKnock(sc), shake: k => { ENV.quake(Math.min(0.5, 0.05 + (k || 0) * 0.9)); }, flash: k => { if (sc.ult) ENV.flashW(Math.min(0.12, k || 0)); },
     dash: () => { }, hide: () => { }, warp: () => { }, cx: () => { const lx = local(sc, sc.f.x); return sc.Cc.x + (lx - sc.C.x); },
   };
-  sc.e = createFull('full_' + kind, { x: sc.Fc.x, y: sc.Fc.y, type: he, seed: 11 + (LIST.length * 7) % 50, C: sc.Cc, M: sc.Mc, bufs: sc.bufs, map: c => installMap(sc, c), ...hk });
+  sc.e = createFull('full_' + kind, { x: sc.Fc.x, y: sc.Fc.y, type: PALO[id] || he, seed: 11 + (LIST.length * 7) % 50, C: sc.Cc, M: sc.Mc, bufs: sc.bufs, map: c => installMap(sc, c), ...hk });
   if (!sc.e) { giveBufs(sc.W, sc.H, sc.bufs); return null; }
   if (t0 > 0) { let t = 0; while (t < t0 - 1e-6) { const d = Math.min(1 / 30, t0 - t); sc.e.update(d); t += d; } sc.t = t0; }
   LIST.push(sc); return sc;
@@ -241,7 +244,8 @@ export function codeBeam(g, he, x0, y0, x1, y1, w0, w1, cx, cy, t, o = {}) {
   if (o.head) { const hx = x0 + ux * L * len, hy = y0 + uy * L * len, r = w1 * 1.3 + 1.5 * Math.sin(t * 50); discD(g, Math.round((hx - cx) * 2), Math.round((hy - cy) * 2), r + 1.5, cols[3]); discD(g, Math.round((hx - cx) * 2), Math.round((hy - cy) * 2), r, cols[1]); discD(g, Math.round((hx - cx) * 2), Math.round((hy - cy) * 2), r * 0.55, cols[0]); }
 }
 /* nổ ở điểm va đối chưởng: lõi sáng phập phồng + tia toả (chỉ trong lúc giằng co) */
-export function clashBurst(g, he1, he2, x, y, cx, cy, t) {
+export function clashBurst(g, he1, he2, x, y, cx, cy, t, pw = 0.5) {   /* p79: điểm va mới (clash79.js) — &clash79=o giữ bản cũ để so */
+  if (clashVar79() !== 'o') return clash79(g, PAL_SRC[he1] || PAL_SRC.quang, PAL_SRC[he2] || PAL_SRC.nham, x, y, cx, cy, t, pw, bay);
   const A = PAL_SRC[he1] || PAL_SRC.quang, B = PAL_SRC[he2] || PAL_SRC.nham, X = Math.round((x - cx) * 2), Y = Math.round((y - cy) * 2), r = 9 + 2 * Math.sin(t * 37) + Math.sin(t * 23);
   for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + t * 5, l = r * (1.8 + 0.5 * Math.sin(t * 30 + i)); g.fillStyle = (i % 2 ? A : B)[1]; for (let s = r * 0.6; s < l; s += 1) g.fillRect(Math.round(X + Math.cos(a) * s) / 2, Math.round(Y + Math.sin(a) * s * 0.7) / 2, 0.5, 0.5); }
   discD(g, X, Y, r + 2, B[4]); discD(g, X, Y, r, A[2]); discD(g, X, Y, r * 0.6, A[0]); discD(g, X, Y, r * 0.3, '#ffffff');

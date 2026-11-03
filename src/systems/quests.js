@@ -150,7 +150,7 @@ const TPL = {
       v => `Cut 3 trees for me — six 🪵 wood is all I ask. I need a new frame.`,
       v => `${v.name} here. My canvas needs a stretcher: chop 3 trees, bring 6 🪵.`,
       v => `${v.i} artworks and every one of them needs a frame. Three trees, 6 🪵. Go.`,
-      v => `An axe, three trees, six 🪵 wood. I'd do it myself but my hands are painted.`,
+      v => `A Seismic Hammer, three trees, six 🪵 wood. I'd do it myself but my hands are painted.`,
       v => `We burn a lot of wood in ${v.nat}. Cut 3 trees and bring the 6 🪵 here.`,
       v => `Magnitude ${v.lv} and no firewood. Three trees, six 🪵, that's the whole job.`,
       v => `Chop 3 trees. Six 🪵 wood. Then I'll show you what I'm painting.`,
@@ -160,7 +160,7 @@ const TPL = {
       v => `Chặt giúp mình 3 cây — sáu 🪵 gỗ thôi. Mình cần đóng khung mới.`,
       v => `${v.name} đây. Toan cần khung căng: chặt 3 cây, mang về 6 🪵.`,
       v => `${v.i} bức tranh, bức nào cũng cần khung. Ba cây, 6 🪵. Đi nào.`,
-      v => `Một cây rìu, ba cái cây, sáu 🪵 gỗ. Mình tự làm nhưng tay dính sơn hết rồi.`,
+      v => `Một cây Búa Seismic, ba cái cây, sáu 🪵 gỗ. Mình tự làm nhưng tay dính sơn hết rồi.`,
       v => `Dân ${v.nat} đốt gỗ dữ lắm. Chặt 3 cây rồi mang 6 🪵 về đây.`,
       v => `Magnitude ${v.lv} mà không có củi. Ba cây, sáu 🪵, xong việc.`,
       v => `Chặt 3 cây. Sáu 🪵 gỗ. Rồi mình cho xem mình đang vẽ gì.`,
@@ -197,18 +197,14 @@ const GROUP = z => (z === 'village' || z === 'm1') ? 0 : (z === 'm2' || z === 'm
 // fetch pools per land group — only ctx.ITEMS ids. A land may ask for its own tier or anything lower.
 const TIER_ITEMS = [
   [['wood', 5], ['berry', 3], ['flower', 3], ['sand', 4], ['leaf', 3]],
-  [['hay', 4], ['egg', 2], ['mushroom', 3], ['honey', 1], ['wool', 2], ['resin', 2]],
+  [['hay', 4], ['mushroom', 3], ['honey', 1], ['resin', 2]],   /* p106nopet2: bỏ trứng, len */
   [['rock', 4], ['ore', 3], ['charcoal', 2], ['iron', 1]],
   [['glass', 2], ['obsidian', 2], ['lava', 1]],
   [['ice', 2], ['crystal', 1]]
 ];
 // which head-carry animals actually live in each land (animals.js THEME + ecology.js TH)
 const CARRY_ZONE = {
-  village: ['chicken', 'cow'],
-  m1: ['fish', 'fishbig', 'crab', 'chicken'],
-  m2: ['sheep', 'chicken', 'cow'],
-  m3: ['rabbit', 'bird', 'chicken'],
-  m4: ['bat', 'bird'], m5: ['bird'], m6: ['bird'], m7: ['bird'], m8: ['bird'], m9: ['bird']
+  /* p106nopet2: chỉ còn mang cá (vật nuôi đã bỏ) */ m1: ['fish', 'fishbig']
 };
 const W_FETCH = [4, 4, 5, 5, 4], W_CARRY = [3, 3, 1, 1, 1], W_FRIEND = [2, 2, 2, 2, 3], W_CHOP = [3, 3, 1, 1, 1], W_HELP = [2, 2, 3, 3, 3];
 const WOODY = { tree: 1, pine: 1, pine_s: 1, palm: 1, deadtree: 1 };   // trees.js chops these — no trees here, no chop request
@@ -225,6 +221,7 @@ function sysS(ctx) {
   const sv = ctx.S.save; sv.sys = sv.sys || {}; if (ctx.clock) clockRef = ctx.clock;
   const s = (sv.sys.quests = sv.sys.quests || {});
   if (!Array.isArray(s.active)) s.active = [];
+  s.active = s.active.filter(q => !(q && ((q.type === 'carry' && q.kind !== 'fish') || (q.type === 'fetch' && (q.item === 'egg' || q.item === 'wool')))));   /* p106nopet2: nhiệm vụ cần vật nuôi / trứng / len → huỷ (vật nuôi đã bỏ khỏi game) */
   if (typeof s.done !== 'number') s.done = 0;
   if (!Array.isArray(s.declined)) s.declined = [];
   const day = dayNum();                                   // yesterday's refusals are forgotten
@@ -649,17 +646,17 @@ export const quests = {
   // "!" / "?" / "✓" bobbing over the artists, and over a notice board when the giver is away
   drawUI(ug, ctx, cx, cy, scale) {
     if (!ctx.S.map || ctx.S.mode === 'title') return;
-    const fs = Math.max(10, scale * 3), up = fs + 4 + 10;
+    const fs = Math.max(10, (globalThis.__u89?globalThis.__u89(scale):scale) * 3), up = fs + 4 + 10;
     const W = ug.canvas.width, H = ug.canvas.height;
     ug.save();
-    ug.font = `bold ${Math.max(13, scale * 4)}px VT323, monospace`;
+    ug.font = `bold ${Math.max(13, (globalThis.__u89?globalThis.__u89(scale):scale) * 4)}px VT323, monospace`;
     ug.textAlign = 'center'; ug.textBaseline = 'middle';
     const glyph = (sx, sy, ch, col) => {
       if (sx < -60 || sx > W + 60 || sy < -40 || sy > H + 40) return;
-      const r = Math.max(7, scale * 3);
+      const r = Math.max(7, (globalThis.__u89?globalThis.__u89(scale):scale) * 3);
       ug.fillStyle = 'rgba(13,11,20,.66)';
       ug.beginPath(); ug.arc(sx, sy, r, 0, 7); ug.fill();
-      ug.strokeStyle = col; ug.lineWidth = Math.max(1, scale / 2); ug.stroke();
+      ug.strokeStyle = col; ug.lineWidth = Math.max(1, (globalThis.__u89?globalThis.__u89(scale):scale) / 2); ug.stroke();
       ug.fillStyle = col; ug.fillText(ch, sx, sy + 1);
     };
     const dy = Math.round(Math.sin(bob * 3) * scale * 1.2);

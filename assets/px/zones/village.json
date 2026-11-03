@@ -10,12 +10,18 @@
   "COBBLE": "stone",
   "MARBLE": "stone",
   "TILLED": "tilled",
-  "TILLED_WET": "tilled"
+  "TILLED_WET": "tilled",
+  "WATER": "water",
+  "BRIDGE": "water"
  },
  "wang": [
   {
    "dir": "wang/a2d",
    "upper": "grass2"
+  },
+  {
+   "dir": "zones/village/p88/wang/w",
+   "upper": "water"
   },
   {
    "dir": "wang/b2",
@@ -174,6 +180,86 @@
   },
   "exit_sign_up": {
    "file": "zones/village/obj/exit_sign_up_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "exit_sign_w": {
+   "file": "zones/village/obj/exit_sign_w_t8.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "cliff88_L": {
+   "file": "zones/village/p88/cliff_L.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "cliff88_A": {
+   "file": "zones/village/p88/cliff_A.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "cliff88_B": {
+   "file": "zones/village/p88/cliff_B.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "cliff88_R": {
+   "file": "zones/village/p88/cliff_R.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "tent88": {
+   "file": "zones/village/p88/tent.png",
+   "ox": -4,
+   "oy": 0
+  },
+  "log88": {
+   "file": "zones/village/p88/log.png",
+   "ox": -3,
+   "oy": 0
+  },
+  "rock88": {
+   "file": "zones/m3/obj/rock_s23.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "rocks88": {
+   "file": "zones/m3/obj/rock_s_s7.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "h119_pumpkin_s": {
+   "file": "zones/village/p119/pumpkin_s.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "h119_pumpkin_l": {
+   "file": "zones/village/p119/pumpkin_l.png",
+   "ox": -4,
+   "oy": 0
+  },
+  "h119_pumpkin_pile": {
+   "file": "zones/village/p119/pumpkin_pile.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "h119_pumpkin_lamp": {
+   "file": "zones/village/p119/pumpkin_lamp.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "h119_grave": {
+   "file": "zones/village/p119/grave.png",
+   "ox": 0,
+   "oy": 0
+  },
+  "h119_scarecrow": {
+   "file": "zones/village/p119/scarecrow.png",
+   "ox": -4,
+   "oy": 0
+  },
+  "h119_web_fence": {
+   "file": "zones/village/p119/web_fence.png",
    "ox": 0,
    "oy": 0
   }
