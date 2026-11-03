@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Seismic · 9 Lands</title>
 <meta name="description" content="A pixel adventure through the 9 Magnitude lands of the Seismic community. Every NPC is a real artist.">
+<script>/* p121 (anh 03/11): GitHub trả 429 / 503 khi tải dồn → tự thử lại, chờ lâu dần. sw.js lo cả ảnh / module; khi sw đã điều khiển trang thì fetch không thử lại lần 2. ?sw=0 gỡ sw. */
+(function () { var F = window.fetch, W = [400, 900, 1800, 3200, 5000], NAV = navigator.serviceWorker;
+  if (F) window.fetch = function (u, o) { if (NAV && NAV.controller) return F(u, o); var i = 0; var wait = function () { return new Promise(function (ok) { setTimeout(ok, W[i++] * (0.8 + Math.random() * 0.4)); }); };
+    var go = function () { return F(u, o).then(function (r) { if ((r.status === 429 || (r.status >= 502 && r.status <= 504)) && i < W.length) return wait().then(go); return r; }, function (e) { if (i < W.length && !(o && o.signal && o.signal.aborted)) return wait().then(go); throw e; }); };
+    return go(); };
+  if (NAV) { var q = new URLSearchParams(location.search); if (q.get('sw') === '0') NAV.getRegistrations().then(function (a) { a.forEach(function (x) { x.unregister(); }); }).catch(function () { });
+    else if (window.isSecureContext) NAV.register('sw.js').catch(function () { }); }
+  var q2 = new URLSearchParams(location.search);   /* chờ sw nhận trang (tối đa 2,5 s) rồi mới nạp game: lượt đầu main.js cũng được thử lại khi 429 */
+  window.__swReady = new Promise(function (res) { if (!NAV || !window.isSecureContext || q2.get('sw') === '0' || NAV.controller) return res(); var t = setTimeout(res, 2500); NAV.addEventListener('controllerchange', function () { clearTimeout(t); res(); }); });
+})();
+</script>
 <link rel="stylesheet" href="assets/fonts/vt323.css">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -162,6 +173,11 @@
 
 <div id="toast" hidden></div>
 <div id="loading">Loading…</div>
-<script type="module" src="src/main.js"></script>
+<script>/* p121: nạp game sau khi sw sẵn sàng; import hỏng (429) thì thử lại; CSS hỏng thì nạp lại */
+__swReady.then(function () {
+  [].forEach.call(document.querySelectorAll('link[rel=stylesheet]'), function (L) { if (!L.sheet) { var c = L.cloneNode(); c.href = L.getAttribute('href') + '?r=1'; L.parentNode.insertBefore(c, L.nextSibling); } });
+  var n = 0; (function go() { import('./src/main.js').catch(function (e) { if (++n < 6) setTimeout(go, 700 * n); else console.error('main.js', e); }); })();
+});
+</script>
 </body>
 </html>
