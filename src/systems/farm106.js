@@ -27,7 +27,7 @@ const ZR = {   /* vùng → cấp quái thường + thủ lĩnh (loài có sprit
      Bỏ Yêu Đá (khối đá nâu giống Rocky golem) → Bọ Cạp Cát. */
   stream: { lv: [3, 5], lead: { sp: 'bachkinh', lv: 9, lead: true }, cts: [], mins: ['crab', 'puffer', 'eel'] },
   camp_coc: { lv: [4, 6], lead: { sp: 'coc2', lv: 10, lead: true }, cts: [], mins: ['crab', 'slime', 'slime'] },
-  south: { lv: [2, 4], lead: { sp: 'saola', lv: 7, lead: true }, cts: [], mins: ['slime', 'wolf', 'crow'] },
+  south: { lv: [2, 4], lead: { sp: 'saola', lv: 7, lead: true }, cts: [], mins: ['slime', 'wolf', 'crow', 'slime', 'wolf', 'crow', 'slime'] },   /* p121: anh 03/11 tăng quái đầu bãi 3 → 7 */
   camp_chui: { lv: [6, 8], lead: { sp: 'chuichui2', lv: 13, lead: true }, cts: [], mins: ['scorpion', 'slime', 'wolf'] },
   cliff: { lv: [5, 7], lead: { sp: 'utchan', lv: 11, lead: true }, cts: [], mins: ['scorpion', 'scorpion', 'wolf'] },
   plateau: { lv: [8, 10], lead: { sp: 'daibang', lv: 14, lead: true }, cts: [], mins: ['crow', 'crow', 'gull'] },
