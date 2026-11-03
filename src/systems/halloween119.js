@@ -8,7 +8,7 @@
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams('');
 const URLF = Q.get('halloween'), RAIN_OFF = Q.get('rain119') === '0';
 function dateOn(d = new Date()) { const mo = d.getMonth(), da = d.getDate(); return (mo === 9 && da >= 25) || (mo === 10 && da <= 10); }
-const ST = { force: URLF === '1' ? true : URLF === '0' ? false : null, placed: [], lightN: 0, amb: [84, 92, 150], rain: !RAIN_OFF, rainK: 1, log: [] };
+const ST = { force: URLF === '1' ? true : URLF === '0' ? false : null, placed: [], lightN: 0, amb: [84, 92, 150], rain: !RAIN_OFF, rainK: 0.4, log: [] };
 function on(ctx) { const S = ctx.S; if (!S || !S.zone || S.zone.id !== 'village' || !S.map || !S.map.v88) return false; return ST.force === null ? dateOn() : ST.force; }
 
 /* ---------- vật trang trí ---------- */
@@ -81,14 +81,15 @@ function lightSprite(r, col, k) {   /* đĩa sáng bậc 4 mức + dither Bayer 
   x.putImageData(id, 0, 0); LS.set(key, c); return c;
 }
 const WARM = [255, 150, 70], HALO = [150, 62, 14], PALE = [150, 150, 120], LIGHT_OLD = { lantern: [26, 10, 1], torch: [24, 12, 1], campfire: [30, 6, 1], arena_pillar: [26, 20, 0.9], crystal_p: [22, 10, 0.6], crystal_b: [20, 10, 0.6] };
-let LM = null, LMg = null;
+let LM = null, LMg = null; const LC = { m: null, n: -1, list: [] };
 function drawNight(g, ctx, cx, cy) {
   const VW = ctx.VW, VH = ctx.VH, m = ctx.S.map, O = ctx.O, TS = 16;
   if (!LM || LM.width !== VW || LM.height !== VH) { LM = document.createElement('canvas'); LM.width = VW; LM.height = VH; LMg = LM.getContext('2d'); }
   const a = ST.amb; LMg.globalCompositeOperation = 'source-over'; LMg.fillStyle = `rgb(${a[0]},${a[1]},${a[2]})`; LMg.fillRect(0, 0, VW, VH);
   LMg.globalCompositeOperation = 'lighter'; let n = 0; const HL = [];   /* p119w: tâm đèn — lớp cộng sáng cam sau multiply (multiply trên cỏ xanh ra vàng xanh) */
   const put = (lx, ly, r, k, col = WARM) => { lx = Math.round(lx); ly = Math.round(ly); if (lx < -r || ly < -r || lx > VW + r || ly > VH + r) return; LMg.drawImage(lightSprite(r, col, k), lx - r, ly - r); n++; if (col === WARM) HL.push([lx, ly, r, k]); };
-  for (const o of m.objects) {
+  if (LC.m !== m || LC.n !== m.objects.length) { LC.m = m; LC.n = m.objects.length; LC.list = m.objects.filter(o => (o.h119 && DECO[o.type.slice(5)]) || LIGHT_OLD[o.type]); }   /* p119: nhớ vật phát sáng, không quét cả map mỗi khung */
+  for (const o of LC.list) {
     if (o.ruined) continue; const d = O[o.type]; if (!d) continue;
     const L = o.h119 ? DECO[o.type.slice(5)].L : null, old = !L && LIGHT_OLD[o.type];
     if (!L && !old) continue;
@@ -105,8 +106,8 @@ function drawNight(g, ctx, cx, cy) {
 const H = (i, k) => { let h = Math.imul(i + 1, 2654435761) ^ Math.imul(k + 7, 1597334677); h = Math.imul(h ^ (h >>> 15), 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
 const wrap = (v, md) => ((v % md) + md) % md;
 const RAIN_L = [   /* xa: chậm, ngắn, nét đứt (dither); gần: nhanh, dài, liền */
-  { n: 46, vy: 170, len: 4, dash: true, c: '#6f80aa', par: 0.4 },
-  { n: 30, vy: 250, len: 7, dash: false, c: '#a9bbdd', par: 0.8 },
+  { n: 46, vy: 170, len: 3, dash: true, c: '#4f5a7e', par: 0.4 },
+  { n: 30, vy: 250, len: 5, dash: false, c: '#7f8db4', par: 0.8 },
 ];
 const SLANT = -0.32;   /* gió xiên trái */
 function drawRain(g, ctx, cx, cy) {

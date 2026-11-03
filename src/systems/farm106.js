@@ -53,6 +53,12 @@ function loadSpr6() { if (!sprP6 && typeof fetch !== 'undefined') sprP6 = fetch(
 const hOf = mo => { const F = mo.f6; if (F && F.sp) { const c = SPR6 && SPR6[F.sp] && (SPR6[F.sp].idle || SPR6[F.sp].hover); return c && c.ay ? Math.round(c.ay / 2) : HGT[(SPECIES[F.sp] && SPECIES[F.sp].size) || 's'] || 18; } return (mo.c.h || 12) + 2; };
 const kindOf = k => (AQUA[k] ? 'aqua' : FLY[k] ? 'fly' : WADE[k] ? 'wade' : AMPH[k] ? 'amph' : 'land');
 const leaderOf = rid => ST.mons.find(m => m.f6 && m.f6.lead && m.f6.rid === rid && m.hp > 0) || null;
+/* p121 (anh 03/11): thủ lĩnh / thú hiếm ở HANG riêng cuối bãi (xa quảng trường / lối vào); quái thường không lại gần hang, đánh quái thường không kéo thủ lĩnh → người chơi ngó lơ được, chỉ vào hang mới đánh */
+const LAIR_R = 40, LAIR_AVOID = 120;
+function lairOf(rid) { ST.lair = ST.lair || {}; if (ST.lair[rid] !== undefined) return ST.lair[rid]; const L0 = tileList(rid, 'land'), S0 = ST.ctx && ST.ctx.S, m = S0 && S0.map, g = S0 && S0.guide, e = m && m.entries && m.entries.default; if (!L0.length || (!g && !e)) return (ST.lair[rid] = null); const rx = g ? g.x : e.x * TS + 8, ry = g ? g.y : e.y * TS + 14, K = new Set(L0.map(t => t[0] + ',' + t[1])), dense = t => { let n = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (K.has((t[0] + dx) + ',' + (t[1] + dy))) n++; return n; }; const S1 = L0.map(t => ({ t, d: Math.hypot(t[0] * TS + 8 - rx, t[1] * TS + 12 - ry) })).sort((a, c) => c.d - a.d); let b = null; for (const q of S1) if (dense(q.t) >= 15) { b = q.t; break; } if (!b) b = S1[0].t; return (ST.lair[rid] = { x: b[0] * TS + 8, y: b[1] * TS + 12 }); }
+const nearLair = (rid, x, y, r) => { const L = lairOf(rid); return !!L && Math.hypot(x - L.x, y - L.y) < r; };
+const FRONT_R = 170; function frontOf(rid) { ST.front = ST.front || {}; if (ST.front[rid] !== undefined) return ST.front[rid]; const L0 = tileList(rid, 'land'), S0 = ST.ctx && ST.ctx.S, m = S0 && S0.map, g = S0 && S0.guide, e = m && m.entries && m.entries.default; if (!L0.length || (!g && !e)) return (ST.front[rid] = null); const rx = g ? g.x : e.x * TS + 8, ry = g ? g.y : e.y * TS + 14, K = new Set(L0.map(t => t[0] + ',' + t[1])), dense = t => { let n = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (K.has((t[0] + dx) + ',' + (t[1] + dy))) n++; return n; }; const S1 = L0.map(t => ({ t, d: Math.hypot(t[0] * TS + 8 - rx, t[1] * TS + 12 - ry) })).sort((a, c) => a.d - c.d); let b = null; for (const q of S1) if (dense(q.t) >= 15) { b = q.t; break; } if (!b) b = S1[0].t; return (ST.front[rid] = { x: b[0] * TS + 8, y: b[1] * TS + 12 }); }   /* p121: ĐẦU BÃI — chỗ gần quảng trường nhất; quái thường tụ ở đây cho người mới farm */
+const inFront = (rid, x, y) => { const F0 = frontOf(rid); return !F0 || Math.hypot(x - F0.x, y - F0.y) < FRONT_R; };
 
 /* ---------- ô đi được ---------- */
 function walkPx(ctx, x, y, kind) {
@@ -121,7 +127,7 @@ function hpOf(spec, lv, c) { if (spec.sp) { const s = SPECIES[spec.sp], b = s &&
 function spawnOne(ctx, rid, spec, avoidP) {
   const Z = ZR[rid], ct = !!spec.sp, lead = !!spec.lead, k = kindOf(spec.sp || spec.key), p = ctx.S.player; if (!ctx.monsters || !ctx.monsters.add) return null;
   const L0 = tileList(rid, k === 'aqua' ? 'aqua' : k === 'amph' ? 'amph' : 'land'); if (!L0.length) return null;
-  const ld = lead ? null : leaderOf(rid), near = ld ? (t => Math.hypot(t[0] * TS + 8 - ld.x, t[1] * TS + 12 - ld.y) < CF.roam + 16) : null;
+  const near = lead ? (t => nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_R)) : (t => !nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_AVOID) && inFront(rid, t[0] * TS + 8, t[1] * TS + 12));   /* p121: hang thủ lĩnh cuối bãi; quái thường ở đầu bãi */
   let q = null; const cand = near ? L0.filter(near) : L0, pool = cand.length >= 4 ? cand : L0;
   for (let i = 0; i < 50 && !q; i++) { const t = pick(pool), x = t[0] * TS + 8, y = t[1] * TS + 12; if (avoidP && Math.hypot(x - p.x, y - p.y) < 130) continue; if (k !== 'fly' && !body(ctx, x, y, k)) continue; if (ST.mons.some(o => Math.hypot(o.x - x, o.y - y) < 18)) continue; q = { x, y }; }
   if (!q) { ST.spFail = (ST.spFail || 0) + 1; log({ ev: 'spawnfail', rid, sp: spec.sp || spec.key, why: 'tile', pool: pool.length }); return null; }
@@ -176,14 +182,14 @@ function provoke(ctx, mo, who, spread) {
   let n = 0;
   for (const o of ST.mons.slice().sort((a, b) => hyp(a, mo) - hyp(b, mo))) {
     if (n >= CF.packN) break; if (o === mo || !o.f6 || o.hp <= 0 || o.f6.rid !== F.rid || hyp(o, mo) > CF.packR) continue;
-    if (o.f6.lead) { provoke(ctx, o, F.tg, true); n++; ST.n.pack++; continue; }   /* thủ lĩnh ở gần thấy đàn em bị đánh → nổi giận, kéo cả bầy */
+    if (o.f6.lead) { const P = ctx.S.player; if (!(P && nearLair(F.rid, P.x, P.y, LAIR_AVOID))) continue; provoke(ctx, o, F.tg, true); n++; ST.n.pack++; continue; }   /* p121: ngoài hang → thủ lĩnh không bị kéo */   /* thủ lĩnh ở gần thấy đàn em bị đánh → nổi giận, kéo cả bầy */
     if (anger(o, F.tg, F.tgT, mo.id)) { n++; ST.n.pack++; }
   }
 }
 function calm(mo, why) { const F = mo.f6; F.mode = 'return'; F.goal = { x: F.home.x, y: F.home.y }; F.act = null; F.backT = 0; mo.angry = false; ST.n.back++; log({ ev: 'giveup', id: mo.id, why }); }
 function scatter(ctx, rid, at) {   /* thủ lĩnh ngã → bầy tan: bỏ chạy khỏi chỗ thủ lĩnh ngã rồi về vùng, trung tính */
   let n = 0; for (const o of ST.mons) { const F = o.f6; if (!F || F.lead || F.rid !== rid || o.hp <= 0) continue; log({ ev: 'flee', id: o.id, x: Math.round(o.x), y: Math.round(o.y) }); F.mode = 'flee'; F.fleeT = CF.fleeT; F.act = null; F.from = { x: at.x, y: at.y }; F.cr = F.cr || {}; o.angry = true; n++;
-    const L0 = tileList(rid, F.kind === 'aqua' ? 'aqua' : 'land').filter(q => Math.hypot(q[0] * TS + 8 - at.x, q[1] * TS + 12 - at.y) > 140); const h = L0.length ? pick(L0) : null; if (h) F.home = { x: h[0] * TS + 8, y: h[1] * TS + 12 }; }   /* chỗ ở mới xa chỗ thủ lĩnh ngã */
+    const L0 = tileList(rid, F.kind === 'aqua' ? 'aqua' : 'land').filter(q => Math.hypot(q[0] * TS + 8 - at.x, q[1] * TS + 12 - at.y) > 140 && !nearLair(rid, q[0] * TS + 8, q[1] * TS + 12, LAIR_AVOID)); const h = L0.length ? pick(L0) : null; if (h) F.home = { x: h[0] * TS + 8, y: h[1] * TS + 12 }; }   /* chỗ ở mới xa chỗ thủ lĩnh ngã */
   ST.n.scatter += n; log({ ev: 'scatter', rid, n });
   if (n) { try { FX.shout(at.x, at.y - 30, vi(ctx) ? 'BẦY TAN!' : 'PACK SCATTERS!', '#ffe9a0', 1, 0.9); } catch (e) { } }
 }
@@ -204,8 +210,8 @@ function step(ctx, mo, tx, ty, sp, dt) {
 function wander(ctx, mo, dt) {
   const F = mo.f6; if (F.wait > 0) { F.wait -= dt; setClip(F, idleClip(F)); return; }
   if (!F.goal) {
-    const L0 = tileList(F.rid, F.kind === 'aqua' || F.kind === 'amph' ? F.kind : 'land'), ld = F.lead ? null : leaderOf(F.rid), c = ld || mo, rr = ld ? CF.roam : 96;   /* quái thường lang thang quanh thủ lĩnh */
-    for (let i = 0; i < 16 && !F.goal; i++) { const t = pick(L0); if (!t) break; const x = t[0] * TS + 8, y = t[1] * TS + 12; if (Math.hypot(x - c.x, y - c.y) > rr || Math.hypot(x - mo.x, y - mo.y) > 120) continue; if (F.kind !== 'fly' && !body(ctx, x, y, F.kind)) continue; F.goal = { x, y }; }
+    const L0 = tileList(F.rid, F.kind === 'aqua' || F.kind === 'amph' ? F.kind : 'land'), ld = null, c = F.lead ? (lairOf(F.rid) || mo) : (F.home || mo), rr = F.lead ? LAIR_R : 96;   /* p121: thủ lĩnh ở hang; quái thường không lang thang quanh thủ lĩnh */   /* quái thường lang thang quanh thủ lĩnh */
+    for (let i = 0; i < 16 && !F.goal; i++) { const t = pick(L0); if (!t) break; const x = t[0] * TS + 8, y = t[1] * TS + 12; if (Math.hypot(x - c.x, y - c.y) > rr || Math.hypot(x - mo.x, y - mo.y) > 120) continue; if (!F.lead && nearLair(F.rid, x, y, LAIR_AVOID)) continue; if (F.kind !== 'fly' && !body(ctx, x, y, F.kind)) continue; F.goal = { x, y }; }
     if (!F.goal) { if (ld && hyp(mo, ld) > CF.roam && F.kind !== 'aqua') F.goal = { x: ld.x + R(-20, 20), y: ld.y + R(-12, 12) }; else { F.wait = 0.5; return; } }
   }
   const mv = step(ctx, mo, F.goal.x, F.goal.y, mo.c.sp * 0.45, dt);
@@ -561,12 +567,12 @@ export const farm106 = {
       mo: id => ST.mons.find(m => m.id === id) || null, provoke: (id, who = 'pl') => { const m = ST.mons.find(q => q.id === id); if (m) provoke(ctx, m, who, true); return !!m; },
       calmAll: () => { for (const m of ST.mons) if (m.f6 && m.f6.mode !== 'calm') { m.f6.mode = 'calm'; m.angry = false; m.f6.act = null; m.f6.cr = {}; } },
       respawnIn: s => { for (const q of ST.rq) q.t = Math.min(q.t, s); return ST.rq.length; }, setCfg: o => Object.assign(CF, o), cfg: () => ({ ...CF }),
-      regions: () => Object.fromEntries(Object.entries(ZR).map(([k, v]) => [k, { lv: v.lv, lead: v.lead, mins: v.mins, rect: rectOf(k), land: (ST.tiles[k] || { land: [] }).land.length, water: (ST.tiles[k] || { water: [] }).water.length }])),
+      lair: rid => lairOf(rid), front: rid => frontOf(rid), regions: () => Object.fromEntries(Object.entries(ZR).map(([k, v]) => [k, { lv: v.lv, lead: v.lead, mins: v.mins, rect: rectOf(k), land: (ST.tiles[k] || { land: [] }).land.length, water: (ST.tiles[k] || { water: [] }).water.length }])),
       log: () => ST.log.slice(), logReset: () => { ST.log = []; for (const k in ST.n) ST.n[k] = 0; for (const k in ST.xp) ST.xp[k] = 0; },
       kill: (id, who = 'ely') => { const m = ST.mons.find(q => q.id === id); if (!m) return false; m.__by = who; ctx.monsters.damage(m, m.hp + 1, m, 0, 0, true); return true; },
       duel: id => duel(ctx, ST.mons.find(q => q.id === id)), at: (x, y) => regionAt(Math.floor(x / TS), Math.floor(y / TS)).id };
     if (!ST.on) return;
-    try { wrapDamage(ctx); ST.tiles = buildTiles(ctx); clearVanilla(ctx); spawnAll(ctx); log({ ev: 'start', n: ST.mons.length }); } catch (e) { console.error('farm106 start', e); }
+    try { wrapDamage(ctx); ST.tiles = buildTiles(ctx); ST.lair = {}; ST.front = {}; clearVanilla(ctx); spawnAll(ctx); log({ ev: 'start', n: ST.mons.length }); } catch (e) { console.error('farm106 start', e); }
   },
   onZoneLeave() { for (const m of ST.mons) { try { ST.ctx && ST.ctx.monsters && ST.ctx.monsters.remove(m); } catch (e) { } } ST.mons = []; ST.rq = []; ST.shots = []; ST.dying = []; ST.on = false; },
   update(dt, ctx) {
