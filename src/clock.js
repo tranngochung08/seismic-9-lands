@@ -94,7 +94,7 @@ export function createClock(deps) {
     fire(startCbs, 'onDayStart');
     ending = false;
     deps.persist();
-    openSummary(prev, auto);
+    try { const lg = deps.lang(), t = STR[lg === 'vi' ? 'vi' : 'en']; deps.toast(`☀ ${t.newDay} · ${clock.label(lg, true)}`); } catch (e) { }   /* c36: bỏ bảng Ngày mới, chỉ toast nhỏ */
   }
 
   const clock = {
@@ -114,7 +114,7 @@ export function createClock(deps) {
     log: text => { const t = st().today; if (t && text) { t.events.push(String(text).slice(0, 80)); if (t.events.length > 8) t.events.shift(); } },
     sleep: (auto = false) => {
       if (!S.save || !S.save.clock || ending) return false;
-      if (!deps.fadeTo(() => endDay(auto), { speed: 1, hold: () => S.mode === 'summary' })) return false;   /* plan-45 BD3: tối dần 1 s → bảng Ngày mới trên nền đen → đóng bảng thì sáng dần 1 s */           // đang fade dở (đổi vùng) → thử lại sau
+      ending = true; endDay(auto); return true;   /* c36: không fade đen, không bảng */   /* plan-45 BD3: tối dần 1 s → bảng Ngày mới trên nền đen → đóng bảng thì sáng dần 1 s */           // đang fade dở (đổi vùng) → thử lại sau
       ending = true; deps.setMode('sleep');                          // khóa người chơi trong lúc fade đen
       return true;
     },
