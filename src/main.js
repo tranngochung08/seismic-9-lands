@@ -288,13 +288,13 @@ async function boot() {
   $('#cr-skip').onclick = () => { stopCredits(); };
   const toggleMusic = () => { const on = !AUDIO.isEnabled(); AUDIO.setEnabled(on); UI.setMusicLabel(on); if (S.save) { S.save.music = on; writeSave(S.save); } };
   $('#p-music').onclick = toggleMusic; $('#t-music').onclick = toggleMusic;
-  initMenu({ S, CTX, setMode, actions: { lang: () => $('#t-lang').onclick(), music: toggleMusic, musicOn: () => AUDIO.isEnabled(), fs: toggleFullscreen, quit: () => { persist(); location.reload(); } } });   /* plan-10: menu phụ */
+  initMenu({ S, CTX, setMode, actions: { lang: () => $('#t-lang').onclick(), music: toggleMusic, musicOn: () => AUDIO.isEnabled(), fs: toggleFullscreen, quit: () => { persist(); location.reload(); }, logout41: () => logout41() } });   /* c41-gon: + Đăng xuất */   /* plan-10: menu phụ */
   AUDIO.setEnabled(sv ? sv.music !== false : true); UI.setMusicLabel(AUDIO.isEnabled());
   for (const ev of ['keydown', 'pointerdown']) window.addEventListener(ev, () => AUDIO.initAudio(), { passive: true }); // browsers only allow audio after a user gesture
   document.addEventListener('fullscreenchange', resize);
   setInterval(() => { if (cv.width !== CVW || cv.height !== CVH || Math.abs(cv.clientWidth - viewSize().w) > 1 || Math.abs(cv.clientHeight - viewSize().h) > 1) resize(); }, 500);
   setupDiscord();
-  if (new URLSearchParams(location.search).get('cloud82') !== '0') { const q82 = location.search; import('./cloud82.js').then(m => m.initCloud82({ S, CTX, UI, $, byId, CONFIG, loadSave, persist, search: q82 })).catch(e => console.warn('cloud82', e)); }   /* c1-p82: lớp mạng plan-82, mặc định TẮT */
+  if (new URLSearchParams(location.search).get('cloud82') !== '0') { const q82 = location.search; import('./cloud82.js').then(m => m.initCloud82({ S, CTX, UI, $, byId, CONFIG, loadSave, persist, search: q82 })).catch(e => console.warn('cloud82', e)); auto41(); }   /* c1-p82: lớp mạng plan-82, mặc định TẮT · c41-gon: tự vào game khi đã đăng nhập */
   $('#loading').hidden = true; $('#title').hidden = false;
   TITLE.initTitle({ resize, persist: () => { if (S.save) persist(); } }); TITLE.showTitle();   /* plan-13 */
   for (const b of document.querySelectorAll('#title .btn')) if (ART.on && ART.man && ART.man.ui && ART.man.ui.title && ART.man.ui.title.btn) b.classList.add('px');
@@ -323,6 +323,61 @@ async function boot() {
   if (q.has('auto')) startGame(sv || defaultSave()); // debug: skip the title screen
   if (q.has('zone') && ZONES[q.get('zone')]) { S.save = S.save || defaultSave(); if (!S.player) startGame(S.save); enterZone(q.get('zone'), 'default'); }
   window.__S = S; window.__CTX = CTX; window.__enterZone = (id, e) => enterZone(id, e || 'default');
+}
+/* c41-gon (anh 04/11): đăng nhập xong (hoặc mở game khi phiên còn) mà tài khoản đã có nhân vật → TỰ VÀO GAME, không dừng ở màn tiêu đề,
+   không có nút Chơi mới; tài khoản mới (chưa có save) → vào luồng tạo nhân vật như bấm Chơi mới. Khách: màn tiêu đề như cũ.
+   Chỉ GỌI API cloud82 (window.__cloud82: st, cloud.status, asking, sync) — không sửa cloud82.js. */
+let auto41done = false;
+function auto41() {
+  const q = new URLSearchParams(location.search);
+  for (const k of ['preset', 'demo', 'promo', 'auto', 'find', 'showcase', 'zone', 'guest']) if (q.has(k)) return;
+  let ok1 = 0, pend = false; const t0 = Date.now();
+  try { pend = Object.keys(localStorage).some(k => /^sb-.+-auth-token$/.test(k) || k === 'seismic9.cloudmock.session'); } catch (e) { pend = false; }   /* còn phiên đăng nhập → ẩn Chơi tiếp / Chơi mới ngay từ lúc tải (khỏi nháy) */
+  const unpend = () => { if (!pend) return; pend = false; const a = $('#t-play'), b = $('#t-cont'); if (a) a.hidden = false; if (b) b.hidden = !loadSave(); };
+  if (pend) { const a = $('#t-play'), b = $('#t-cont'); if (a) a.hidden = true; if (b) b.hidden = true; }
+  const iv = setInterval(() => {
+    try {
+      if (auto41done || S.player) { clearInterval(iv); return; }
+      const c8 = window.__cloud82, c = c8 && c8.cloud, st = c8 && c8.st;
+      if (pend && Date.now() - t0 > 40000) unpend();
+      if (!c8 || !st) return;
+      if (/^skip|^off/.test(String(st.mode)) || (c && c.mode === 'off')) { unpend(); clearInterval(iv); return; }
+      if (!c || !c.status) return;
+      const u = c.status().user, tt = $('#title'), tp = $('#t-play'), tc = $('#t-cont');
+      if (st.ready && !u) unpend();
+      if (tp) tp.hidden = !!u || pend;   /* tài khoản đã đăng nhập: không có Chơi mới (mất công sức đã cày) */
+      const busy = !st.ready || !tt || tt.hidden || (c8.asking && c8.asking()) || (tc && tc.disabled) || (tp && tp.disabled)
+        || document.getElementById('cloud82-ask') || document.querySelector('#title input[type=password]');
+      if (!u || busy) { ok1 = 0; return; }
+      if (++ok1 < 4) return;   /* ổn định 4 nhịp (~0,6 s): đồng bộ mây đã xong, bảng hỏi đã đóng */
+      const sv = loadSave(), last = st.last || {};
+      if (sv) { auto41done = true; clearInterval(iv); startGame(sv); return; }
+      if (last.action === 'offline' || last.action === 'timeout' || !c.status().online) return;   /* mất mạng: không tạo nhân vật mới đè tài khoản */
+      const tn = $('#t-name'); if (tn && !tn.value.trim()) { let dn = ''; try { dn = c8.displayName ? c8.displayName() : ''; } catch (e) { dn = ''; } dn = dn || u.name || u.username || ''; if (dn && !/@/.test(dn)) tn.value = dn; }
+      auto41done = true; clearInterval(iv); clearSave(); startGame(fresh120(defaultSave()));
+    } catch (e) { }
+  }, 150);
+}
+/* c41-gon: Đăng xuất — ghi save → đẩy lên mây NGAY → bấm nút Sign out sẵn có của cloud82 (nhả phiên + signOut) → cất/xoá save máy khỏi ô khách → về màn hình chính sạch */
+async function logout41() {
+  const vi = UI.lang() === 'vi', c8 = window.__cloud82, c = c8 && c8.cloud;
+  let u = null; try { u = c && c.status ? c.status().user : null; } catch (e) { u = null; }
+  if (!u) { persist(); location.reload(); return; }
+  try { if (S.save) persist(); } catch (e) { }
+  UI.toast(vi ? 'Đang lưu lên tài khoản…' : 'Saving to your account…', true);
+  let ok = false, r = null;
+  for (let i = 0; i < 12 && c8 && c8.sync; i++) {
+    try { r = await c8.sync.flushNow('logout41'); } catch (e) { r = null; }
+    if (r && r.skipped === 'busy') { await new Promise(z => setTimeout(z, 500)); continue; }
+    break;
+  }
+  ok = !!(r && r.ok);
+  if (!ok && !confirm(vi ? 'Chưa lưu được lên tài khoản (mất mạng?). Bản trên máy này sẽ được cất riêng. Vẫn đăng xuất?' : "Couldn't save to your account (offline?). A private copy stays on this device. Log out anyway?")) return;
+  try { const SV = await import('./save.js'); if (SV.saveOff) SV.saveOff(); } catch (e) { }   /* chặn mọi lần ghi save sau đó (vòng lặp game, ẩn tab lúc tải lại) */
+  S.mode = 'title';
+  try { const b = $('#t-discord'); if (b && b.dataset.cloud82 === 'out' && typeof b.onclick === 'function') await b.onclick(); else if (c.signOut) await c.signOut(); } catch (e) { }
+  try { const K = 'seismic9.save.v1', raw = localStorage.getItem(K); if (raw && !ok) localStorage.setItem('seismic9.c41.keep.' + (u.id || 'x'), raw); localStorage.removeItem(K); } catch (e) { }
+  location.reload();
 }
 function startGame(sv) {
   if (sv && sv.story && sv.story.seaDone && !sv.story.path && sv.zone !== 'sea') sv.story.path = 'noxx';   /* plan-25: save cũ đã lên bờ trước khi có chọn phe → phe Noxx; còn ở Biển (tắt game lúc ván đang trôi vào bến) → story_sea mở bảng chọn phe */

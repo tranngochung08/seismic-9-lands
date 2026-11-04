@@ -40,7 +40,7 @@ const STR = {
     qLand: (n, t) => `Meet ${n}/${t} artists`, qLocked: lv => `Locked — earn the Magnitude ${lv}.0 badge first`, badgeDone: 'Badge earned',
     qGather: 'Three gifts for the deep', qGatherText: 'Forge the diving bell, get the trench map, receive the core crystal.', qGatherLocked: 'Opens after the nine lands',
     qTrench: 'The Kraken Trench', qTrenchText: 'Dive with a Rocky, bring Lyron home.', qHome: 'Lyron is home — the harbour lights its lanterns.',
-    resume: 'Resume', lang: 'Tiếng Việt', musicVol: 'Music', sfxVol: 'Sound effects', music: 'Music', fs: 'Fullscreen', quit: 'Save & quit to title', on: 'on', off: 'off'
+    resume: 'Resume', lang: 'Tiếng Việt', musicVol: 'Music', sfxVol: 'Sound effects', music: 'Music', fs: 'Fullscreen', quit: 'Back to title', on: 'on', off: 'off'
   },
   vi: {
     tabs: { bag: 'Túi đồ', shop: 'Mua nhanh', hero: 'Nhân vật', rocky: 'Rocky', anlinh: 'Ấn Linh', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-6 · đổi thẻ   ·   B túi · O mua nhanh · Q nhiệm vụ', footTouch: 'Esc · đóng   ·   chạm thẻ để đổi',
@@ -61,7 +61,7 @@ const STR = {
     qLand: (n, t) => `Gặp ${n}/${t} nghệ sĩ`, qLocked: lv => `Chưa mở — cần huy hiệu Magnitude ${lv}.0 trước`, badgeDone: 'Đã nhận huy hiệu',
     qGather: 'Ba món cho vực sâu', qGatherText: 'Rèn chuông lặn, lấy bản đồ vực, nhận tinh thể Lõi.', qGatherLocked: 'Mở sau khi xong chín vùng đất',
     qTrench: 'Vực Kraken', qTrenchText: 'Lặn cùng Rocky, đưa Lyron về nhà.', qHome: 'Lyron đã về nhà — bến cảng thắp đèn.',
-    resume: 'Tiếp tục', lang: 'English', musicVol: 'Nhạc nền', sfxVol: 'Hiệu ứng', music: 'Nhạc', fs: 'Toàn màn hình', quit: 'Lưu & về màn hình chính', on: 'bật', off: 'tắt'
+    resume: 'Tiếp tục', lang: 'English', musicVol: 'Nhạc nền', sfxVol: 'Hiệu ứng', music: 'Nhạc', fs: 'Toàn màn hình', quit: 'Về màn hình chính', on: 'bật', off: 'tắt'
   }
 };
 const FLAGS = [['vehicles', 'raft', '🛶'], ['vehicles', 'sail', '⛵'], ['vehicles', 'wax', '🎿'], ['vehicles', 'tires', '🛞'], ['rocky', 'cape', '🧣'], ['rocky', 'armor', '🛡'], ['ecology', 'coat', '🧥'], ['crafting', 'lamps', '🏮', 1], ['rocky', 'charged', '⚡', 1]];
@@ -613,16 +613,22 @@ function acct26() {
   const vi = isVi(); let c = null, u = null;
   try { c = typeof window !== 'undefined' && window.__cloud82 && window.__cloud82.cloud; if (!c || !c.status || c.mode === 'off') return ''; u = c.status().user; } catch (e) { return ''; }
   let dn = ''; try { const c8 = window.__cloud82; dn = c8 && c8.displayName ? c8.displayName() : ''; } catch (e) { dn = ''; }   /* c30-tk: hiện TÊN HIỂN THỊ (đổi được), tên đăng nhập ghi riêng */
-  const nm = u ? (dn || u.name || u.username || u.email || (vi ? 'Người chơi' : 'Player')) : '';
+  const nm = u ? ([dn, u.name, u.username, u.email].find(x => x && !in41(x)) || (vi ? 'Người chơi' : 'Player')) : '';   /* c41-gon: bỏ email nội bộ */
   return `<div class="c26-acct" style="display:contents">`
-    + (u ? `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Đã đăng nhập' : 'Signed in'}: <b style="color:#ffd96a">${esc(nm)}</b> · ${vi ? 'tự lưu theo tài khoản' : 'auto-saves to account'}</span>${u.username && u.username !== nm ? `<span style="display:block;text-align:center;font:16px VT323,monospace;color:#9d917f">(${vi ? 'tên đăng nhập' : 'username'}: ${esc(u.username)})</span>` : ''}<button class="btn" data-rn30="1">✎ ${vi ? 'Đổi tên' : 'Rename'}</button>`
-      : `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Chưa đăng nhập' : 'Not signed in'}</span><button class="btn" data-act="quit">${vi ? 'Đăng nhập để lưu game' : 'Sign in to save your game'}</button>`) + `</div>`;
+    + (u ? `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Đã đăng nhập' : 'Signed in'}: <b style="color:#ffd96a">${esc(nm)}</b> · ${vi ? 'tự lưu theo tài khoản' : 'auto-saves to account'}</span>${u.username && !in41(u.username) && u.username !== nm ? `<span style="display:block;text-align:center;font:16px VT323,monospace;color:#9d917f">(${vi ? 'tên đăng nhập' : 'username'}: ${esc(u.username)})</span>` : ''}<button class="btn" data-rn30="1">✎ ${vi ? 'Đổi tên' : 'Rename'}</button>`
+      : `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Chưa đăng nhập — về màn hình chính để đăng nhập & lưu theo tài khoản' : 'Not signed in — go back to the title to sign in & save to an account'}</span>`) + `</div>`;
+}
+const in41 = s => /@players\.seismic9\.app$/i.test(String(s || ''));   /* c41-gon: email nội bộ của tài khoản tên+mật khẩu */
+function quit41() {   /* c41-gon (anh 04/11): đã đăng nhập → Đăng xuất (tự lưu lên mây rồi về màn hình chính); khách → Về màn hình chính (lưu trên máy) */
+  const vi = isVi(); let u = null;
+  try { const c = typeof window !== 'undefined' && window.__cloud82 && window.__cloud82.cloud; u = c && c.status && c.mode !== 'off' ? c.status().user : null; } catch (e) { u = null; }
+  return u ? `<button class="btn" data-act="logout41">${vi ? 'Đăng xuất' : 'Log out'}</button>` : `<button class="btn" data-act="quit">${vi ? 'Về màn hình chính' : 'Back to title'}</button>`;
 }
 function gearBody() {   /* c26-coban: bỏ thanh Nhạc nền + nút ♪ Nhạc (anh 04/11 bỏ nhạc), giữ thanh Hiệu ứng; bỏ khối chuyển save */
   const t = L(), A = deps.actions || {}, on = A.musicOn ? A.musicOn() : true;
   const vol = (k, label, v) => `<label class="mvol"><span>${label}</span><input type="range" min="0" max="100" value="${Math.round(v * 100)}" data-vol="${k}"><b>${Math.round(v * 100)}%</b></label>`;
   const mv = AUDIO.getMusicVolume ? AUDIO.getMusicVolume() : 0.5, sv = AUDIO.getSfxVolume ? AUDIO.getSfxVolume() : 0.5;
-  return `<div class="mgear"><button class="btn primary" data-act="resume">${t.resume}</button><button class="btn" data-act="lang">${t.lang}</button>
+  return `<div class="mgear"><button class="btn" data-act="lang">${t.lang}</button>
     ${vol('sfx', t.sfxVol, sv)}${deps.CTX.size19 ? deps.CTX.size19.html(deps.CTX.lang() === 'vi') : ''}
-    <button class="btn" data-diff="1" title="${deps.CTX.lang() === 'vi' ? 'Dễ: máu & đòn của quái, bạn tập, trùm ×0,6 — phần thưởng giữ nguyên' : 'Easy: monsters, sparring partners and bosses have ×0.6 HP & damage — same rewards'}">⚖ ${diffLabel(deps.CTX.lang() === 'vi', deps.S.save)}</button>${deps.CTX.ki ? `<button class="btn" data-kimode="1">◉ ${deps.CTX.ki.menuLabel()}</button>` : ''}${deps.CTX.gfx ? `<button class="btn" data-gfx="1">▣ ${deps.CTX.gfx.label(deps.CTX.lang() === 'vi')}</button>` : ''}<button class="btn" data-act="fs">⛶ ${t.fs}</button><button class="btn" data-act="quit">${t.quit}</button>${acct26()}</div>`;
+    <button class="btn" data-diff="1" title="${deps.CTX.lang() === 'vi' ? 'Dễ: máu & đòn của quái, bạn tập, trùm ×0,6 — phần thưởng giữ nguyên' : 'Easy: monsters, sparring partners and bosses have ×0.6 HP & damage — same rewards'}">⚖ ${diffLabel(deps.CTX.lang() === 'vi', deps.S.save)}</button>${deps.CTX.ki ? `<button class="btn" data-kimode="1">◉ ${deps.CTX.ki.menuLabel()}</button>` : ''}${deps.CTX.gfx ? `<button class="btn" data-gfx="1">▣ ${deps.CTX.gfx.label(deps.CTX.lang() === 'vi')}</button>` : ''}${acct26()}${quit41()}</div>`;
 }
