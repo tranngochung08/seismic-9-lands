@@ -10,7 +10,7 @@
    · Giữ cảnh không đứt: người chơi / Elyziuma / Rocky tụt máu thì hồi lặng lẽ (không ngất giữa video).
    · Lệnh thử: window.__farm103 { state, log, spawn(kind,n), stop, go } · window.__fps103(). Tham số URL: bot103=0, wave103=0. */
 import * as FX from './systems/fx78.js';
-import { SPECIES, MOVES } from './systems/duel-data.js';
+import { SPECIES, MOVES, SPECIES_EN, MOVE_NAME_EN } from './systems/duel-data.js';   /* c7: tên en */
 import { shadowFor } from './systems/shadow.js';
 const TS = 16;
 const KINDS = { w: ['puffer', 'eel', 'crab'], s: ['slime', 'wolf', 'scorpion']   /* anh 02/11: bỏ Yêu Đá (rockimp) — trông như Rocky golem */, f: ['crow', 'gull'] };
@@ -208,7 +208,7 @@ function hurtNear(C, x, y, r, dmg, src) {   /* đòn thủ lĩnh trúng người
 function leadCast(C, mo) {
   const sp = mo.lsp, S0 = SPECIES[sp] || {}, mv = (S0.moves || [])[(mo.mvI = (mo.mvI || 0) + 1) % ((S0.moves || []).length || 1)], M0 = MOVES[mv] || { name: 'Gầm Doạ', type: (S0.types || ['chan'])[0] };
   const ty = M0.type || (S0.types || ['chan'])[0], sk = FX.skinOf(sp, ty), pw = FX.power(0.55), p = C.S.player, e = leadE(C, mo);
-  FX.shout(mo.x, mo.y - 34, String(M0.name || mv).toUpperCase(), '#ffd36a', 1, 0.9); leadClip(C, e, C.ldKit.has(e || {}, 'cast') ? 'cast' : 'atk', 0.7);
+  FX.shout(mo.x, mo.y - 34, String((C.lang && C.lang() === 'en' && (MOVE_NAME_EN[mv] || (!MOVES[mv] && MOVE_NAME_EN.gam))) || M0.name || mv).toUpperCase(), '#ffd36a', 1, 0.9); leadClip(C, e, C.ldKit.has(e || {}, 'cast') ? 'cast' : 'atk', 0.7);
   let hx = mo.x, hy = mo.y, r = 44;
   if (mo.cat103 === 'w') { hx = (mo.x + p.x) / 2; hy = (mo.y + p.y) / 2; FX.shockRing(mo.x, mo.y, 46, sk, 0.45, 3); FX.erupt(hx, hy, sk, pw, 'b'); try { C.vfx('water_splash', mo.x, mo.y); } catch (er) { } r = 40; }
   else if (mo.cat103 === 'f') { mo.dive = 0.45; hx = p.x; hy = p.y; FX.erupt(p.x, p.y, sk, pw, 'b'); r = 36; }
@@ -248,7 +248,7 @@ function spawnLeader(C, cat) {
   else if (cat === 's') { for (let k = 0; k < 60 && !q; k++) { const a = Math.random() * 6.283, r = rnd(70, 105), tx = Math.floor((p.x + Math.cos(a) * r) / TS), ty = Math.floor((p.y + Math.sin(a) * r * 0.7) / TS); if (free(C, tx, ty) && free(C, tx + 1, ty) && free(C, tx - 1, ty)) q = { x: tx * TS + 8, y: ty * TS + 12 }; } }
   else { const sd = Math.random() < 0.5 ? -1 : 1; q = { x: p.x + sd * 130, y: p.y - 60 }; }
   if (!q) return null;
-  const nm = spName(sp), c = { key: 'lead103_' + sp, vi: 'Thủ lĩnh ' + nm, en: 'Leader ' + (nm), hp: LHP, w: 22, h: 26, dmg: LDMG, sp: cat === 'f' ? 60 : 44, xp: 120, drop: 'stone', c: ['#5a4a7a', '#2a2040', '#ffd36a'], fly: cat === 'f', swim: cat === 'w', shortHit: false,
+  const nm = spName(sp), c = { key: 'lead103_' + sp, vi: 'Thủ lĩnh ' + nm, en: 'Leader ' + (SPECIES_EN[sp] || nm), hp: LHP, w: 22, h: 26, dmg: LDMG, sp: cat === 'f' ? 60 : 44, xp: 120, drop: 'stone', c: ['#5a4a7a', '#2a2040', '#ffd36a'], fly: cat === 'f', swim: cat === 'w', shortHit: false,
     aiFn: (ctx, mo, dt, pp, dp, ch) => leadAI(C, mo, dt, pp, dp, ch), drawFn: (g, mo, x, y) => leadDraw(C, g, mo, x, y) };
   const mo = C.monsters.add(c, q.x, q.y); if (cat === 'w') { mo.hp = mo.max = Math.round(LHP * 0.7); } mo.angry = true; mo.farm103 = true; mo.lead103 = true; mo.lsp = sp; mo.cat103 = cat; if (cat === 'w') mo.swim103 = true;
   FX.erupt(q.x, q.y, FX.skinOf(sp), FX.power(0.5), 'b'); try { if (cat === 'w') C.vfx('water_splash', q.x, q.y); } catch (er) { }

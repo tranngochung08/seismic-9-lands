@@ -1,3 +1,4 @@
+/* c4perf: gộp điểm fx78 (Việc 4 cloud, 2026-11-03) */
 /* fx78.js — p78 (plan-78 đợt mẫu, 01/11/2026): VFX VẼ CODE HOÀN TOÀN cho kho chiêu hệ Chấn + nhóm Chung + 3 chiêu đầu của Rocky + cảnh "Thức Tỉnh" (Saiyan A).
    Skill vfx-code: điểm ảnh 2× (RES 2), bảng 8 bậc, mờ bằng dither Bayer 4×4 (không alpha), lớp nền (drawGround) / drawables theo y chân / lớp trên cùng (drawTop),
    hạt có trọng lực + lực cản + nảy, khựng / rung / chớp CHỈ ở khung sự kiện. Không có hiệu ứng lặp quanh thú: mọi thứ có thời hạn rồi tắt.
@@ -45,15 +46,25 @@ const TAU = Math.PI * 2;
 
 /* ---------------- bút vẽ 2× ---------------- */
 const BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], bay = (x, y) => (BAY[((y & 3) << 2) | (x & 3)] + 0.5) / 16;
-function dot(g, X, Y, c) { g.fillStyle = c; g.fillRect(X / 2, Y / 2, 0.5, 0.5); }
-function disc(g, X, Y, r, c, a = 1) { if (r <= 0) return; g.fillStyle = c; for (let y = Math.floor(Y - r); y <= Math.ceil(Y + r); y++) for (let x = Math.floor(X - r); x <= Math.ceil(X + r); x++) { const dx = x + 0.5 - X, dy = y + 0.5 - Y; if (dx * dx + dy * dy <= r * r && (a >= 1 || a > bay(x, y))) g.fillRect(x / 2, y / 2, 0.5, 0.5); } }
-function oval(g, X, Y, rx, ry, c, a = 1) { if (rx <= 0 || ry <= 0) return; g.fillStyle = c; for (let y = Math.floor(Y - ry); y <= Math.ceil(Y + ry); y++) for (let x = Math.floor(X - rx); x <= Math.ceil(X + rx); x++) { const dx = (x + 0.5 - X) / rx, dy = (y + 0.5 - Y) / ry; if (dx * dx + dy * dy <= 1 && (a >= 1 || a > bay(x, y))) g.fillRect(x / 2, y / 2, 0.5, 0.5); } }
+/* c4perf: bút gộp — RG/RC/RX0..RX1/RY = đoạn điểm đang chờ; LG/LC = màu đang đặt trên canvas LG */
+let LG = null, LC = null, RG = null, RC = null, RX0 = 0, RX1 = 0, RY = 0, C4RUN = true, C4DEC = true;
+const C4OFF = k => globalThis.__c4off === true || !!(globalThis.__c4off && globalThis.__c4off[k]);
+function flushRun() { const g = RG; if (!g) return; RG = null; if (g !== LG || RC !== LC) { g.fillStyle = RC; LG = g; LC = RC; } g.fillRect(RX0 / 2, RY / 2, (RX1 - RX0 + 1) / 2, 0.5); }
+function FS(g, c) { if (RG) flushRun(); if (g !== LG || c !== LC || !C4RUN) { g.fillStyle = c; LG = g; LC = c; } }
+function FR(g, x, y, w, h) { if (RG) flushRun(); g.fillRect(x, y, w, h); }
+function enter() { if (RG) flushRun(); LG = null; C4RUN = !C4OFF('run'); C4DEC = !C4OFF('decal'); }   /* vào / ra fx78: code khác có thể đã đổi fillStyle */
+function dot(g, X, Y, c) { if (!C4RUN) { g.fillStyle = c; g.fillRect(X / 2, Y / 2, 0.5, 0.5); return; }
+  if (RG === g && RC === c && RY === Y) { if (X === RX1 + 1) { RX1 = X; return; } if (X === RX0 - 1) { RX0 = X; return; } if (X >= RX0 && X <= RX1 && OPQ(c)) return; }   /* nối phải / trái; trùng điểm đã có (màu đặc) → bỏ */
+  if (RG) flushRun(); RG = g; RC = c; RX0 = RX1 = X; RY = Y; }
+const OPQ = c => c.charCodeAt(0) === 35 && (c.length === 7 || c.length === 4);   /* '#rrggbb' / '#rgb' = màu đặc */
+function disc(g, X, Y, r, c, a = 1) { if (r <= 0) return; for (let y = Math.floor(Y - r); y <= Math.ceil(Y + r); y++) for (let x = Math.floor(X - r); x <= Math.ceil(X + r); x++) { const dx = x + 0.5 - X, dy = y + 0.5 - Y; if (dx * dx + dy * dy <= r * r && (a >= 1 || a > bay(x, y))) dot(g, x, y, c); } }   /* c4perf: bút gộp */
+function oval(g, X, Y, rx, ry, c, a = 1) { if (rx <= 0 || ry <= 0) return; for (let y = Math.floor(Y - ry); y <= Math.ceil(Y + ry); y++) for (let x = Math.floor(X - rx); x <= Math.ceil(X + rx); x++) { const dx = (x + 0.5 - X) / rx, dy = (y + 0.5 - Y) / ry; if (dx * dx + dy * dy <= 1 && (a >= 1 || a > bay(x, y))) dot(g, x, y, c); } }   /* c4perf: bút gộp */
 const SX = (x, cx) => Math.round((x - cx) * 2), SY = (y, cy) => Math.round((y - cy) * 2);
-function seg(g, X0, Y0, X1, Y1, c, a = 1, w = 1) { const n = Math.max(1, Math.ceil(Math.max(Math.abs(X1 - X0), Math.abs(Y1 - Y0)))); g.fillStyle = c; for (let i = 0; i <= n; i++) { const x = Math.round(X0 + (X1 - X0) * i / n), y = Math.round(Y0 + (Y1 - Y0) * i / n); if (a < 1 && a <= bay(x, y)) continue; g.fillRect(x / 2, y / 2, w / 2, w / 2); } }
+function seg(g, X0, Y0, X1, Y1, c, a = 1, w = 1) { const n = Math.max(1, Math.ceil(Math.max(Math.abs(X1 - X0), Math.abs(Y1 - Y0)))); FS(g, c); for (let i = 0; i <= n; i++) { const x = Math.round(X0 + (X1 - X0) * i / n), y = Math.round(Y0 + (Y1 - Y0) * i / n); if (a < 1 && a <= bay(x, y)) continue; FR(g, x / 2, y / 2, w / 2, w / 2); } }
 function ringBand(g, x, y, R, th, cx, cy, colOf, densOf, ry = 0.5) {
   if (R < 1) return; const X = (x - cx) * 2, Y = (y - cy) * 2, rows = Math.max(1, Math.round(th * 2));
-  for (let q = 0; q < rows; q++) { const r = R * 2 - q, dq = q / rows, d = densOf(dq); if (d <= 0.02 || r < 1) continue; g.fillStyle = colOf(dq); const n = Math.max(16, Math.round(r * 6.4));
-    for (let i = 0; i < n; i++) { const a = i / n * TAU, px = Math.round(X + Math.cos(a) * r), py = Math.round(Y + Math.sin(a) * r * ry); if (d < bay(px, py)) continue; g.fillRect(px / 2, py / 2, 0.5, 0.5); } }
+  for (let q = 0; q < rows; q++) { const r = R * 2 - q, dq = q / rows, d = densOf(dq); if (d <= 0.02 || r < 1) continue; const cq = colOf(dq);   /* c4perf */ const n = Math.max(16, Math.round(r * 6.4));
+    for (let i = 0; i < n; i++) { const a = i / n * TAU, px = Math.round(X + Math.cos(a) * r), py = Math.round(Y + Math.sin(a) * r * ry); if (d < bay(px, py)) continue; dot(g, px, py, cq); } }
 }
 /* viên đá theo nét thú: mẫu ô (a sáng · b giữa · c tối · g loé vân) + viền tối; xoay bằng lấy mẫu */
 const SHAPE = {
@@ -65,13 +76,23 @@ const SHAPE = {
   raw: ['.aab.', 'abgbc', 'bbbgc', 'bbcc.', '.cc..'],
 };
 const SHAPE_PTS = {}; for (const [k, rows] of Object.entries(SHAPE)) { const H0 = rows.length, W0 = rows[0].length, pts = []; for (let j = 0; j < H0; j++) for (let i = 0; i < W0; i++) { const ch = rows[j][i]; if (ch !== '.') pts.push([i - (W0 - 1) / 2, j - (H0 - 1) / 2, ch]); } SHAPE_PTS[k] = pts; }
-function peb(g, X, Y, sk, ang = 0, sc = 1, shape = null, lit = 0) {
+function peb(g, X, Y, sk, ang = 0, sc = 1, shape = null, lit = 0) { if (C4RUN && peb2(g, X, Y, sk, ang, sc, shape, lit)) return;
   const pts = SHAPE_PTS[shape || sk.shape] || SHAPE_PTS.rock, c = Math.cos(ang), s = Math.sin(ang), P = sk.pal, Gl = sk.glow;
   const col = ch => (ch === 'a' ? (lit ? Gl[0] : P[1]) : ch === 'b' ? (lit ? P[1] : P[3]) : ch === 'g' ? Gl[1] : P[5]);
   const pl = (u, v) => [Math.round(X + (u * c - v * s) * sc), Math.round(Y + (u * s + v * c) * sc)];
-  g.fillStyle = P[7]; for (const [u, v] of pts) { const [x, y] = pl(u, v); g.fillRect((x - 1) / 2, y / 2, 1.5, 0.5); g.fillRect(x / 2, (y - 1) / 2, 0.5, 1.5); }
-  for (const [u, v, ch] of pts) { const [x, y] = pl(u, v); g.fillStyle = col(ch); g.fillRect(x / 2, y / 2, 0.5, 0.5); if (sc > 1.3) g.fillRect((x + 1) / 2, y / 2, 0.5, 0.5); if (sc > 1.6) g.fillRect(x / 2, (y + 1) / 2, 0.5, 0.5); }
+  FS(g, P[7]); for (const [u, v] of pts) { const [x, y] = pl(u, v); FR(g, (x - 1) / 2, y / 2, 1.5, 0.5); FR(g, x / 2, (y - 1) / 2, 0.5, 1.5); }
+  for (const [u, v, ch] of pts) { const [x, y] = pl(u, v); FS(g, col(ch)); FR(g, x / 2, y / 2, 0.5, 0.5); if (sc > 1.3) FR(g, (x + 1) / 2, y / 2, 0.5, 0.5); if (sc > 1.6) FR(g, x / 2, (y + 1) / 2, 0.5, 0.5); }
 }
+function peb2(g, X, Y, sk, ang, sc, shape, lit) {   /* c4perf: cùng hình với peb, ít lượt vẽ */
+  const pts = SHAPE_PTS[shape || sk.shape] || SHAPE_PTS.rock, c = Math.cos(ang), s = Math.sin(ang), P = sk.pal, Gl = sk.glow;
+  const col = ch => (ch === 'a' ? (lit ? Gl[0] : P[1]) : ch === 'b' ? (lit ? P[1] : P[3]) : ch === 'g' ? Gl[1] : P[5]);
+  if (!OPQ(P[7]) || !OPQ(P[1]) || !OPQ(P[3]) || !OPQ(P[5]) || !OPQ(Gl[0]) || !OPQ(Gl[1])) return false;
+  const M = PEBM; M.clear(); const put = (x, y, v) => M.set((y + 2048) * 4096 + (x + 2048), v);
+  const xy = []; for (const [u, v, ch] of pts) { const x = Math.round(X + (u * c - v * s) * sc), y = Math.round(Y + (u * s + v * c) * sc); xy.push(x, y, ch); put(x - 1, y, P[7]); put(x, y, P[7]); put(x + 1, y, P[7]); put(x, y - 1, P[7]); put(x, y + 1, P[7]); }
+  for (let i = 0; i < xy.length; i += 3) { const x = xy[i], y = xy[i + 1], cc = col(xy[i + 2]); put(x, y, cc); if (sc > 1.3) put(x + 1, y, cc); if (sc > 1.6) put(x, y + 1, cc); }
+  const K = [...M.keys()].sort((a, b) => a - b); for (const k of K) dot(g, (k % 4096) - 2048, Math.floor(k / 4096) - 2048, M.get(k)); return true;
+}
+const PEBM = new Map();
 /* ---------------- chữ điểm ảnh 3×5 (có dấu tiếng Việt) ---------------- */
 const FONT = { A: ['010', '101', '111', '101', '101'], B: ['110', '101', '110', '101', '110'], C: ['011', '100', '100', '100', '011'], D: ['110', '101', '101', '101', '110'], E: ['111', '100', '110', '100', '111'], F: ['111', '100', '110', '100', '100'],
   G: ['011', '100', '101', '101', '011'], H: ['101', '101', '111', '101', '101'], I: ['111', '010', '010', '010', '111'], J: ['001', '001', '001', '101', '010'], K: ['101', '101', '110', '101', '101'], L: ['100', '100', '100', '100', '111'],
@@ -91,11 +112,12 @@ function glyphs(txt) {   /* → [{ rows, marks }] ; Đ = D + gạch */
 }
 export function textW(txt) { return glyphs(txt).reduce((s, q) => s + (q.sp ? 2 : q.rows[0].length + 1), -1); }
 /* x, y: giữa-đáy chữ (px logic); sc: cỡ điểm (1 = 1 px logic); a < 1 → dither */
-export function pixText(g, txt, x, y, col, cx, cy, sc = 1, out = '#140e1a', a = 1) {
+export function pixText(g, txt, x, y, col, cx, cy, sc = 1, out = '#140e1a', a = 1) { enter(); pixText0(g, txt, x, y, col, cx, cy, sc, out, a); enter(); }   /* c4perf: vào / ra */
+function pixText0(g, txt, x, y, col, cx, cy, sc, out, a) {
   const G = glyphs(txt), W = G.reduce((s, q) => s + (q.sp ? 2 : q.rows[0].length + 1), -1); const ox = Math.round(x - cx - W * sc / 2), oy = Math.round(y - cy - 5 * sc);
-  for (const pass of [0, 1]) { let px = 0; g.fillStyle = pass ? col : out;
+  for (const pass of [0, 1]) { let px = 0; FS(g, pass ? col : out);
     for (const q of G) { if (q.sp) { px += 2; continue; } const cells = []; q.rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === '1') cells.push([j, i]); }); for (const m of q.marks) cells.push(m);
-      for (const [j, i] of cells) { const X = ox + (px + i) * sc, Y = oy + j * sc; if (a < 1 && a <= bay(X * 2, Y * 2)) continue; if (pass) g.fillRect(X, Y, sc, sc); else { const o1 = sc < 1 ? Math.max(0.25, sc / 2) : 1; g.fillRect(X - o1, Y - o1, sc + 2 * o1, sc + 2 * o1); } }   /* p110: viền mảnh khi chữ nhỏ */
+      for (const [j, i] of cells) { const X = ox + (px + i) * sc, Y = oy + j * sc; if (a < 1 && a <= bay(X * 2, Y * 2)) continue; if (pass) FR(g, X, Y, sc, sc); else { const o1 = sc < 1 ? Math.max(0.25, sc / 2) : 1; FR(g, X - o1, Y - o1, sc + 2 * o1, sc + 2 * o1); } }   /* p110: viền mảnh khi chữ nhỏ */
       px += q.rows[0].length + 1; } }
 }
 
@@ -111,7 +133,7 @@ function updParts(dt) {
 }
 function drawPart(g, p, cx, cy) {
   const k = p.t / p.T, X = SX(p.x, cx), Y = SY(p.y - p.z, cy), cols = p.cols || ['#fff'], a = (p.fade === false ? 1 : 1 - k * k) * p.a;
-  if (p.k === 'peb') { if (k > 0.8 && (k - 0.8) * 5 > bay(X, Y)) return; if (p.z > 1) { g.fillStyle = 'rgba(20,12,10,.3)'; g.fillRect(SX(p.x, cx) / 2 - 0.5, SY(p.y, cy) / 2, 1, 0.5); } peb(g, X, Y, p.sk, p.ang, p.sc, p.shape, p.lit && k < 0.3); return; }
+  if (p.k === 'peb') { if (k > 0.8 && (k - 0.8) * 5 > bay(X, Y)) return; if (p.z > 1) { FS(g, 'rgba(20,12,10,.3)'); FR(g, SX(p.x, cx) / 2 - 0.5, SY(p.y, cy) / 2, 1, 0.5); } peb(g, X, Y, p.sk, p.ang, p.sc, p.shape, p.lit && k < 0.3); return; }
   const c = cols[Math.min(cols.length - 1, Math.floor(k * cols.length))];
   if (p.k === 'px') { if (a < bay(X, Y)) return; dot(g, X, Y, c); dot(g, X + 1, Y, c); if (k < 0.4) dot(g, X, Y + 1, cols[Math.min(cols.length - 1, 2)]); return; }
   if (p.k === 'grain') { if (a < bay(X, Y)) return; dot(g, X, Y, c); return; }
@@ -129,16 +151,37 @@ export function update(dt, rdt) {   /* rdt: thời gian thật (cảnh Thức T�
   S.fx = S.fx.filter(f => !f.dead && f.t < (f.T ?? 9e9));
   for (const d of S.decals) d.t += dt; S.decals = S.decals.filter(d => d.t < d.T);
 }
-export function drawGround(g, cx, cy) {
-  for (const d of S.decals) { const fade = d.t > d.T - 1 ? (d.T - d.t) : 1; drawDecal(g, d, cx, cy, fade); }
+export function drawGround(g, cx, cy) { enter();
+  for (const d of S.decals) { const fade = d.t > d.T - 1 ? (d.T - d.t) : 1; if (C4DEC && decalCached(g, d, cx, cy, fade)) continue; drawDecal(g, d, cx, cy, fade); }
   for (const f of S.fx) if (f.gd) f.gd(g, cx, cy, f);
+  enter();
 }
-export function drawables(out, g, cx, cy) {
-  for (const p of S.parts) out.push({ y: p.ky, f: () => drawPart(g, p, cx, cy) });
-  for (const f of S.fx) if (f.dr) f.dr(out, g, cx, cy, f);
+export function drawables(out, g, cx, cy) { enter();
+  for (const p of S.parts) out.push({ y: p.ky, f: () => { enter(); drawPart(g, p, cx, cy); enter(); } });   /* c4perf: mỗi mục vẽ xen với code khác → vào / ra */
+  const n0 = out.length; for (const f of S.fx) if (f.dr) f.dr(out, g, cx, cy, f);
+  for (let i = n0; i < out.length; i++) { const o = out[i], f0 = o.f; if (typeof f0 === 'function') o.f = () => { enter(); f0(); enter(); }; }
+  enter();
 }
-export function drawTop(g, cx, cy, VW, VH) { for (const A of S.fx) if (A.top) A.top(g, cx, cy, VW || 320, VH || 200, A); }
+export function drawTop(g, cx, cy, VW, VH) { enter(); for (const A of S.fx) if (A.top) A.top(g, cx, cy, VW || 320, VH || 200, A); enter(); }
 export const busyTop = () => S.fx.some(f => f.top && !f.dead);
+function decalBox(d) {   /* c4perf: hộp bao (px logic, tương đối d.x / d.y) */
+  const r = d.r || 10;
+  if (d.k === 'crater') return [-r - 2, -r * 0.5 - 2, r + 2, r * 0.5 + 2];
+  if (d.k === 'crack') return [-r * 1.3 - 3, -r * 0.8 - 3, r * 1.3 + 3, r * 0.8 + 3];
+  if (d.k === 'furrow' || d.k === 'line') { const x1 = (d.x1 ?? d.x) - d.x, y1 = (d.y1 ?? d.y) - d.y; return [Math.min(0, x1) - 4, Math.min(0, y1) - 4, Math.max(0, x1) + 4, Math.max(0, y1) + 4]; }
+  return null;
+}
+function decalCached(g, d, cx, cy, fade) {   /* c4perf: vết vẽ vào canvas riêng (KHÔNG __hi), dựng lại khi đổi nấc mờ (4 nấc); dán drawImage 9 tham số */
+  if (typeof document === 'undefined') return false;
+  const lv = fade >= 1 ? 4 : Math.max(1, Math.ceil(fade * 4)), B = d.__B || (d.__B = decalBox(d)); if (!B) return false;
+  if (d.__lv !== lv) { const W = Math.ceil((B[2] - B[0]) * 2) + 2, H = Math.ceil((B[3] - B[1]) * 2) + 2; if (W * H > 120000) return false;
+    let c = d.__cv; if (!c) { c = d.__cv = document.createElement('canvas'); c.width = W; c.height = H; } const x = c.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); x.setTransform(2, 0, 0, 2, 0, 0);
+    /* gốc canvas = ô nguyên gần vết; vẽ bằng chính drawDecal (cùng màu, cùng hình) */
+    const ox = Math.floor(d.x + B[0]), oy = Math.floor(d.y + B[1]); d.__ox = ox - d.x; d.__oy = oy - d.y;
+    drawDecal(x, d, ox, oy, lv / 4); flushRun(); d.__lv = lv; }
+  const c = d.__cv, X = Math.round((d.x + d.__ox - cx) * 2) / 2, Y = Math.round((d.y + d.__oy - cy) * 2) / 2;
+  if (RG) flushRun(); g.drawImage(c, 0, 0, c.width, c.height, X, Y, c.width / 2, c.height / 2); return true;
+}
 function drawDecal(g, d, cx, cy, fade) {
   const X = SX(d.x, cx), Y = SY(d.y, cy), P = d.sk.pal;
   if (d.k === 'crater') { const r = d.r * 2; for (let y = -r * 0.5; y <= r * 0.5; y++) for (let x = -r; x <= r; x++) { const e = (x * x) / (r * r) + (y * y) / (r * r * 0.25); if (e > 1) continue; const px = Math.round(X + x), py = Math.round(Y + y); if (fade * (e > 0.7 ? 0.8 : 1) < bay(px, py)) continue; dot(g, px, py, e > 0.7 ? DIRT[5] : e > 0.35 ? DIRT[6] : DIRT[7]); }
@@ -193,7 +236,7 @@ export function volley(o) {
     if (f.orbit && f.orbit.length && f.i < o.n) { const src = o.src ? o.src() : { x: o.x, gy: o.gy, z: o.z }; for (const q of f.orbit) { const front = Math.sin(q.a) > 0; out.push({ y: src.gy + (front ? 0.6 : -0.6), f: () => peb(g, SX(src.x + Math.cos(q.a) * q.r, cx), SY(src.gy - src.z + Math.sin(q.a) * q.r * 0.45, cy), sk, q.a * 2, 0.6 * pw.size) }); } }
     for (const s of f.shots) { if (s.done) continue; const up = s.aim.gy < s.g0 - 2; out.push({ y: (o.ky ? o.ky : s.g0) + (up ? -0.5 : 0.5), f: () => {   /* luật lớp 16/10: bay lên nằm sau người bắn, bay xuống nằm trước */
       for (let i = 1; i < s.trail.length; i++) { const q = s.trail[i], X = SX(q.x, cx), Y = SY(q.gy - q.z, cy), a = 1 - i / s.trail.length; if (a < bay(X, Y)) continue; const c = i < 2 ? sk.glow[1] : i < 4 ? sk.pal[2] : sk.pal[4]; dot(g, X, Y, c); dot(g, X + 1, Y, c); if (V !== 'b' && i < 3) dot(g, X, Y + 1, sk.pal[1]); }
-      if (s.z > 2) { g.fillStyle = 'rgba(20,12,10,.28)'; g.fillRect(SX(s.x, cx) / 2 - 1, SY(s.gy, cy) / 2, 2, 0.5); }
+      if (s.z > 2) { FS(g, 'rgba(20,12,10,.28)'); FR(g, SX(s.x, cx) / 2 - 1, SY(s.gy, cy) / 2, 2, 0.5); }
       peb(g, SX(s.x, cx), SY(s.gy - s.z, cy), sk, s.ang, s.sc, null, V === 'c' && s.t < 0.06); } }); }
   };
   return F;
@@ -245,7 +288,7 @@ export function lob(o) {   /* nắm cát / đá bay bổng: { x, gy, z, tx, ty, 
   cnt('lob'); const sk = o.sk; return addFx({ k: 'lob', T: o.T + 0.02, upd: (dt, f) => { const u = Math.min(1, f.t / o.T); f.x = o.x + (o.tx - o.x) * u; f.gy = o.gy + (o.ty - o.gy) * u; f.z = o.z * (1 - u) + Math.sin(Math.PI * u) * (o.h || 22);
       if ((f.tr = (f.tr || 0) - dt) <= 0) { f.tr = 0.035; part({ k: 'grain', x: f.x, y: f.gy, z: f.z, vx: 0, vz: -10, g: 120, T: 0.35, cols: [sk.pal[1], sk.pal[3], sk.pal[4]] }); }
       if (u >= 1 && !f.landed) { f.landed = true; if (o.onLand) o.onLand(); } },
-    dr: (out, g, cx, cy, f) => { if (f.x == null || f.landed) return; out.push({ y: f.gy + 0.4, f: () => { g.fillStyle = 'rgba(20,12,10,.25)'; g.fillRect(SX(f.x, cx) / 2 - 1.5, SY(f.gy, cy) / 2, 3, 1); disc(g, SX(f.x, cx), SY(f.gy - f.z, cy), 4, sk.pal[5]); disc(g, SX(f.x, cx), SY(f.gy - f.z, cy), 3, sk.pal[3]); disc(g, SX(f.x, cx) - 1, SY(f.gy - f.z, cy) - 1, 1.6, sk.pal[1]); } }); } });
+    dr: (out, g, cx, cy, f) => { if (f.x == null || f.landed) return; out.push({ y: f.gy + 0.4, f: () => { FS(g, 'rgba(20,12,10,.25)'); FR(g, SX(f.x, cx) / 2 - 1.5, SY(f.gy, cy) / 2, 3, 1); disc(g, SX(f.x, cx), SY(f.gy - f.z, cy), 4, sk.pal[5]); disc(g, SX(f.x, cx), SY(f.gy - f.z, cy), 3, sk.pal[3]); disc(g, SX(f.x, cx) - 1, SY(f.gy - f.z, cy) - 1, 1.6, sk.pal[1]); } }); } });
 }
 /* pit({ x, y, r, T, sk }) → handle { x, y, r, trig(), alive() } — vũng TĨNH (không xoáy lặp), chỉ cuộn cát khi có thú bước vào */
 export function pit(o) {
@@ -313,7 +356,7 @@ export function slide(o) {
       const hx = o.x + o.ux * f.front, hy = o.gy + o.uy * f.front; out.push({ y: hy + 0.7, f: () => { for (const r of f.ring) { const k = r / 0.3; ringBand(g, hx, hy - 8, 4 + 12 * k, 2 * (1 - k), cx, cy, q => (q < 0.4 ? sk.glow[0] : sk.glow[1]), () => 1 - k * k, 0.8); } } }); }
     if (V === 'c') { const tx = o.x + o.ux * Math.min(L, o.hitAt || L * 0.6), ty = o.gy + o.uy * Math.min(L, o.hitAt || L * 0.6), fall = 0.3, k = Math.min(1, f.t / fall);   /* ĐỈNH NÚI RƠI: tảng đá khổng lồ rơi đúng chỗ đối thủ + sóng đường thẳng */
       if (!f.boom && k >= 1) { f.boom = true; impact(tx, ty, 0, sk, pw, { n: 14, r: 6, big: 1.2, ring: true, ringR: 26, q: 1.4, s: 1.2 }); crack(tx, ty + 1, sk, 18, true, 8, 3.5); if (o.onFront) o.onFront(L, 0); }
-      if (k < 1) out.push({ y: ty + 0.9, f: () => { const z = (1 - k * k) * 120; g.fillStyle = 'rgba(20,12,10,.35)'; g.fillRect(Math.round(tx - cx) - 7 * k, Math.round(ty - cy), 14 * k, 2); peb(g, SX(tx, cx), SY(ty - z - 10, cy), sk, 0.3, 3.2 * pw.size, 'boulder', k > 0.8); } });
+      if (k < 1) out.push({ y: ty + 0.9, f: () => { const z = (1 - k * k) * 120; FS(g, 'rgba(20,12,10,.35)'); FR(g, Math.round(tx - cx) - 7 * k, Math.round(ty - cy), 14 * k, 2); peb(g, SX(tx, cx), SY(ty - z - 10, cy), sk, 0.3, 3.2 * pw.size, 'boulder', k > 0.8); } });
       if (f.boom) out.push({ y: kyC, f: () => { const kk = (f.t - fall) / 0.4; if (kk > 1) return; const u0 = 0, u1 = L * Math.min(1, kk * 1.2); const n = Math.ceil((u1 - u0) * 2); for (let i = 0; i <= n; i++) { const u = u0 + i / 2, X = SX(o.x + o.ux * u, cx), Y = SY(o.gy + o.uy * u, cy); for (let q = -2; q <= 2; q++) if ((1 - kk) * (1 - Math.abs(q) / 3) > bay(X, Y + q)) dot(g, X, Y + q - 2, Math.abs(q) < 1 ? sk.glow[1] : sk.pal[3]); } } }); }
   };
   return F;
@@ -361,7 +404,7 @@ export function endure(o) {   /* GỒNG CHỊU: { get(), T, sk, variant } — v�
       if (V === 'c') { for (let i = 0; i < 10; i++) { const xx = X + Math.round((i - 4.5) * 2.6), Hh = (8 + (i % 3) * 5) * 2 * Math.min(1, k * 3) * (1 - k * 0.5); for (let yy = 0; yy < Hh; yy++) if ((1 - k) > bay(xx, Y - yy)) dot(g, xx, Y - yy, yy > Hh - 4 ? sk.glow[0] : sk.glow[2]); } return; }
       for (const v of f.veins) { let x = X + v.x * 2, y = Y, a = v.a, s = v.s; const n = Math.round(v.L * 2 * Math.min(1, k * 2.2)); for (let i = 0; i < n; i++) { s = (s * 16807) % 2147483647; a += ((s / 2147483647) - 0.5) * 0.8; x += Math.cos(a); y += Math.sin(a); dot(g, Math.round(x), Math.round(y), V === 'b' ? P[6] : (k < 0.7 ? sk.glow[1] : P[2])); if (V === 'b') dot(g, Math.round(x) + 1, Math.round(y), P[3]); } } } });
     if (!f.used) out.push({ y: p.y + 0.9, f: () => { const X = Math.round(p.x - cx), Y = Math.round(p.y - p.h - cy) - 9, M = ['.0110.', '011110', '111111', '111111', '.1111.', '..11..'], col = ['', P[2]];   /* biểu tượng tĩnh: khiên nắm đấm */
-      g.fillStyle = '#140e1a'; g.fillRect(X - 4, Y - 1, 8, 8); for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) if (M[r][c] === '1') { g.fillStyle = r < 2 ? sk.glow[1] : col[1]; g.fillRect(X - 3 + c, Y + r, 1, 1); } } });
+      FS(g, '#140e1a'); FR(g, X - 4, Y - 1, 8, 8); for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) if (M[r][c] === '1') { FS(g, r < 2 ? sk.glow[1] : col[1]); FR(g, X - 3 + c, Y + r, 1, 1); } } });
   };
   return { save: () => { cnt('endure_save'); const p = o.get(); F.used = true; F.dead = true; if (!p) return; H.stop(0.09); H.quake(0.22); H.flash(0.08); flashAt(p.x, p.y, p.h * 0.5, sk, 9, 0.14, p.y + 0.9, true); chips(p.x, p.y, p.h * 0.5, sk, 14, 90, 80, 0.8, 0.8, p.y + 0.9); shockRing(p.x, p.y + 1, 26, sk, 0.35); }, end: () => { F.dead = true; } };
 }
@@ -417,10 +460,10 @@ export function awaken(o) {
     chips(P0.x, P0.y, 4, sk, Math.round(10 + 20 * p), 110, 120, 1.0, 1.0); };
   F.top = (g, cx, cy, VW, VH, f) => { const P0 = o.get(); if (!P0) return; const k = f.t / f.T, X = Math.round(P0.x - cx), Y = Math.round(P0.y - P0.h * 0.45 - cy);
     const din = Math.min(1, f.t / 0.25) * (k > 0.8 ? (1 - k) / 0.2 : 1), R0 = 26 + 10 * p + (f.burst ? 12 : 0);   /* tối cảnh: vành sáng bậc thang quanh thú (không mờ mịn) */
-    g.save(); for (const [rr, a] of [[R0 * 1.9, dark * 0.45], [R0 * 1.35, dark * 0.3], [R0, dark * 0.25]]) { g.fillStyle = `rgba(6,4,14,${(a * din).toFixed(3)})`; g.beginPath(); g.rect(-20, -20, VW + 40, VH + 40); g.ellipse(X, Y, rr, rr * 0.75, 0, 0, TAU, true); g.fill('evenodd'); } g.restore();
+    enter(); g.save(); for (const [rr, a] of [[R0 * 1.9, dark * 0.45], [R0 * 1.35, dark * 0.3], [R0, dark * 0.25]]) { FS(g, `rgba(6,4,14,${(a * din).toFixed(3)})`); g.beginPath(); g.rect(-20, -20, VW + 40, VH + 40); g.ellipse(X, Y, rr, rr * 0.75, 0, 0, TAU, true); g.fill('evenodd'); } g.restore(); LG = null;
     for (const b of f.bolts) { const kb = b.t / b.T; for (let i = 1; i < b.pts.length; i++) { const [x0, y0] = b.pts[i - 1], [x1, y1] = b.pts[i]; seg(g, SX(x0, cx), SY(y0, cy), SX(x1, cx), SY(y1, cy), '#7a5cff', 1, 4); seg(g, SX(x0, cx), SY(y0, cy), SX(x1, cx), SY(y1, cy), kb < 0.5 ? '#ffffff' : '#ffe27a', 1, 2); } }
     if (f.burst) { const kb = (f.t - f.tb) / 0.9; if (kb < 1) { const W = (8 + 10 * p) * (1 - kb * 0.7), Xp = SX(P0.x, cx), Yb = SY(P0.y, cy); for (let yy = Yb; yy > -40; yy -= 1) for (let xx = -W; xx <= W; xx++) { const e = Math.abs(xx) / W; if ((1 - kb) * (1 - e * 0.7) < bay(Xp + xx, yy)) continue; dot(g, Xp + xx, yy, e < 0.3 ? '#ffffff' : e < 0.65 ? '#fff1a8' : sk.glow[2]); } }   /* cột sáng */
-      const kf = f.t - f.tb; if (kf < 0.05) { g.fillStyle = p > 0.5 ? 'rgba(255,214,90,.55)' : 'rgba(255,255,255,.5)'; g.fillRect(-20, -20, VW + 40, VH + 40); }   /* chớp vàng / trắng 1 khung */
+      const kf = f.t - f.tb; if (kf < 0.05) { FS(g, p > 0.5 ? 'rgba(255,214,90,.55)' : 'rgba(255,255,255,.5)'); FR(g, -20, -20, VW + 40, VH + 40); }   /* chớp vàng / trắng 1 khung */
       if (o.name && kf > 0.15 && kf < 1.55) { const a = kf > 1.25 ? 1 - (kf - 1.25) / 0.3 : 1, sc = textW(o.name) * 2 > VW - 20 ? 1 : 2; pixText(g, o.name, P0.x, P0.y - P0.h - 18, '#ffe27a', cx, cy, sc, '#140e1a', a); } }
     for (const d of f.deb) peb(g, SX(d.x, cx), SY(d.y - d.z, cy), sk, d.ang, d.sc); };
   return { burst, F };

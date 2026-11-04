@@ -26,7 +26,7 @@ const STR = {
     bought: 'Đã mua 1 Ấn Thu', size: { xs: 'Tí', s: 'Nhỏ', m: 'Vừa', l: 'To' } },
   en: { pick: '◉ Choose your first beast', team: '◉ Beast team', pickT: 'Choose your first beast', pickLead: 'Pick one partner. You can name it (rename here later).',
     name: 'Name', ok: '✓ Choose', later: 'Later', close: 'Close', save: '✓ Save', lead: 'Lead', isLead: '★ Leads', box: 'Storage', empty: 'empty', order: 'Battle order: ▲▼ to sort · 1–3 fight 3v3 · 1–6 fight 6v6', up: 'Up', down: 'Down',
-    got: (n, k) => `${n} joined your team! Got ${k} Seal Stones.`, wildL: (n, lv) => `⚔ Wild ${n} Lv${lv}`, noStarter: 'No Chấn Thú yet — go back to the Village and pick a starter (3 orbs by the entrance).',
+    got: (n, k) => `${n} joined your team! Got ${k} Seal Stones.`, wildL: (n, lv) => `⚔ Wild ${n} Lv${lv}`, noStarter: 'No Quake Beast yet — go back to the Village and pick a starter (3 orbs by the entrance).',
     caught: (n, w) => `Caught ${n}! → ${w === 'team' ? 'team' : 'storage'}`, balls: n => `Seal Stone ×${n}`, anthu: 'Seal Stone', anthuNote: 'throw when a wild one is at ≤ 30 % HP', poor: 'Not enough Seismic stones',
     bought: 'Bought 1 Seal Stone', size: { xs: 'Tiny', s: 'Small', m: 'Medium', l: 'Large' } },
 };
@@ -278,7 +278,7 @@ function rareTick(ctx) {
   if (cur || !k) return; const key = z + ':r:' + k; if ((ST.gone[key] || 0) > performance.now() / 1000) return;
   const list = (RARE_Z[z] && RARE_Z[z][k]) || (RARE_Z100[z] && RARE_Z100[z][k]) || (RARE_Z99[z] && RARE_Z99[z][k]) || RARE[k],   /* p116: sửa lỗi gộp p99/p100 — thiếu RARE_Z99 → 'ven' (Moyaki M1) lỗi list undefined mỗi khung */ n = +String(z).slice(1) || 1, sp = list[n % list.length]; if (!SPECIES[sp]) return; ST.rareNear99 = k === 'ven'; const at = rareSpot(ctx, (ST.rareWait = (ST.rareWait || 0) + 1) > 12); if (!at) return; ST.rareWait = 0;
   ST.wild.push({ key, sp, lv: zoneLv(z) + 3, rare: k, x: at.x, y: at.y, hx: at.x, hy: at.y, fx: 0, fy: 1, ct: Math.random() * 2, wait: 1.5, goal: null, moving: false, tier: SPECIES[sp].size || 'm' });
-  ST.rareLog.push({ t: +(performance.now() / 1000).toFixed(1), z, ev: 'appear', sp, k }); const R0 = RL(ctx); try { ctx.toast(R0.appear(spN(sp), R0[k])); } catch (e) { }
+  ST.rareLog.push({ t: +(performance.now() / 1000).toFixed(1), z, ev: 'appear', sp, k }); if (ST.rareLog.length > 120) ST.rareLog.splice(0, ST.rareLog.length - 120); /* c2-raloi rareLog */ const R0 = RL(ctx); try { ctx.toast(R0.appear(spN(sp), R0[k])); } catch (e) { }
 }
 function rarePins(ctx) { const R0 = RL(ctx); return ST.wild.filter(w => w.rare && !goneNow(w)).map(w => ({ x: w.x, y: w.y - 8, kind: 'rare', label: R0.pin(spN(w.sp), R0[w.rare]) })); }
 function drawRareIcon(g, w, cx, cy) {   /* biểu tượng TĨNH trên đầu (ảnh PixelLab 32 px → 10 px logic, vẽ kèm cỡ đích) */

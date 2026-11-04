@@ -173,7 +173,7 @@ export function fighterIO(ctx, f, gx, gy, sp, dt, near, opt = {}) {
     frame: (c, fr) => { const cc = S0 && S0[c] ? c : 'idle', q = S0 && S0[cc]; f.clip = cc; f.ct = (fr + 0.5) / ((q && q.fps) || FPSD[cc] || 10); },
     face: (ux, uy) => { f.fx = ux; f.fy = uy; if (opt.face) opt.face(ux, uy); },
     dash: L && S0 && S0.dash ? 'dash' : null, loop: L ? [L[0], L[1]] : null, wind: L ? L[2] : 1, lean: opt.lean, tint: opt.tint || (sk && sk.pal && sk.pal[1]) || '#ffffff', h: H,
-    water: (x, y) => !!(ctx.isWater && ctx.isWater(x, y)), sfx: opt.quiet ? null : () => { try { ctx.sfx('whoosh'); } catch (e) { } } };
+    water: (x, y) => { try { const m = ctx.S.map, g = ctx.getG(m, Math.floor(x / 16), Math.floor(y / 16)); return g === ctx.T.WATER || g === ctx.T.DEEP; } catch (e) { return false; } },   /* c2-raloi water */ sfx: opt.quiet ? null : () => { try { ctx.sfx('whoosh'); } catch (e) { } } };
 }
 /* đẩy điểm đích ra khỏi thân người chơi, Rocky (pet), Elyziuma, Chấn Thú thả (comp79) — giữ cách ≥ 1 thân, dùng cho cả lao lẫn đi thường */
 export function clear(ctx, self, gx, gy, r = 9) {

@@ -87,9 +87,9 @@ Object.assign(MOVE_EN, { nut_dat: 'Rock Spikes', nem_da: 'Boulder Toss', dam_cha
   dich_loi: 'Glitch Step', nhieu_song: 'Cube Cannon', tuong_lua: 'Firewall', ma_hoa: 'Disconnect', sap_he: 'System Crash', song_am: 'Echo Boom', hu_vang: 'Fan Roar', tieng_vong: 'Echo', cong_huong: 'Chorus',
   ham_bong: 'Shadow Jaws', cau_bong: 'Shadow Orb', lan_bong: 'Shadow Sink', den_me: 'Dazing Lantern', dem_den: 'Nightmare', chop_loa: 'Sweeping Light', tu_lanh: 'Light Veil', cau_trang: 'Moon Orb', phan_quyet: 'Eclipse Judgment' });   /* p57 */
 /* TÊN HIỂN THỊ TẠM (anh 2026-10-28 tối: chờ duyệt — đổi tên chỉ ở đây) */
-const NAME_TMP = { culibong: { vi: 'Cu Li Bóng', en: 'Shade Loris' }, bovimach: { vi: 'Bọ Vi Mạch', en: 'Chip Beetle' }, golem: { vi: 'Thạch Chấn Vương', en: 'Thạch Chấn Vương' }, rongdo: { vi: 'Xích Long', en: 'Xích Long' }, bachkinh: { vi: 'Bạch Kình', en: 'Bạch Kình' }, loiho: { vi: 'Lôi Hồ', en: 'Lôi Hồ' },
-  vitbao: { vi: 'Vịt Bão', en: 'Vịt Bão' }, diepnhan: { vi: 'Diệp Nhẫn Giả', en: 'Diệp Nhẫn Giả' },
-  tuyetky: { vi: 'Tuyết Kỳ Lân', en: 'Tuyết Kỳ Lân' }, tinhmieu: { vi: 'Tinh Miêu', en: 'Tinh Miêu' }, cuoitho: { vi: 'Cười Thố', en: 'Cười Thố' }, banhbao: { vi: 'Bánh Bao Thánh', en: 'Bánh Bao Thánh' } };
+const NAME_TMP = { culibong: { vi: 'Cu Li Bóng', en: 'Shade Loris' }, bovimach: { vi: 'Bọ Vi Mạch', en: 'Chip Beetle' }, golem: { vi: 'Thạch Chấn Vương', en: 'Quake Golem' }, rongdo: { vi: 'Xích Long', en: 'Crimson Wyrm' }, bachkinh: { vi: 'Bạch Kình', en: 'Pale Whale' }, loiho: { vi: 'Lôi Hồ', en: 'Volt Fox' },
+  vitbao: { vi: 'Vịt Bão', en: 'Storm Duck' }, diepnhan: { vi: 'Diệp Nhẫn Giả', en: 'Leaf Ninja' },
+  tuyetky: { vi: 'Tuyết Kỳ Lân', en: 'Snow Qilin' }, tinhmieu: { vi: 'Tinh Miêu', en: 'Crystal Cat' }, cuoitho: { vi: 'Cười Thố', en: 'Giggle Hare' }, banhbao: { vi: 'Bánh Bao Thánh', en: 'Holy Bun' } };
 const SPN_EN = { utchan: 'Ut Chan', thanhong: 'Than Hong', golem: 'Stone Golem', rongdo: 'Red Dragon' };
 /* miệng phun (px logic so với chân, hướng chưa lật) — lửa / đạn than do engine vẽ từ đây (clip spit không có lửa) */
 const MOUTH = { culibong: {"south": [0.2, -5.2], "east": [11.2, -10.2], "north": [0.2, -4.2], "south-east": [12.2, -6.2], "north-east": [10.8, -18.2]},   /* p64: đo trên khung chạm clip cast (tools/px-p64mouth.py) */
@@ -3092,7 +3092,7 @@ P73.init({ ST, MOVES, LOAD, MV78, grounded: q => P78.grounded(q), SK, FLY, HS, D
   for (const [sp, o, n] of [['bachkinh', 'roi_nuoc', 'kinh_lao'], ['diepnhan', 'hut_nhua', 'diep_tram'], ['tuyetky', 'san_bang', 'sung_bang'], ['tinhmieu', 'tru_pha_le', 'vo_pha_le'], ['banhbao', 'cau_trang', 'lao_than'], ['bovimach', 'nhieu_song', 'xung_loi'], ['macuu', 'nhieu_song', 'xung_loi'], ['rongdo', 'cau_no_lua', 'lao_lua']]) {
     const L0 = LOAD[sp]; if (!L0 || L0.includes(n)) continue; const i = L0.indexOf(o); if (i >= 0) L0[i] = n; }
   if (!P78_CHUNG.includes('lao_than')) P78_CHUNG.push('lao_than'); }
-Object.assign(MOVE_NAME_EN, MOVE_EN);   /* p74: tên chiêu tiếng Anh cho hệ khác */
+Object.assign(MOVE_EN, { cao: 'Claw Swipe', chan_khien: 'Guard Up', bao_cat: 'Sandstorm Call', goi_mua: 'Rain Call', phan_doc: 'Toxic Pollen', goi_tuyet: 'Snow Call', goi_nhieu: 'Static Noise', vuot_bong: 'Shadow Swipe' }); Object.assign(MOVE_NAME_EN, MOVE_EN);   /* p74: tên chiêu tiếng Anh cho hệ khác */   /* c7: + 8 chiêu còn thiếu tên en */
 /* p74:en:end */
 /* p78:b:begin */
 /* ===== p78: KHO CHIÊU đợt mẫu (systems/chieu78.js + fx78.js) — chiêu id → chế độ 'p78'; tầm, clip, tên tiếng Anh; link thử &lv78=30 (cả 2 đội tự xếp theo cấp) &mv78=a,b,c,d,ult ===== */

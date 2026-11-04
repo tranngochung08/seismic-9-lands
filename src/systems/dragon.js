@@ -609,7 +609,7 @@ function syncBtn(ctx) {
   const d = sv(ctx), show = !!d.got.skill && ctx.S.mode === 'play' && !ST.sc;
   if (!ST.btn) {
     if (!show) return; css();
-    const b = document.createElement('button'); b.id = 'btn-dragon'; b.type = 'button'; b.title = 'Rồng Thần Giáng (G)';
+    const b = document.createElement('button'); b.id = 'btn-dragon'; b.type = 'button'; b.title = ctx.lang() === 'vi' ? 'Rồng Thần Giáng (G)' : 'Divine Dragon Dive (G)';
     b.innerHTML = '<img src="assets/px/dragon/skill_icon.png" alt=""><b></b><i>G</i>'; document.body.appendChild(b); ST.btn = b;
     b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ST.ctx) useSkill(ST.ctx); });
   }

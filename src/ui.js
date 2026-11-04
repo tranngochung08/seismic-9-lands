@@ -436,7 +436,7 @@ export function applyStaticText() {
   /* các dòng này trước đây nằm lạc trong flagLabel() sau return (lỗi cũ) → nút Tìm tôi / Discord / Tour bị trống chữ */
   $('#t-find-label').textContent = L.findLabel; $('#t-find').placeholder = L.findPh; $('#t-find-btn').textContent = L.findBtn;
   $('#t-discord').textContent = L.discordBtn; $('#t-discord-note').textContent = L.discordNote;
-  $('#t-demo').textContent = L === STR.vi ? '▶ Tour tự động (xem mọi tính năng)' : '▶ Auto tour (see every feature)';
+  $('#t-demo').textContent = L === STR.vi ? '▶ Tour tự động (xem mọi tính năng)' : '▶ Auto tour (see every feature)';   { const br = document.getElementById('btn-rot'); if (br) br.title = L === STR.vi ? 'Xoay ngang' : 'Rotate to landscape'; }   /* c7: title cứng trong index.html */
 }
 export function setMusicLabel(on) { const t = `♪ ${L.music}: ${on ? L.on : L.off}`; $('#p-music').textContent = t; $('#t-music').textContent = t; }
 export function flagLabel(key) { const n = nationOf({ ro: [key] }); return n ? `${n.flag} ${n.name}` : key; }

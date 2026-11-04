@@ -148,8 +148,9 @@ function clearVanilla(ctx) {   /* Chũi / Cóc hoang cũ của fieldct + quái t
 
 /* ---------- ghi công sát thương (bọc ctx.monsters.damage; elyz95 / comp79 đặt mo.__by trước khi gọi — vá p106) ---------- */
 function credit(mo, who, d) { const F = mo.f6; if (!F || !(d > 0)) return; F.cr[who] = (F.cr[who] || 0) + d; F.last = who; }
+const WR106 = new WeakSet();   /* c2-raloi f106 */
 function wrapDamage(ctx) {
-  const M = ctx.monsters; if (!M || !M.damage || M.damage.__f106) return;
+  const M = ctx.monsters; if (!M || !M.damage || M.damage.__f106 || WR106.has(M)) return; WR106.add(M);
   const orig = M.damage, w = function (mo, dmg, src, ...r) {
     if (!(mo && mo.f6 && mo.hp > 0)) return orig.call(this, mo, dmg, src, ...r);
     let by = mo.__by || null; mo.__by = null; if (!by) { const u = unitAt(ctx, src); by = u ? whoOfUnit(ctx, u) : 'pl'; }
@@ -228,7 +229,7 @@ function hurtTarget(ctx, mo, who, d) {
     if (d >= 1) { try { h.hit(Math.round(d)); } catch (e) { } } ST.n.hitP++; return true;
   }
   const u = unitOf(ctx, who);
-  if (u && who !== 'ely') { const max = (u.f && u.f.max) || u.max || 100, hp = u.hp == null ? max : u.hp, d2 = Math.min(Math.round(d * 1.5), Math.max(0, hp - Math.round(max * CF.floorC))); if (d2 >= 1) { try { SQ(ctx).hurt(u, d2, mo); } catch (e) { } } ST.n.hitC++; return true; }   /* squad104: đòn vào Chấn Thú qua hurt() chung, giữ sàn 25 % */
+  if (u && who !== 'ely') { const max = u.max || (u.f && u.f.max) || 100, hp = u.hp == null ? max : u.hp,   /* c2-raloi f106: máu ngoài map */  d2 = Math.min(Math.round(d * 1.5), Math.max(0, hp - Math.round(max * CF.floorC))); if (d2 >= 1) { try { SQ(ctx).hurt(u, d2, mo); } catch (e) { } } ST.n.hitC++; return true; }   /* squad104: đòn vào Chấn Thú qua hurt() chung, giữ sàn 25 % */
   const o = objOf(ctx, who); if (!o) return false; const max = o.max || o.hp || 100;
   o.hp = Math.max(Math.round(max * CF.floorC), (o.hp == null ? max : o.hp) - Math.round(d * 1.5)); o.flash = 0.12; ST.n.hitC++; return true;
 }

@@ -466,7 +466,7 @@ export const squad104 = {
         units: [...ST.U.values()].map(u => { const P = u.pos(), fo = focusOf(u.id); return { id: u.id, sp: u.sp, brain: isEly(ctx, u) ? 'elyz95' : 'chung', on: u.onField(), x: Math.round(P.x), y: Math.round(P.y), hp: isEly(ctx, u) ? (ctx.elyz95.E && ctx.elyz95.E() ? Math.round(ctx.elyz95.E().hp) : null) : Math.round(u.hp), max: u.max, ko: u.ko, mode: modeOf(ctx, u.id), focus: fo ? fo.id : null, tgt: u.tgt ? u.tgt.id : null, act: u.act && u.act.kind, clip: u.f && u.f.clip, guard: guardMove(u) && { kind: guardMove(u).kind, mv: guardMove(u).mv.id }, atk: atkMove(u) && atkMove(u).id }; }),
         bar: ST.el && !ST.el.hidden ? (() => { const r = ST.el.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height), txt: ST.el.textContent }; })() : null }; } };
   },
-  onZoneLeave() { ST.shots = []; for (const u of ST.U.values()) { u.act = null; u.dash = null; } },
+  onZoneLeave() { ST.shots = []; for (const u of ST.U.values()) { u.act = null; u.dash = null; } try { if (RK && RK.reset) RK.reset(); } catch (e) { } },   /* c2-raloi RK.reset */
   key(code, ctx) {
     if (ctx.S.mode !== 'play') return false;
     if (code === 'KeyG' && sv(ctx).out.length) { attack(ctx); return true; }

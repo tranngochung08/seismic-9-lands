@@ -380,7 +380,7 @@ const SKIN_E = { pal: EPAL.k, glow: ['#ffffff', '#ecfcf3', '#8fd8c4'], shape: 'r
 const SKIN_V = { pal: ['#9aa4d8', '#6a74b0', '#3e4680', '#262e51', '#1a1f3c', '#121630', '#0b0d1e', '#05060e'], glow: ['#ffffff', '#ecfcf3', '#bff3e6'], shape: 'slab', name: 'ma' };
 function rq(ctx, s) { const t = performance.now(); if (t < PW.qT) return; PW.qT = t + (PW.on ? 150 : 350); try { if (ctx.quake) ctx.quake(s); } catch (e) { } }   /* rung màn: chỉ lúc trúng, tối đa 1 lần / 0,15 s */
 function flashG(ctx, k) { try { ctx.S.flash = Math.max(ctx.S.flash || 0, k); } catch (e) { } }
-function slowmo(ctx, sec) { try { ctx.S.timeScale = 0.3; PW.slowT = performance.now() + sec * 1000; PW.n.slow++; setTimeout(() => { if (performance.now() >= PW.slowT - 5 && ctx.S.timeScale === 0.3) ctx.S.timeScale = 1; }, sec * 1000 + 20); } catch (e) { } }
+function slowmo(ctx, sec) { try { if ((ctx.S.timeScale ?? 1) !== 1) return; /* c2-raloi slowmo */ ctx.S.timeScale = 0.3; PW.slowT = performance.now() + sec * 1000; PW.n.slow++; setTimeout(() => { if (performance.now() >= PW.slowT - 5 && ctx.S.timeScale === 0.3) ctx.S.timeScale = 1; }, sec * 1000 + 20); } catch (e) { } }
 function chargeFx(E, T) {   /* TỤ LỰC: hạt dữ liệu xoáy hút vào kính, kính rực (chỉ trong lúc gồng) */
   PW.n.charge++; const P = []; for (let i = 0; i < 16; i++) P.push({ a: Math.random() * TAU, r: 26 + Math.random() * 14, s: 0.6 + Math.random() * 0.8, c: EPAL.k[Math.floor(Math.random() * 4)] });
   return { t: 0, T, upd(dt, f) { f.t += dt; E.glint = Math.max(E.glint, 0.05); }, y: () => E.y + 0.6, dr(g, cx, cy, f) {

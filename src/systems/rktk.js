@@ -55,6 +55,7 @@ const mark = id => { T.stats[id] = (T.stats[id] || 0) + 1; T.log.push(id); if (T
 
 function hitStop(ctx, ms) {   /* dừng hình theo sức: chỉ khi không có cảnh chậm khác */
   if (!ctx.S || ctx.S.mode !== 'play' || (ctx.S.timeScale ?? 1) !== 1) return; T.stopUntil = performance.now() + ms; T.stopOn = true; ctx.S.timeScale = 0.05;
+  setTimeout(() => { if (T.stopOn && performance.now() >= T.stopUntil - 5) { T.stopOn = false; if (ctx.S && ctx.S.timeScale === 0.05) ctx.S.timeScale = 1; } }, ms + 30);   /* c2-raloi hitStop: tự trả 1 kể cả khi update không còn chạy */
 }
 const dst = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const isBoss = mo => !!(mo.c && mo.c.boss);
@@ -150,7 +151,7 @@ function fistShape(U) {
 export function update(ctx, dt, H) {
   for (let i = FX113.length - 1; i >= 0; i--) { FX113[i].I.update(dt); if (FX113[i].I.done) FX113.splice(i, 1); }   /* p114fx */
   T.ref = { ctx, H };
-  if (T.stopOn && performance.now() >= T.stopUntil) { T.stopOn = false; if (ctx.S.timeScale < 1) ctx.S.timeScale = 1; }
+  if (T.stopOn && performance.now() >= T.stopUntil) { T.stopOn = false; if (ctx.S.timeScale === 0.05) ctx.S.timeScale = 1; }
   const pt = H.pet(), e = H.ent(); if (!e || !pt) { reset(); return; }
   if (active(pt)) { if (!T.began) { begin(pt); T.began = true; } T.formT += dt; } else T.began = false;
   for (const k of SK_IDS) if (T.cd[k] > 0) T.cd[k] -= dt;

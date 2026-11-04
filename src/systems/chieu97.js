@@ -60,7 +60,7 @@ export function onStart(f, id) {
 /* ---------- BỌT ỘP: phồng má → 3 (5) bong bóng nối đuôi từ miệng ---------- */
 function bubbles(f, a) {
   const N = f.sp === 'oalipho' ? 5 : 3, mul = N === 5 ? 0.3 : 0.42, pw = pwF(f); let k = 0, t = 0; const T0 = E.impactT(a.clip);
-  const shoot = () => { const o = E.foeReal(f); if (!o) return; const m = mouth(f, 'spit'), tx = o.x + (o.vx || 0) * 0.25, ty = o.y + (o.vy || 0) * 0.25, dx = tx - m.x, dy = ty - m.gy, d = Math.hypot(dx, dy) || 1, sp = 150 + k * 6;
+  const shoot = () => { const o = E.foeReal(f); if (!o) { k = N; return; } const m = mouth(f, 'spit'), tx = o.x + (o.vx || 0) * 0.25, ty = o.y + (o.vy || 0) * 0.25, dx = tx - m.x, dy = ty - m.gy, d = Math.hypot(dx, dy) || 1, sp = 150 + k * 6;
     origin(f, 'spit', m.x, m.gy, m.z); const h = FX.track({ k: 'bub', x: m.x, y: m.gy, z: m.z, r: 3.3 + (k === N - 1 ? 0.7 : 0), ky: m.gy + (dy < 0 ? -0.5 : 0.5) });
     S.shots.push({ kind: 'bub', f, mv: a.mv, h, x: m.x, y: m.gy, z: m.z, z0: m.z, tz: chestZ(o), vx: dx / d * sp, vy: dy / d * sp, wob: (k % 2 ? 1 : -1) * 2.2, t: 0, life: 1.1, mul, i: k, gy0: m.gy, pw });
     k++; E.sfx(k === 1 ? 'knock_whoosh' : 'pop'); };
@@ -122,21 +122,21 @@ function mugUp(f, a) {
   if (a.p97mug) return; const flip = (f.fx || 1) < 0;
   const M = a.p97mug = FX.track({ k: 'mug', x: f.x, y: f.y, z: 0, pop: 0, ang: 0, flip, kyF: () => f.y + (f.fy < -0.3 ? -0.6 : 0.6),
     upd: (dt, o) => { o.x = f.x + (o.flip ? -7 : 7); o.y = f.y; o.z = E.standH(f) + 6 + (f.alt || 0); o.pop = Math.min(1, o.t / 0.16);
-      if (!o.pour) o.ang = Math.max(0, Math.min(60, (o.t - 0.3) * 160)); else o.ang = Math.min(110, o.ang + dt * 200); if (o.end) { o.pop = Math.max(0, 1 - (o.t - o.end) / 0.18); if (o.pop <= 0) o.alive = false; } if (!live(f)) o.alive = false; } });
+      if (!o.pour) o.ang = Math.max(0, Math.min(60, (o.t - 0.3) * 160)); else o.ang = Math.min(110, o.ang + dt * 200); if (o.end) { o.pop = Math.max(0, 1 - (o.t - o.end) / 0.18); if (o.pop <= 0) o.alive = false; } if (!live(f) || f.act !== a) o.alive = false; } });
   E.sfx('pop'); say(f.x, f.y - 46, 'NHẤP 1 NGỤM…', 'ONE SIP…', '#f4ecd8', 0.85, 0.9);
 }
 function flood(f, a) {
   const pw = pwF(f), o0 = E.foeReal(f); if (!a.p97mug) mugUp(f, a); const M = a.p97mug; M.pour = 1;
   const dx = (o0 ? o0.x : f.x + f.fx * 60) - f.x, dy = (o0 ? o0.y : f.y + f.fy * 20) - f.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
   const Wv = { k: 'wave', x: f.x - ux * 6, y: f.y - uy * 3, ux, uy, front: 0, W: 36 + 8 * pw.p, H: 13 + 4 * pw.p, T2: 46, grow: 0, fade: 1, ky: f.y, kyF: null };
-  Wv.kyF = () => Wv.y + Wv.uy * Wv.front + (Wv.uy < 0 ? -0.5 : 0.5); const hW = FX.track(Wv);
-  const pour = FX.track({ k: 'pour', x0: M.x, y0: f.y, z0: M.z, x1: f.x + ux * 10, y1: f.y + uy * 4, T: 0.45, ky: f.y + 0.6, upd: (dt, o) => { o.x0 = M.x + (M.flip ? -5 : 5); o.y0 = f.y; o.z0 = M.z - 2; o.x1 = f.x + ux * 12; o.y1 = f.y + uy * 5; } });
+  Wv.kyF = () => Wv.y + Wv.uy * Wv.front + (Wv.uy < 0 ? -0.5 : 0.5); Wv.upd = (dt, o) => { if (f.act !== a) { o.alive = false; if (f.p97air === a) { f.alt = 0; f.p97air = null; } } }; const hW = FX.track(Wv);
+  const pour = FX.track({ k: 'pour', x0: M.x, y0: f.y, z0: M.z, x1: f.x + ux * 10, y1: f.y + uy * 4, T: 0.45, ky: f.y + 0.6, upd: (dt, o) => { o.x0 = M.x + (M.flip ? -5 : 5); o.y0 = f.y; o.z0 = M.z - 2; o.x1 = f.x + ux * 12; o.y1 = f.y + uy * 5; if (f.act !== a) o.alive = false; } });
   FX.waveCrash(f.x + ux * 10, f.y + uy * 4, pw.p * 0.5); E.sfx('smash'); log({ ev: 'flood', side: f.side });
   const L = 175, T = 0.85, seen = new Set(); let t = 0, ride = true, lastP = 0, ended = false; const T0 = E.impactT(a.clip);
   a.sigU = dt => {
     t += dt; f.ct = Math.max(f.ct, T0); Wv.grow = Math.min(1, t / 0.14); const u = Math.min(1, t / T), front = L * (1 - Math.pow(1 - u, 1.6)), adv = front - Wv.front; Wv.front = front;
     if (t > 0.35 && !M.end) M.end = M.t;
-    if (ride && live(f)) { const want = front - 16; if (want > 0) { E.moveBy(f, ux * Math.max(0, adv) * 0.62, uy * Math.max(0, adv) * 0.62); E.clampField(f); } f.alt = Math.sin(Math.min(1, t / 0.75) * Math.PI) * 9; if (t > 0.75) { ride = false; f.alt = 0; } }
+    if (ride && live(f)) { const want = front - 16; if (want > 0) { E.moveBy(f, ux * Math.max(0, adv) * 0.62, uy * Math.max(0, adv) * 0.62); E.clampField(f); } f.alt = Math.sin(Math.min(1, t / 0.75) * Math.PI) * 9; f.p97air = a; if (t > 0.75) { ride = false; f.alt = 0; f.p97air = null; } }
     if (!ended && ((t * 25) | 0) % 2 === 0) { const sa = (rnd() * 2 - 1) * Wv.W; FX.foam(Wv.x + ux * front - uy * sa, Wv.y + uy * front + ux * sa * 0.6, Wv.H * 1.6 * Wv.grow, 1); }
     if (front - lastP > 18) { lastP = front; FX.puddle(Wv.x + ux * front - ux * 8 + (rnd() - 0.5) * Wv.W, Wv.y + uy * front + (rnd() - 0.5) * 8, 5 + rnd() * 4, 2.2); FX.foam(Wv.x + ux * front, Wv.y + uy * front, Wv.H * 0.8, 2); }
     for (const q of E.ST.F) { if (!live(q) || q.side === f.side || seen.has(q)) continue; const along = (q.x - Wv.x) * ux + (q.y - Wv.y) * uy, perp = Math.abs(-(q.x - Wv.x) * uy + (q.y - Wv.y) * ux);
@@ -216,7 +216,7 @@ export function dmgMul(att, def, mv) {
 export function afterHit(att, def, mv) { A.afterHit(att, def, mv); }
 
 /* ================= mỗi khung ================= */
-export function tick(f, dt) { A.tick(f, dt); if (f.act && f.act.id === 'bung_phe' && !f.act.sigU && f.alt && !f.act.fired) f.alt = 0; }
+export function tick(f, dt) { A.tick(f, dt); if (f.p97air && f.act !== f.p97air) { f.alt = 0; f.p97air = null; } /* c2-raloi act-cut */ if (f.act && f.act.id === 'bung_phe' && !f.act.sigU && f.alt && !f.act.fired) f.alt = 0; }
 export function update(dt) { A.update(dt); if (!E) return; FX.update(dt); updShots(dt); updShades(dt); }
 
 /* AI */
