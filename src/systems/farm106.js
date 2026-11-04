@@ -38,6 +38,9 @@ const SHOT_CLIPS = ['cast', 'spit', 'zap', 'spout', 'flap', 'beam', 'shine', 'sh
 const HGT = { xs: 15, s: 18, m: 24, l: 30 };
 const CF = { aggroR: 28, aggroT: 0.7, packR: 80, packN: 2, bite: 20, near: 16, shotMin: 30, shotMax: 90, shotV: 105, leashOut: 56, leashHome: 300, tauntT: 5, respawn: 60, respawnLead: 180, sleepR: 520, floorP: 0.35, floorC: 0.25, fleeT: 5, roam: 72, sepR: 18, respawnCt: 90, ctXp: 1.5, gcd: [1.6, 2.6], leadXp: 2.5 };
 const ST = { ctx: null, on: false, mons: [], rq: [], shots: [], dying: [], fx6: [], tiles: {}, log: [], n: { spawn: 0, kill: 0, killLead: 0, angry: 0, pack: 0, calm: 0, back: 0, shot: 0, bite: 0, hitP: 0, hitC: 0, floor: 0, duel: 0, respawn: 0, scatter: 0 }, xp: { ely: 0, c79: 0, pl: 0 }, errs: 0, vanT: 0, im: null };
+/* c10-coop (chơi chung): NET.role 'solo' | 'host' (mô phỏng quái, phát cho mọi người) | 'guest' (quái = bóng theo chủ phòng). coop.js gắn hàm vào NET. */
+export const NET = { role: 'solo', peerObj: null, peers: null, nearest: null, hurt: null, onKill: null, fx: null, take: null, guestFall: null };
+const isR = w => typeof w === 'string' && w.slice(0, 2) === 'r:';
 const vi = ctx => !ctx.lang || ctx.lang() !== 'en';
 const now = () => (ST.ctx ? ST.ctx.S.time : 0);
 const hyp = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -105,7 +108,7 @@ const SQ = ctx => (ctx.squad104 && ctx.squad104.units ? ctx.squad104 : null);
 function unitOf(ctx, who) { const q = SQ(ctx); if (!q || typeof who !== 'string' || who.slice(0, 2) !== 'u:') return null; const id = who.slice(2); return q.units().find(u => String(u.id) === id && u.onField()) || null; }
 function unitAt(ctx, src) { const q = SQ(ctx); if (!q || !src) return null; for (const u of q.units()) { if (!u.onField()) continue; const P = u.pos(); if (P && Math.hypot(P.x - src.x, P.y - src.y) < 1.5) return u; } return null; }
 function whoOfUnit(ctx, u) { return u.sp === 'elyziuma' ? 'ely' : 'u:' + u.id; }
-function objOf(ctx, who) { if (who === 'ely') return elyE(ctx); if (who === 'c79') return c79F(ctx); const u = unitOf(ctx, who); if (u) return u.f || u.pos(); if (typeof who === 'string' && who.slice(0, 2) === 'u:') return null; return ctx.S.player; }
+function objOf(ctx, who) { if (isR(who)) return NET.peerObj ? NET.peerObj(who.slice(2)) : null; if (who === 'ely') return elyE(ctx); if (who === 'c79') return c79F(ctx); const u = unitOf(ctx, who); if (u) return u.f || u.pos(); if (typeof who === 'string' && who.slice(0, 2) === 'u:') return null; return ctx.S.player; }
 const isComp = who => who !== 'pl';
 
 /* ---------- sinh / hồi sinh ---------- */
@@ -152,7 +155,7 @@ const WR106 = new WeakSet();   /* c2-raloi f106 */
 function wrapDamage(ctx) {
   const M = ctx.monsters; if (!M || !M.damage || M.damage.__f106 || WR106.has(M)) return; WR106.add(M);
   const orig = M.damage, w = function (mo, dmg, src, ...r) {
-    if (!(mo && mo.f6 && mo.hp > 0)) return orig.call(this, mo, dmg, src, ...r);
+    if (!(mo && mo.f6 && mo.hp > 0) || mo.__in106) return orig.call(this, mo, dmg, src, ...r);   /* c10-coop: đang trong 1 lớp bọc farm106 → lớp lồng chỉ cho đi qua (giữ đúng người ra đòn) */
     let by = mo.__by || null; mo.__by = null; if (!by) { const u = unitAt(ctx, src); by = u ? whoOfUnit(ctx, u) : 'pl'; }
     const hp0 = mo.hp; mo.__hp0 = hp0; mo.__by106 = by; mo.__in106 = true;
     try { provoke(ctx, mo, by, true); } catch (e) { }
@@ -223,6 +226,7 @@ function wander(ctx, mo, dt) {
 function lvDmg(F) { return (3 + F.lv * 0.6) * (F.lead ? 1.3 : F.ct ? 1.1 : 0.8); }
 function hurtTarget(ctx, mo, who, d) {
   d = Math.max(1, d);
+  if (isR(who)) { if (NET.hurt) NET.hurt(who.slice(2), Math.round(d), mo); ST.n.hitR = (ST.n.hitR || 0) + 1; return true; }   /* c10-coop */
   if (who === 'pl') {
     const h = ctx.hero; if (!h || h.fainted) return false;
     if (legendOut(ctx)) { const max = h.max || 100, hp = h.hp == null ? max : h.hp, fl = Math.ceil(max * CF.floorP); const d2 = Math.min(d, Math.max(0, hp - fl)); if (d2 < d) ST.n.floor++; d = d2; }
@@ -233,7 +237,7 @@ function hurtTarget(ctx, mo, who, d) {
   const o = objOf(ctx, who); if (!o) return false; const max = o.max || o.hp || 100;
   o.hp = Math.max(Math.round(max * CF.floorC), (o.hp == null ? max : o.hp) - Math.round(d * 1.5)); o.flash = 0.12; ST.n.hitC++; return true;
 }
-function startAct(mo, id, T0, imp, extra) { const F = mo.f6; F.act = { id, t: 0, T: T0, imp, done: false, ...extra }; }
+function startAct(mo, id, T0, imp, extra) { const F = mo.f6; F.act = { id, t: 0, T: T0, imp, done: false, ...extra }; if (NET.fx) NET.fx(mo, F.act); }
 function shotClip(ctx, F) { if (!F.sp) return null; if (F.shotClip !== null) return F.shotClip; if (!ctx.ldKit || !ctx.ldKit.ready() || !F.e) return null; F.shotClip = SHOT_CLIPS.find(c => ctx.ldKit.has(F.e, c)) || (ctx.ldKit.has(F.e, 'atk') ? 'atk' : 'idle'); return F.shotClip; }
 function skin(F) { return FX.skinOf(F.sp || 'utchan', F.he); }
 function updAct(ctx, mo, dt) {
@@ -266,6 +270,7 @@ function updShots(ctx, dt) {
     b.t += dt; b.x += b.vx * dt; b.y += b.vy * dt; b.z = Math.max(1, b.z + b.vz * dt);
     const T = objOf(ctx, b.who), P = ctx.S.player;
     const hitT = T && Math.hypot(T.x - b.x, T.y - b.y) < 9 ? b.who : (b.who !== 'pl' && Math.hypot(P.x - b.x, P.y - b.y) < 7 ? 'pl' : null);
+    if (hitT && b.vis) { b.dead = true; try { FX.impact(b.x, b.y, b.z, FX.skinOf(b.sp, b.he), FX.power(0.2), { n: 3 }); } catch (e) { } continue; }   /* c10-coop: đạn bóng của khách */
     if (hitT) { b.dead = true; if (b.mo && b.mo.f6) hurtTarget(ctx, b.mo, hitT, lvDmg(b.mo.f6) * 1.2); try { if (globalThis.__sfx108) globalThis.__sfx108.move(ctx, SPECIES[b.sp] && SPECIES[b.sp].moves[0], 'hit', b.x, b.y, { type: b.he, vol: 0.7 }); } catch (e) { } if (b.slow && hitT === 'pl') slowP(ctx); try { FX.impact(b.x, b.y, b.z, FX.skinOf(b.sp, b.he), FX.power(0.25), { n: 4 }); } catch (e) { } try { if (ctx.envfx) ctx.envfx.hit(b.x, b.y, 9, b.he, 0.6); } catch (e) { }   /* p105w-hit */ continue; }
     const tx = Math.floor(b.x / TS), ty = Math.floor(b.y / TS);
     if (b.t > b.T || (ctx.isSolid(ctx.S.map, tx, ty) && ctx.getG(ctx.S.map, tx, ty) !== TT.WATER)) { b.dead = true; try { FX.impact(b.x, b.y, b.z, FX.skinOf(b.sp, b.he), FX.power(0.12), { n: 2 }); } catch (e) { } try { if (ctx.envfx) ctx.envfx.hit(b.x, b.y, 8, b.he, 0.4); } catch (e) { }   /* p105w-miss */ }
@@ -274,6 +279,7 @@ function updShots(ctx, dt) {
 }
 function fight(ctx, mo, dt, canHit) {
   const F = mo.f6;
+  if (isR(F.tg)) { const q = objOf(ctx, F.tg); if (q && hyp(q, mo) < 220) F.tgT = Math.max(F.tgT || 0, now() + 1); }   /* c10-coop */
   if (F.tg !== 'pl' && !(F.tgT > now() && objOf(ctx, F.tg))) F.tg = 'pl';
   const who = F.tg, T = objOf(ctx, who);
   if (!T || (who === 'pl' && !canHit)) { F.calmT += dt; if (F.calmT > 2) calm(mo, 'notarget'); else setClip(F, idleClip(F)); return; }
@@ -330,7 +336,7 @@ const MHE = { slime: 'moc', wolf: 'anh', crow: 'phong', gull: 'phong', crab: 'tr
 const mvOf = id => MOVES[id] || (MM[id] && { ...MM[id], name: MM[id].vi });
 function movesOf(sp) { const s = SPECIES[sp]; if (!s || !s.moves) return []; const out = []; for (const id of s.moves) { const m = MOVES[id]; if (!m || !SH[m.shape]) continue; out.push(id); if (out.length >= 4) break; } return out; }
 function mvCd(id) { if (MM[id]) return MM[id].cd * R(0.9, 1.2); const m = MOVES[id]; return Math.max(3, Math.min(m && m.ult ? 16 : 10, ((m && m.cd) || 4) * 1.3)); }
-function targets(ctx) { const out = [{ who: 'pl', o: ctx.S.player }]; const q = SQ(ctx); if (q) { for (const u of q.units()) if (u.onField()) { const w = whoOfUnit(ctx, u), o = objOf(ctx, w); if (o) out.push({ who: w, o }); } } else { const E = elyE(ctx), f = c79F(ctx); if (E) out.push({ who: 'ely', o: E }); if (f) out.push({ who: 'c79', o: f }); } return out; }
+function targets(ctx) { const out = [{ who: 'pl', o: ctx.S.player }]; if (NET.role === 'host' && NET.peers) for (const q of NET.peers()) out.push(q); const q = SQ(ctx); if (q) { for (const u of q.units()) if (u.onField()) { const w = whoOfUnit(ctx, u), o = objOf(ctx, w); if (o) out.push({ who: w, o }); } } else { const E = elyE(ctx), f = c79F(ctx); if (E) out.push({ who: 'ely', o: E }); if (f) out.push({ who: 'c79', o: f }); } return out; }
 function tryCast(ctx, mo, T, who, d) {
   const F = mo.f6; if (!F.mvs.length) return false;
   const wet = F.he === 'trieu', big = id => F.lead && wet && mvOf(id).ult, shOf = id => (big(id) ? 'vung' : SH[mvOf(id).shape]), ex = wet ? 25 : 0, mn = !F.sp;   /* hệ Triều (anh 02/11): chiêu nước nhiều, tầm xa hơn; tuyệt chiêu của thủ lĩnh nước = CỘT NƯỚC lớn tại chỗ mục tiêu */
@@ -343,7 +349,7 @@ function tryCast(ctx, mo, T, who, d) {
   F[lk] = id; F.mcd[id] = mvCd(id); F.gcd = R(CF.gcd[0], CF.gcd[1]) * (F.lead ? 0.85 : 1) * (wet ? 0.8 : 1) * (mn ? 1.6 : 1);
   const tel = bigMv ? 1.1 : TEL[s] * (F.lead ? 0.9 : mn ? 0.85 : 1), dx = P.x - mo.x, dy = P.y - mo.y, dd = Math.hypot(dx, dy) || 1;
   const M0 = mvOf(id), A = { id: 'mv', mv: id, shape: s, who: pref.who, P, ux: dx / dd, uy: dy / dd, t: 0, imp: tel, T: tel + (s === 'lao' ? 0.45 : 0.35), done: false, len: s === 'tia' ? 128 : s === 'lao' ? Math.min(M0.len || 110, dd + 16) : 0, r: bigMv ? 38 : M0.r || (s === 'vung' ? 24 : s === 'quanh' ? 38 : s === 'hu' ? 20 : 0), big: bigMv, wet, mn, slow: !!M0.slow };
-  F.act = A; F.tel = A; setClip(F, s === 'lao' ? (hasClip(ctx, F, 'atk') ? 'atk' : 'run') : (shotClip(ctx, F) || 'idle')); if (F.e) F.e.ct = 0; face(F, P.x, P.y, mo);
+  F.act = A; F.tel = A; if (NET.fx) NET.fx(mo, A); setClip(F, s === 'lao' ? (hasClip(ctx, F, 'atk') ? 'atk' : 'run') : (shotClip(ctx, F) || 'idle')); if (F.e) F.e.ct = 0; face(F, P.x, P.y, mo);
   const nm = MM[id] ? (vi(ctx) ? MM[id].vi : MM[id].en) : vi(ctx) ? (MOVES[id].name || id) : (MOVE_NAME_EN[id] || MOVES[id].name || id);
   if ((F.shoutT || 0) < now()) { F.shoutT = now() + 3.5; try { FX.shout(mo.x, mo.y - hOf(mo) - 10, mn ? nm : nm.toUpperCase(), F.lead ? '#ffe9a0' : mn ? '#f0e0d0' : '#ffd0b0', mn ? 0.6 : 0.75, mn ? 0.6 : 0.75); } catch (e) { } }   /* quái thường: tên chiêu nhỏ hơn */
   try { S108.at(ctx, F.he + '_cast', mo.x, mo.y, { vol: mn ? 0.45 : 0.7 }); } catch (e) { }
@@ -416,11 +422,13 @@ function ai0(ctx, mo, dt, p, dp, canHit) {
   if (residual(mo)) provoke(ctx, mo, 'pl', true);
   if (F.regen > 0) { F.regen -= dt; mo.hp = Math.min(mo.max, mo.hp + mo.max * 0.25 * dt); F.prevHp = mo.hp; }
   if ((F.kind === 'aqua' || F.kind === 'amph') && !walkPx(ctx, mo.x, mo.y, F.kind)) { const L0 = tileList(F.rid, F.kind); let b = null, bd = 1e9; for (const t of L0) { const x = t[0] * TS + 8, y = t[1] * TS + 12, d = Math.hypot(x - mo.x, y - mo.y); if (d < bd) { bd = d; b = { x, y }; } } if (b) { mo.x = b.x; mo.y = b.y; mo.kb = null; ST.n.wetFix = (ST.n.wetFix || 0) + 1; } }   /* cá bị hất lên bờ → trượt về nước */
-  if (F.mode === 'calm' && dp > CF.sleepR) { setClip(F, idleClip(F)); return; }   /* ngủ khi xa người chơi */
+  const q10 = NET.role === 'host' && NET.nearest ? NET.nearest(mo.x, mo.y) : null;   /* c10-coop: người chơi khác gần nhất {id, d} */
+  if (F.mode === 'calm' && dp > CF.sleepR && !(q10 && q10.d <= CF.sleepR)) { setClip(F, idleClip(F)); return; }   /* ngủ khi xa người chơi */
   if (F.act) { updAct(ctx, mo, dt); return; }
   if (F.mode === 'flee') { flee(ctx, mo, dt); return; }
   if (F.mode === 'angry') { fight(ctx, mo, dt, canHit); return; }
   if (F.mode === 'return') { goHome(ctx, mo, dt); return; }
+  if (q10 && q10.d < CF.aggroR && !(canHit && dp < q10.d)) { F.nearR = (F.nearR || 0) + dt; if (F.nearR > CF.aggroT) { F.nearR = 0; provoke(ctx, mo, 'r:' + q10.id, true); return; } } else F.nearR = 0;   /* c10-coop */
   if (canHit && dp < CF.aggroR) { F.nearT += dt; if (F.nearT > CF.aggroT) { provoke(ctx, mo, 'pl', true); F.nearT = 0; return; } } else F.nearT = Math.max(0, F.nearT - dt);
   wander(ctx, mo, dt);
 }
@@ -436,18 +444,22 @@ function addXp(ctx, m, n, at) {
 export const baseXp = (lead, lv, ct) => (lead ? Math.round((3 + 2.2 * lv) * CF.leadXp) : ct ? Math.round((3 + 2.2 * lv) * CF.ctXp) : Math.round(2 + 1.2 * lv));
 function onFallF(mo) {
   const ctx = ST.ctx; if (!ctx || !mo.f6) return false;
+  if (NET.role === 'guest' && NET.guestFall) return NET.guestFall(mo);   /* c10-coop: khách không tự hạ quái — gửi đòn cuối cho chủ phòng */
   try {
     const F = mo.f6; if (!mo.__in106) residual(mo); else credit(mo, mo.__by106 || 'pl', Math.max(0, mo.__hp0 || 0));   /* đòn kết liễu: phần máu còn lại về đúng kẻ ra đòn */
     const last = mo.__in106 ? (mo.__by106 || F.last) : 'pl', base = baseXp(F.lead, F.lv, F.ct), got = {};
-    for (const who of Object.keys(F.cr).filter(isComp)) if ((F.cr[who] || 0) > 0) { const m = memberOf(ctx, who), o = objOf(ctx, who), n = Math.round(base * (last === who ? 1.5 : 1)); if (m) { got[who] = addXp(ctx, m, n, o); ST.xp[who] = (ST.xp[who] || 0) + n; } }
-    const pn = last === 'pl' ? base : Math.max(1, Math.round(base * 0.3)); if (ctx.hero && ctx.hero.gainXp) ctx.hero.gainXp(pn); ST.xp.pl += pn; got.pl = pn;
-    (ctx.S.pops ||= []).push({ x: ctx.S.player.x, y: ctx.S.player.y - 34, text: `+${pn} XP`, color: '#c8ff9a', t: 0 });
-    if (F.lead) { ctx.give('stone', 2 + ((Math.random() * 2) | 0), mo.x, mo.y); if (Math.random() < 0.35) ctx.give('soul', 1, mo.x, mo.y); }
+    const mine106 = NET.role !== 'host' || Object.keys(F.cr).some(w => !isR(w) && F.cr[w] > 0);   /* c10-coop: chủ phòng không ăn công quái người khác hạ một mình */
+    if (mine106) for (const who of Object.keys(F.cr).filter(w => isComp(w) && !isR(w))) if ((F.cr[who] || 0) > 0) { const m = memberOf(ctx, who), o = objOf(ctx, who), n = Math.round(base * (last === who ? 1.5 : 1)); if (m) { got[who] = addXp(ctx, m, n, o); ST.xp[who] = (ST.xp[who] || 0) + n; } }
+    if (mine106) { const pn = last === 'pl' ? base : Math.max(1, Math.round(base * 0.3)); if (ctx.hero && ctx.hero.gainXp) ctx.hero.gainXp(pn); ST.xp.pl += pn; got.pl = pn;
+    (ctx.S.pops ||= []).push({ x: ctx.S.player.x, y: ctx.S.player.y - 34, text: `+${pn} XP`, color: '#c8ff9a', t: 0 }); }
+    if (!mine106) { } else if (F.lead) { ctx.give('stone', 2 + ((Math.random() * 2) | 0), mo.x, mo.y); if (Math.random() < 0.35) ctx.give('soul', 1, mo.x, mo.y); }
     else if (F.ct) { ctx.give('stone', 1, mo.x, mo.y); if (Math.random() < 0.15) ctx.give('soul', 1, mo.x, mo.y); }   /* thủ lĩnh rơi nhiều hơn */
     else { if (Math.random() < 0.12) ctx.give('stone', 1, mo.x, mo.y); if (Math.random() < 0.15 && mo.c.drop) ctx.give(mo.c.drop, 1, mo.x, mo.y); }
     ST.n.kill++; if (F.lead) ST.n.killLead++;
+    try { if (NET.onKill) NET.onKill(mo, last); } catch (e) { }   /* c10-coop */
     log({ ev: 'kill', id: mo.id, sp: F.sp || F.key, lead: F.lead, ct: F.ct, rid: F.rid, lv: F.lv, base, last, cr: Object.fromEntries(Object.entries(F.cr).map(([k, v]) => [k, Math.round(v)])), got });
     if (F.e) { F.e.clip = hasClip(ctx, F, 'faint') ? 'faint' : 'idle'; F.e.ct = 0; ST.dying.push({ e: F.e, x: mo.x, y: mo.y, alt: F.alt, t: 0, fx: F.fx, fy: F.fy }); }
+    faintAdd(ctx, mo, F, isR(last) ? 'r' : 'me', mo.id);   /* c10: Chấn Thú hoang ngất → người hạ bắt được */
     if (ctx.wfx && ctx.wfx('kill', mo.x, mo.y + 1, { w: mo.c.w || 16, h: mo.c.h || 16, col: mo.c.c })) { } else { try { FX.sink(mo.x, mo.y, skin(F), FX.power(0.3)); } catch (e) { } }
     ST.rq.push({ rid: F.rid, spec: F.lead ? ZR[F.rid].lead : F.ct ? { sp: F.sp, lv: F.lv } : { key: F.key || mo.c.fct || mo.c.key }, lead: F.lead, ct: F.ct, t: F.lead ? CF.respawnLead : F.ct ? CF.respawnCt : CF.respawn });
     mo.dead = true; mo.hp = 0; mo.angry = false; ST.mons = ST.mons.filter(o => o !== mo); try { ctx.monsters.remove(mo); } catch (e) { }
@@ -460,10 +472,11 @@ function onFallF(mo) {
 /* ---------- đấu chính thức (E) — chỉ thủ lĩnh (Chấn Thú) ---------- */
 function duel(ctx, mo) {
   if (!ctx.duel || !ctx.duel.start || duelOn(ctx) || !mo || !mo.f6 || !mo.f6.sp) return;
+  if (NET.role === 'guest' && NET.take && !mo.__took) { NET.take(mo, () => { mo.__took = true; duel(ctx, mo); }); return; }   /* c10-coop */
   const d = ctx.chanthu && ctx.chanthu.ensure && ctx.chanthu.ensure(); if (!d || !d.team || !d.team.length) { try { ctx.toast(vi(ctx) ? 'Chưa có Chấn Thú — nhận con đầu tiên ở bệ Chấn Thú trong Làng' : 'No Quake Beast yet — get your first one at the beast stand in the Village'); } catch (e) { } return; }
   if (ctx.comp79 && !ctx.comp79.out()) { ctx.comp79.need(); return; }
   const me = d.team[0], F = mo.f6, sp = F.sp, lv = F.lv, he = F.he;
-  const gone = () => { try { ctx.monsters.remove(mo); } catch (e) { } ST.mons = ST.mons.filter(o => o !== mo); ST.rq.push({ rid: F.rid, spec: F.lead ? ZR[F.rid].lead : { sp: F.sp, lv: F.lv }, lead: F.lead, ct: true, t: F.lead ? CF.respawnLead : CF.respawnCt }); if (F.lead) scatter(ctx, F.rid, mo); };
+  const gone = () => { try { ctx.monsters.remove(mo); } catch (e) { } ST.mons = ST.mons.filter(o => o !== mo); if (mo.__took) return; ST.rq.push({ rid: F.rid, spec: F.lead ? ZR[F.rid].lead : { sp: F.sp, lv: F.lv }, lead: F.lead, ct: true, t: F.lead ? CF.respawnLead : CF.respawnCt }); if (F.lead) scatter(ctx, F.rid, mo); };
   ST.n.duel++; log({ ev: 'duel', sp, lv });
   ctx.duel.start({ wildAt: { x: mo.x, y: mo.y }, wild: { sp, lv, key: 'f106:' + mo.id }, mode: '1v1', lv: me.lv, team: [{ sp: me.sp, lv: me.lv, name: me.name, lt: me.lt || null }], foeTeam: [{ sp, lv }],
     onCatch: () => { const where = ctx.chanthu.add(sp, lv); const dd = ctx.chanthu.ensure(); dd.caught = (dd.caught | 0) + 1; ctx.persist(); gone(); return where; },
@@ -557,7 +570,7 @@ export const farm106 = {
   id: 'farm106',
   always: true,
   onZoneEnter(ctx) {
-    ST.ctx = ctx; ST.mons = []; ST.rq = []; ST.shots = []; ST.dying = []; ST.fx6 = []; loadSpr6();
+    ST.ctx = ctx; ST.mons = []; ST.rq = []; ST.fz = []; ST.balls = []; ctx.ballThrow = () => ballThrow(ctx); ctx.ballInfo = () => ballInfo(ctx);   /* c10: quả cầu thanh công cụ = ném Ấn Thu */ ST.shots = []; ST.dying = []; ST.fx6 = []; loadSpr6();
     ST.on = !off() && !!(ctx.S.zone && ctx.S.zone.id === 'village' && ctx.S.map && ctx.S.map.decals88 && ctx.monsters);
     if (typeof window !== 'undefined') window.__f106 = {
       on: () => ST.on, baseXp, onW: (x, y) => onWater(ctx, x, y), nearW: (x, y) => nearWater(ctx, Math.floor(x / TS), Math.floor(y / TS)), landNear: (x, y, rid) => { let b = null, bd = 1e9; for (const [r, o] of Object.entries(ST.tiles)) { if (rid && r !== rid) continue; for (const q of o.land) { const X = q[0] * TS + 8, Y = q[1] * TS + 12, d = Math.hypot(X - x, Y - y); if (d < bd && d > 30) { bd = d; b = { x: X, y: Y }; } } } return b; }, castNow: (id, mv) => { const m = ST.mons.find(q => q.id === id); if (!m || !m.f6.ct) return false; if (mv) for (const k of m.f6.mvs) m.f6.mcd[k] = k === mv ? 0 : 99; m.f6.gcd = 0; m.f6.act = null; return true; }, sepN: () => ST.sepN || 0,
@@ -573,7 +586,7 @@ export const farm106 = {
       kill: (id, who = 'ely') => { const m = ST.mons.find(q => q.id === id); if (!m) return false; m.__by = who; ctx.monsters.damage(m, m.hp + 1, m, 0, 0, true); return true; },
       duel: id => duel(ctx, ST.mons.find(q => q.id === id)), at: (x, y) => regionAt(Math.floor(x / TS), Math.floor(y / TS)).id };
     if (!ST.on) return;
-    try { wrapDamage(ctx); ST.tiles = buildTiles(ctx); ST.lair = {}; ST.front = {}; clearVanilla(ctx); spawnAll(ctx); log({ ev: 'start', n: ST.mons.length }); } catch (e) { console.error('farm106 start', e); }
+    try { wrapDamage(ctx); ST.tiles = buildTiles(ctx); ST.lair = {}; ST.front = {}; clearVanilla(ctx); if (NET.role !== 'guest') spawnAll(ctx); log({ ev: 'start', n: ST.mons.length, net: NET.role }); } catch (e) { console.error('farm106 start', e); }
   },
   onZoneLeave() { for (const m of ST.mons) { try { ST.ctx && ST.ctx.monsters && ST.ctx.monsters.remove(m); } catch (e) { } } ST.mons = []; ST.rq = []; ST.shots = []; ST.dying = []; ST.on = false; },
   update(dt, ctx) {
@@ -583,24 +596,291 @@ export const farm106 = {
     wrapDamage(ctx);
     ST.vanT -= dt; if (ST.vanT <= 0) { ST.vanT = 1; clearVanilla(ctx); const L0 = ctx.monsters.list(); ST.mons = ST.mons.filter(m => L0.includes(m)); }
     updShots(ctx, dt); updFx6(dt); separate(ctx, dt);
+    faintTick(ctx, dt);   /* c10 */
     for (const d of ST.dying) { d.t += dt; d.e.ct += dt; } ST.dying = ST.dying.filter(d => d.t < 0.9);
     for (const q of ST.rq) q.t -= dt;
     for (const q of ST.rq.slice().sort((a, b) => b.lead - a.lead)) if (q.t <= 0) { const mo = spawnOne(ctx, q.rid, q.spec, true); if (mo) { ST.rq.splice(ST.rq.indexOf(q), 1); ST.n.respawn++; try { FX.erupt(mo.x, mo.y, skin(mo.f6), FX.power(0.2), 'b'); } catch (e) { } } else q.t = 0.5; }
   },
   near(ctx) {
     if (!ST.on || ctx.S.mode !== 'play' || duelOn(ctx)) return null; const p = ctx.S.player; let best = null, bd = 40;
+    { const z = faintNear(ctx); if (z) return z; }   /* c10: Chấn Thú ngất của mình → Bắt */
     for (const mo of ST.mons) { const F = mo.f6; if (!F || !F.sp || mo.hp <= 0 || F.mode === 'angry') continue; const d = hyp(mo, p); if (d >= bd) continue; bd = d;
       best = { label: vi(ctx) ? `⚔ Đấu ${spName(ctx, F.sp)} Lv${F.lv}` : `⚔ Battle ${spName(ctx, F.sp)} Lv${F.lv}`, x: mo.x, y: mo.y + 18, limit: 52, priority: true, data: { f106: mo } }; }
     return best;
   },
-  interact(ctx, cand) { const d = cand && cand.data; if (d && d.f106) duel(ctx, d.f106); },
+  interact(ctx, cand) { const d = cand && cand.data; if (d && d.f106c) { ballThrow(ctx, d.f106c); return; } if (d && d.f106) duel(ctx, d.f106); },
   drawables(ctx, cx, cy) {
     if (!ST.on || duelOn(ctx)) return []; const g = ctx.g, out = [];
     for (const b of ST.shots) out.push({ y: b.sy + b.ky, f: () => drawShot(g, b, cx, cy) });
     for (const f of ST.fx6) out.push({ y: f.k === 'beam' ? f.sy + f.ky : f.k === 'burst' ? f.y - 40 : f.y - 0.5, f: () => drawFx6(g, f, cx, cy) });   /* tia: lên → sau lưng, xuống → trước (luật 16/10) */   /* chiêu bắn lên: sau lưng người ra chiêu · bắn xuống: trước (luật 16/10) */
+    for (const z of ST.fz || []) out.push({ y: z.y, f: () => faintDraw(ctx, g, z, cx, cy) });   /* c10 */
+    for (const b of ST.balls || []) out.push({ y: b.z.y + 1, f: () => ballDraw(ctx, g, b, cx, cy) });   /* c10: Ấn Thu đang bay / lắc */
     for (const d of ST.dying) out.push({ y: d.y, f: () => { const e = d.e; e.x = d.x; e.y = d.y; e.alt = d.alt; e.fx = d.fx; e.fy = d.fy; e.flash = 0; if (d.t > 0.55) { g.save(); g.globalAlpha = Math.max(0, 1 - (d.t - 0.55) / 0.35); ctx.ldKit.draw(g, e, cx, cy); g.restore(); } else ctx.ldKit.draw(g, e, cx, cy); } });
     return out;
   },
   drawGround(g, ctx, cx, cy) { if (!ST.on || duelOn(ctx)) return; for (const mo of ST.mons) { const A = mo.f6 && mo.f6.act; if (A && A.id === 'mv' && !A.done) drawTel(g, mo, A, cx, cy); } },
   drawUI(ug, ctx, cx, cy, scale) { if (ST.on) drawUI(ug, ctx, cx, cy, scale); },
 };
+
+/* ================= c10-coop: API MẠNG (patch-c10.py nối vào cuối farm106.js) =================
+   CHỦ PHÒNG: netSnap() ảnh chụp gọn mọi con · netDefs()/netDef(mo) định nghĩa để khách dựng bóng · netHit() nhận đòn người khác · netTake() nhường thủ lĩnh để khách đấu · netFxPack() gói động tác.
+   KHÁCH: netBecomeGuest() bỏ bầy tự sinh · netSpawn(def) dựng bóng · netApply(snap) áp vị trí / máu / trạng thái · netHits() đòn mình gây ra (gửi chủ phòng) · netFall(mo) đòn cuối
+          · netKilled(mo, mineLast) quái chết (thưởng theo công của mình) · netAct(n, A) vẽ báo trước / đạn / tia · netHurt(d) mình bị đánh · netTakeOver() khách lên làm chủ phòng (chủ cũ rời / mất mạng). */
+const MODE106 = ['calm', 'angry', 'return', 'flee'];
+const NETM = new Map();   /* khách: id quái của chủ phòng → bóng ở máy mình */
+const r2 = v => Math.round(v * 2) / 2;
+export function netSnap() {
+  const l = [];
+  for (const mo of ST.mons) { const F = mo.f6; if (!F || !(mo.hp > 0) || mo.dead) continue; l.push([mo.id, r2(mo.x), r2(mo.y), Math.ceil(mo.hp), Math.max(0, MODE106.indexOf(F.mode)), (F.e && F.e.clip) || '', Math.round((F.fx || 0) * 100) / 100, Math.round((F.fy || 0) * 100) / 100, Math.round(F.alt || 0)]); }
+  return l;
+}
+export function netDef(mo) { const F = mo.f6; return { n: mo.id, rid: F.rid, sp: F.sp, key: F.key || mo.c.fct || null, lead: !!F.lead, ct: !!F.ct, lv: F.lv, max: mo.max, hp: Math.ceil(mo.hp), x: Math.round(mo.x), y: Math.round(mo.y), hx: Math.round(F.home.x), hy: Math.round(F.home.y) }; }
+export function netDefs() { return ST.mons.filter(mo => mo.f6 && mo.hp > 0 && !mo.dead).map(netDef); }
+export function netAlive() { return ST.mons.filter(mo => mo.f6 && mo.hp > 0 && !mo.dead); }
+export function netHit(pid, nid, d, at) {
+  const ctx = ST.ctx, mo = ST.mons.find(m => m.id === nid && m.hp > 0 && !m.dead); if (!ctx || !mo || !(d > 0)) return false;
+  mo.__by = 'r:' + pid; try { ctx.monsters.damage(mo, Math.min(9999, Math.round(d)), at || mo, 0, 40, true); } catch (e) { mo.__by = null; return false; }
+  ST.n.hitIn = (ST.n.hitIn || 0) + 1; return true;
+}
+export function netTake(nid) {
+  const ctx = ST.ctx, mo = ST.mons.find(m => m.id === nid && m.hp > 0 && !m.dead); if (!ctx || !mo || !mo.f6 || !mo.f6.sp || mo.f6.mode === 'angry') return false;
+  const F = mo.f6; try { ctx.monsters.remove(mo); } catch (e) { } ST.mons = ST.mons.filter(o => o !== mo); mo.dead = true;
+  ST.rq.push({ rid: F.rid, spec: F.lead ? ZR[F.rid].lead : { sp: F.sp, lv: F.lv }, lead: F.lead, ct: true, t: F.lead ? CF.respawnLead : CF.respawnCt }); if (F.lead) scatter(ctx, F.rid, mo);
+  log({ ev: 'nettake', id: nid }); return true;
+}
+export function netFxPack(mo, A) {
+  const ctx = ST.ctx, T = A.who && ctx ? (A.who === 'pl' ? ctx.S.player : objOf(ctx, A.who)) : null, o = { id: A.id, imp: +A.imp.toFixed(2), T: +A.T.toFixed(2) };
+  if (T) { o.tx = Math.round(T.x); o.ty = Math.round(T.y); }
+  if (A.id === 'mv') { o.shape = A.shape; o.mv = A.mv; o.ux = +A.ux.toFixed(3); o.uy = +A.uy.toFixed(3); o.len = Math.round(A.len || 0); o.r = Math.round(A.r || 0); o.big = !!A.big; o.wet = !!A.wet; o.mn = !!A.mn; if (A.P) o.P = { x: Math.round(A.P.x), y: Math.round(A.P.y) }; }
+  return o;
+}
+/* ---------- khách ---------- */
+export function netBecomeGuest() {
+  const ctx = ST.ctx; for (const m of ST.mons) { try { ctx && ctx.monsters && ctx.monsters.remove(m); } catch (e) { } } ST.mons = []; ST.rq = []; ST.shots = []; ST.fx6 = []; NETM.clear(); log({ ev: 'guest' });
+}
+function mkF6(def, k, max) {
+  const lead = !!def.lead, ct = !!def.sp;
+  return { rid: def.rid, sp: def.sp || null, key: def.key || null, lead, ct, lv: def.lv, kind: k, he: ct ? heOf(def.sp) : (MHE[def.key] || 'chan'), mvs: ct ? movesOf(def.sp) : (MKEY[def.key] || []).slice(), mcd: ct ? {} : Object.fromEntries((MKEY[def.key] || []).map(id => [id, R(2, 6)])), gcd: R(1, 2.5), tel: null, home: { x: def.hx, y: def.hy }, rect: rectOf(def.rid), mode: 'calm', goal: null, wait: R(0.3, 2.5), cd: { bite: 0, shot: R(1, 3) }, act: null, tg: 'pl', tgT: 0,
+    prevHp: def.hp, acc: 0, cr: {}, last: null, nearT: 0, stuck: 0, calmT: 0, backT: 0, fleeT: 0, fx: 1, fy: 0.4, alt: lead && k === 'fly' ? 9 : 0, e: null, shotClip: null, ct0: Math.random() * 2, regen: 0 };
+}
+export function netSpawn(def) {
+  const ctx = ST.ctx; if (!ctx || !ST.on || !ctx.monsters || !ctx.monsters.add || NETM.has(def.n)) return null;
+  const ct = !!def.sp; let c = ct ? leadCfg(def.sp, def.rid) : minCfg(ctx, def.key); if (!c) { log({ ev: 'netspawnfail', def: JSON.stringify(def) }); return null; }
+  c = { ...c, aiFn: aiPup, onFall: onFallF };
+  const k = kindOf(def.sp || def.key), mo = ctx.monsters.add(c, def.x, def.y); mo.max = def.max; mo.hp = Math.min(def.max, def.hp); mo.fx = 1; mo.angry = false;
+  mo.f6 = mkF6(def, k, def.max); mo.__net = { x: def.x, y: def.y, fx: 1, fy: 0.4, alt: mo.f6.alt, clip: '' }; mo.__nid = def.n; mo.__hpL = mo.hp; mo.__born = now();
+  ST.mons.push(mo); NETM.set(def.n, mo); ST.n.netSpawn = (ST.n.netSpawn || 0) + 1; return mo;
+}
+function netRemove(mo) { const ctx = ST.ctx; NETM.delete(mo.__nid); mo.dead = true; ST.mons = ST.mons.filter(o => o !== mo); try { ctx && ctx.monsters.remove(mo); } catch (e) { } }
+export function netApply(l) {
+  if (!ST.on) return; const t0 = now(), seen = new Set();
+  for (const r of l) {
+    const mo = NETM.get(r[0]); if (!mo || mo.dead) continue; seen.add(r[0]);
+    const N = mo.__net, F = mo.f6; N.x = r[1]; N.y = r[2]; N.fx = r[6]; N.fy = r[7]; N.alt = r[8]; N.clip = r[5];
+    F.mode = MODE106[r[4]] || 'calm'; mo.angry = F.mode === 'angry' || F.mode === 'flee';
+    mo.__pend = (mo.__pend || []).filter(p => t0 - p.t < 0.6); const pend = mo.__pend.reduce((a, p) => a + p.d, 0);
+    if (mo.__dying && t0 - mo.__dying > 2.5) mo.__dying = 0;   /* chủ phòng không xác nhận hạ (đã hồi máu / đòn lạc) → bỏ chờ */
+    if (!mo.__dying) mo.hp = Math.max(1, Math.min(mo.max, r[3] - pend));
+    mo.__hpL = mo.hp; F.prevHp = mo.hp; F.acc = 0;
+    if (F.mode === 'calm' && r[3] >= mo.max - 0.5) F.cr = {};   /* quái về nhà hồi đầy máu → công cũ hết hạn (như goHome của chủ phòng) */
+  }
+  for (const [nid, mo] of [...NETM]) if (!seen.has(nid) && t0 - (mo.__born || 0) > 0.8) netRemove(mo);
+}
+export function netHits() {
+  const out = [];
+  for (const mo of ST.mons) {
+    const F = mo.f6; if (!F || !mo.__net || mo.dead) continue;
+    if (mo.hp < F.prevHp - 0.01) residual(mo);   /* máu mất ngoài damage() (kiếm) → công người chơi */
+    const d = mo.__hpL - mo.hp; if (d > 0.5 && !mo.__dying) { out.push([mo.__nid, Math.round(d)]); (mo.__pend ||= []).push({ d, t: now() }); }
+    mo.__hpL = mo.hp;
+  }
+  return out;
+}
+export function netFall(mo) {   /* đòn cuối ở máy khách: gửi phần máu còn lại, giữ quái 1 máu chờ chủ phòng hạ */
+  const F = mo.f6, d = Math.max(1, Math.round((mo.__hpL == null ? mo.max : mo.__hpL) - mo.hp), Math.ceil(mo.max));   /* máy mình thấy quái ngã → đòn cuối đủ hạ ở chủ phòng (máu dự đoán có thể lệch) */
+  if (!mo.__in106) residual(mo);
+  mo.hp = 1; mo.__hpL = 1; F.prevHp = 1; F.acc = 0; mo.__dying = now(); (mo.__pend ||= []).push({ d, t: now() });
+  return [mo.__nid, d];
+}
+export function netKilled(nid, mineLast) {
+  const ctx = ST.ctx, mo = NETM.get(nid); if (!ctx || !mo || !mo.f6) return false; const F = mo.f6;
+  try {
+    const mine = mineLast || Object.keys(F.cr).some(w => F.cr[w] > 0);
+    if (mine) {
+      const base = baseXp(F.lead, F.lv, F.ct), last = mineLast ? (F.last || 'pl') : null;
+      for (const who of Object.keys(F.cr).filter(w => isComp(w) && !isR(w))) if ((F.cr[who] || 0) > 0) { const m = memberOf(ctx, who), o = objOf(ctx, who), n = Math.round(base * (last === who ? 1.5 : 1)); if (m) { addXp(ctx, m, n, o); ST.xp[who] = (ST.xp[who] || 0) + n; } }
+      const pn = last === 'pl' ? base : Math.max(1, Math.round(base * 0.3)); if (ctx.hero && ctx.hero.gainXp) ctx.hero.gainXp(pn); ST.xp.pl += pn;
+      (ctx.S.pops ||= []).push({ x: ctx.S.player.x, y: ctx.S.player.y - 34, text: `+${pn} XP`, color: '#c8ff9a', t: 0 });
+      if (F.lead) { ctx.give('stone', 2 + ((Math.random() * 2) | 0), mo.x, mo.y); if (Math.random() < 0.35) ctx.give('soul', 1, mo.x, mo.y); }
+      else if (F.ct) { ctx.give('stone', 1, mo.x, mo.y); if (Math.random() < 0.15) ctx.give('soul', 1, mo.x, mo.y); }
+      else { if (Math.random() < 0.12) ctx.give('stone', 1, mo.x, mo.y); if (Math.random() < 0.15 && mo.c.drop) ctx.give(mo.c.drop, 1, mo.x, mo.y); }
+    }
+    ST.n.kill++; if (F.lead) ST.n.killLead++; log({ ev: 'netkill', nid, sp: F.sp || F.key, lead: F.lead, mine: !!mine, last: !!mineLast });
+    if (F.e) { F.e.clip = hasClip(ctx, F, 'faint') ? 'faint' : 'idle'; F.e.ct = 0; ST.dying.push({ e: F.e, x: mo.x, y: mo.y, alt: F.alt, t: 0, fx: F.fx, fy: F.fy }); }
+    faintAdd(ctx, mo, F, mineLast ? 'me' : 'r', nid);   /* Chấn Thú hoang ngất: chỉ người hạ (mineLast) bắt được */
+    if (ctx.wfx && ctx.wfx('kill', mo.x, mo.y + 1, { w: mo.c.w || 16, h: mo.c.h || 16, col: mo.c.c })) { } else { try { FX.sink(mo.x, mo.y, skin(F), FX.power(0.3)); } catch (e) { } }
+    if (F.lead) { try { FX.shout(mo.x, mo.y - 30, vi(ctx) ? 'BẦY TAN!' : 'PACK SCATTERS!', '#ffe9a0', 1, 0.9); } catch (e) { } }
+    if (mine) { try { ctx.persist && ctx.persist(); } catch (e) { } }
+  } catch (e) { console.error('farm106 netKilled', e); }
+  netRemove(mo); return true;
+}
+function visShot(ctx, mo, T) {
+  const F = mo.f6, H = hOf(mo), o = { x: mo.x + (F.fx || 0) * 6, y: mo.y, z: (F.alt || 0) + H * 0.5 }, dx = T.x - o.x, dy = T.y - o.y, d = Math.hypot(dx, dy) || 1;
+  ST.shots.push({ vis: true, small: !F.sp, x: o.x, y: o.y, z: o.z, vx: dx / d * CF.shotV, vy: dy / d * CF.shotV, vz: (10 - o.z) / (d / CF.shotV), t: 0, T: Math.min(1.6, d / CF.shotV), he: F.he, sp: F.sp, who: 'vis', mo, ky: dy < 0 ? -0.5 : 0.5, sy: mo.y });
+  try { FX.muzzle(o.x, o.y, o.z, skin(F), FX.power(0.2), dx / d, dy / d); } catch (e) { }
+}
+export function netAct(nid, a) {   /* khách: chủ phòng báo quái bắt đầu động tác → báo trước trên đất / đạn / tia (chỉ để nhìn; sát thương do chủ phòng tính) */
+  const mo = NETM.get(nid); if (!mo || !mo.f6 || !a) return; const F = mo.f6;
+  F.act = { ...a, t: 0, done: false, net: 1, who: 'vis', P: a.P || null }; if (a.id === 'mv') F.tel = F.act;
+  if (a.id === 'mv' && a.mv && (F.shoutT || 0) < now()) { F.shoutT = now() + 3.5; const ctx = ST.ctx, nm = MM[a.mv] ? (vi(ctx) ? MM[a.mv].vi : MM[a.mv].en) : MOVES[a.mv] ? (vi(ctx) ? (MOVES[a.mv].name || a.mv) : (MOVE_NAME_EN[a.mv] || MOVES[a.mv].name || a.mv)) : null; if (nm) { try { FX.shout(mo.x, mo.y - hOf(mo) - 10, a.mn ? nm : nm.toUpperCase(), F.lead ? '#ffe9a0' : a.mn ? '#f0e0d0' : '#ffd0b0', a.mn ? 0.6 : 0.75, a.mn ? 0.6 : 0.75); } catch (e) { } } }
+}
+function pupAct(ctx, mo, dt) {
+  const F = mo.f6, A = F.act; A.t += dt;
+  if (!A.done && A.t >= A.imp) {
+    A.done = true; const sk = skin(F), T = A.tx != null ? { x: A.tx, y: A.ty } : null;
+    try {
+      if (A.id === 'bite') { if (T) FX.bite(T.x, T.y, 8, sk, FX.power(F.lead ? 0.3 : 0.18)); }
+      else if (A.id === 'shot') { if (T) visShot(ctx, mo, T); }
+      else if (A.id === 'mv') {
+        if (A.shape === 'dan') { const P = A.P || T; if (P) visShot(ctx, mo, P); }
+        else if (A.shape === 'tia') { const H = hOf(mo), ox = mo.x + A.ux * 6, oy = mo.y, oz = (F.alt || 0) + H * 0.5; ST.fx6.push({ k: 'beam', t: 0, T: A.wet ? 0.42 : 0.3, wet: A.wet, x: ox, y: oy, z: oz, ux: A.ux, uy: A.uy, len: A.len, he: F.he, sy: mo.y, ky: A.uy < 0 ? -0.5 : 0.5 }); FX.muzzle(ox, oy, oz, sk, FX.power(0.3), A.ux, A.uy); }
+        else if (A.shape === 'hu') { ST.fx6.push({ k: 'burst', t: 0, T: 0.4, x: mo.x, y: mo.y, r: 20, he: F.he }); FX.shockRing(mo.x, mo.y, 26, sk, 0.35, 2); }
+        else if (A.shape === 'vung' || A.shape === 'quanh') { const c = A.shape === 'quanh' || !A.P ? { x: mo.x, y: mo.y } : A.P; ST.fx6.push({ k: 'burst', t: 0, T: A.big ? 0.6 : 0.35, x: c.x, y: c.y, r: A.r, he: F.he, wet: A.wet, big: A.big }); FX.impact(c.x, c.y, 2, sk, FX.power(A.big ? 0.9 : A.wet ? 0.55 : 0.35), { n: A.wet ? 9 : 5, big: A.big }); if (A.wet) FX.shockRing(c.x, c.y, A.r, sk, A.big ? 0.5 : 0.32, A.big ? 4 : 3); }
+      }
+    } catch (e) { }
+  }
+  if (A.t >= A.T) F.act = null;
+}
+function aiPup(ctx, mo, dt) {   /* khách: quái = bóng theo ảnh chụp của chủ phòng (nội suy vị trí, hoạt ảnh, động tác) */
+  const F = mo.f6, N = mo.__net; if (!F || !N) return;
+  const e = fighter(ctx, mo); if (e) e.ct += dt;
+  const dx = N.x - mo.x, dy = N.y - mo.y, d = Math.hypot(dx, dy);
+  if (d > 96) { mo.x = N.x; mo.y = N.y; } else if (d > 0.05) { const k = Math.min(1, dt * 10); mo.x += dx * k; mo.y += dy * k; }
+  F.fx = N.fx; F.fy = N.fy; F.alt = N.alt; if (Math.abs(N.fx) > 0.05) mo.dir = N.fx >= 0 ? 1 : -1;
+  if (e && N.clip && e.clip !== N.clip) { e.clip = N.clip; e.ct = 0; }
+  if (F.act) pupAct(ctx, mo, dt);
+}
+export function netHurt(d) { const ctx = ST.ctx; if (!ctx) return false; ST.n.hurtIn = (ST.n.hurtIn || 0) + 1; return hurtTarget(ctx, null, 'pl', d); }
+export function netTakeOver() {   /* khách → chủ phòng (chủ cũ rời / mất mạng): bóng thành quái thật, bầy thiếu thì hồi sinh dần */
+  for (const mo of ST.mons) { if (!mo.__net) continue; mo.c.aiFn = aiF; delete mo.__net; mo.__dying = 0; mo.__pend = null; const F = mo.f6; F.act = null; F.goal = null; F.home = F.home || { x: mo.x, y: mo.y }; if (F.mode === 'angry') { F.tg = 'pl'; F.tgT = 0; } }
+  NETM.clear(); ST.shots = ST.shots.filter(b => !b.vis);
+  for (const [rid, Z] of Object.entries(ZR)) {
+    const have = ST.mons.filter(m => m.f6 && m.f6.rid === rid && m.hp > 0 && !m.dead);
+    if (!have.some(m => m.f6.lead) && !ST.rq.some(q => q.rid === rid && q.lead)) ST.rq.push({ rid, spec: Z.lead, lead: true, ct: true, t: 30 });
+    const want = Z.mins.length - have.filter(m => !m.f6.ct).length - ST.rq.filter(q => q.rid === rid && !q.ct).length;
+    for (let i = 0; i < want; i++) ST.rq.push({ rid, spec: { key: Z.mins[i % Z.mins.length] }, lead: false, ct: false, t: 4 + i * 2 });
+  }
+  log({ ev: 'takeover', n: ST.mons.length, rq: ST.rq.length });
+}
+export function netStat() { return { on: ST.on, role: NET.role, mons: ST.mons.length, net: NETM.size, n: { ...ST.n }, xp: { ...ST.xp } }; }
+
+/* ================= c10: BẮT CHẤN THÚ HOANG BỊ HẠ — NÉM ẤN THU (anh 04/11) =================
+   Chấn Thú hoang (F.ct — thủ lĩnh các vùng) ngã → nằm NGẤT tại chỗ CATCH_T giây (clip faint). AI CŨNG ném Ấn Thu được (bấm quả cầu trên thanh công cụ,
+   hoặc E / nút A khi đứng gần), mỗi lần tốn 1 Ấn Thu: người HẠ nó (đòn cuối của chính họ hoặc Chấn Thú của họ; chơi chung: chủ phòng ghi 'r:<id>' → máy người đó)
+   tỉ lệ cao (RATE.mine), người khác thấp (RATE.other). Trượt → nó vẫn nằm, ném tiếp được tới hết giờ. Trúng → con đó vào đội (đầy thì kho), cấp giữ nguyên.
+   Chơi chung: trúng phải xin chủ phòng XÁC NHẬN (ai xin trước được) → không 2 người cùng bắt 1 con; xong mọi máy bỏ xác. */
+const CATCH_T = 14, RATE = { mine: 0.85, mineLead: 0.75, other: 0.3, otherLead: 0.2 }, BALL_R = 90;
+const CT = { THROW: 0.45, SUCK: 0.35, DROP: 0.28, GAP: 0.3, SHAKE: 0.42 };   /* nhịp như trận đấu (linhduel CATCH): bay xoay → hút → rơi → [chờ · lắc] × tối đa 3 → loé / bung */
+/* Ấn Thu PixelLab dùng chung với trận đấu: assets/px/duel/anthu/{anthu_spin,anthu_shake,anthu_ok,anthu_fail}.png + .json (ảnh 2× → vẽ cỡ logic fw×fh, neo ax/ay) */
+const ANT = {}, ANT_IDS = ['anthu_spin', 'anthu_shake', 'anthu_ok', 'anthu_fail']; let ANTP = null;
+function antLoad() { if (ANTP || typeof fetch === 'undefined') return; ANTP = 1; for (const id of ANT_IDS) fetch('assets/px/duel/anthu/' + id + '.json').then(r => (r.ok ? r.json() : null)).then(j => { if (!j || typeof Image === 'undefined') return; const im = new Image(); im.src = 'assets/px/duel/anthu/' + id + '.png'; ANT[id] = { n: j.n, w: j.fw, h: j.fh, ax: j.ax, ay: j.ay, fps: j.fps || 12, im }; }).catch(() => { }); }
+function antDraw(g, id, fr, x, y, a = 1) { const m = ANT[id], im = m && m.im; if (!im || !im.complete || !im.naturalWidth) return false; const sw = im.naturalWidth / m.n; g.save(); g.globalAlpha *= a; g.imageSmoothingEnabled = false; g.drawImage(im, (fr % m.n) * sw, 0, sw, im.naturalHeight, Math.round(x - m.ax), Math.round(y - m.ay), m.w, m.h); g.restore(); return true; }
+const ballImg = antLoad;   /* faintAdd gọi sẵn để ảnh nạp trước khi ném */
+const dsfx = (ctx, n, d) => { try { if (ctx.duelSfx) ctx.duelSfx(n, d || null); } catch (e) { } };
+const CLAIMED = new Set();   /* chủ phòng / chơi một mình: xác đã có người bắt */
+function faintAdd(ctx, mo, F, who, key) {
+  if (!F || !F.sp || !F.ct) return null;
+  const i = ST.dying.findIndex(d => d.e === F.e); if (i >= 0) ST.dying.splice(i, 1);   /* không mờ dần — nằm lại chờ bắt */
+  let e = F.e; if (!e && ctx.ldKit && ctx.ldKit.ready()) { try { e = ctx.ldKit.mk(F.sp, F.lv, null, mo.x, mo.y); } catch (er) { e = null; } }
+  if (e) { e.clip = hasClip(ctx, F, 'faint') ? 'faint' : 'idle'; e.ct = 0; }
+  const z = { key, sp: F.sp, lv: F.lv, he: F.he, x: mo.x, y: mo.y, alt: 0, fx: F.fx, fy: F.fy, e, mine: who === 'me', t: 0, T: CATCH_T, lead: !!F.lead, busy: false };
+  (ST.fz ||= []).push(z); ballImg(); ST.n.faint = (ST.n.faint || 0) + 1; log({ ev: 'faint', key, sp: F.sp, lv: F.lv, mine: z.mine });
+  if (z.mine) { try { ctx.toast(vi(ctx) ? `${spName(ctx, F.sp)} ngất! Ném Ấn Thu để bắt` : `${spName(ctx, F.sp)} fainted! Throw a Seal Orb to catch it`); } catch (er) { } }
+  return z;
+}
+function faintTick(ctx, dt) {
+  for (const b of ST.balls || []) ballTick(ctx, b, dt); ST.balls = (ST.balls || []).filter(b => !b.end2);
+  if (!ST.fz || !ST.fz.length) return;
+  for (const z of ST.fz) { if (!z.busy) z.t += dt; if (z.e) z.e.ct += dt; if (z.t >= z.T && z.e) ST.dying.push({ e: z.e, x: z.x, y: z.y, alt: 0, t: 0.55, fx: z.fx, fy: z.fy }); }   /* hết giờ → mờ dần biến mất */
+  ST.fz = ST.fz.filter(z => z.t < z.T);
+}
+function faintNear(ctx) {
+  const p = ctx.S.player; let best = null, bd = 40;
+  for (const z of ST.fz || []) { if (z.busy) continue; const d = Math.hypot(z.x - p.x, z.y - p.y); if (d >= bd) continue; bd = d;
+    best = { label: vi(ctx) ? `◉ Ném Ấn Thu · ${spName(ctx, z.sp)} Lv${z.lv}` : `◉ Throw Seal Orb · ${spName(ctx, z.sp)} Lv${z.lv}`, x: z.x, y: z.y + 18, limit: 52, priority: true, data: { f106c: z } }; }
+  return best;
+}
+const rateOf = z => (z.mine ? (z.lead ? RATE.mineLead : RATE.mine) : (z.lead ? RATE.otherLead : RATE.other));
+export function ballInfo(ctx) {   /* nút Ấn Thu điện thoại: số Ấn Thu + có con ngất trong tầm ném không */
+  ctx = ctx || ST.ctx; if (!ctx || !ST.on) return { on: false }; let n = 0; try { const d = ctx.chanthu && ctx.chanthu.ensure(); n = d ? d.anThu | 0 : 0; } catch (e) { }
+  const p = ctx.S.player, near = (ST.fz || []).some(z => !z.busy && Math.hypot(z.x - p.x, z.y - p.y) < BALL_R); return { on: true, n, near };
+}
+export function ballThrow(ctx, z) {   /* quả cầu trên thanh công cụ / E / A: ném Ấn Thu vào Chấn Thú ngất gần nhất trong BALL_R */
+  ctx = ctx || ST.ctx; if (!ctx) return false; const p = ctx.S.player, V = vi(ctx);
+  if (!z) { let bd = BALL_R; for (const q of ST.fz || []) { if (q.busy) continue; const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; z = q; } } }
+  if (!z || !(ST.fz || []).includes(z)) { try { ctx.toast(V ? 'Không có Chấn Thú nào đang ngất gần đây — hạ Chấn Thú hoang rồi ném Ấn Thu' : 'No fainted beast nearby — defeat a wild beast, then throw a Seal Orb'); } catch (e) { } return false; }
+  if (z.busy || (ST.balls || []).some(b => b.z === z)) return false;
+  if (!ctx.chanthu || !ctx.chanthu.useBall || !ctx.chanthu.useBall()) { try { ctx.toast(V ? 'Hết Ấn Thu — mua ở Thương nhân' : 'Out of Seal Orbs — buy more from the Merchant'); } catch (e) { } return false; }
+  const P0 = rateOf(z), q = Math.pow(P0, 1 / 3); let shakes = 0; while (shakes < 3 && Math.random() < q) shakes++;   /* như trận đấu: mỗi lần lắc qua với xác suất p^(1/3); qua đủ 3 = bắt được */
+  const ok = shakes >= 3; z.busy = true; if (p.faceTo) p.faceTo(z.x, z.y); antLoad();
+  const b = { z, x0: p.x, y0: p.y - 10, x: p.x, y: p.y, h: 10, t: 0, ph: 'throw', shakes: Math.min(3, shakes), done: 0, ok, res: ok ? null : 'fail', fin: false, ask: false };
+  (ST.balls ||= []).push(b); if (ok) { b.ask = true; claim(z.key, ok2 => { b.res = ok2 ? 'ok' : 'taken'; }); }   /* xin xác nhận ngay lúc ném → trả lời về trong lúc cầu đang lắc */
+  dsfx(ctx, 'orb_throw', { side: 0, anthu: true });
+  try { if (p.act && p.hasAct && p.hasAct('throw')) p.act('throw', 0.4); } catch (e) { }
+  ST.n.ball = (ST.n.ball || 0) + 1; log({ ev: 'ball', key: z.key, sp: z.sp, mine: z.mine, rate: rateOf(z), ok, shakes: b.shakes }); return true;
+}
+function ballTick(ctx, b, dt) {
+  b.t += dt; const z = b.z, V = vi(ctx), nm = spName(ctx, z.sp), ph = b.ph;
+  const go = n => { b.ph = n; b.t = 0; };
+  if (ph === 'throw') { const k = Math.min(1, b.t / CT.THROW); b.x = b.x0 + (z.x - b.x0) * k; b.y = b.y0 + 10 + (z.y - b.y0 - 10) * k; b.h = 10 * (1 - k) + 12 * k + Math.sin(Math.PI * k) * 24; if (k >= 1) { go('suck'); dsfx(ctx, 'recall', { side: 1, anthu: true }); } return; }
+  if (ph === 'suck') { if (b.t >= CT.SUCK) go('drop'); return; }
+  if (ph === 'drop') { const k = Math.min(1, b.t / CT.DROP); b.h = k < 0.7 ? 12 * (1 - k / 0.7) : Math.sin(Math.PI * (k - 0.7) / 0.3) * 3; if (k >= 1) { b.h = 0; go('wait'); try { FX.dust && FX.dust(z.x, z.y, 4, 0); } catch (e) { } } return; }
+  if (ph === 'wait') {
+    if (b.t < CT.GAP) return;
+    if (b.done < b.shakes) { go('shake'); dsfx(ctx, 'catch_shake', { n: b.done + 1 }); return; }
+    if (b.res == null) return;   /* đủ 3 lần lắc mà chủ phòng chưa xác nhận → nằm yên chờ */
+    if (b.res === 'ok') {
+      go('ok'); b.fin = true; z.busy = false;
+      const where = ctx.chanthu.add(z.sp, z.lv); try { const d = ctx.chanthu.ensure(); d.caught = (d.caught | 0) + 1; } catch (e) { } try { ctx.persist(); } catch (e) { }
+      ST.fz = ST.fz.filter(q => q !== z); ST.n.caught = (ST.n.caught || 0) + 1; log({ ev: 'caught', key: z.key, sp: z.sp, lv: z.lv, where, mine: z.mine });
+      try { ctx.toast(V ? `Đã bắt ${nm} Lv${z.lv}! → ${where === 'team' ? 'vào đội' : 'vào kho'}` : `Caught ${nm} Lv${z.lv}! → ${where === 'team' ? 'joined your team' : 'sent to storage'}`); } catch (e) { }
+      try { FX.shout(z.x, z.y - 30, V ? 'BẮT ĐƯỢC!' : 'CAUGHT!', '#ffd45e', 0.9, 0.9); } catch (e) { }
+      dsfx(ctx, 'catch_ok', { sp: z.sp }); try { ctx.sfx && ctx.sfx('level_up'); } catch (e) { }
+      try { if (NET.caught) NET.caught(z.key); } catch (e) { }   /* máy khác bỏ xác */
+    } else {
+      go('fail'); b.fin = true; z.busy = false; z.flash = 0.14;
+      if (b.res === 'taken') { try { ctx.toast(V ? `${nm} đã bị người khác bắt mất` : `Someone else caught ${nm} first`); } catch (e) { } ST.fz = ST.fz.filter(q => q !== z); }
+      else { try { FX.shout(z.x, z.y - 30, V ? 'THOÁT!' : 'BROKE FREE!', '#ffd0b0', 0.8, 0.8); } catch (e) { } log({ ev: 'ballfail', key: z.key, shakes: b.shakes }); }
+      dsfx(ctx, 'catch_fail', { sp: z.sp });
+    }
+    return;
+  }
+  if (ph === 'shake') { if (b.t >= CT.SHAKE) { b.done++; go('wait'); } return; }
+  if (ph === 'ok') { const m = ANT.anthu_ok; if (b.t >= Math.max(0.6, m ? m.n / m.fps : 0.6) + 0.5) b.done2 = true; }
+  if (ph === 'fail') { const m = ANT.anthu_fail; if (b.t >= (m ? m.n / m.fps : 0.5)) b.done2 = true; }
+  if (b.done2) b.end2 = true;
+}
+function claim(key, cb) {   /* chủ phòng / một mình: tự quyết; khách: xin chủ phòng (ai xin trước được) */
+  if (NET.role === 'guest' && NET.claim) { NET.claim(key, cb); return; }
+  const ok = !CLAIMED.has(key); CLAIMED.add(key); cb(ok);   /* giữ chỗ cho người ném trước; xác chỉ biến mất ở máy khác khi bắt XONG (NET.caught ở pha ok) */
+}
+export function netClaim(key) { if (CLAIMED.has(key)) return false; CLAIMED.add(key); return true; }   /* chủ phòng nhận lời xin của khách */
+export function faintGone(key) { const n0 = (ST.fz || []).length; ST.fz = (ST.fz || []).filter(z => z.key !== key || (ST.balls || []).some(b => b.z === z && !b.fin)); return n0 !== ST.fz.length; }   /* người khác đã bắt → bỏ xác (trừ xác mình đang ném dở: kết quả 'taken' tự bỏ) */
+function faintDraw(ctx, g, z, cx, cy) {
+  if (SHADOW.on) shadowFor(g, z.x, z.y, (globalThis.__R89 || Math.round)(z.x - cx), (globalThis.__R89 || Math.round)(z.y - cy) + 1, globalThis.__fw110 ? globalThis.__fw110(z.sp, 13) : 13, 0);
+  const e = z.e; if (!e || !ctx.ldKit) return; const B = (ST.balls || []).find(b => b.z === z && !b.end2);
+  if (B && B.ph !== 'throw' && B.ph !== 'suck' && B.ph !== 'fail') return;   /* đang nằm trong Ấn Thu */
+  e.x = z.x; e.y = z.y; e.alt = 0; e.fx = z.fx; e.fy = z.fy; e.flash = B && B.ph === 'fail' && B.t < 0.15 ? 0.14 : 0;
+  if (B && B.ph === 'suck') { const k = Math.min(1, B.t / CT.SUCK); e.flash = 0.2; g.save(); g.globalAlpha = Math.max(0, 1 - k); ctx.ldKit.draw(g, e, cx, cy); g.restore(); return; }   /* bị hút vào Ấn Thu: loé sáng rồi tan về viên ấn */
+  const left = z.T - z.t; if (left < 1.5) { g.save(); g.globalAlpha = Math.max(0.25, left / 1.5); ctx.ldKit.draw(g, e, cx, cy); g.restore(); } else ctx.ldKit.draw(g, e, cx, cy);
+}
+function ballDraw(ctx, g, b, cx, cy) {   /* Ấn Thu như trận đấu: bay = anthu_spin (xoay), nằm / lắc = anthu_shake (khung 0,1,0,3,0), bắt được = anthu_ok, bung = anthu_fail */
+  const z = b.z, X = b.ph === 'throw' ? b.x : z.x, Y = b.ph === 'throw' ? b.y : z.y, H = b.ph === 'throw' || b.ph === 'drop' ? b.h : 0, sx = X - cx, sy = Y - cy;
+  if (SHADOW.on && b.ph !== 'fail' && !(b.ph === 'ok' && b.t < 0.56)) shadowFor(g, X, Y, Math.round(sx), Math.round(sy) + 1, 6, H);
+  if (b.ph === 'throw') { const m = ANT.anthu_spin; if (!antDraw(g, 'anthu_spin', Math.floor(b.t * (m ? m.fps : 14)), sx, sy - H)) { g.fillStyle = '#ffd45e'; g.fillRect(Math.round(sx) - 3, Math.round(sy - H) - 3, 6, 6); } return; }
+  if (b.ph === 'ok') { const m = ANT.anthu_ok; if (b.t < 0.56 && m) antDraw(g, 'anthu_ok', Math.min(m.n - 1, Math.floor(b.t * m.fps)), sx, sy - 8); else { antDraw(g, 'anthu_shake', 0, sx, sy, Math.max(0, Math.min(1, (1.1 - b.t) / 0.4))); if (m && b.t < m.n / m.fps) antDraw(g, 'anthu_ok', Math.min(m.n - 1, Math.floor(b.t * m.fps)), sx, sy - 8); } return; }
+  if (b.ph === 'fail') { const m = ANT.anthu_fail; if (m) antDraw(g, 'anthu_fail', Math.min(m.n - 1, Math.floor(b.t * m.fps)), sx, sy - 8); return; }
+  const fr = b.ph === 'shake' ? [0, 1, 0, 3, 0][Math.min(4, Math.floor(b.t / CT.SHAKE * 5))] : 0;
+  antDraw(g, 'anthu_shake', fr, sx, sy - H);
+}
+if (typeof window !== 'undefined') window.__f106c = { list: () => (ST.fz || []).map(z => ({ key: z.key, sp: z.sp, lv: z.lv, mine: z.mine, busy: z.busy, x: Math.round(z.x), y: Math.round(z.y), left: +(z.T - z.t).toFixed(1) })), throwKey: key => { const z = (ST.fz || []).find(q => q.key === key); return ballThrow(ST.ctx, z || null); }, rate: o => Object.assign(RATE, o || {}), rates: () => ({ ...RATE }), near: () => { const c = ST.ctx && faintNear(ST.ctx); return c ? c.label : null; }, balls: () => (ST.balls || []).length, ballSt: () => (ST.balls || []).map(b => ({ ph: b.ph, t: +b.t.toFixed(2), shakes: b.shakes, done: b.done, res: b.res })), ant: () => Object.fromEntries(Object.entries(ANT).map(([k, m]) => [k, !!(m.im && m.im.naturalWidth)])) };

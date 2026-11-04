@@ -413,7 +413,7 @@ function barTick(ctx, dt) {
   if (!ST.el) { if (!document.getElementById('sq104-css')) { const s = document.createElement('style'); s.id = 'sq104-css'; s.textContent = CSS; document.head.appendChild(s); }
     const el = document.createElement('div'); el.id = 'sq104'; el.hidden = true; document.body.appendChild(el); ST.el = el;
     el.addEventListener('pointerdown', e => { const b = e.target.closest('[data-a]'); if (!b) return; e.preventDefault(); e.stopPropagation(); const C = ST.ctx; if (!C) return; const a = b.dataset.a, id = b.dataset.id != null ? +b.dataset.id : null;
-      if (a === 'port') { if (e.button === 2) toggle(C, id); else select(C, id); } else if (a === 'all') select(C, null); else if (a === 'atk') attack(C); else if (a === 'mode') cycleMode(C); ST.rT = 0; });
+      if (a === 'port') { if (e.button === 2) toggle(C, id); else select(C, id); } else if (a === 'all') select(C, null); else if (a === 'atk') attack(C); else if (a === 'call') press(C); else if (a === 'mode') cycleMode(C); ST.rT = 0; });
     el.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); }); }
   const el = ST.el, hb = document.getElementById('hotbar'), r = hb && !hb.hidden ? hb.getBoundingClientRect() : null, tm = team(ctx);
   const show = !!r && r.width > 0 && tm.length > 0 && ctx.S.mode === 'play' && !duelOn(ctx) && !(window.matchMedia && matchMedia('(pointer:coarse)').matches) && innerWidth >= 700;
@@ -427,7 +427,8 @@ function barTick(ctx, dt) {
   const selName = k.sel != null && member(ctx, k.sel) ? nameOf(ctx, member(ctx, k.sel)) : Lx.all;
   el.innerHTML = `<div class="sq-lbl">${esc(selName)} · ${esc(Lx.mode[md])}</div>`
     + `<div class="sq-s${k.sel == null ? ' on' : ''}" data-a="all" title="${esc(Lx.tipAll)}"><img src="${icoSrc('team')}" alt=""></div>` + cells.map(port).join('')
-    + `<b class="sq-sep"></b><div class="sq-s" data-a="atk" title="${esc(Lx.tipAtk)}"><img src="${icoSrc('cmd_atk')}" alt=""><i class="sq-k">G</i></div>`
+    + `<b class="sq-sep"></b><div class="sq-s${k.out.length ? ' on' : ''}" data-a="call" title="${esc(vi(ctx) ? 'Thả / thu Chấn Thú (J)' : 'Send out / recall beasts (J)')}"><img src="assets/px/ui/hud91/sk_call.png" alt=""><i class="sq-k">J</i></div>`   /* c10: gọi Chấn Thú chuyển từ quả cầu sang đây */
+    + `<div class="sq-s" data-a="atk" title="${esc(Lx.tipAtk)}"><img src="${icoSrc('cmd_atk')}" alt=""><i class="sq-k">G</i></div>`
     + `<div class="sq-s on" data-a="mode" title="${esc(Lx.tipMode(Lx.mode[md]) + ' · ' + Lx.tipKey)}"><img src="${icoSrc(ICO[md])}" alt=""><i class="sq-k">U</i></div>`;
   el.hidden = false; const w = el.offsetWidth || 400, x = Math.max(8, r.left), y = r.top - (el.offsetHeight || 64) - 6;
   el.style.left = Math.round(Math.min(x, innerWidth - w - 8)) + 'px'; el.style.top = Math.round(Math.max(8, y)) + 'px';

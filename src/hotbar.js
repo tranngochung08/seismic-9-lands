@@ -352,6 +352,7 @@ function skillHTML(i) {
 }
 const hasRk = () => !!rk();
 const c79Api = () => { const C = deps && deps.CTX.comp79; return !mobile() && C && C.slot && C.press ? C : null; };
+const ballN = () => { try { const d = deps.CTX.chanthu && deps.CTX.chanthu.ensure(); return d ? d.anThu | 0 : 0; } catch (e) { return 0; } };   /* c10: số Ấn Thu hiện trên quả cầu */
 const c79Slot = () => { const C = c79Api(); return C ? C.slot() : null; };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 const openSeal = () => import('./menu.js').then(m => m.openMenu && m.openMenu('anlinh')).catch(() => { });
@@ -365,7 +366,7 @@ export function render(force) {
   const s = sv(), lg = deps.CTX.lang() === 'vi' ? 'vi' : 'en', h = deps.CTX.hero, c79 = c79Slot();
   const sk = [0, 1, 2, 3, 4].map(skillInfo).map(x => [x.icon, x.lock, x.dim, x.on, Math.round((x.cd || 0) * 10), x.cdTxt, x.name, x.pet].join(','));
   const ki = deps.CTX.ki ? Math.round(deps.CTX.ki.get() * 2) : 0, hs = s.hero || {};
-  const key = JSON.stringify([sk, h ? [Math.ceil(h.hp), h.max, h.lv] : 0, hs.xp, ki, PORT.url && PORT.url.length, hasRk(), c79 && [c79.out, c79.sp, c79.lbl], s.hotbar, s.hotSel, mob && s.mHeld, mob && DO.open, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0, htOn() && window.__hopthe ? Math.round(window.__hopthe.state().e) + '|' + Math.floor(window.__hopthe.state().left) : 0]);
+  const key = JSON.stringify([sk, h ? [Math.ceil(h.hp), h.max, h.lv] : 0, hs.xp, ki, PORT.url && PORT.url.length, hasRk(), c79 && [c79.out, c79.sp, c79.lbl, ballN()], s.hotbar, s.hotSel, mob && s.mHeld, mob && DO.open, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0, htOn() && window.__hopthe ? Math.round(window.__hopthe.state().e) + '|' + Math.floor(window.__hopthe.state().left) : 0]);
   if (!force && key === sig) return; sig = key;
   const cur = held(), t = T();
   const items = s.hotbar.map((id, i) => {
@@ -382,7 +383,7 @@ export function render(force) {
   el.innerHTML = `<div class="hb-tip"${tipT > 0 && cur ? '' : ' hidden'}>${cur ? itemName(cur, lg) : ''}</div>` + topHTML(lg) + `<div class="hb-bar">`
     + [0, 1, 2, 3, 4].map(skillHTML).join('') + `<b class="h91-sep" title="${esc(t.skills + ' · ' + t.items)}"></b>` + items
     + `<div class="h91-ex">${hasRk() ? `<div class="hb-slot hb-rk" title="${esc(t.rkCmd)}">${deps.ART && deps.ART.man && deps.ART.man.ui && deps.ART.man.ui.port_rocky ? `<img src="assets/px/${deps.ART.man.ui.port_rocky}" alt="">` : '🪨'}<i class="hb-v">/</i></div>` : ''}`
-    + `${c79 ? `<div class="hb-slot hb-c79${c79.out ? ' st-out' : ''}" title="${esc(c79.tip)}"><img src="assets/px/duel/orb/orb_icon.png" alt=""><i class="hb-v">J</i></div>` : ''}`
+    + `${c79 ? `<div class="hb-slot hb-c79" title="${esc(lg === 'vi' ? 'Ném Ấn Thu — bắt Chấn Thú hoang đang ngất (người hạ nó dễ bắt hơn)' : 'Throw a Seal Orb — catch a fainted wild beast (easier for whoever defeated it)')}"><img src="assets/px/duel/anthu/anthu_icon.png" alt=""><i class="hb-v">${ballN()}</i></div>` : ''}`
     + `<div class="hb-bag" title="${esc(t.bag)}"><img src="assets/px/ui/tab_bag.png" alt=""></div></div></div>`;
 }
 let rT = 0;
@@ -398,7 +399,7 @@ export function initHotbar(d) {
   addEventListener('pointerup', ltUp); addEventListener('pointercancel', ltUp);
   el.addEventListener('contextmenu', e => { if (!e.target.closest('.hb-lt')) return; e.preventDefault(); e.stopPropagation(); if (ltHold) { clearTimeout(ltHold.tm); ltHold = null; } openSeal(); });
   el.addEventListener('pointerdown', e => {
-    if (e.target.closest('.hb-c79')) { e.preventDefault(); e.stopPropagation(); const C = c79Api(); if (C) C.press(); render(true); return; }
+    if (e.target.closest('.hb-c79')) { e.preventDefault(); e.stopPropagation(); if (deps.CTX.ballThrow) deps.CTX.ballThrow(); else { const C = c79Api(); if (C) C.press(); } render(true); return; }   /* c10: quả cầu = ném Ấn Thu (gọi Chấn Thú: nút ở bảng đội / phím J) */
     if (e.target.closest('.hb-bag')) { e.preventDefault(); e.stopPropagation(); if (deps.openBag) deps.openBag(); return; }
     if (e.target.closest('.hb-rk')) { e.preventDefault(); e.stopPropagation(); if (deps.CTX.rocky && deps.CTX.rocky.openChat) deps.CTX.rocky.openChat(); return; }
     const k = e.target.closest('[data-sk]'); if (k) { e.preventDefault(); e.stopPropagation(); const si = +k.dataset.sk, ht0 = htOn(); const ok = skill(si); if (si === 0 && ok && !ht0 && e.button === 0) swingNow(); /* c12-kiem: bấm ô kiếm = cầm + vung luôn */ return; }
