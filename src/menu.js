@@ -109,6 +109,7 @@ export function initMenu(d) {
     const rq = e.target.closest('[data-rkeq]'); if (rq) { e.preventDefault(); if (deps.CTX.rkCore) deps.CTX.rkCore.toggle(rq.dataset.rkeq); render(); return; }   /* plan-38: mang / bỏ chiêu học từ trùm */
     const df = e.target.closest('[data-diff]'); if (df) { e.preventDefault(); const S = deps.S; setDiff(S.save, isEasy(S.save) ? 'normal' : 'easy'); if (deps.CTX.persist) deps.CTX.persist(); render(); return; }   /* plan-44 C2: Độ khó — áp cho trận / quái sinh ra SAU khi đổi */
     const km = e.target.closest('[data-kimode]'); if (km) { e.preventDefault(); if (deps.CTX.ki) deps.CTX.ki.toggleAuto(); render(); return; }   /* plan-34: Ki tự động / dùng tay */
+    const rn30 = e.target.closest('[data-rn30]'); if (rn30) { e.preventDefault(); const c8 = window.__cloud82; if (c8 && c8.renamePanel) c8.renamePanel().then(() => render()); return; }   /* c30-tk: đổi tên hiển thị (cloud82.js) */
     const dg = e.target.closest('[data-dragon]'); if (dg) { e.preventDefault(); closeMenu(); if (deps.CTX.dragon) deps.CTX.dragon.summon(); return; }   /* plan-29 */
     const lk = e.target.closest('[data-look]'); if (lk) { e.preventDefault(); if (deps.CTX.dragon) deps.CTX.dragon.wear(lk.dataset.look === 'chad'); render(); return; }   /* plan-29: thẻ Ngoại hình */
     const jb = e.target.closest('[data-journey]'); if (jb) { e.preventDefault(); openCert(); return; }   /* plan-44 P2 */
@@ -611,9 +612,10 @@ function questBody() {
 function acct26() {
   const vi = isVi(); let c = null, u = null;
   try { c = typeof window !== 'undefined' && window.__cloud82 && window.__cloud82.cloud; if (!c || !c.status || c.mode === 'off') return ''; u = c.status().user; } catch (e) { return ''; }
-  const nm = u ? (u.username || u.name || u.email || (vi ? 'Người chơi' : 'Player')) : '';
+  let dn = ''; try { const c8 = window.__cloud82; dn = c8 && c8.displayName ? c8.displayName() : ''; } catch (e) { dn = ''; }   /* c30-tk: hiện TÊN HIỂN THỊ (đổi được), tên đăng nhập ghi riêng */
+  const nm = u ? (dn || u.name || u.username || u.email || (vi ? 'Người chơi' : 'Player')) : '';
   return `<div class="c26-acct" style="display:contents">`
-    + (u ? `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Đã đăng nhập' : 'Signed in'}: <b style="color:#ffd96a">${esc(nm)}</b> · ${vi ? 'tự lưu theo tài khoản' : 'auto-saves to account'}</span>`
+    + (u ? `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Đã đăng nhập' : 'Signed in'}: <b style="color:#ffd96a">${esc(nm)}</b> · ${vi ? 'tự lưu theo tài khoản' : 'auto-saves to account'}</span>${u.username && u.username !== nm ? `<span style="display:block;text-align:center;font:16px VT323,monospace;color:#9d917f">(${vi ? 'tên đăng nhập' : 'username'}: ${esc(u.username)})</span>` : ''}<button class="btn" data-rn30="1">✎ ${vi ? 'Đổi tên' : 'Rename'}</button>`
       : `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Chưa đăng nhập' : 'Not signed in'}</span><button class="btn" data-act="quit">${vi ? 'Đăng nhập để lưu game' : 'Sign in to save your game'}</button>`) + `</div>`;
 }
 function gearBody() {   /* c26-coban: bỏ thanh Nhạc nền + nút ♪ Nhạc (anh 04/11 bỏ nhạc), giữ thanh Hiệu ứng; bỏ khối chuyển save */

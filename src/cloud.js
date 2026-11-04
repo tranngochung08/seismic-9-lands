@@ -71,7 +71,23 @@ export function summary(save, extra = {}) {   /* tóm tắt cho bảng xung đ�
   if (!save) return null;
   const ct = save.sys && save.sys.chanthu, m = save.meta || {};
   return { play_sec: (save.stats && save.stats.sec) | 0, zone: save.zone, badges: lenOf(save, 'badges'), caught: ct ? ct.caught | 0 : 0,
-    team: ct && Array.isArray(ct.team) ? ct.team.length : 0, upd: m.upd || null, dev: m.dev || null, ...extra };
+    team: ct && Array.isArray(ct.team) ? ct.team.length : 0, upd: m.upd || null, dev: m.dev || null, name: typeof save.name === 'string' ? save.name.slice(0, 24) : '', ...extra };
+}
+/* c30-tk (04/11): save "mới / rỗng" = chưa chơi gì đáng kể (giờ chơi < 2 phút, 0 huy hiệu, chưa bắt Chấn Thú) → được thay bằng bản mây không cần hỏi */
+export const FRESH_SEC = 120;
+export const IDLE_SEC = 60;   /* giây chơi thêm kể từ lần đồng bộ cuối dưới mức này = "chưa chơi thêm" */
+export function isFreshSave(s) {
+  if (!s || typeof s !== 'object') return true;
+  const ct = s.sys && s.sys.chanthu;
+  return ((s.stats && s.stats.sec) | 0) < FRESH_SEC && lenOf(s, 'badges') === 0 && !(ct && (ct.caught | 0) > 0);
+}
+/* so 2 save BỎ QUA meta, khoá sắp xếp (jsonb của Postgres đổi thứ tự khoá) → cùng nội dung = cùng một bản, không hỏi */
+const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : (v && typeof v === 'object') ? '{' + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v);
+export function sameSave(a, b) {
+  if (!a || !b) return false;
+  const am = a.meta || {}, bm = b.meta || {};
+  if (am.dev && am.dev === bm.dev && am.upd && am.upd === bm.upd && (am.rev | 0) === (bm.rev | 0)) return true;   /* cùng máy + cùng lần lưu */
+  try { return canon({ ...a, meta: null }) === canon({ ...b, meta: null }); } catch (e) { return false; }
 }
 
 /* ---------- bảng quyết định §3.3 (hàm thuần — test được không cần mạng) ----------
@@ -453,16 +469,20 @@ export function createSync(opts) {
   const KEY = opts.key || 'seismic9.save.v1', BAK = KEY + BAK_SUFFIX, clock = () => (opts.now ? opts.now() : Date.now());
   const canSync = () => { try { return !opts.isSyncSlot || !!opts.isSyncSlot(); } catch (e) { return false; } };
   const ask = async (qq) => { try { return opts.ask ? await opts.ask(qq) : null; } catch (e) { return null; } };
-  const st = { dirty: false, lastPush: 0, busy: false, state: 'idle', pendingConflict: null };
+  const st = { dirty: false, lastPush: 0, busy: false, state: 'idle', pendingConflict: null, link: null };   /* c30: link = { uid, base } lần gắn mây gần nhất (ván mới sau khi xoá save vẫn nối tiếp tài khoản) */
   const readLocal = () => jget(storage, KEY);
   const writeLocal = s => sset(storage, KEY, JSON.stringify(s));
   const backupLocal = () => { const cur = sget(storage, KEY); if (cur) sset(storage, BAK, cur); };
   const dev = () => deviceId(storage);
   const playOf = s => (s && s.stats && s.stats.sec) | 0;
+  const sigOf = s => { const q = summary(s) || {}; return [q.zone, q.badges, q.caught, q.team, lenOf(s, 'met')].join('|'); };   /* c30: dấu tiến độ lúc đồng bộ cuối (vùng, huy hiệu, thú, đội, NPC đã gặp) */
 
   function adopt(data, rev, uid) {   /* nhận bản mây làm bản cục bộ */
-    const s = clone(data); s.meta = { ...(s.meta || {}), rev: (s.meta && s.meta.rev) | 0, base: rev, cloud: uid, dev: dev() }; s.meta.srev = s.meta.rev;
-    writeLocal(s); return s;
+    const s = clone(data); s.meta = { ...(s.meta || {}), rev: (s.meta && s.meta.rev) | 0, base: rev, cloud: uid, dev: dev() }; s.meta.srev = s.meta.rev; s.meta.ssec = playOf(s); s.meta.ssig = sigOf(s); s.meta.pids = []; s.meta.kas = {}; s.meta.ppid = (data && data.meta && data.meta.pid) || null;   /* ppid = mã lần đẩy của bản mây đã nhận → máy gốc nhận ra bản mây sau này nối tiếp từ nó */
+    writeLocal(s); st.link = { uid, base: rev }; return s;
+  }
+  function linkTo(local, rev, uid) {   /* c30: bản máy = bản mây (cùng nội dung) → chỉ gắn meta, không đẩy / không hỏi */
+    const m = local.meta ||= {}; m.base = rev; m.srev = m.rev | 0; m.cloud = uid; m.pids = []; m.ssec = playOf(local); m.ssig = sigOf(local); m.kas = {}; writeLocal(local); st.link = { uid, base: rev }; return local;
   }
   async function pushLocal(local, base, uid) {
     const m = local.meta ||= {}, pid = 'p' + rid(8), atRev = m.rev | 0;
@@ -472,8 +492,17 @@ export function createSync(opts) {
     if (saveProblem(body)) return { ok: false, err: 'bad' };
     m.pid = pid; m.pids = [pid].concat(Array.isArray(m.pids) ? m.pids : []).slice(0, 4); m.cloud = uid; writeLocal(local);   /* nhớ pid TRƯỚC khi gửi (cả các lần chưa được xác nhận): mất phản hồi vẫn nhận ra được */
     const r = await cloud.pushSave(body, base, { playSec: playOf(local), ver: opts.ver || null, device: dev() });
-    if (r.ok) { const cur = readLocal() || local; cur.meta = { ...(cur.meta || {}), base: r.rev, srev: atRev, cloud: uid, pid, pids: [] }; writeLocal(cur); st.lastPush = clock(); st.dirty = (cur.meta.rev | 0) > atRev; }
+    if (r.ok) { const cur = readLocal() || local; cur.meta = { ...(cur.meta || {}), base: r.rev, srev: atRev, cloud: uid, pid, pids: [], ssec: playOf(local), ssig: sigOf(local), kas: {} }; writeLocal(cur); st.lastPush = clock(); st.dirty = (cur.meta.rev | 0) > atRev; st.link = { uid, base: r.rev }; }
     return r;
+  }
+  /* c30: đẩy bị báo xung đột lúc đang chơi → kéo bản mây xem có thật là khác không (keepalive đã vào, cùng nội dung, mây chỉ có save rỗng) */
+  async function heal2(local, uid) {
+    const p = await cloud.pullSave(); if (!p.ok) return null;
+    if (!p.data) return pushLocal(local, 0, uid);
+    const m = local.meta || {}, cm = p.data.meta || {};
+    if (sameSave(local, p.data)) { linkTo(local, p.rev, uid); return { ok: true, rev: p.rev, linked: true }; }
+    if ((cm.pid && Array.isArray(m.pids) && m.pids.includes(cm.pid)) || (isFreshSave(p.data) && !isFreshSave(local))) return pushLocal(local, p.rev, uid);   /* bản mây là lần đẩy trước của chính máy này / chỉ là save rỗng → đẩy đè (bản cũ vào save_backups) */
+    return null;
   }
   /* đẩy bị báo xung đột: nếu bản mây chính là lần đẩy trước của máy này (pid khớp) → chỉ là mất phản hồi, nhận rev rồi đẩy lại */
   async function healLost(local, r, uid) {
@@ -490,13 +519,31 @@ export function createSync(opts) {
     await cloud.ensureProfile();
     const pull = await cloud.pullSave(); if (!pull.ok) return { action: 'offline', err: pull.err };
     const local = readLocal(), cl = pull.data ? { rev: pull.rev, data: pull.data } : null;
-    const act = decide(local, cl, u.id);
-    if (act === 'new' || act === 'same') return { action: act };
+    if (local && cl) {   /* c30: 2 bản cùng nội dung (vd lần đẩy keepalive đã vào mà máy không biết) → gắn luôn, không hỏi */
+      const m = local.meta || {}, cm = cl.data.meta || {};
+      if ((!m.cloud || m.cloud === u.id) && sameSave(local, cl.data)) { linkTo(local, cl.rev, u.id); return { action: 'same', healed: true }; }
+      if ((!m.cloud || m.cloud === u.id) && cm.pid && Array.isArray(m.pids) && m.pids.includes(cm.pid)) { local.meta = { ...m, base: cl.rev, cloud: u.id }; writeLocal(local); }   /* bản mây là lần đẩy của chính máy này */
+      else if (m.cloud === u.id && cm.ppid && m.kas && Array.isArray(m.kas[cm.ppid]) && playOf(local) - (m.kas[cm.ppid][0] | 0) < IDLE_SEC && sigOf(local) === m.kas[cm.ppid][1]) {   /* máy khác đã nhận 1 lần đẩy keepalive của máy này rồi chơi tiếp; máy này gần như không chơi thêm từ đó → tải về, không hỏi */
+        backupLocal(); const s = adopt(cl.data, cl.rev, u.id); return { action: 'download', save: s, reload: true, auto: 'lineage' };
+      }
+    }
+    const act = decide(readLocal(), cl, u.id);
+    if (act === 'same' || (act === 'new' && cl)) { if (local && cl) st.link = { uid: u.id, base: cl.rev }; return { action: act }; }
+    if (act === 'new') { st.link = { uid: u.id, base: 0 }; return { action: act }; }
     if (act === 'download') { if (local) backupLocal(); const s = adopt(cl.data, cl.rev, u.id); return { action: 'download', save: s, reload: true }; }
+    if ((act === 'conflict' || act === 'other_account') && cl && isFreshSave(local)) {   /* máy này chỉ có save mới / rỗng → tự tải bản mây (bản máy vào .bak) */
+      backupLocal(); const s = adopt(cl.data, cl.rev, u.id); return { action: 'download', save: s, reload: true, auto: act };
+    }
+    if (act === 'conflict' && cl && local.meta && local.meta.cloud === u.id && local.meta.ssec != null && playOf(local) - (local.meta.ssec | 0) < IDLE_SEC && local.meta.ssig === sigOf(local)) {   /* máy này gần như không chơi thêm từ lần đồng bộ cuối (chỉ mở / tắt app) → lấy bản mây, bản máy cất sao lưu */
+      await cloud.stashBackup(local, (local.meta || {}).rev | 0, { playSec: playOf(local), device: dev() });
+      backupLocal(); const s = adopt(cl.data, cl.rev, u.id); return { action: 'download', save: s, reload: true, auto: 'idle' };
+    }
+    if (act === 'conflict' && cl && isFreshSave(cl.data) && !isFreshSave(local) && (!(local.meta || {}).cloud || local.meta.cloud === u.id)) {   /* mây chỉ có save rỗng, máy này có tiến độ → đẩy đè (bản mây cũ vào save_backups) */
+      const r = await pushLocal(readLocal() || local, cl.rev, u.id); return r.ok ? { action: 'push', rev: r.rev, auto: 'cloud_fresh' } : { action: 'push_failed', err: r.err };
+    }
     if (act === 'push') { const r = await pushLocal(local, local.meta.base | 0, u.id); if (r.ok) return { action: 'push', rev: r.rev }; if (r.err === 'conflict') { const h = await healLost(local, r, u.id); if (h && h.ok) return { action: 'push', rev: h.rev, healed: true }; return conflictFlow(local, null, u.id); } return { action: 'push_failed', err: r.err }; }
-    if (act === 'ask_upload') {
-      const yes = await ask({ kind: 'upload', local: summary(local) });
-      if (yes === false) return { action: 'kept_local' };
+    if (act === 'ask_upload') {   /* c30: mây chưa có bản nào → TỰ đưa save máy này lên (trước đây hỏi; "Để sau" làm save không bao giờ được gắn) */
+      if (opts.askUpload) { const yes = await ask({ kind: 'upload', local: summary(local) }); if (yes === false) return { action: 'kept_local' }; }
       const r = await pushLocal(local, 0, u.id); return r.ok ? { action: 'uploaded', rev: r.rev } : { action: 'push_failed', err: r.err };
     }
     if (act === 'other_account') {
@@ -509,6 +556,8 @@ export function createSync(opts) {
   async function conflictFlow(local, cl, uid) {
     if (!cl) { const p = await cloud.pullSave(); if (!p.ok) return { action: 'offline', err: p.err }; cl = p.data ? { rev: p.rev, data: p.data } : null; }
     if (!cl) { const r = await pushLocal(local, 0, uid); return r.ok ? { action: 'push', rev: r.rev } : { action: 'push_failed', err: r.err }; }
+    if (sameSave(local, cl.data)) { linkTo(local, cl.rev, uid); return { action: 'same', healed: true }; }   /* c30: giống nhau → không hỏi */
+    if (isFreshSave(cl.data) && !isFreshSave(local)) { const r = await pushLocal(local, cl.rev, uid); if (r.ok) return { action: 'push', rev: r.rev, auto: 'cloud_fresh' }; }
     st.state = 'conflict';
     const pick = await ask({ kind: 'conflict', local: summary(local, { rev: (local.meta || {}).rev | 0 }), cloud: summary(cl.data, { rev: cl.rev }) });
     if (pick === 'local') {   /* đẩy đè lên bản mây hiện tại: bản mây cũ tự vào save_backups (trigger) */
@@ -538,6 +587,7 @@ export function createSync(opts) {
     try {
       let r = await pushLocal(local, m.base | 0, u.id);
       if (!r.ok && r.err === 'conflict') { const h = await healLost(readLocal() || local, r, u.id); if (h) r = h; }
+      if (!r.ok && r.err === 'conflict') { const h = await heal2(readLocal() || local, u.id); if (h) r = h; }   /* c30 */
       if (!r.ok && r.err === 'conflict') { st.state = 'conflict'; st.pendingConflict = { cloudRev: r.cloud ? r.cloud.rev : null }; }
       if (!r.ok) st.dirty = true;
       return { ...r, reason };
@@ -549,7 +599,14 @@ export function createSync(opts) {
     if (!canSync() || cloud.mode === 'off' || st.state === 'conflict') return { ok: false, skipped: true };
     const u = cloud.status().user, local = readLocal(); if (!u || !local) return { ok: false, skipped: true };
     const m = local.meta || {}; if ((m.rev | 0) <= (m.srev | 0)) return { ok: true, skipped: 'clean' };
-    return cloud.pushKeepalive(local, m.base | 0, { playSec: playOf(local), ver: opts.ver || null, device: dev() });
+    if (m.cloud !== u.id) return { ok: false, skipped: 'unlinked' };
+    if ((m.karev | 0) === (m.rev | 0) && Array.isArray(m.pids) && m.pids.length) return { ok: true, skipped: 'sent' };   /* rev này đã gửi keepalive rồi (visibilitychange + pagehide) → không gửi trùng */
+    m.karev = m.rev | 0;   /* c30: save chưa gắn tài khoản (đang chờ hỏi / chưa đồng bộ lần đầu) → KHÔNG đẩy mù (trước đây tạo 2 bản giống hệt bị coi là xung đột) */
+    const pid = 'p' + rid(8), body = clone(local); body.meta = { ...m, pid, cloud: u.id };
+    m.pid = pid; m.pids = [pid].concat(Array.isArray(m.pids) ? m.pids : []).slice(0, 4);   /* nhớ pid: lần mở sau nhận ra bản mây là của chính máy này */
+    const kas = {}; for (const p of m.pids) if (m.kas && m.kas[p]) kas[p] = m.kas[p]; kas[pid] = [playOf(local), sigOf(local)]; m.kas = kas;   /* mốc giờ chơi + tiến độ của từng lần keepalive */
+    writeLocal(local);
+    return cloud.pushKeepalive(body, m.base | 0, { playSec: playOf(local), ver: opts.ver || null, device: dev() });
   }
   async function restore(id) {   /* "Khôi phục bản sao lưu": mây đổi sang bản đó rồi tải về máy */
     if (!canSync()) return { ok: false, skipped: 'slot' };
@@ -557,5 +614,5 @@ export function createSync(opts) {
     const p = await cloud.pullSave(); if (!p.ok || !p.data) return { ok: false, err: p.err || 'nodata' };
     backupLocal(); const u = cloud.status().user; return { ok: true, save: adopt(p.data, p.rev, u && u.id), reload: true };
   }
-  return { resolve, flushNow, markDirty, flushHidden, restore, state: () => ({ ...st }), localBak: () => jget(storage, BAK) };
+  return { resolve, flushNow, markDirty, flushHidden, restore, state: () => ({ ...st }), localBak: () => jget(storage, BAK), linkInfo: () => (st.link ? { ...st.link } : null) };
 }

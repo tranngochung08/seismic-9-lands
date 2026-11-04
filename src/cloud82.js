@@ -7,7 +7,7 @@
 // Đăng nhập: Google (nút chính) + email nhận mã 6 số — anh chốt 2026-11-03, BỎ Discord (không còn khớp roster tự động).
 // c24 (04/11): thêm "Tên đăng nhập & mật khẩu" (Đăng nhập | Đăng ký) — email nội bộ <tên>@players.seismic9.app, xem cloud.js. ?cloud=mock&mockconfirm=1 giả Supabase còn bật xác nhận email.
 import { createCloud, createSync, bumpMeta, deviceId, emailOk, cleanUser, userOk, PW_MIN } from './cloud.js';
-import { setWriteHook, isSyncSlot, saveKey } from './save.js';
+import { setWriteHook, isSyncSlot, saveKey, writeSave } from './save.js';
 
 const RESOLVE_MAX = 8000;      /* ms: quá lâu thì mở khoá nút, coi như ngoại tuyến */
 const TICK = 10000;            /* ms: soát "bẩn" để đẩy (cloud.js tự giới hạn 1 lần / 60 s) */
@@ -36,7 +36,8 @@ const TXT = {
     cfTitle: 'Hai bản save khác nhau', cfBody: 'Bạn đã chơi ở 2 nơi khi chưa đồng bộ. Chọn bản để chơi tiếp — bản kia vẫn được cất vào sao lưu.',
     here: 'Bản máy này', cloud: 'Bản trên mây', pick: 'Chọn bản này', later: 'Chọn sau',
     play: 'Giờ chơi', zone: 'Vùng', badges: 'Huy hiệu', caught: 'Chấn Thú đã bắt', team: 'Trong đội', upd: 'Lưu lần cuối', dev: 'Máy',
-    loaded: 'Đã tải save từ mây', pushed: 'Đã đưa save lên mây', player: 'Người chơi'
+    loaded: 'Đã tải save từ mây', pushed: 'Đã đưa save lên mây', player: 'Người chơi',
+    rnTitle: 'Đổi tên nhân vật', rnBody: 'Tên hiện trong game và khi chơi chung. Tên đăng nhập giữ nguyên.', rnPh: 'tên mới (2–16 ký tự)', rnOk: 'Lưu tên', rnBad: 'Tên cần 2–16 ký tự, không có < >', rnDone: n => `Đã đổi tên: ${n}`, login: 'tên đăng nhập'
   },
   en: {
     signIn: 'Sign in with Google', signInMock: 'Sign in with Google (test)', emailBtn: 'Sign in with email', signOut: 'Sign out',
@@ -59,7 +60,8 @@ const TXT = {
     cfTitle: 'Two different saves', cfBody: 'You played in two places without syncing. Pick the save to continue — the other one is kept as a backup.',
     here: 'This device', cloud: 'Cloud', pick: 'Use this one', later: 'Decide later',
     play: 'Play time', zone: 'Zone', badges: 'Badges', caught: 'Caught', team: 'In team', upd: 'Last saved', dev: 'Device',
-    loaded: 'Save loaded from the cloud', pushed: 'Save uploaded to the cloud', player: 'Player'
+    loaded: 'Save loaded from the cloud', pushed: 'Save uploaded to the cloud', player: 'Player',
+    rnTitle: 'Rename character', rnBody: 'Shown in game and in co-op. Your username stays the same.', rnPh: 'new name (2–16 characters)', rnOk: 'Save name', rnBad: 'Name needs 2–16 characters, no < >', rnDone: n => `Renamed: ${n}`, login: 'username'
   }
 };
 
@@ -110,6 +112,11 @@ export async function initCloud82(o) {
       } catch (e) { }
     };
     if (wrap) wrap.hidden = false;
+    try { const fr = document.querySelector('#title .findrow'); if (fr) fr.style.display = 'none'; } catch (e) { }   /* c30: bỏ ô "Discord username / Find me" (Discord đã bỏ từ 03/11) */
+    function afterFlush(r) {   /* c30: sau mỗi lần đẩy → dòng trạng thái báo đúng bản đã lưu trên mây */
+      log('flush', r);
+      try { if (r && r.ok && r.rev) { statusTxt = T().synced(r.rev); paint(); } else if (r && r.ok === false && r.err === 'conflict') { statusTxt = T().conflictWait; paint(); } } catch (e) { }
+    }
     const lock = on => { for (const id of ['#t-cont', '#t-play']) { const b = $(id); if (b) b.disabled = !!on; } };
 
     /* ---------- bảng hỏi khung pixel (frame.png như leaderarena / menu) ---------- */
@@ -119,7 +126,7 @@ export async function initCloud82(o) {
         try {
           const t = T(), col = (title, s, pickVal) => !s ? '' : `<div class="c82col" style="flex:1;min-width:140px;padding:4px 6px;background:#2a1f38">
               <b style="color:#ffd96a">${esc(title)}</b>
-              <div class="tiny">${esc(t.play)}: ${hm(s.play_sec)}<br>${esc(t.zone)}: ${esc(s.zone)}<br>${esc(t.badges)}: ${s.badges | 0}<br>${esc(t.caught)}: ${s.caught | 0} · ${esc(t.team)}: ${s.team | 0}<br>${esc(t.upd)}: ${s.upd ? esc(new Date(s.upd * 1000).toLocaleString()) : '—'}<br>${esc(t.dev)}: ${esc(s.dev || '—')}</div>
+              <div class="tiny">${s.name ? esc(s.name) + '<br>' : ''}${esc(t.play)}: ${hm(s.play_sec)}<br>${esc(t.zone)}: ${esc(s.zone)}<br>${esc(t.badges)}: ${s.badges | 0}<br>${esc(t.caught)}: ${s.caught | 0} · ${esc(t.team)}: ${s.team | 0}<br>${esc(t.upd)}: ${s.upd ? esc(new Date(s.upd * 1000).toLocaleString()) : '—'}<br>${esc(t.dev)}: ${esc(s.dev || '—')}</div>
               <button class="btn px" data-v="${pickVal}" style="margin-top:4px;width:100%">${esc(t.pick)}</button></div>`;
           let title, body, inner;
           if (qq.kind === 'upload') { title = t.upTitle; body = t.upBody; inner = `<button class="btn px primary" data-v="yes">${esc(t.yes)}</button> <button class="btn px" data-v="no">${esc(t.no)}</button>`; }
@@ -152,13 +159,14 @@ export async function initCloud82(o) {
       try {
         const old = JSON.parse(storage.getItem(KEY()) || 'null'), om = old && old.meta;
         const m = (s.meta && typeof s.meta === 'object') ? s.meta : (s.meta = {});
-        if (om && (om.rev | 0) >= (m.rev | 0)) for (const k of ['rev', 'srev', 'base', 'cloud', 'pid', 'pids']) if (om[k] !== undefined) m[k] = om[k];   /* createSync ghi thẳng localStorage → S.save trong RAM phải nhận lại base/srev, không thì đẩy sau bị xung đột giả */
+        if (om && (om.rev | 0) >= (m.rev | 0)) for (const k of ['rev', 'srev', 'base', 'cloud', 'pid', 'pids', 'ssec', 'ssig', 'ppid', 'karev', 'kas']) if (om[k] !== undefined) m[k] = om[k];   /* createSync ghi thẳng localStorage → S.save trong RAM phải nhận lại base/srev, không thì đẩy sau bị xung đột giả */
+        if (!om && !m.cloud) { const L = sync.linkInfo(), u = cloud.status().user; if (L && u && L.uid === u.id) { m.cloud = L.uid; m.base = L.base | 0; m.srev = 0; } }   /* c30: ván mới (đã xoá save) khi đang đăng nhập → nối tiếp tài khoản, đẩy đè được, không thành xung đột */
       } catch (e) { }
       bumpMeta(s, dev);
     }, s => {
       if (!isSyncSlot() || !cloud.status().user) return;
       const z = s && s.zone;
-      if (lastZone && z && z !== lastZone) sync.flushNow('zone').then(r => log('flush', r)); else sync.markDirty();
+      if (lastZone && z && z !== lastZone) sync.flushNow('zone').then(afterFlush); else { const p = sync.markDirty(); if (p && p.then) p.then(afterFlush); }
       lastZone = z || lastZone;
     });
 
@@ -323,6 +331,60 @@ export async function initCloud82(o) {
     }
     dbg.pwPanel = pwPanel;
 
+    /* ---------- c30: ĐỔI TÊN hiển thị (save.name + hồ sơ mây), độc lập với tên đăng nhập ---------- */
+    const cleanDisp = v => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').replace(/\s+/g, ' ').trim();
+    const dispOk = n => { const k = [...n].length; return k >= 2 && k <= 16; };
+    const curName = () => { try { if (o.S && o.S.save && o.S.save.name) return o.S.save.name; const s = JSON.parse(storage.getItem(KEY()) || 'null'); if (s && s.name) return s.name; } catch (e) { } const u = cloud.status().user; return (u && (u.name || u.username)) || ''; };
+    async function rename(v) {
+      const n = cleanDisp(v); if (!dispOk(n)) return { ok: false, err: 'bad_name' };
+      try {
+        if (o.S && o.S.save) { o.S.save.name = n; if (o.persist) o.persist(); else writeSave(o.S.save); }
+        else { const s = JSON.parse(storage.getItem(KEY()) || 'null'); if (s && typeof s === 'object') { s.name = n; writeSave(s); } }
+        const tn = $('#t-name'); if (tn) tn.value = n;
+      } catch (e) { }
+      let r = { ok: true, name: n, cloud: false };
+      const u = cloud.status().user;
+      if (u) { const c = await cloud.setName(n); if (c && c.ok) { u.name = c.name; r.cloud = true; } const f = await sync.flushNow('rename'); afterFlush(f); r.flush = f && f.ok; }
+      log('rename', r); paint(); return r;
+    }
+    dbg.rename = rename;
+    let rnOpen = null;
+    function renamePanel() {
+      if (rnOpen) return rnOpen.p;
+      const t = T(), el = document.createElement('div');
+      el.id = 'cloud82-rename';
+      el.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:200;background:rgba(10,6,16,.55);padding:16px;box-sizing:border-box';
+      el.innerHTML = `<div style="border:20px solid transparent;border-image:url(assets/px/ui/frame.png) 20 / 20px round;image-rendering:pixelated;background:#1c1424;background-clip:padding-box;max-width:420px;width:100%;color:#f3e6c6;font:18px VT323,monospace;padding:4px 8px 8px;box-sizing:border-box">
+        <div data-k="title" style="font-size:22px;color:#ffd96a;margin-bottom:4px"></div><div data-k="body" class="tiny"></div>
+        <input data-k="name" type="text" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="24" style="${inSt}">
+        <div data-k="err" class="tiny" style="color:#ff8a7a;min-height:1.2em"></div>
+        <div style="display:flex;gap:6px"><button class="btn px primary" data-v="go" style="flex:1"></button><button class="btn px" data-v="cancel" style="flex:1"></button></div></div>`;
+      const $$ = k => el.querySelector(`[data-k="${k}"]`), go = el.querySelector('[data-v="go"]');
+      $$('title').textContent = t.rnTitle; $$('body').textContent = t.rnBody; $$('name').placeholder = t.rnPh; $$('name').value = curName();
+      go.textContent = t.rnOk; el.querySelector('[data-v="cancel"]').textContent = t.cancel;
+      let res, busy = false;
+      const close = v => { try { el.remove(); } catch (e) { } rnOpen = null; res(v); };
+      const submit = async () => {
+        const n = cleanDisp($$('name').value); if (!dispOk(n)) { $$('err').textContent = t.rnBad; return; }
+        busy = true; go.textContent = t.working; const r = await rename(n); busy = false;
+        if (!r.ok) { go.textContent = t.rnOk; $$('err').textContent = t.rnBad; return; }
+        try { UI.toast && UI.toast(t.rnDone(r.name)); } catch (e) { }
+        close(r);
+      };
+      el.addEventListener('pointerdown', e => e.stopPropagation());
+      el.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest && e.target.closest('button[data-v]'); if (!b || busy) return; if (b.dataset.v === 'cancel') return close(null); submit(); });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter' && !busy) { e.preventDefault(); submit(); } else if (e.key === 'Escape') { e.preventDefault(); close(null); } e.stopPropagation(); });
+      el.addEventListener('keyup', e => e.stopPropagation());
+      const p = new Promise(z => { res = z; });
+      rnOpen = { el, p };
+      document.body.appendChild(el);
+      try { $$('name').focus(); $$('name').select(); } catch (e) { }
+      log('renameOpen', 1);
+      return p;
+    }
+    dbg.renamePanel = renamePanel;
+    dbg.displayName = curName;
+
     const signedIn = async why => { await runResolve(why); await afterSignIn(); paint(); };
     if (ebtn) ebtn.onclick = async () => { try { if (cloud.status().user) return; if (await emailPanel()) await signedIn('email'); } catch (e) { log('err', String(e)); } };
     if (ubtn) ubtn.onclick = async () => { try { if (cloud.status().user) return; if (await pwPanel()) await signedIn('password'); } catch (e) { log('err', String(e)); } };
@@ -336,7 +398,7 @@ export async function initCloud82(o) {
     };
 
     /* ---------- nhịp: đẩy khi bẩn, ẩn tab, nhịp tim + đếm online ---------- */
-    setInterval(() => { try { const s = sync.state(); if (s.dirty && cloud.status().user && Date.now() - s.lastPush >= 60000) sync.flushNow('timer').then(r => log('flush', r)); } catch (e) { } }, TICK);
+    setInterval(() => { try { const s = sync.state(); if (s.dirty && cloud.status().user && Date.now() - s.lastPush >= 60000) sync.flushNow('timer').then(afterFlush); } catch (e) { } }, TICK);
     const beat = async () => {
       try {
         if (typeof document !== 'undefined' && document.hidden) return;
@@ -348,8 +410,9 @@ export async function initCloud82(o) {
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => {
       try {
         if (!document.hidden) return;
+        if (typeof o.persist === 'function' && o.S && o.S.save && o.S.mode !== 'title') { try { o.persist(); } catch (x) { } }   /* c30: ẩn tab / tắt màn → ghi save mới nhất trước khi đẩy */
         const r = cloud.mode === 'supabase' ? sync.flushHidden() : null;
-        if (!r || !r.ok) sync.flushNow('hidden').then(x => log('flush', x));
+        if (!r || !r.ok) sync.flushNow('hidden').then(afterFlush);
       } catch (e) { }
     });
     if (W.addEventListener) W.addEventListener('pagehide', () => { try { if (cloud.mode === 'supabase') sync.flushHidden(); else sync.flushNow('pagehide'); } catch (e) { } });
