@@ -98,7 +98,7 @@ function palmHit(ctx, h, o, a, ca, sa, pw) {
     if (!hit) continue;
     const r = A.palm.get(P.id) || { d: 0 }; r.d += pw * (h.k === 'tick' ? 0.3 : 1.4); A.palm.set(P.id, r);
   }
-  A.palmT = 1.6;
+  if (ctx.pkthu && ctx.pkthu.palmHit) ctx.pkthu.palmHit(h, o, a, ca, sa, pw); /* c32-pkthu: Chưởng trúng Chấn Thú đối thủ */ A.palmT = 1.6;
   if (h.k === 'boom') flushPalm(ctx);
 }
 function flushPalm(ctx) {
@@ -110,6 +110,7 @@ function flushPalm(ctx) {
 function aim(ctx, p, maxD) {
   if (!A.on || !live()) return null; let best = null, bd = maxD;
   for (const P of peers()) { if (!canFight(ctx, P)) continue; const d = dist(P.ent, p) - (P.id === A.sel ? 30 : 0); if (d < bd) { bd = d; best = P; } }
+  { const q32 = ctx.pkthu && ctx.pkthu.aim ? ctx.pkthu.aim(p, bd) : null; if (q32) return q32; }   /* c32-pkthu: Chấn Thú đối thủ gần hơn → nhắm nó */
   if (!best) return null; const id = best.id;
   return { __pk: id, hp: 1, c: {}, get x() { const Q = peerOf(id); return Q ? Q.ent.x : best.ent.x; }, get y() { const Q = peerOf(id); return Q ? Q.ent.y : best.ent.y; }, live: () => !!peerOf(id) };
 }
@@ -120,6 +121,7 @@ function onMsg(ctx, m) {
   if (m.t === 'pvpok') { const P = peerOf(m.f); A.n.ok++; if (m.ok && P) { if (ctx.pop) ctx.pop(P.ent.x, P.ent.y - 22, `-${m.d}`, '#ffb36a'); if (m.ko) { A.n.ko++; toast(ctx, T(ctx).koYou(P.name)); } }
     else if (!m.ok && m.why === 'off' && P && now() - A.warnT > 3) { A.warnT = now(); toast(ctx, T(ctx).theyOff(P.name)); } return; }
   if (m.t !== 'pvp') return;
+  if (m.k === 'pet') { if (ctx.pkthu && ctx.pkthu.onPet) ctx.pkthu.onPet(m); else a.send({ t: 'pvpok', to: m.f, ok: 0, why: 'off' }); return; }   /* c32-pkthu: Chấn Thú đối thủ đánh người */
   A.n.rx++;
   const P = peerOf(m.f), p = ctx.S.player, k = m.k === 'palm' ? 'palm' : m.k === 'fist' ? 'fist' : 'sword';
   const rej = why => { A.n.rej++; lg({ ev: 'rej', f: m.f, why }); a.send({ t: 'pvpok', to: m.f, ok: 0, why }); };
@@ -212,11 +214,11 @@ function placeBtn(ctx, dt) {
 }
 function panelHTML(ctx, P) {
   const t = T(ctx), s = P.st || {}, lv = s.lv | 0, hp = Math.max(0, s.hp | 0), hm = Math.max(1, s.hm | 0), pk = !!s.pk;
-  const U = Array.isArray(s.u) ? s.u : []; const pet = U.length ? U.slice(0, 2).map(r => `${esc(spName(ctx, r[0]))} ${t.lv} ${r[5] | 0}`).join(', ') : t.none;
+  const U = Array.isArray(s.u) ? s.u : []; const pet = U.length ? U.slice(0, 3).map((r, i) => `<div class="r">${i ? '&nbsp;&nbsp;' : t.pet + ': '}${esc(spName(ctx, r[0]))} ${t.lv} ${r[5] | 0}</div>` + (r[7] ? `<div class="hp" title="${Math.max(0, r[6] | 0)}/${r[7] | 0}"><i style="width:${Math.round(Math.max(0, Math.min(1, (r[6] | 0) / (r[7] | 0))) * 100)}%"></i></div>` : '')).join('') : `<div class="r">${t.pet}: ${t.none}</div>`;   /* c32-pkthu: mỗi Chấn Thú 1 dòng + thanh máu nhỏ */
   return `<b class="${pk ? 'pk' : ''}">${esc(P.name)}</b>`
     + `<div class="r">${t.lv} ${lv || '?'} · ${t.hp} ${s.hm ? `${hp}/${hm}` : '?'}</div>`
     + `<div class="hp"><i style="width:${s.hm ? Math.round(hp / hm * 100) : 0}%"></i></div>`
-    + `<div class="r">${t.pet}: ${pet}</div>`
+    + pet
     + `<div class="r ${pk ? 'on' : 'off'}"><img src="${BASE}ui/hud91/act_fight.png" alt="">${pk ? t.pkOn : t.pkOff}${P.ko ? ` · <span class="ko">${t.ko}</span>` : ''}</div>`;
 }
 function placePanel(ctx) {
@@ -264,7 +266,7 @@ export const pk = {
     ctx.pk = {
       isOn: () => A.on && live(),
       st: () => { const h = ctx.hero; return { pk: A.on ? 1 : 0, lv: h ? h.lv | 0 : 0, hp: h ? Math.max(0, Math.ceil(h.hp)) : 0, hm: h ? h.max | 0 : 0 }; },
-      onMsg: m => onMsg(ctx, m), palmHit: (h, o, a, ca, sa, pw) => palmHit(ctx, h, o, a, ca, sa, pw), aim: (p, maxD) => aim(ctx, p, maxD),
+      fight: () => { A.fightT = now(); } /* c32-pkthu */, onMsg: m => onMsg(ctx, m), palmHit: (h, o, a, ca, sa, pw) => palmHit(ctx, h, o, a, ca, sa, pw), aim: (p, maxD) => aim(ctx, p, maxD),
     };
     if (typeof window !== 'undefined') window.__pk = {
       state: () => ({ on: A.on, live: live(), cd: +A.cd.toFixed(2), sel: A.sel, togWait: +Math.max(0, CF.tog - (now() - A.togT)).toFixed(2), n: { ...A.n },

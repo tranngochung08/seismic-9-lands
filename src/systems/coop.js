@@ -53,7 +53,7 @@ function onSt(ctx, m) {
   const U = Array.isArray(m.u) ? m.u.slice(0, 4) : [], keep = new Set();
   U.forEach((r, i) => { const [sp, x, y, clip, fx, lv] = r; if (typeof sp !== 'string') return; const k = i + ':' + sp; keep.add(k); let u = P.units.get(k);
     if (!u) { let e = null; try { e = ctx.ldKit && ctx.ldKit.ready() ? ctx.ldKit.mk(sp, lv || 5, null, x, y) : null; } catch (er) { e = null; } if (!e) return; u = { e, tx: x, ty: y }; P.units.set(k, u); }
-    u.tx = x; u.ty = y; if (clip && u.e.clip !== clip) { u.e.clip = clip; u.e.ct = 0; } if (typeof fx === 'number') u.e.fx = fx; });
+    u.tx = x; u.ty = y; if (clip && u.e.clip !== clip) { u.e.clip = clip; u.e.ct = 0; } if (typeof fx === 'number') u.e.fx = fx; u.sp = sp; if (r.length > 7) { u.hp = +r[6] || 0; u.hm = +r[7] || 0; u.uid = r[8]; } });   /* c32-pkthu: máu + id Chấn Thú người khác */
   for (const k of [...P.units.keys()]) if (!keep.has(k)) P.units.delete(k);
 }
 const peerHere = (P, ctx) => P.zone === ZONE && P.tx != null && inZone(ctx);
@@ -115,6 +115,7 @@ function onMsg(ctx, m) {
     case 'mcaught': { faintGone(m.n); if (isHost()) netClaim(m.n); const P = C.peers.get(m.f); lg({ ev: 'mcaught', n: m.n, by: m.f }); void P; return; }
     case 'claim': if (isHost()) { const ok = netClaim(m.n); send({ t: 'claimed', to: m.f, n: m.n, ok }); lg({ ev: 'claim', n: m.n, by: m.f, ok }); } return;
     case 'claimed': { const Q = C.claims.get(m.n); if (Q) { C.claims.delete(m.n); Q.cb(!!m.ok); } return; }
+    case 'pvu': case 'pvuok': if (ctx.pkthu && ctx.pkthu.onMsg) ctx.pkthu.onMsg(m); return;   /* c32-pkthu: đòn lên Chấn Thú */
     case 'pvp': case 'pvpok': if (ctx.pk && ctx.pk.onMsg) ctx.pk.onMsg(m); return;   /* c17-pk: đòn PvP gửi riêng (to) — máy nhận tự kiểm */
     case 'full': toast(ctx, vi(ctx) ? 'Phòng chơi chung đã đầy' : 'Co-op room is full'); return;
   }
@@ -124,7 +125,7 @@ function onMsg(ctx, m) {
 function stMsg(ctx) {
   const p = ctx.S.player, a = p.action && !p.action.walk ? p.action.name : '', units = [];
   const q = ctx.squad104 && ctx.squad104.units ? ctx.squad104 : null;
-  if (q) { try { for (const u of q.units()) { if (!u.onField() || !u.f || units.length >= 3) continue; const f = u.f; units.push([f.sp || u.sp, Math.round(f.x), Math.round(f.y), f.clip || 'idle', Math.round((f.fx || 0) * 100) / 100, f.lv | 0]); } } catch (e) { } }
+  if (q) { try { for (const u of q.units()) { if (!u.onField() || !u.f || units.length >= 3) continue; const f = u.f; units.push([f.sp || u.sp, Math.round(f.x), Math.round(f.y), f.clip || 'idle', Math.round((f.fx || 0) * 100) / 100, f.lv | 0, Math.max(0, Math.ceil(u.hp || 0)), u.max | 0, u.id]); } } catch (e) { } }   /* c32-pkthu: + máu / máu tối đa / id Chấn Thú */
   return { t: 'st', x: Math.round(p.x * 2) / 2, y: Math.round(p.y * 2) / 2, d: p.dir | 0, m: p.moving ? 1 : 0, g: p.diag == null ? null : p.diag, a, k: ctx.hero && ctx.hero.fainted ? 1 : 0, z: ctx.S.zone ? ctx.S.zone.id : null, u: units, n: myNameC(ctx), ...(ctx.pk && ctx.pk.st ? ctx.pk.st() : {}) };   /* c29-vat: + n (tên) */   /* c17-pk: + pk, lv, hp, hm */
 }
 

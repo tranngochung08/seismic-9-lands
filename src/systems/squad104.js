@@ -85,13 +85,13 @@ const rally = ctx => { const h = heroHp(ctx); return h.max > 0 && h.hp / h.max <
 const danger = ctx => now() - ST.pHitT < 1.5 || (() => { const h = heroHp(ctx); return h.hp / h.max < 0.5; })();
 
 /* ---------- mục tiêu ---------- */
-function monList(ctx) { try { return ctx.monsters && ctx.monsters.list ? ctx.monsters.list() : []; } catch (e) { return []; } }
+function monList(ctx) { let L0; try { L0 = ctx.monsters && ctx.monsters.list ? ctx.monsters.list() : []; } catch (e) { L0 = []; } const X = ctx.pkthu && ctx.pkthu.foes ? ctx.pkthu.foes() : null; return X && X.length ? L0.concat(X) : L0; }   /* c32-pkthu: + mục tiêu PK (Chấn Thú / người đối thủ khi cả 2 bật PK) */
 function alive(mo) { return !!mo && mo.hp > 0 && !mo.dead && mo.state !== 'dead' && !mo.hide && !mo.statue && !(mo.c && mo.c.spar); }
 function valid(mo) { return alive(mo) && !(mo.c && mo.c.boss) && !(mo.c && mo.c.fct && !mo.angry); }   /* Chũi / Cóc hoang hiền: để bắt; trùm: chỉ khi ra lệnh G */
 function focusOf(id) { const mo = ST.focus.get(id); if (mo && alive(mo) && monList(ST.ctx).includes(mo)) return mo; if (mo) ST.focus.delete(id); return null; }
-function hostileNear(ctx, x, y, r) { let best = null, bd = r; for (const mo of monList(ctx)) { if (!alive(mo) || (mo.c && mo.c.fct && !mo.angry)) continue; const d = Math.hypot(mo.x - x, mo.y - y); if (d < bd) { bd = d; best = mo; } } return best; }
+function hostileNear(ctx, x, y, r) { let best = null, bd = r; for (const mo of monList(ctx)) { if (mo.__pk32 || !alive(mo) || (mo.c && mo.c.fct && !mo.angry)) continue; const d = Math.hypot(mo.x - x, mo.y - y); if (d < bd) { bd = d; best = mo; } } return best; }
 function rangedNear(ctx, p, r) {   /* đòn từ xa (chiêu Chấn Thú hoang nổi giận / côn đồ): con hung gần nhất trong r */
-  let best = null, bd = r; for (const mo of monList(ctx)) { if (!alive(mo) || !(mo.angry || (mo.c && (mo.c.gang95 || mo.c.boss)))) continue; const d = hyp(mo, p); if (d < bd) { bd = d; best = mo; } } return best; }
+  let best = null, bd = r; for (const mo of monList(ctx)) { if (mo.__pk32 || !alive(mo) || !(mo.angry || (mo.c && (mo.c.gang95 || mo.c.boss)))) continue; const d = hyp(mo, p); if (d < bd) { bd = d; best = mo; } } return best; }
 const reachOf = u => (u && u.f && u.f.tier === 'l' ? 26 : u && u.f && u.f.tier === 's' ? 12 : 17);   /* đứng chắn cách người theo cỡ thú — thú to không che kín người chơi */
 const shooter = mo => !!(mo && mo.c && (mo.c.rg104 || mo.c.ranged)) || (mo && mo.chg104 > 0);
 function shooterNear(ctx) { const p = ctx.S.player; let best = null, bd = 190; for (const mo of monList(ctx)) { if (!alive(mo) || !shooter(mo)) continue; const d = hyp(mo, p); if (d < bd) { bd = d; best = mo; } } return best; }
@@ -148,6 +148,7 @@ const skinU = u => FX.skinOf(u.sp, u.f && u.f.types && u.f.types[0]);
 function biteDmg(u, mo) { return Math.max(1, Math.round(Math.max((mo.max || 10) * 0.12, (u.f && u.f.st && u.f.st.atk ? u.f.st.atk : 40) * 0.35))); }
 function dealHit(ctx, u, mo, dmg, kb = 55, tag = 'bite') {
   if (!alive(mo)) return false; dmg = Math.max(1, Math.round(dmg));
+  if (mo.__pk32) { if (ctx.pkthu && ctx.pkthu.hit) ctx.pkthu.hit(u, mo, dmg, tag); ST.n.hit++; return true; }   /* c32-pkthu: đòn lên mục tiêu PK → gửi qua mạng (máy chủ con đó tự kiểm) */
   globalThis.__env105he = (u.f && u.f.types && u.f.types[0]) || null; try { ctx.monsters.damage(mo, dmg, u.pos(), 0.3, kb); } catch (e) { } globalThis.__env105he = null;   /* p105w: hệ đòn → envfx (vết đất / tóe nước theo hệ) */
   mo.taunt104 = now() + CFG.taunt; mo.tu104 = u.id; if (mo.c && mo.c.gang95) { mo.taunt95 = 0; }   /* bị Chấn Thú đánh → quay sang đánh nó (gây hấn) */
   ST.n.hit++; if (!(mo.hp > 0)) { ST.n.kill++; log({ ev: 'kill', id: u.id, tag }); } return true;
