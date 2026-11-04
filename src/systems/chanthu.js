@@ -201,6 +201,11 @@ function openTeam(ctx) {
   ctx.setMode('ctpick'); ctx.registerCloser('ctpick', () => closePanel(ctx));
 }
 
+function cards(ctx) {   /* c6 (03/11 anh): thẻ Ấn Linh hiện Chấn Thú đã thu phục — đội (thứ tự ra trận) rồi kho */
+  const d = data(ctx); if (!d) return [];
+  const f = (m, i, w) => ({ id: m.id, sp: m.sp, lv: m.lv, name: nmOf(m), spName: spN(m.sp), port: port(m.sp), chip: SPECIES[m.sp] ? chip(ctx, m.sp) : '', where: w, no: i + 1 });
+  return [...(d.team || []).map((m, i) => f(m, i, 'team')), ...(d.box || []).map((m, i) => f(m, i, 'box'))];
+}
 function moveMon(ctx, i, dir) { const d = ensure(ctx), j = i + dir; if (i < 0 || j < 0 || i >= d.team.length || j >= d.team.length) return false; const t = d.team[i]; d.team[i] = d.team[j]; d.team[j] = t; ctx.persist(); return true; }   /* p52d: đổi chỗ 2 con kề nhau */
 
 /* ---------- p52d (plan-58 C.4): CHẤN THÚ HIẾM theo giờ / thời tiết ----------
@@ -305,7 +310,7 @@ export const chanthu = {
     ctx.chanthu = { data: () => data(ctx), ensure: () => ensure(ctx), hasStarter: () => hasStarter(ctx), team: () => (data(ctx) || { team: [] }).team.slice(), balls: () => { const d = data(ctx); return d ? d.anThu | 0 : 0; },
       useBall: () => { const d = data(ctx); if (!d || d.anThu <= 0) return false; d.anThu--; ctx.persist(); return true; }, addBall: n => { ensure(ctx).anThu += n | 0; ctx.persist(); }, add: (sp, lv, nm) => addMon(ctx, sp, lv, nm), choose: (sp, nm) => choose(ctx, sp, nm),
       wild: () => ST.wild.filter(w => !w.rare).map(w => ({   /* p52d: con hiếm xem ở rare() */ key: w.key, sp: w.sp, lv: w.lv, x: Math.round(w.x), y: Math.round(w.y), gone: goneNow(w), moving: w.moving })), pad: () => ST.pad && { ...ST.pad, orbs: padOrbs(ctx).map(o => o.sp) },
-      fight: i => { const w = ST.wild[i | 0]; if (!w || goneNow(w)) return false; fightWild(ctx, w); return true; }, openPick: () => openPick(ctx), openTeam: () => openTeam(ctx), panel: () => ST.panel, gone: () => ({ ...ST.gone }), ungone: () => { ST.gone = {}; },
+      fight: i => { const w = ST.wild[i | 0]; if (!w || goneNow(w)) return false; fightWild(ctx, w); return true; }, openPick: () => openPick(ctx), openTeam: () => openTeam(ctx), cards: () => cards(ctx), panel: () => ST.panel, gone: () => ({ ...ST.gone }), ungone: () => { ST.gone = {}; },
       shopRow: () => shopRow(ctx), buy: () => buyBall(ctx), markGone: (k, why) => markGone(k, why),
       move: (i, dir) => moveMon(ctx, i, dir), battleTeam: mode => (data(ctx) || { team: [] }).team.slice(0, TEAM_SIZE[mode] || 1),   /* p52d: đội ra trận theo thể thức */
       wx: () => wxNow(ctx), setWx: o => { ST.wxForce = o ? { night: !!o.night, dawn: !!o.dawn, rain: !!o.rain, storm: !!o.storm } : null; rareTick(ctx); return wxNow(ctx); }, rareTick: () => rareTick(ctx),

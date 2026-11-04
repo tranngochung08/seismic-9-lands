@@ -487,6 +487,178 @@
      "n": 6,
      "ch": 24,
      "cw": 32
+    },
+    "chop": {
+     "file": "chars/c1_act_chop.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32,
+     "impact": 3
+    },
+    "mine": {
+     "file": "chars/c1_act_mine.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32,
+     "impact": 4
+    },
+    "fish": {
+     "file": "chars/c1_act_fish.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "carry": {
+     "file": "chars/c1_act_carry.png",
+     "n": 3,
+     "ch": 24,
+     "cw": 32
+    },
+    "paddle": {
+     "file": "chars/c1_act_paddle.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "hammer": {
+     "file": "chars/c1_act_hammer.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "hoe": {
+     "file": "chars/c1_act_hoe.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 3
+    },
+    "water": {
+     "file": "chars/c1_act_water.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 2
+    },
+    "harvest": {
+     "file": "chars/c1_act_harvest.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 4
+    },
+    "eat": {
+     "file": "chars/c1_act_eat.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "hurt": {
+     "file": "chars/c1_act_hurt.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "attack": {
+     "file": "chars/c1_act_attack.png",
+     "n": 7,
+     "ch": 32,
+     "cw": 40,
+     "impact": 3
+    },
+    "idle": {
+     "file": "chars/c1_act_idle.png",
+     "n": 8,
+     "cw": 18,
+     "ch": 23
+    },
+    "pick": {
+     "file": "chars/c1_act_pick.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "shoot": {
+     "file": "chars/c1_act_shoot.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "knockfly": {
+     "file": "chars/c1_act_knockfly.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "launched": {
+     "file": "chars/c1_act_launched.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "knockdown": {
+     "file": "chars/c1_act_knockdown.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "stagger": {
+     "file": "chars/c1_act_stagger.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "dive": {
+     "file": "chars/c1_act_dive.png",
+     "n": 12,
+     "ch": 32,
+     "cw": 32,
+     "fps": 10
+    },
+    "climb": {
+     "file": "chars/c1_act_climb.png",
+     "n": 12,
+     "ch": 32,
+     "cw": 32,
+     "fps": 10
+    },
+    "roll": {
+     "file": "chars/c1_act_roll.png",
+     "n": 8,
+     "ch": 24,
+     "cw": 32
+    },
+    "dash": {
+     "file": "chars/c1_act_dash.png",
+     "n": 4,
+     "ch": 24,
+     "cw": 32
+    },
+    "attack2": {
+     "file": "chars/c1_act_attack2.png",
+     "n": 7,
+     "impact": 3,
+     "cw": 44,
+     "ch": 32
+    },
+    "attack3": {
+     "file": "chars/c1_act_attack3.png",
+     "n": 7,
+     "impact": 5,
+     "cw": 48,
+     "ch": 52
+    },
+    "walk": {
+     "file": "chars/c1_act_walk.png",
+     "n": 8,
+     "cw": 18,
+     "ch": 23
+    },
+    "throw": {
+     "file": "chars/c1_act_throw.png",
+     "n": 6,
+     "ch": 24,
+     "cw": 32
     }
    },
    "c2": {
@@ -500,6 +672,178 @@
    "c4": {
     "hover": {
      "file": "chars/c4_act_hover.png",
+     "n": 6,
+     "ch": 24,
+     "cw": 32
+    },
+    "chop": {
+     "file": "chars/c4_act_chop.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32,
+     "impact": 3
+    },
+    "mine": {
+     "file": "chars/c4_act_mine.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32,
+     "impact": 4
+    },
+    "fish": {
+     "file": "chars/c4_act_fish.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "carry": {
+     "file": "chars/c4_act_carry.png",
+     "n": 3,
+     "ch": 24,
+     "cw": 32
+    },
+    "paddle": {
+     "file": "chars/c4_act_paddle.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "hammer": {
+     "file": "chars/c4_act_hammer.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "hoe": {
+     "file": "chars/c4_act_hoe.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 3
+    },
+    "water": {
+     "file": "chars/c4_act_water.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 2
+    },
+    "harvest": {
+     "file": "chars/c4_act_harvest.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32,
+     "impact": 4
+    },
+    "eat": {
+     "file": "chars/c4_act_eat.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "hurt": {
+     "file": "chars/c4_act_hurt.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "attack": {
+     "file": "chars/c4_act_attack.png",
+     "n": 7,
+     "ch": 32,
+     "cw": 40,
+     "impact": 3
+    },
+    "idle": {
+     "file": "chars/c4_act_idle.png",
+     "n": 8,
+     "cw": 18,
+     "ch": 23
+    },
+    "pick": {
+     "file": "chars/c4_act_pick.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "shoot": {
+     "file": "chars/c4_act_shoot.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "knockfly": {
+     "file": "chars/c4_act_knockfly.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "launched": {
+     "file": "chars/c4_act_launched.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "knockdown": {
+     "file": "chars/c4_act_knockdown.png",
+     "n": 7,
+     "ch": 24,
+     "cw": 32
+    },
+    "stagger": {
+     "file": "chars/c4_act_stagger.png",
+     "n": 5,
+     "ch": 24,
+     "cw": 32
+    },
+    "dive": {
+     "file": "chars/c4_act_dive.png",
+     "n": 12,
+     "ch": 32,
+     "cw": 32,
+     "fps": 10
+    },
+    "climb": {
+     "file": "chars/c4_act_climb.png",
+     "n": 12,
+     "ch": 32,
+     "cw": 32,
+     "fps": 10
+    },
+    "roll": {
+     "file": "chars/c4_act_roll.png",
+     "n": 8,
+     "ch": 24,
+     "cw": 32
+    },
+    "dash": {
+     "file": "chars/c4_act_dash.png",
+     "n": 4,
+     "ch": 24,
+     "cw": 32
+    },
+    "attack2": {
+     "file": "chars/c4_act_attack2.png",
+     "n": 7,
+     "impact": 3,
+     "cw": 44,
+     "ch": 32
+    },
+    "attack3": {
+     "file": "chars/c4_act_attack3.png",
+     "n": 7,
+     "impact": 5,
+     "cw": 48,
+     "ch": 52
+    },
+    "walk": {
+     "file": "chars/c4_act_walk.png",
+     "n": 8,
+     "cw": 18,
+     "ch": 23
+    },
+    "throw": {
+     "file": "chars/c4_act_throw.png",
      "n": 6,
      "ch": 24,
      "cw": 32

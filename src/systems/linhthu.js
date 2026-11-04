@@ -264,9 +264,9 @@ function wildDraw(g, mo, x, y) {
 /* ---------------- linh thú đi cùng ---------------- */
 function hiddenNow(ctx, ok = {}) {   /* 2026-10-15: người chơi bị hất bay không còn làm linh thú chớp tắt (trước đây cóc biến mất mỗi lần người chơi bị đánh bay) */ const S = ctx.S, p = S.player; return !!((ctx.alt && ctx.alt.h && ctx.alt.h() > 2) || (S.sea && S.sea.riding) || (S.swimming && !ok.swim) || (S.map && S.map.under && !ok.under) || (S.map && S.map.sky && !(S.zone && S.zone.id === 'sky_bakunawa')) || (S.zone && /^(mind_|sky_lyron)/.test(S.zone.id)) || (p && p.custom && !(ctx.air && ctx.air.on && ctx.air.on()) && !(ctx.knocked && ctx.knocked()) && !(ok.swim && (S.swimming || (S.map && S.map.under) || (WATER.depth && p && WATER.depth(p.x, p.y) > 0)))) || S.mode === 'bkcarry'); }
 const swimmer = id => amphib(id) || fishOnly(id);   /* 2026-10-15 anh 'cóc có thể bơi dưới nước': Cóc / Cóc Thần Vũ (lưỡng cư), Cá Chép / Long Ngư (cá) bơi theo người chơi */
-function hiddenFor(ctx, C) { return swimmer(C.id) ? hiddenNow(ctx, { swim: true, under: true }) : hiddenNow(ctx); }   /* lặn: cá + cóc theo */   /* lặn khu dưới nước (u1–u4, Hang Ổ): chỉ CÁ theo — cóc nước ngọt không lặn biển sâu, tự về ấn */
+function hiddenFor(ctx, C) { return swimmer(C.id) ? hiddenNow(ctx, { swim: true, under: true }) : hiddenNow(ctx, { swim: true }); }   /* c10:boi */   /* lặn: cá + cóc theo */   /* lặn khu dưới nước (u1–u4, Hang Ổ): chỉ CÁ theo — cóc nước ngọt không lặn biển sâu, tự về ấn */
 const canOut = (ctx, id) => !mustRecallFor(ctx, { id }) && (!hiddenFor(ctx, { id }) || (fishOnly(id) && !!(ctx.S.sea && ctx.S.sea.riding)));   /* con nào ném ra được lúc này */
-function mustRecallFor(ctx, C) { const S = ctx.S; if (fishOnly(C.id)) return !!(ctx.alt && ctx.alt.h && ctx.alt.h() > 2); return !!((ctx.alt && ctx.alt.h && ctx.alt.h() > 2) || (S.sea && S.sea.riding) || (S.swimming && !swimmer(C.id)) || (S.map && S.map.under && !swimmer(C.id))); }   /* đi bè / ván / cá voi: vẫn về ấn (cá thì bơi cạnh bè như cũ) */
+function mustRecallFor(ctx, C) { const S = ctx.S; if (fishOnly(C.id)) return !!(ctx.alt && ctx.alt.h && ctx.alt.h() > 2); return !!((ctx.alt && ctx.alt.h && ctx.alt.h() > 2) || (S.sea && S.sea.riding) || (S.map && S.map.under && !swimmer(C.id))); }   /* c10:boi: người bơi → mọi linh thú bơi theo (không về ấn) */   /* đi bè / ván / cá voi: vẫn về ấn (cá thì bơi cạnh bè như cũ) */
 function mustRecall(ctx) { const S = ctx.S; return !!((ctx.alt && ctx.alt.h && ctx.alt.h() > 2) || (S.sea && S.sea.riding) || S.swimming || (S.map && S.map.under)); }   /* 2026-10-15: các chỗ BẮT BUỘC về ấn (anh: chỉ khi kỹ thuật buộc) */
 function mkC(ctx, id, p, i) { const C = { id, x: p.x - 18 + i * 14, y: p.y + 4 + i * 4, dir: 'south', t: 0, cast: null, cd1: 2 + i * 0.5, cd2: 6 + i, stuck: 0, evoT: 0, moving: false, lift: 0, slot: i }; if (!floaty(id) && !hopFree(ctx, C, C.x, C.y)) teleport(ctx, C, p, true); loadMeta();   /* 2026-10-16: chỗ đặt lệch cố định có thể nằm trong đá (hang M4) → tìm chỗ đi được cạnh người */ const k = owned(ctx, id); sheetImg(formOf(id, k.evo)); log('companion ' + id); return C; }
 function spawnCompanion(ctx) {   /* dựng lại CẢ ĐỘI đang ở ngoài (giữ con đã có, thêm con mới, bỏ con đang nghỉ / đang bay trong quả cầu) */
@@ -282,7 +282,7 @@ function follow(ctx, C, dt) {
   if (far > 130) { teleport(ctx, C, p); return; }
   if (hopMove(ctx, C, gx, gy, dt, far, 'follow')) { if (!C.moving && !C.hw) C.dir = ['south', 'west', 'east', 'north'][p.dir] || C.dir; return; }   /* Cóc: nhảy cóc */
   if (d > 6) { const sp = (far > 60 ? 135 : 86) * dt, st = Math.min(d, sp), nx = C.x + dx / d * st, ny = C.y + dy / d * st, m = ctx.S.map;
-    const free = (x, y) => floaty(C.id) || (amphib(C.id) && ctx.S.map && ctx.S.map.under) || !ctx.isSolid(m, Math.floor(x / TS), Math.floor((y - 2) / TS)) || (amphib(C.id) && wetAt(ctx, x, y - 2));
+    const free = (x, y) => floaty(C.id) || (amphib(C.id) && ctx.S.map && ctx.S.map.under) || !ctx.isSolid(m, Math.floor(x / TS), Math.floor((y - 2) / TS)) || wetAt(ctx, x, y - 2);   /* c10:boi: mọi linh thú bơi theo người */
     if (free(nx, ny)) { C.x = nx; C.y = ny; C.stuck = 0; } else if (free(nx, C.y)) { C.x = nx; C.stuck += dt * 0.5; } else if (free(C.x, ny)) { C.y = ny; C.stuck += dt * 0.5; } else C.stuck += dt;
     if (C.stuck > 0.9) teleport(ctx, C, p); C.dir = dirOf(dx, dy, C.dir); C.moving = true; }
   else { C.moving = false; C.dir = ['south', 'west', 'east', 'north'][p.dir] || C.dir; }
@@ -729,7 +729,7 @@ function hpTick(ctx, dt) {   /* máu từng con: dậy sau nghỉ, hồi khi n�
 function drawHpBar(ug, ctx, cx, cy, scale) {   /* thanh máu nhỏ trên đầu (cùng kiểu Rocky) khi đang đánh / bị thương — mỗi con một thanh */
   for (const C of ST.cs) { const k = owned(ctx, C.id); if (!k || C.hidden || C.hide || ST.orbs.some(o => o.id === C.id)) continue; const max = ltMax(k), hp = hpOf(k);   /* C.hide: đang chui ngầm (Chũi) → ẩn cả thanh máu */
     if (!(hp < max * 0.999 || (C.barT || 0) > ctx.S.time || C.cast)) continue;
-    const w = Math.round(14 * scale), x = (globalThis.__R89||Math.round)((C.x - cx) * scale - w / 2), y = (globalThis.__R89||Math.round)((C.y - headY(C) - (C.lift || 0) - (floaty(C.id) ? (SP[C.id].flyH || 5) : 0) - cy) * scale), h = Math.max(4, (globalThis.__u89?globalThis.__u89(scale):scale)), q = Math.max(0, Math.min(1, hp / max));
+    const w = Math.round(14 * scale), x = (globalThis.__R89||Math.round)((C.x - cx) * scale - w / 2), y = (globalThis.__R89||Math.round)((C.y - headY(C) - (C.lift || 0) - (floaty(C.id) ? (SP[C.id].flyH || 5) : 0) - cy) * scale), h = Math.max(4, (globalThis.__u89?globalThis.__u89((globalThis.__u89?globalThis.__u89(scale):scale)):(globalThis.__u89?globalThis.__u89(scale):scale))), q = Math.max(0, Math.min(1, hp / max));
     ug.fillStyle = '#3a1c0c'; ug.fillRect(x - 1, y - 1, w + 2, h + 2); ug.fillStyle = '#5a2a2a'; ug.fillRect(x, y, w, h); ug.fillStyle = q > 0.5 ? '#7bd04a' : q > 0.25 ? '#ffd45e' : '#ff5a5a'; ug.fillRect(x, y, Math.round(w * q), h); }
 }
 
@@ -932,6 +932,7 @@ const PANEL_CSS = `
 .ltp .hpb{display:block;width:44px;height:4px;background:#5a2a2a;border:1px solid #3a1c0c;margin:2px auto 0}.ltp .hpb i{display:block;height:100%}
 .ltp .ltp-info{border:2px solid var(--line);background:#15111f;padding:6px 8px;min-height:64px;font-size:13px;line-height:1.35}.ltp .ltp-info .row{display:flex;gap:10px;align-items:flex-start}.ltp .ltp-info img{width:56px;height:56px;image-rendering:pixelated;flex:0 0 56px}
 .ltp .ltp-info .btns{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.ltp .ltp-ct .ltp-cell{height:96px}.ltp .ltp-ct .ltp-cell img{width:44px;height:44px;max-width:none;max-height:none}.ltp .ltp-cell .bx{position:absolute;left:3px;top:2px;font-size:9px;color:#b9a98a}.ltp .ltp-ct .chip{display:inline-flex;align-items:center;gap:2px;font-size:9px;line-height:1;padding:1px 3px;border-radius:3px;color:#fff;text-shadow:1px 0 #000,-1px 0 #000,0 1px #000,0 -1px #000;margin-top:2px}.ltp .ltp-ct .chip img{width:9px;height:9px}
 @media (max-width:520px){.ltp .ltp-slot{width:72px;height:86px}.ltp .ltp-grid{grid-template-columns:repeat(auto-fill,minmax(58px,1fr))}.ltp .ltp-cell{height:78px}}`;
 Object.assign(STR.vi, { pTitle: 'ẤN LINH', pLv: (l, n) => `Cấp ${l} · mang được ${n} linh thú`, pTeam: (a, b) => `ĐỘI HÌNH (${a}/${b})`, pCol: (a, b) => `BỘ SƯU TẬP (${a}/${b})`, pUp: n => `Nâng lên cấp ${n}`, pMax: 'Ấn Linh đã cấp tối đa', pSpecies: n => `${n} loài đã bắt`, pStone: 'đá',
   pEmpty: 'Ô trống — chạm một linh thú bên dưới để mang theo', pLocked: n => `Mở ở Ấn Linh cấp ${n}`, pPickHint: 'Chạm ô đội hình để chọn, chạm linh thú để xem / mang theo. Gọi cả đội bằng nút “Gọi”.', pAdd: 'Mang theo', pRemove: 'Bỏ khỏi đội', pSwap: 'Đổi vào ô đang chọn', pNone: 'Chưa có linh thú. Mỗi vùng có 1 ổ: đánh cho đuối rồi cho ăn món nó thích để thu phục.',
@@ -981,9 +982,17 @@ function panel(ctx) {
   const ost = orbState(ctx), coarse = matchMedia('(pointer: coarse)').matches, rs = ost === 'rest' ? Math.ceil(Math.min(...T.map(id => restLeft(ctx, id)))) : 0;   /* 2026-10-15 anh: nút Gọi ra / Thu về cạnh quả cầu (bấm xong tự đóng menu) */
   const call = ost === 'in' || ost === 'out' ? `<button class="btn primary ltp-call" data-ltorb="1">${ost === 'out' ? '⤺ ' + esc(t.pRecall) : '✦ ' + esc(t.pCall)}${coarse ? '' : ' (U)'}</button>` : `<span class="ltp-call off">${esc(ost === 'rest' ? t.pResting(rs) : t.pNoTeam)}</span>`;
   return `<div class="ltp"><div class="ltp-top"><div class="ltp-orbc"><div class="ltp-orb"><img class="sh" src="${shell}" alt="">${fk ? `<img class="pe" src="assets/px/linhthu/${formOf(first, fk.evo)}_icon.png" alt="" onerror="this.style.display='none'">` : ''}</div>${call}</div>
-    <div class="ltp-lv"><b>${t.pTitle} · ${t.pLvL} ${lv}</b><br>${esc(t.pLv(lv, slots))}</div>${up}</div>
+    <div class="ltp-lv"><b>${t.pTitle} · ${t.pLvL} ${lv}</b><br>${esc(t.pLv(lv, slots))}</div>${up}</div>${ctSection(ctx)}
     <h3>${t.pTeam(T.length, slots)}</h3><div class="ltp-team">${slotsH}</div>
     <h3>${t.pCol(n, IDS.length)}</h3><div class="ltp-grid">${cells}</div>${infoBox(ctx, ST.menuSel || (T[ST.menuSlot] || null))}</div>`;
+}
+function ctSection(ctx) {   /* c6 (03/11 anh): 'show các Chấn Thú đã thu phục vào trong này' — đội trước (số thứ tự ra trận), kho sau; chạm → bảng Đội Chấn Thú */
+  const C = ctx.chanthu && ctx.chanthu.cards ? ctx.chanthu.cards() : null; if (!C) return '';
+  const en = !vi(ctx), nT = C.filter(c => c.where === 'team').length;
+  const h = en ? `CAPTURED BEASTS (${C.length}) · team ${nT} · storage ${C.length - nT}` : `CHẤN THÚ ĐÃ THU PHỤC (${C.length}) · đội ${nT} · kho ${C.length - nT}`;
+  if (!C.length) return `<h3>${h}</h3><div class="ltp-info dim">${esc(en ? 'No beasts captured yet — go back to the Village and pick a starter (3 orbs by the entrance), then weaken wild beasts and throw a Seal Stone.' : 'Chưa thu phục Chấn Thú nào — về Làng chọn con khởi đầu (3 Ấn Chấn cạnh lối vào), rồi đánh thú hoang còn ≤ 30 % máu và ném Ấn Thu.')}</div>`;
+  const cells = C.map(c => `<div class="ltp-cell ct${c.where === 'team' ? ' team' : ''}" data-ctteam="1" title="${esc(c.spName)} · Lv ${c.lv}">${c.where === 'team' ? `<span class="tm">${c.no}</span>` : `<span class="bx">${en ? 'box' : 'kho'}</span>`}<img src="${c.port}" alt="" onerror="this.style.display='none'"><span>${esc(c.name)}<br>Lv ${c.lv}</span>${c.chip}</div>`).join('');
+  return `<h3>${h}</h3><div class="ltp-grid ltp-ct">${cells}</div><div class="btns" style="margin-top:4px"><button class="btn" data-ctteam="1">⚙ ${en ? 'Manage team' : 'Quản lý đội'}</button></div>`;
 }
 function setTeam(ctx, T) { const k = sv(ctx); k.team = T.filter((id, i) => id && k.owned[id] && T.indexOf(id) === i).slice(0, slotsOf(k)); k.active = k.team[0] || null; if (k.out) spawnCompanion(ctx); ctx.persist(); }
 function menuAct(ctx, kind, v) {   /* menu.js gọi khi chạm trong thẻ Ấn Linh */

@@ -1071,7 +1071,7 @@ function flyable(x, y) { const m = ST.ctx && ST.ctx.S.map; return !m || (x > 40 
 function moveBy(f, dx, dy) {   /* đi có va chạm: chặn trục nào thì bỏ trục đó; trả false khi bị chặn cả hai */
   if (FLY[f.sp] && !f.dead) { let ok = true; if (dx && flyable(f.x + dx, f.y)) f.x += dx; else if (dx) ok = false; if (dy && flyable(f.x, f.y + dy)) f.y += dy; else if (dy) ok = false; return ok; }
   let ok = true;
-  const W = (x, y) => walkable(x, y) || swimOK(f, x, y);
+  const W = (x, y) => walkable(x, y) || swimOK(f, x, y) || (!!(f.comp79 || f.swim10) && ST.owSwim && isWater(x, y));   /* c10:boi: Chấn Thú đi cùng người chơi (squad104 / comp79 / Elyziuma) bơi xuống nước theo người */
   if (dx && W(f.x + dx + Math.sign(dx) * 4, f.y)) f.x += dx; else if (dx) ok = false;
   if (dy && W(f.x, f.y + dy + Math.sign(dy) * 2)) f.y += dy; else if (dy) ok = false;
   return ok;
@@ -1167,7 +1167,8 @@ function occl(ctx, dt) {
 function nearWalk(ctx, x, y) {   /* ô đi được gần nhất (đủ chỗ cho thân thú) */
   for (let r = 0; r < 10; r++) for (let a = 0; a < 16; a++) {
     const px = x + Math.cos(a / 16 * Math.PI * 2) * r * 12, py = y + Math.sin(a / 16 * Math.PI * 2) * r * 12;
-    if (!walkable(px, py) || !walkable(px - 7, py) || !walkable(px + 7, py) || !walkable(px, py - 4) || !walkable(px, py + 3)) continue; return { x: px, y: py };
+    const Wk = (a, c) => walkable(a, c) || (ST.owSwim && isWater(a, c));   /* c10:boi: người đang ở dưới nước → chỗ đặt Chấn Thú cạnh người được là ô nước */
+    if (!Wk(px, py) || !Wk(px - 7, py) || !Wk(px + 7, py) || !Wk(px, py - 4) || !Wk(px, py + 3)) continue; return { x: px, y: py };
   }
   return { x, y };
 }
@@ -1308,7 +1309,7 @@ function drawFighter(g, f, cx, cy, sil, toss) {
   const tz = toss > 0 ? Math.round(Math.sin(Math.PI * (1 - toss / (f.tossT || 0.5))) * (f.tossH || 22)) : 0;   /* hất tung khi bị trồi lên dưới chân */
   const rc = recoilOf(f) + hurtDX(f), x = (globalThis.__R89||Math.round)(f.x - cx) + rc, y = (globalThis.__R89||Math.round)(f.y - (f.alt || 0) - tz - hurtDY(f) - cy), src = sil ? darkOf(im) : f.flash > 0 ? whiteOf(im) : im;
   const one = s2 => { if (flip) { g.save(); g.translate(x, y); g.scale(-1, 1); g.drawImage(s2, fr * sw, r * sh, sw, sh, -ax, -ay, w, h); g.restore(); } else g.drawImage(s2, fr * sw, r * sh, sw, sh, x - ax, y - ay, w, h); };
-  if (!sil && !toss && !((f.alt || 0) > 1) && WATER105.depth) waterDraw105(g, f.x, f.y, x, (globalThis.__R89||Math.round)(f.y - cy), () => one(src)); else one(src);   /* p105w: đứng trong nước → che phần dưới + mép nước (như Rocky, luật Cóc 15/10) */
+  if (!sil && !toss && !((f.alt || 0) > 1) && WATER105.depth) waterDraw105(g, f.x, f.y, x, (globalThis.__R89||Math.round)(f.y - cy), () => { const sk = WATER105.depth(f.x, f.y) >= 11 ? Math.max(0, Math.round(ay * 0.55 - 9 + Math.sin(performance.now() / 330 + f.x * 0.1))) : 0; if (sk) { g.save(); g.translate(0, sk); one(src); g.restore(); } else one(src); }); else one(src);   /* c10:boi: nước SÂU (người đang bơi) → Chấn Thú chìm ~nửa thân + nhấp nhô, như người chơi chỉ còn đầu */   /* p105w: đứng trong nước → che phần dưới + mép nước (như Rocky, luật Cóc 15/10) */
   if (!sil && f.decoy) decoyDraw(g, f, src, fr, r, sw, sh, w, h, ax, ay, x, y, flip);   /* p72 */
   if (!sil && f.status && f.status.id === 'dong') { g.save(); g.globalAlpha = 0.5; one(colorOf(im, '#bfefff')); g.restore(); }   /* p49c: phủ màu băng khi đóng băng */
   if (!sil && !(f.flash > 0) && f.tint > 0) { g.save(); g.globalAlpha = 0.3 * Math.min(1, f.tint / 0.08); one(tintOf(im)); g.restore(); }   /* nhịp lửa giữa: ánh đỏ cam nhẹ thay vì chớp trắng */
@@ -1391,6 +1392,34 @@ function combo85(att, def, o) {   /* cùng 1 bên trúng liên tiếp cùng đ�
 }
 /* ---------- HUD (lớp UI độ phân giải đầy đủ) ---------- */
 function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+const mini10 = () => !!(ST.wild && !ST.inField);   /* c10-vsnho: thú hoang / thủ lĩnh bãi đánh NGAY TRÊN MAP → không bảng VS, chỉ thanh máu nhỏ trên đầu (anh 04/11) */
+let OB10 = null;
+function ob10() { if (!OB10 && typeof Image !== 'undefined') { OB10 = new Image(); OB10.src = BASE + 'ui/hud91/obar_s.png'; } return OB10 && OB10.complete && OB10.naturalWidth ? OB10 : null; }
+function overBar10(ug, sx, sy, w, k, ally, su) {   /* cùng kiểu overBar p91 / farm106: khung PixelLab obar_s.png, XANH LÁ phe mình, ĐỎ thú hoang */
+  const h = Math.max(8, Math.round(su * 2.6)), x = Math.round(sx - w / 2), y = Math.round(sy - h), im = ob10(), q = Math.max(0, Math.min(1, k));
+  const fill = ally ? (q > 0.5 ? '#7bd04a' : q > 0.25 ? '#ffd45e' : '#ff5a5a') : '#e84a3a', dark = ally ? '#2f5a1c' : '#7a1c16';
+  ug.save(); ug.imageSmoothingEnabled = false;
+  if (im) {
+    const sw = im.width, sh = im.height, c = 3, dc = Math.max(2, Math.round(c * h / sh)), ix = Math.max(1, Math.round(3 * h / sh)), iy = Math.max(1, Math.round(3 * h / sh));
+    ug.drawImage(im, 0, 0, c, sh, x, y, dc, h); ug.drawImage(im, c, 0, sw - 2 * c, sh, x + dc, y, w - 2 * dc, h); ug.drawImage(im, sw - c, 0, c, sh, x + w - dc, y, dc, h);
+    const iw = w - 2 * ix, ih = h - 2 * iy; ug.fillStyle = fill; ug.fillRect(x + ix, y + iy, Math.round(iw * q), ih); ug.fillStyle = dark; ug.fillRect(x + ix, y + iy + ih - Math.max(1, Math.round(ih / 3)), Math.round(iw * q), Math.max(1, Math.round(ih / 3)));
+  } else { ug.fillStyle = '#352022'; ug.fillRect(x, y, w, h); ug.fillStyle = fill; ug.fillRect(x + 1, y + 1, Math.round((w - 2) * q), h - 2); }
+  ug.restore(); return { x, y, w, h };
+}
+function drawMiniBars(ug, ctx, cx, cy, scale) {   /* c10-vsnho: thanh máu nhỏ + Lv trên đầu từng Chấn Thú (bám theo thú, không che cảnh) */
+  const su = ctx.scaleUI || scale, fs = Math.max(10, Math.round(su * 3)); ST.miniBars = [];
+  for (const f of ST.F) {
+    if (!f || f.dead || f.absent || f.hidden || f.recall || f.suck) continue;
+    const [sx, sy] = toUI(ctx, f.x, headY(f) - 3, cx, cy, scale), w = Math.round(su * (f.side ? 13 : 14)), r = overBar10(ug, sx, sy, w, f.hp / f.max, !f.side, su);
+    ug.save(); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'left'; ug.textBaseline = 'middle'; ug.fillStyle = '#2a1a10'; ug.fillText('Lv' + f.lv, r.x + r.w + 3, r.y + r.h / 2 + 1); ug.fillStyle = f.side ? '#ffe9d6' : '#e4ffd0'; ug.fillText('Lv' + f.lv, r.x + r.w + 2, r.y + r.h / 2); ug.restore();
+    ST.miniBars.push({ side: f.side, x: r.x, y: r.y, w: r.w, h: r.h, k: +(f.hp / f.max).toFixed(3) });
+  }
+}
+function end10(ctx) {   /* c10-vsnho: hết trận trên map — toast nhỏ thay băng rôn + nút Done; vài giây sau tự trả điều khiển (update) */
+  const E = ST.end; if (!E || E.caught || E.fled) return;
+  const f = ST.F[E.win], nm = f ? fName(ctx, f) : E.win === 0 ? (ctx.S.save.name || L(ctx).you) : L(ctx).wildN;
+  try { ctx.toast(L(ctx).win(nm)); } catch (e) { }
+}
 function hudSide(ug, ctx, f, side, W, u) {
   const t = L(ctx), right = side === 1, pw = Math.round(u * 13), pad = Math.round(u * 1.6), x0 = right ? W - pad - pw : pad, y0 = pad;
   const bw = Math.round(Math.min(W * 0.3, u * 46)), fs = Math.round(u * 4.6), sfs = Math.round(u * 2.9);
@@ -2793,10 +2822,10 @@ function updCatch(dt, ctx) {
   if (C.ph === 'drop') { const k = Math.min(1, C.t / CATCH.DROP); C.h = k < 0.7 ? C.mid * (1 - k / 0.7) : Math.sin(Math.PI * (k - 0.7) / 0.3) * 3; if (k >= 1) { C.h = 0; C.ph = 'wait'; C.t = 0; if (isWater(C.x, C.y)) vfx('swim_ripple', C.x, C.y + 2, { ground: true }); else vfx('dust', C.x, C.y, { ground: true }); } return; }   /* rơi xuống nước (sân biển): gợn nước thay bụi */
   if (C.ph === 'wait') { if (C.t >= CATCH.GAP) { if (C.done < C.shakes) { C.ph = 'shake'; C.t = 0; duelSfx('catch_shake', { n: C.done + 1 }); if (isWater(C.x, C.y)) vfx('swim_ripple', C.x, C.y + 2, { ground: true }); } else if (C.ok) catchOK(ctx); else catchFail(ctx); } return; }
   if (C.ph === 'shake') { if (C.t >= CATCH.SHAKE) { C.done++; C.ph = 'wait'; C.t = 0; } return; }
-  if (C.ph === 'ok') { if (C.t >= CATCH.OK && ST.ph === 'catch') { ST.ph = 'done'; ST.end = { t: 0, win: 0, caught: true }; sfx('win'); endCb(); endPanel(ctx); catchBtn(ctx); if (ST.catchWhere) text(C.x, C.y - 26, ST.catchWhere === 'box' ? L(ctx).toBox : L(ctx).toTeam, '#bfefff', 0.9, 2); } return; }
+  if (C.ph === 'ok') { if (C.t >= CATCH.OK && ST.ph === 'catch') { ST.ph = 'done'; ST.end = { t: 0, win: 0, caught: true }; sfx('win'); endCb(); if (!mini10()) endPanel(ctx); catchBtn(ctx); if (ST.catchWhere) text(C.x, C.y - 26, ST.catchWhere === 'box' ? L(ctx).toBox : L(ctx).toTeam, '#bfefff', 0.9, 2); } return; }
   if (C.ph === 'fail') { if (C.t >= CATCH.FAIL) { C.ph = 'flee'; C.t = 0; f.fade = 1; text(f.x, f.y - 34, L(ctx).fled(fName(ctx, f)), '#ffb0a0', 1.05, 1.8); } return; }
   if (C.ph === 'flee') { const ux = f.x >= me.x ? 1 : -1; f.fx = ux; f.fy = 0.2; f.clip = SPR && SPR[f.sp] && SPR[f.sp].run ? 'run' : 'idle'; moveBy(f, ux * 95 * dt, -12 * dt); f.fade = Math.max(0, 1 - C.t / CATCH.FLEE);
-    if (C.t >= CATCH.FLEE && ST.ph === 'catch') { f.hidden = true; f.fade = null; ST.ph = 'done'; ST.end = { t: 0, win: 0, fled: true }; endCb(); endPanel(ctx); catchBtn(ctx); } }
+    if (C.t >= CATCH.FLEE && ST.ph === 'catch') { f.hidden = true; f.fade = null; ST.ph = 'done'; ST.end = { t: 0, win: 0, fled: true }; endCb(); if (!mini10()) endPanel(ctx); catchBtn(ctx); } }
 }
 function catchOK(ctx) { const C = ST.catch, f = ST.F[1]; C.ph = 'ok'; C.t = 0; ST.catchRes = 'ok'; ST.fxo.push({ id: 'anthu_ok', ant: true, x: C.x, y: C.y - 8, t: 0, ky: C.y + 0.6 }); duelSfx('catch_ok', { sp: f.sp }); text(C.x, C.y - 40, L(ctx).caught(fName(ctx, f)).toUpperCase(), '#ffd45e', 1.3, 2.2); ST.stats.caught = (ST.stats.caught || 0) + 1; }
 function catchFail(ctx) { const C = ST.catch, f = ST.F[1]; C.ph = 'fail'; C.t = 0; ST.catchRes = 'fled'; C.gone = true; ST.fxo.push({ id: 'anthu_fail', ant: true, x: C.x, y: C.y - 8, t: 0, ky: C.y + 0.6 }); duelSfx('catch_fail', { sp: f.sp });
@@ -2832,7 +2861,7 @@ export const linhduel = {
     if (typeof window !== 'undefined') window.__duel = api(ctx);
     ctx.linhDuel = { start: o => startDuel(ctx, o || {}), on: () => ST.on, ask: n => ask(ctx, n) };
     ctx.duelLead = () => myLead(ctx); ctx.ltDuelTeam = () => ltTeam(ctx);   /* p72: chanthu (thú hoang) dùng đội gộp */
-    ctx.ldKit = { mk: (sp, lv, e, x, y) => mkFighter(0, sp, lv, x, y, e), draw: (g, f, cx, cy) => drawFighter(g, f, cx, cy, false), load: () => loadDuel(), ready: () => !!SPR, has: (f, c) => !!(SPR && SPR[f.sp] && SPR[f.sp][c]), clipT: (f, c) => { const s = SPR && SPR[f.sp] && SPR[f.sp][c]; return s ? s.n / (s.fps || FPS[c] || 10) : 0.5; }, impT: c => (FPS[c] && IMPACT[c] != null ? impactT(c) : 0.25), move: (f, dx, dy) => { const k105 = ctx.envfx && ctx.envfx.inFlood && ctx.envfx.inFlood(f.x, f.y) ? 0.7 : 1; return moveBy(f, dx * k105, dy * k105); },   /* p105w-move: lội vùng ngập chậm 30 % */ near: (x, y) => nearWalk(ctx, x, y), name: sp => spName(ctx, sp) };   /* p79: comp79 (thả Chấn Thú) dùng chung sprite + va chạm của trận */
+    ctx.ldKit = { mk: (sp, lv, e, x, y) => mkFighter(0, sp, lv, x, y, e), draw: (g, f, cx, cy) => drawFighter(g, f, cx, cy, false), load: () => loadDuel(), ready: () => !!SPR, has: (f, c) => !!(SPR && SPR[f.sp] && SPR[f.sp][c]), clipT: (f, c) => { const s = SPR && SPR[f.sp] && SPR[f.sp][c]; return s ? s.n / (s.fps || FPS[c] || 10) : 0.5; }, impT: c => (FPS[c] && IMPACT[c] != null ? impactT(c) : 0.25), move: (f, dx, dy) => { const k105 = ctx.envfx && ctx.envfx.inFlood && ctx.envfx.inFlood(f.x, f.y) ? 0.7 : 1; ST.owSwim = true; try { return moveBy(f, dx * k105, dy * k105); } finally { ST.owSwim = false; } },   /* p105w-move: lội vùng ngập chậm 30 % */ near: (x, y) => { const pz = ctx.S.player; ST.owSwim = !!(pz && (ctx.S.swimming || isWater(pz.x, pz.y - 4))); try { return nearWalk(ctx, x, y); } finally { ST.owSwim = false; } },   /* c10:boi */ name: sp => spName(ctx, sp) };   /* p79: comp79 (thả Chấn Thú) dùng chung sprite + va chạm của trận */
     ctx.duel = { wildKey: () => (ST.on && ST.wild ? ST.wild.key || null : null), start: o => startDuel(ctx, o || {}), active: () => ST.on, swap: i => requestSwap(0, i, 'api') };   /* plan-58 C.1: khớp p48b (leaderarena: ctx.duel.start({ foe, foeNpc, team, field, onWin, onLose })) */   /* móc: Sàn Đấu từng map (Leader) gọi start({ foe, foeSp, mySp, lv, reward }) */
     if (!ctx.__ldPet) { ctx.__ldPet = true; }
     ctx.registerCloser('duel', () => { });
@@ -2875,7 +2904,7 @@ export const linhduel = {
     for (const x of ST.texts) x.t += dt; ST.texts = ST.texts.filter(x => x.t < x.life);
     updKnocks(dt0); if (!ST.inField) crowdCtl(ctx, dt0); occl(ctx, dt0);
     if ((ST.terrT -= dt0) <= 0) { ST.terrT = 2; ST.terr = terrainOf(ctx); }
-    if (ST.ph === 'intro') { ST.introT += dt; if (ST.introT > 2.25) { ST.ph = 'send'; sendOut(); }   /* plan-58: 2 huấn luyện viên ném Ấn Chấn rồi mới đánh (alarm + cắt camera khi cả 2 đã ra sân) */   /* plan-52 #10: cắt cứng 1 khung khi vào trận */ camera(ctx, dt); syncMoves(); return; }
+    if (ST.ph === 'intro') { ST.introT += dt; if (ST.introT > (mini10() ? 0.5 : 2.25)) {   /* c10-vsnho: trên map không màn VS → vào trận ngay */ ST.ph = 'send'; sendOut(); }   /* plan-58: 2 huấn luyện viên ném Ấn Chấn rồi mới đánh (alarm + cắt camera khi cả 2 đã ra sân) */   /* plan-52 #10: cắt cứng 1 khung khi vào trận */ camera(ctx, dt); syncMoves(); return; }
     if (ST.ph === 'cut') { ST.cut.t += dt; if (ST.cut.t >= 0.85) { ST.zoomOn = SK[ST.cut.id] && SK[ST.cut.id].m === 'ult' ? foeOf(ST.cut.f) : ST.cut.f;   /* p57: tuyệt chiêu 2 lớp giáng lên đối thủ → camera vào đối thủ */ ST.camZoomT = 1.6; ST.ph = 'fight'; ST.cut = null; } syncMoves(); return; }
     if (ST.ko && !ST.ko.go) { ST.ko.t += dt0; if (ST.ko.t < KO_T0 + (ST.koHold || 0)) return; koGo(ctx); }   /* p57: khung bóng KO_FRAME rồi đứng hình KO_HOLD (cảnh vẽ thường, không cập nhật) */   /* plan-49a M1: đóng băng cả cảnh trong 2 khung kết liễu */
     if (ST.ko) ST.ko.t += dt0;
@@ -2896,8 +2925,8 @@ export const linhduel = {
       if (ST.ph === 'fight' && !ST.clash) clash84(dt);   /* p84: đối chưởng chỉ khi 2 bên cùng tung TIA (trước: tự bật ~15 s một lần) */
       if (ST.ph === 'fight' || ST.ph === 'ko') tick84(dt);   /* p84 đợt 2: CLASH cận chiến + nhịp AI (lùi sau cận chiến, phản đòn sau né) */   /* review7: đối chưởng tự nhiên (≥ 8 s một lần) */
     }
-    if (ST.ph === 'ko' && ST.end && ST.end.mid) koMid(dt0); else if (ST.ph === 'ko') { ST.end.t += dt0 * ST.speed; endRecalls(); for (const f of ST.F) if (!f.dead && !f.act) { f.clip = 'idle'; } if (ST.end.t >= P52.BAN_AT && !ST.end.ban) { ST.end.ban = true; duelSfx('victory_banner', { win: ST.end.win }); } if (ST.end.t > 2.6) {   /* plan-52: giờ thật (cảnh chậm không kéo dài bảng) */ ST.ph = 'done'; sfx('win'); endCb(); endPanel(ctx); showMoves(ctx, true); } }
-    if (ST.ph === 'done') { ST.end.t += dt; for (const f of ST.F) if (!f.dead) { f.ct += dt; f.clip = 'idle'; } }
+    if (ST.ph === 'ko' && ST.end && ST.end.mid) koMid(dt0); else if (ST.ph === 'ko') { ST.end.t += dt0 * ST.speed; endRecalls(); for (const f of ST.F) if (!f.dead && !f.act) { f.clip = 'idle'; } if (ST.end.t >= P52.BAN_AT && !ST.end.ban) { ST.end.ban = true; duelSfx('victory_banner', { win: ST.end.win }); } if (ST.end.t > 2.6) {   /* plan-52: giờ thật (cảnh chậm không kéo dài bảng) */ ST.ph = 'done'; sfx('win'); endCb(); if (mini10()) end10(ctx); else endPanel(ctx); showMoves(ctx, true); } }   /* c10-vsnho */
+    if (ST.ph === 'done') { ST.end.t += dt; for (const f of ST.F) if (!f.dead) { f.ct += dt; f.clip = 'idle'; } if (mini10() && (ST.end.d10 = (ST.end.d10 || 0) + dt) >= (ST.end.caught || ST.end.fled ? 2 : 1.5)) { endBattle(ctx); return; } }   /* c10-vsnho: trên map không nút Done — đứng 1,5 s (bắt / chạy 2 s) rồi tự trả điều khiển; đếm riêng vì ST.end.t nối tiếp pha ko */
     camera(ctx, dt); syncMoves();
   },
   drawGround(g, ctx, cx, cy) {
@@ -2934,7 +2963,7 @@ export const linhduel = {
     if (ST.clash) { const C = ST.clash, ky = Math.max(C.L.y, C.R.y) + 0.5; out.push({ y: ky, f: () => drawBeams(g, cx, cy) }); out.push({ y: ky + 0.1, f: () => drawSteam(g, cx, cy) }); }   /* luồng ngang: vẽ trước người bắn (luật 16/10: không hướng lên) */
     for (const f of ST.F) if (f.ghosts && f.ghosts.length) out.push({ y: f.y - 0.4, f: () => drawGhosts(g, f, cx, cy) });   /* bóng mờ né lướt (sau thân) */
     for (const f of ST.F) if (f.act && f.act.breath) out.push({ y: f.y + (Math.sin(f.act.breath.ang) < 0 ? -0.5 : 0.5), f: () => drawBreath(g, f, cx, cy) });   /* luật 16/10 */
-    for (const f of ST.F) { if (f.dead || f.absent || ST.ph === 'done') continue; const m = VFXM && VFXM[f.side ? 'arrow_foe' : 'arrow_me'], im = m && img(m.file); if (!im) continue;   /* mũi tên phe trên đầu: xanh = mình, đỏ = đối thủ (tĩnh) */
+    for (const f of ST.F) { if (f.dead || f.absent || ST.ph === 'done' || mini10()) continue; const m = VFXM && VFXM[f.side ? 'arrow_foe' : 'arrow_me'], im = m && img(m.file); if (!im) continue;   /* mũi tên phe trên đầu: xanh = mình, đỏ = đối thủ (tĩnh) */
       out.push({ y: f.y + 0.6, f: () => g.drawImage(im, (globalThis.__R89||Math.round)(f.x - cx - m.ax), (globalThis.__R89||Math.round)(headY(f) - 4 - cy - m.h), m.w, m.h) }); }   /* cách đỉnh đầu 4 px */
     for (const e of ST.fx) out.push({ y: e.ky, f: () => drawVfx(g, e, cx, cy) });
     if (DFX.CODE) DFX.drawables(out, g, cx, cy);   /* p52e */ draw84(out, g, cx, cy);   /* p84: tia lửa CLASH cận chiến */
@@ -2977,8 +3006,10 @@ export const linhduel = {
       if (word) { ug.save(); ug.translate(sx, sy); ug.rotate(-0.1); ug.strokeText(x.s, 0, 0); ug.fillStyle = x.col; ug.fillText(x.s, 0, 0); ug.restore(); } else { ug.strokeText(x.s, sx, sy); ug.fillStyle = x.col; ug.fillText(x.s, sx, sy); }   /* plan-49a M2: chữ kết quả nghiêng */
     }
     ug.restore();
-    if (ST.ph === 'intro') { drawIntro(ug, ctx, W, H, u); return; }
+    if (ST.ph === 'intro') { if (!mini10()) drawIntro(ug, ctx, W, H, u); return; }   /* c10-vsnho */
     if (ST.warn) drawWarn(ug, W, H);   /* plan-52 #2: dưới HUD */
+    if (mini10()) { ST.hudUI = null; drawMiniBars(ug, ctx, cx, cy, scale); { const ty = Math.round(u * 1.6); drawSwapBanner(ug, ctx, W, u, ty, 0); drawSwapBanner(ug, ctx, W, u, ty + Math.round(u * 6.5), 1); drawTeam(ug, ctx, W, H, u, ty); } }   /* c10-vsnho: chỉ thanh máu trên đầu (đội nhiều con vẫn có hàng chân dung để đổi) */
+    else {
     const a = hudSide(ug, ctx, ST.F[0], 0, W, u), b = hudSide(ug, ctx, ST.F[1], 1, W, u); ST.hudUI = { y: Math.max(a.y, b.y), scale, cy };
     drawCallout(ug, ctx, 0, a.y + Math.round(u * 1.4), W, u); drawCallout(ug, ctx, 1, b.y + Math.round(u * 1.4), W, u);
     { const ty = Math.max(a.y, b.y) + Math.round(u * 9); drawSwapBanner(ug, ctx, W, u, ty, 0); drawSwapBanner(ug, ctx, W, u, ty + Math.round(u * 6.5), 1); drawTeam(ug, ctx, W, H, u, ty); }   /* plan-58: hàng chân dung đội + banner đổi thú */
@@ -2987,9 +3018,10 @@ export const linhduel = {
     if (ST.terr) { const t = L(ctx), tn = TERR_NAME[ctx.lang() === 'en' ? 'en' : 'vi'][ST.terr.k], ups = Object.entries(ST.terr.mul).map(([k, v]) => (ctx.lang() === 'en' ? TYPE_EN74 : TYPE_NAME)[k] + (v > 1 ? '↑' : '↓')).join(' '), s = `${tn} · ${ups}`, fs = Math.round(u * 2.9);
       ug.save(); ug.font = `bold ${fs}px VT323, monospace`; const tw = ug.measureText(s).width + 14, ty = Math.round(u * 1.6) + (W > H ? Math.round(u * 4.2) + 10 : 0), tx = W > H ? W / 2 : W / 2;
       const yy = W > H ? ty : Math.round(H - u * 30); ug.fillStyle = 'rgba(16,12,22,.72)'; rr(ug, tx - tw / 2, yy, tw, fs + 6, 7); ug.fill(); ug.fillStyle = '#e8dcc0'; ug.textAlign = 'center'; ug.textBaseline = 'top'; ug.fillText(s, tx, yy + 3); ug.restore(); }
+    }   /* c10-vsnho: hết nhánh bảng VS */
     if (ST.ph === 'cut' && ST.cut) drawCut(ug, ctx, W, H);
-    if (ST.ko && ST.ko.go && ST.ko.t < KO_T0 + 1.9 && !(ST.end && ST.end.mid)) drawKoText(ug, ctx, W, H, u);
-    if ((ST.ph === 'ko' || ST.ph === 'done') && ST.end && !ST.end.mid && !ST.end.caught && !ST.end.fled && ST.end.t > P52.BAN_AT) drawBanner(ug, ctx, W, H, u);   /* plan-52 #10: banner thắng trượt từ trái 0,2 s */
+    if (ST.ko && ST.ko.go && ST.ko.t < KO_T0 + 1.9 && !(ST.end && ST.end.mid) && !mini10()) drawKoText(ug, ctx, W, H, u);   /* c10-vsnho */
+    if ((ST.ph === 'ko' || ST.ph === 'done') && ST.end && !ST.end.mid && !ST.end.caught && !ST.end.fled && ST.end.t > P52.BAN_AT && !mini10()) drawBanner(ug, ctx, W, H, u);   /* c10-vsnho */   /* plan-52 #10: banner thắng trượt từ trái 0,2 s */
   },
 };
 function camera(ctx, dt) {   /* camera giữ cả 2 thú (giữa 2 thú, hơi lệch xuống để HUD không che) */
@@ -3039,7 +3071,7 @@ function api(ctx) {
     state: () => ({ ph: ST.ph, t: +ST.t.toFixed(2), F: ST.F.map(f => ({ sp: f.sp, hp: Math.round(f.hp), max: f.max, x: Math.round(f.x), y: Math.round(f.y), clip: f.clip, act: f.act && f.act.id, st: f.status && f.status.id, dead: f.dead, cds: Object.fromEntries(Object.entries(f.cds).map(([k, v]) => [k, +v.toFixed(1)])) })), win: ST.end && ST.end.win, decals: ST.decals.length, fx: ST.fx.length + ST.gfx.length }),
     log: () => ST.log.slice(), stats: () => ST.stats, order: i => order(i), auto: (side, on) => { ST.auto[side] = !!on; }, speed: k => { ST.speed = k; },
     dig: side => { const f = ST.F[side]; if (f && DIG[f.sp]) { startDig(f); return true; } return false; }, scars: () => ST.scars.length + ST.trenches.reduce((n, T) => n + T.pts.length, 0), trenches: () => ST.trenches.map(T => ({ n: T.pts.length, a: +T.a.toFixed(2) })), decals: () => ST.decals.length, waves: () => ST.waves.length,
-    restart: () => startBattle(ctx, { ...(ST.opts || {}) }), hudTop: () => hudTopW(), tier: () => ST.F.map(f => ({ sp: f.sp, tier: f.tier, spe: f.st.spe, hp: f.max, bw: bodyW(f), sh: standH(f) })), loads: () => LOAD, freeze: side => { const f = ST.F[side]; return f && applyStatus(f, 'dong'); }, koHold: s => { ST.koHold = s; }, hooks: () => (ST.hooks || []).slice(), ko: () => ST.ko && { t: +ST.ko.t.toFixed(2), go: ST.ko.go, sep: ST.ko.sep, frameS: ST.koFrameS, side: ST.ko.f.side, alt: +(ST.ko.f.alt || 0).toFixed(1), fly: !!ST.ko.f.koFly, x: Math.round(ST.ko.f.x), y: Math.round(ST.ko.f.y) }, zoomStep: () => ({ z: ctx.S.camZoom, m: ctx.zoomM, snap: !!ctx.S.camZoomSnap, zv: ctx.zoomView && ctx.zoomView() }), killFoe: (side = 1) => { const f = ST.F[side]; if (f) { f.hp = 1; hit(foeOf(f), f, MOVES.huc, { noMiss: true, mul: 50 }); } }, swim: () => ST.F.map(f => !!inSwim(f)), rafts: () => (ctx.S.map.rafts || []).length, zone: () => ctx.S.zone.id, field: () => FIELD.kind, inField: () => !!ST.inField, startDuel: o => startDuel(ctx, { foe: ST.villager, ...(o || {}) }), clashNow: () => ST.clash && { x: Math.round(ST.clash.x), y: Math.round(ST.clash.y), off: Math.round(ST.clash.off || 0), ph: ST.clash.ph, adv: ST.clash.adv, L: ST.clash.L.sp, R: ST.clash.R.sp, win: ST.clash.win && ST.clash.win.sp, t: +ST.clash.t.toFixed(2) }, clashLast: () => ST.clashLast || null, err: () => ST.err || null, challenge: (x, y) => { const v = ST.villager; if (v && x != null) { v.x = x; v.y = y; } startDuel(ctx, { foe: v }); return Promise.resolve(true); }, end: () => endBattle(ctx), knocks: () => ST.knocks.length, alt: () => ST.F.map(f => +(f.alt || 0).toFixed(1)), wrapped: () => ST.wrap.size, occ: () => ST.F.map(f => +(f.occ || 0).toFixed(2)), ring: () => null, terr: () => ST.terr && { k: ST.terr.k, mul: ST.terr.mul }, host: () => ST.villager && { x: ST.villager.x, y: ST.villager.y }, spawnHost: (x, y) => { const mem = pickFoe(ctx), n = new ctx.NPC(mem, x, y, ctx.npcSheet(mem), () => 0.5); n.busy = true; n.dir = 0; n.duelHost = true; ST.villager = n; return true; }, ask: () => ST.villager && ask(ctx, ST.villager), ready: () => !!(SPR && VFXM), fighters: () => ST.F, cdAll: () => { for (const f of ST.F) for (const k in f.cds) f.cds[k] = 0; },
+    restart: () => startBattle(ctx, { ...(ST.opts || {}) }), hudTop: () => hudTopW(), mini10: () => ({ on: mini10(), bars: (ST.miniBars || []).slice() }), tier: () => ST.F.map(f => ({ sp: f.sp, tier: f.tier, spe: f.st.spe, hp: f.max, bw: bodyW(f), sh: standH(f) })), loads: () => LOAD, freeze: side => { const f = ST.F[side]; return f && applyStatus(f, 'dong'); }, koHold: s => { ST.koHold = s; }, hooks: () => (ST.hooks || []).slice(), ko: () => ST.ko && { t: +ST.ko.t.toFixed(2), go: ST.ko.go, sep: ST.ko.sep, frameS: ST.koFrameS, side: ST.ko.f.side, alt: +(ST.ko.f.alt || 0).toFixed(1), fly: !!ST.ko.f.koFly, x: Math.round(ST.ko.f.x), y: Math.round(ST.ko.f.y) }, zoomStep: () => ({ z: ctx.S.camZoom, m: ctx.zoomM, snap: !!ctx.S.camZoomSnap, zv: ctx.zoomView && ctx.zoomView() }), killFoe: (side = 1) => { const f = ST.F[side]; if (f) { f.hp = 1; hit(foeOf(f), f, MOVES.huc, { noMiss: true, mul: 50 }); } }, swim: () => ST.F.map(f => !!inSwim(f)), rafts: () => (ctx.S.map.rafts || []).length, zone: () => ctx.S.zone.id, field: () => FIELD.kind, inField: () => !!ST.inField, startDuel: o => startDuel(ctx, { foe: ST.villager, ...(o || {}) }), clashNow: () => ST.clash && { x: Math.round(ST.clash.x), y: Math.round(ST.clash.y), off: Math.round(ST.clash.off || 0), ph: ST.clash.ph, adv: ST.clash.adv, L: ST.clash.L.sp, R: ST.clash.R.sp, win: ST.clash.win && ST.clash.win.sp, t: +ST.clash.t.toFixed(2) }, clashLast: () => ST.clashLast || null, err: () => ST.err || null, challenge: (x, y) => { const v = ST.villager; if (v && x != null) { v.x = x; v.y = y; } startDuel(ctx, { foe: v }); return Promise.resolve(true); }, end: () => endBattle(ctx), knocks: () => ST.knocks.length, alt: () => ST.F.map(f => +(f.alt || 0).toFixed(1)), wrapped: () => ST.wrap.size, occ: () => ST.F.map(f => +(f.occ || 0).toFixed(2)), ring: () => null, terr: () => ST.terr && { k: ST.terr.k, mul: ST.terr.mul }, host: () => ST.villager && { x: ST.villager.x, y: ST.villager.y }, spawnHost: (x, y) => { const mem = pickFoe(ctx), n = new ctx.NPC(mem, x, y, ctx.npcSheet(mem), () => 0.5); n.busy = true; n.dir = 0; n.duelHost = true; ST.villager = n; return true; }, ask: () => ST.villager && ask(ctx, ST.villager), ready: () => !!(SPR && VFXM), fighters: () => ST.F, cdAll: () => { for (const f of ST.F) for (const k in f.cds) f.cds[k] = 0; },
     pair: (a, b) => { ST.pair = [a, b]; return ST.pair; }, wx: () => ({ w: ST.weather, t: +(ST.wxT || 0).toFixed(1), log: (ST.wxLog || []).slice() }), ltRes: () => ST.ltRes || null,   /* p72 */ wipeOn: () => !!ST.wipe,
     clash: () => { if (ST.F.length === 2) { ST.clashNext = 0; ST.p84force = 1; try { startClash(ST.F[0], ST.F[1]); } finally { ST.p84force = 0; } } return !!ST.clash; }, clash84: () => ({ n: ST.clash84 | 0, answer: ST.answer84 | 0, beamBoom: (ST.stats && ST.stats.beamBoom) | 0, beamN: ST.beamN84 | 0 }),
     p84: () => ({ mclash: ST.mclash84 | 0, mlog: (ST.mclashLog || []).slice(), beamN: ST.beamN84 | 0, clash84: ST.clash84 | 0, answer: ST.answer84 | 0, dodgeTia: ST.stats.p84dodgeTia | 0, dodgeTel: ST.stats.p84dodgeTel | 0, dodgeShot: ST.stats.dodge | 0, ctr: ST.stats.p84ctr | 0, back: ST.stats.p84back | 0, sh: ST.stats.p84sh || {}, fx: (ST.p84fx || []).length, lk: ST.F.map(f => +(f.p84lk || 0).toFixed(2)) }),

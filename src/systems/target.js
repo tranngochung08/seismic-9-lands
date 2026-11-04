@@ -330,6 +330,7 @@ export function clickVerdict(mt, hoverFn) {   /* main.onClick gọi đầu tiên
     const r = rule(ent, hc);
     if (r.act === 'no') { if (D.S.time - ST.noT > 0.8) { ST.noT = D.S.time; D.CTX.toast(NOMSG(nameOf(ent))); D.CTX.sfx('fail'); } return { stop: true, why: 'no' }; }
     lock(ent);
+    if ((ent.kind === 'mon' || ent.kind === 'tent') && hc === 'weapon') return { chase: ent };   /* p120 2026-11-04 anh: cầm vũ khí (ô 1) + click quái = khóa + TỰ ĐI TỚI rồi đánh luôn (main.chaseTick) */
     if (r.act === 'talk' || (ent.kind === 'npc' && hc === 'item')) return dist(ent) <= 33 ? (r.act === 'talk' ? { talk: ent.ref } : {}) : { stop: true, why: 'lock' };   /* trong tầm: nói chuyện / tặng đá như cũ; xa: chỉ khóa */
     return { stop: true, why: 'lock' };   /* click = CHỈ KHÓA (không tự đi, không tự đánh / bắn) */
   }
@@ -361,6 +362,7 @@ export function hoverLabel() {
   const h = ST.hover; if (!h) return null; const r = rule(h), n = nameOf(h), v = vi(), t = get();
   if (!r) return null; if (r.act === 'no') return NOMSG(n);
   if (h.kind === 'npc' && heldClass() !== 'gun' && dist(h) <= 33) return null;   /* trong tầm: nhãn việc như cũ (nói chuyện / tặng đá) */
+  if ((h.kind === 'mon' || h.kind === 'tent') && heldClass() === 'weapon') return v ? `⚔ Tấn công: ${n}` : `⚔ Attack: ${n}`;   /* p120: click = đi tới + đánh */
   if (t && t.ref === h.ref) return v ? `🎯 ${n} (đang khóa)` : `🎯 ${n} (locked)`;
   return v ? `🎯 Khóa mục tiêu: ${n}` : `🎯 Lock target: ${n}`;
 }

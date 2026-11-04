@@ -113,7 +113,7 @@ export function cycle(d) { const s = sv(); let i = (s.hotSel == null || s.hotSel
 export function key(code, rep) {
   if (hidden()) return false;
   if (code === 'KeyR') { if (!rep) eatBest(); return true; }
-  if (code in SKEYS) { if (!rep) skill(SKEYS[code]); return true; }
+  if (code in SKEYS) { if (!rep) { KB120 = true; try { skill(SKEYS[code]); } finally { KB120 = false; } } return true; }
   if (!(code in KEYS)) return false;
   const i = KEYS[code], id = sv().hotbar[i]; select(i);
   if (kindOf(id) === 'food' && !rep) eatTap(id);
@@ -209,10 +209,11 @@ function aimHa() {   /* ô 2: Rocky-ha nhắm con đang khoá → con gần nh�
   if (q) return Math.atan2(q.y - (e.y - 7), q.x - e.x);
   const p = deps.S.player, D = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir || 0]; return Math.atan2(D[1], D[0]);
 }
+let KB120 = false;   /* p120: skill() đang được gọi từ phím (không phải chuột) */
 export function skill(i) {
   const C = deps.CTX, t = T(); if (deps.S.mode !== 'play') return false;
   if (htOn()) { if (window.__hopthe) window.__hopthe.use(i); render(true); return true; }   /* ô 5 = tuyệt chiêu Hợp Thể (trước: R) */
-  if (i === 0) { if (mobile()) hold(WEAPON); else select(-1); if (deps.strike) deps.strike(); return true; }   /* 2026-11-04 anh: bấm ô 1 = cầm kiếm VÀ ra đòn ngay (trước chỉ cầm, phải bấm thêm E) */
+  if (i === 0) { if (mobile()) hold(WEAPON); else select(-1); if (deps.strike && KB120) deps.strike(); return true; }   /* p120: chỉ PHÍM 1 ra đòn ở đây; bấm chuột ô 1 đã có c12 swingNow (tránh chém 2 lần) */   /* 2026-11-04 anh: bấm ô 1 = cầm kiếm VÀ ra đòn ngay (trước chỉ cầm, phải bấm thêm E) */
   if (i === 1) { const R = rk(); if (!R) { C.toast(t.noRk); C.sfx('fail'); return false; }
     if (!(R.haReady && R.haReady())) { const why = R.haWhy ? R.haWhy() : ''; C.toast(/tier/.test(why) ? t.noHa : /cd/.test(why) ? t.cd : t.rkBusy); C.sfx('fail'); return false; }
     const a = aimHa(); const ok = a != null && R.haFire(a); render(true); return ok; }
@@ -221,6 +222,20 @@ export function skill(i) {
   if (dragonOk()) { const d = (deps.S.sys || []).find(s => s && s.id === 'dragon'); if (d && d.key) d.key('KeyG', C); render(true); return true; }
   if (rk() && C.hopthe && C.hopthe.fuse) { C.hopthe.fuse(); render(true); return true; }
   C.toast(t.lock5); C.sfx('fail'); return false;
+}
+/* c12-kiem swingNow (anh 04/11 "nhấn vào thanh kiếm nhưng nhân vật không chịu đánh"): bấm chuột / chạm ô 1 = cầm kiếm + VUNG LUÔN.
+   Chém đối thủ trong tầm như phím E (ứng viên đánh của các hệ: quái / xúc tu / trùm / việc trong trận; mục tiêu đang khoá trước, rồi con gần nhất);
+   không có thì vung không theo hướng đang nhìn (clip attack + tiếng swing có sẵn). Phím 1 giữ như cũ (chỉ cầm). */
+const FIGHT12 = d => !!(d && (d.mo || d.tent || d.grab || d.fight)), SW12 = { n: 0, air: 0, last: null };
+export function swingNow() {
+  if (!deps) return false; const C = deps.CTX, S = deps.S, p = S.player; if (!p || S.mode !== 'play' || htOn() || held() !== WEAPON) return false;
+  let best = null, bs = -Infinity;
+  for (const sy of S.sys || []) { if (!sy || !sy.near || !sy.interact) continue; let c = null; try { c = sy.near(C); } catch (e) { continue; } if (!c || c.need || !FIGHT12(c.data)) continue;
+    const d = Math.hypot(c.x - p.x, c.y - p.y), lim = c.limit == null ? 30 : c.limit; if (d > lim) continue;
+    const pr = typeof c.priority === 'number' ? c.priority : c.priority ? 1 : 0, sc = pr * 1000 + (c.isLock ? 500 : 0) - d; if (sc > bs) { bs = sc; best = { sy, c }; } }
+  if (best) { try { best.sy.interact(C, best.c); } catch (e) { console.error(best.sy.id, e); } SW12.n++; SW12.last = { sys: best.sy.id, label: best.c.label, t: S.time }; return true; }
+  if (!p.custom && !p.action && p.hasAct && p.hasAct('attack')) { p.act('attack', 0); SW12.air++; SW12.last = { sys: null, t: S.time }; }
+  return false;
 }
 export const skillState = () => [0, 1, 2, 3, 4].map(i => { const s = skillInfo(i); return { name: s.name, lock: !!s.lock, cd: +(s.cd || 0).toFixed(1), dim: !!s.dim, ht: s.cls === 'ht' }; });
 
@@ -386,12 +401,12 @@ export function initHotbar(d) {
     if (e.target.closest('.hb-c79')) { e.preventDefault(); e.stopPropagation(); const C = c79Api(); if (C) C.press(); render(true); return; }
     if (e.target.closest('.hb-bag')) { e.preventDefault(); e.stopPropagation(); if (deps.openBag) deps.openBag(); return; }
     if (e.target.closest('.hb-rk')) { e.preventDefault(); e.stopPropagation(); if (deps.CTX.rocky && deps.CTX.rocky.openChat) deps.CTX.rocky.openChat(); return; }
-    const k = e.target.closest('[data-sk]'); if (k) { e.preventDefault(); e.stopPropagation(); skill(+k.dataset.sk); return; }
+    const k = e.target.closest('[data-sk]'); if (k) { e.preventDefault(); e.stopPropagation(); const si = +k.dataset.sk, ht0 = htOn(); const ok = skill(si); if (si === 0 && ok && !ht0 && e.button === 0) swingNow(); /* c12-kiem: bấm ô kiếm = cầm + vung luôn */ return; }
     if (e.target.closest('.h91-do')) { e.preventDefault(); e.stopPropagation(); DO.open = !DO.open; render(true); return; }
     const s = e.target.closest('.hb-slot[data-i]'); if (!s) return; e.preventDefault(); e.stopPropagation(); if (mobile()) { const id = sv().hotbar[+s.dataset.i]; if (id) { if (kindOf(id) === 'food') eatTap(id); else hold(id); } DO.open = false; render(true); return; } select(+s.dataset.i);
   });
   const cv = d.canvas;
   cv.addEventListener('wheel', e => { if (hidden() || (window.__altWheel && window.__altWheel())) return; e.preventDefault(); cycle(e.deltaY > 0 ? 1 : -1); }, { passive: false });
   cv.addEventListener('contextmenu', e => { if (hidden()) return; e.preventDefault(); eatHeld(); });
-  if (typeof window !== 'undefined') window.__hb91 = { skill, skillState, migrate, held, sel: () => sv() && sv().hotSel, bar: () => sv() && sv().hotbar.slice(), bag: () => bagSlots().slice(), portrait: () => PORT.url };
+  if (typeof window !== 'undefined') window.__hb91 = { skill, skillState, swing: swingNow, sw12: () => ({ ...SW12 }), migrate, held, sel: () => sv() && sv().hotSel, bar: () => sv() && sv().hotbar.slice(), bag: () => bagSlots().slice(), portrait: () => PORT.url };
 }

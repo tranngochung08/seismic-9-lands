@@ -122,7 +122,7 @@ export const swim = {
   onZoneEnter(ctx) {
     WATER.depth = (x, y) => { const d = depthAt(ctx, x, y); return d === 'swim' ? 11 : d === 'wade' ? 6 : 0; };   /* NPC/thú lội nước vẽ ngập như người chơi */
     st.mode = 'none'; st.rescue = null; st.fx = []; st.ownCustom = null; st.ownPass = null; ctx.S.swimming = false;
-    if (typeof window !== 'undefined') window.__swim = { state: () => ({ mode: st.mode, stam: +st.stam.toFixed(2), rescue: st.rescue && { phase: st.rescue.phase, n: st.rescue.n && st.rescue.n.m.n, x: Math.round(st.rescue.x), y: Math.round(st.rescue.y) } }), drain: () => { st.stam = 0.01; }, talks: () => ctx.S.save.talks };
+    if (typeof window !== 'undefined') window.__swim = { state: () => ({ mode: st.mode, stam: +st.stam.toFixed(2), rescue: st.rescue && { phase: st.rescue.phase, n: st.rescue.n && st.rescue.n.m.n, x: Math.round(st.rescue.x), y: Math.round(st.rescue.y) } }), drain: () => { }, talks: () => ctx.S.save.talks };
   },
   onZoneLeave(ctx) { setCustom(ctx, null); setPass(ctx, false); ctx.S.swimming = false; },
   update(dt, ctx) {
@@ -140,12 +140,12 @@ export const swim = {
     st.t += dt; st.ripT += dt;
     if (st.mode === 'wade') { p.speedMul = ctx.envfx && ctx.envfx.inFlood && ctx.envfx.inFlood(p.x, p.y - 4) ? 0.7 : 0.65;   /* p105: lội vùng ngập chậm 30 % */ setCustom(ctx, (g, e) => drawInWater(g, e, 6)); st.stam = Math.min(STAM_MAX, st.stam + REGEN * dt); if (p.moving && st.ripT > 0.35) { st.ripT = 0; ripple(ctx, p.x, p.y, 4); } }
     else if (st.mode === 'swim') {
-      p.speedMul = 0.5; setCustom(ctx, (g, e) => drawInWater(g, e, 11)); st.stam -= dt;
+      p.speedMul = 0.8; setCustom(ctx, (g, e) => drawInWater(g, e, 11)); st.stam = STAM_MAX;   /* c10:boi (anh 04/11): bơi thoải mái — không mất sức, không chết đuối, nhanh hơn (0,5 → 0,8) */
       if (p.moving && st.ripT > 0.25) { st.ripT = 0; ripple(ctx, p.x, p.y, 5); }
-      if (st.stam < STAM_MAX * 0.3 && !st.warned) { st.warned = true; ctx.toast(t.low); ctx.sfx('warn'); }
-      if (st.stam <= 0) { st.stam = 0; st.mode = 'drown'; st.t = 0; p.speedMul = 0; p.moving = false; setCustom(ctx, drawDrowned); ctx.toast(t.tired, true); ctx.sfx('faint'); }
+      /* c10:boi: bỏ cảnh báo sắp hết sức */
+      if (false) { st.stam = 0; st.mode = 'drown'; st.t = 0; p.speedMul = 0; p.moving = false; setCustom(ctx, drawDrowned); ctx.toast(t.tired, true); ctx.sfx('faint'); }
     }
-    else if (st.mode === 'drown') { p.speedMul = 0; if (st.t > DROWN_SECS) startRescue(ctx); }
+    else if (st.mode === 'drown') { st.mode = 'swim'; p.speedMul = 0.8; setCustom(ctx, null); }   /* c10:boi: (phòng hờ) không còn trạng thái đuối */
     else { st.stam = Math.min(STAM_MAX, st.stam + REGEN * dt); if (st.stam >= STAM_MAX) st.warned = false; }
   },
   near(ctx) {   /* thả thú đang cầm xuống nước: đứng trong nước, có cá/cua/kỳ nhông trên tay */
@@ -155,7 +155,7 @@ export const swim = {
     return { label: L(ctx).release, x: p.x, y: p.y, limit: 20, data: { idx: i[1], kind: i[0].kind } };
   },
   interact(ctx, cand) { const d = cand.data; const it = removeCarry(ctx, d.idx); if (!it) return; ripple(ctx, ctx.S.player.x + 10, ctx.S.player.y, 8); ctx.sfx('splash'); ctx.toast(L(ctx).released(ctx.itemName(it.kind))); },
-  hudLines(ctx) { if (st.mode === 'swim' || st.mode === 'drown') return [`🏊 ${Math.ceil(st.stam)}s`]; if (st.mode === 'wade') return ['💧']; return []; },
+  hudLines(ctx) { if (st.mode === 'swim' || st.mode === 'drown') return ['🏊']; if (st.mode === 'wade') return ['💧']; return []; },
   drawables(ctx, cx, cy) {
     const out = [], g = ctx.g;
     if (!(ctx.ART && ctx.ART.waterNew)) for (const f of st.fx) out.push({ y: f.y - 300, f: () => { const k = f.t / 0.6; g.strokeStyle = `rgba(230,246,255,${(0.7 * (1 - k)).toFixed(2)})`; g.lineWidth = 1; g.beginPath(); g.ellipse(f.x - cx, f.y - cy, f.r + k * 10, (f.r + k * 10) * 0.45, 0, 0, Math.PI * 2); g.stroke(); } });
@@ -164,7 +164,7 @@ export const swim = {
     return out;
   },
   drawUI(ug, ctx, cx, cy, scale) {
-    if (st.mode === 'none' && st.stam >= STAM_MAX) return;
+    if (st.mode !== 'rescue') return;   /* c10:boi: không còn thanh sức bơi / màn tối dần */
     const t = L(ctx), w = 120, h = 10, x = 14, y = Math.round(scale * 24) + 12, k = st.stam / STAM_MAX;
     ug.fillStyle = 'rgba(13,11,20,.7)'; ug.fillRect(x - 2, y - 2, w + 4, h + 4); ug.fillStyle = '#2b2440'; ug.fillRect(x, y, w, h);
     ug.fillStyle = k < 0.3 ? '#ff6b84' : '#5cc9ee'; ug.fillRect(x, y, Math.round(w * k), h);

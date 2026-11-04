@@ -68,11 +68,7 @@ export function dropBucket(s) {
   return s;
 }
 export let SAVE_OFF = false; export function saveOff() { SAVE_OFF = true; }   /* ?promo: không ghi đè save thật */
-let WRITE_HOOK = null, AFTER_HOOK = null;   /* c1-p82: cloud82.js gắn (mặc định null → y như cũ) */
-export function setWriteHook(before, after) { WRITE_HOOK = before || null; AFTER_HOOK = after || null; }
-export function saveKey() { return KEY; }
-export function isSyncSlot() { return KEY === 'seismic9.save.v1' && !SAVE_OFF; }   /* chỉ ô save THẬT mới đồng bộ mây (không preset / guest_find / promo / đang nhập mã) */
-export function writeSave(s) { if (SAVE_OFF) return; if (WRITE_HOOK) { try { WRITE_HOOK(s, KEY); } catch (e) { } } try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { } if (AFTER_HOOK) { try { AFTER_HOOK(s, KEY); } catch (e) { } } }
+export function writeSave(s) { if (SAVE_OFF) return; try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { } }
 export function clearSave() { try { localStorage.removeItem(KEY); } catch (e) { } }
 
 /* ---- plan-44 Q6 (2026-10-17): XUẤT / NHẬP MÃ LƯU — mang save sang máy khác (máy tính ↔ điện thoại) ----

@@ -175,7 +175,7 @@ const ST = {
 const tileOf = v => Math.floor(v / TS);
 function passable(ctx, x, y) {   // 8×4 feet box, same tile rule as the player's default
   const map = ctx.S.map;
-  for (const [ox, oy] of [[-4, -4], [3, -4], [-4, -1], [3, -1]]) { const tx = tileOf(x + ox), ty = tileOf(y + oy); if (ctx.isSolid(map, tx, ty) && !(map.rkRuinTiles && map.rkRuinTiles.has(ty * map.w + tx))) return false; }   /* đống đổ nát do Rocky phá (blast.js): Rocky đi qua được */
+  for (const [ox, oy] of [[-4, -4], [3, -4], [-4, -1], [3, -1]]) { const tx = tileOf(x + ox), ty = tileOf(y + oy); if (ctx.isSolid(map, tx, ty) && !(map.rkRuinTiles && map.rkRuinTiles.has(ty * map.w + tx)) && !(WATER.depth && WATER.depth(tx * TS + 8, ty * TS + 12) > 0)) return false; }   /* c10:boi: Rocky bơi theo người (ô nước đi được) */   /* đống đổ nát do Rocky phá (blast.js): Rocky đi qua được */
   return true;
 }
 function freeNear(ctx, x, y) {   // nearest walkable px spot around (x,y)

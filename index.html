@@ -18,7 +18,7 @@
 </script>
 <script>/* c6 (Việc 6): nạp src/c6pack.js (gộp ảnh / JSON lượt đầu thành vài gói) — thử lại khi 429 / lỗi mạng; game (main.js) chờ c6 sẵn sàng (≤ 15 s) rồi mới nạp. Hỏng hẳn → game tải lẻ như cũ. ?c6=0 tắt. */
 (function () { if (/[?&]c6=0(&|$)/.test(location.search)) return; var W = [400, 900, 1800, 3200, 5000], i = 0;
-  var p = new Promise(function (res) { (function go() { var s = document.createElement('script'); s.src = 'src/c6pack.js?v=86fd393c19' + (i ? '&r=' + i : ''); s.onload = function () { res(); };
+  var p = new Promise(function (res) { (function go() { var s = document.createElement('script'); s.src = 'src/c6pack.js?v=e8df1b3110' + (i ? '&r=' + i : ''); s.onload = function () { res(); };
     s.onerror = function () { s.remove(); if (i < W.length) setTimeout(go, W[i++] * (0.8 + Math.random() * 0.4)); else res(); }; document.head.appendChild(s); })(); });
   window.__swReady = Promise.all([window.__swReady, Promise.race([p, new Promise(function (r) { setTimeout(r, 15000); })])]).then(function () { });
 })();

@@ -130,7 +130,7 @@ function mkE(ctx, pop) {
 }
 function near(ctx, x, y) { try { if (ctx.ldKit && ctx.ldKit.near) return ctx.ldKit.near(x, y); } catch (e) { } return { x, y }; }
 function moveE(ctx, E, dx, dy) {
-  const k = ctx.ldKit; if (k && k.move && k.ready && k.ready()) { const o = { sp: 'elyziuma', x: E.x, y: E.y }; const ok = k.move(o, dx, dy); E.x = o.x; E.y = o.y; return ok; }
+  const k = ctx.ldKit; if (k && k.move && k.ready && k.ready()) { const o = { sp: 'elyziuma', x: E.x, y: E.y, swim10: true }; const ok = k.move(o, dx, dy);   /* c10:boi: bơi theo người chơi */ E.x = o.x; E.y = o.y; return ok; }
   E.x += dx; E.y += dy; return true;
 }
 function face(E, x, y) { const dx = x - E.x, dy = y - E.y, d = Math.hypot(dx, dy); if (d > 0.5) { E.fx = dx / d; E.fy = dy / d; } }
