@@ -555,7 +555,7 @@ function chatUI(ctx) {
     b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ctx.S.mode === 'play') openChat(ctx); else if (ctx.S.mode === 'chat') closeChat(ctx); }); }
 }
 function openChat(ctx) {
-  const pt = petOf(ctx); if (!pt || ctx.S.mode !== 'play') return false; chatUI(ctx); const t = L(ctx);
+  const pt = petOf(ctx); if (true || !pt || ctx.S.mode !== 'play') return false; chatUI(ctx); const t = L(ctx);   /* c33-bohopthe: bỏ ô lệnh chat Rocky */
   const el = ST.chatEl, inp = el.querySelector('input'); inp.placeholder = t.chatPh; el.querySelector('#rk-chat-send').textContent = t.send;
   el.querySelector('.rk-cmds').innerHTML = ['protect', 'attack', 'follow', 'home'].map(k => `<button type="button" data-cmd="${k}" class="${pt.cmd === k ? 'on' : ''}">${t.cmd[k]}</button>`).join('')
     + (ctx.hopthe ? `<button type="button" data-hopthe="1" class="ht">⚡ ${ctx.hopthe.label()}${ctx.hopthe.cdText() ? ' · ' + ctx.hopthe.cdText() : ''}</button>` : '');   /* plan-50: nút Hợp thể / Tách ra (hồi chờ hiện số phút) */
@@ -890,7 +890,7 @@ function updatePet(dt, ctx) {
   { const mnt = ctx.skyMount ? ctx.skyMount() : null;   /* plan-31: người chơi đang CƯỠI Rocky bay (sky.js vẽ cả hai) — Rocky bám theo chỗ cưỡi, chỉ chạy luồng Rocky-ha đã ra lệnh */
     if (mnt) { e.state = 'mount'; e.x = mnt.x; e.y = mnt.y; e.px = e.x; e.py = e.y; e.face = mnt.face; e.diag = null; e.sec8 = null; e.dir = mnt.dir; e.moving = false; e.sit = false; e.kfly = null; e.kdown = 0; if (ST.sparkle) cancelFetch(); ST.tgt = null; if (ST.beam) beamTick(ctx, pt, dt); return; }
     if (e.state === 'mount') { e.state = 'follow'; e.ghost = 1; } }
-  const hungry = pt.hunger < HUNGRY_AT;
+  if (pt.hunger < 100) pt.hunger = 100; const hungry = false;   /* c33-bohopthe: Chấn Thú không đói / không cần cho ăn (bỏ bong bóng đói) */
   const riding = !!(ctx.S.sea && ctx.S.sea.riding && !ctx.S.sea.diving);   /* anh báo 2026-10-10: chỉ ngồi khi đang trên bè/ván, không phải cả vùng Biển */
   if (e.ghost > 0) { e.ghost -= dt; if (e.ghost <= 0 && !passable(ctx, e.x, e.y)) { const f = freeNear(ctx, e.x, e.y); e.x = f.x; e.y = f.y; } }   /* 2026-10-12 tối anh (ảnh Rocky lẫn trong cây): hết xuyên mà còn đứng trong thân cây / vật → dời ra ô trống gần nhất */
   if (e.hop > 0) e.hop -= dt;
@@ -1124,7 +1124,7 @@ export const pet = {
     rollLoot.grown = !!(s.pet && s.pet.grown);
     if (s.pet) updatePet(dt, ctx);
     if (s.pet && ST.chatBtn) { ST.btnT = (ST.btnT || 0) - dt; if (ST.btnT <= 0) { ST.btnT = 1; placeChatBtn(); if (ST.chatOpen) placeChat(); } }
-    else if (s.pet && typeof document !== 'undefined' && document.getElementById('touch')) chatUI(ctx);
+    else if (false) chatUI(ctx);   /* c33-bohopthe: bỏ nút 💬 Rocky trên điện thoại */
   },
 
   near(ctx) {
@@ -1135,7 +1135,7 @@ export const pet = {
       const x = ST.eggObj.x * TS + 8, y = ST.eggObj.y * TS + 12;
       if (Math.hypot(x - p.x, y - p.y) < 26) return { label: t.takeEgg, x, y, limit: 26, priority: true, data: { egg: true } };
     }
-    if (!s.pet || !ST.ent) return null;
+    if (!s.pet || !ST.ent || true) return null;   /* c33-bohopthe (anh 04/11): Ubam / Rocky là Chấn Thú như mọi con — bỏ nhãn Vuốt ve / Cho ăn / Nhận đồ (quà tự đưa sau 8 s) */
     if (ctx.petHush && ctx.petHush()) return null;   /* 2026-10-11 Sàn Đấu Ngầm: trong sàn cát E dành cho đòn đánh, Rocky không giành */
     const e = ST.ent, d = Math.hypot(e.x - p.x, e.y - p.y); if (d > 30 || e.state === 'fetch' || e.state === 'dig' || e.state === 'ride') return null;   /* trên bè: E dành cho câu cá / bè, không vuốt ve */
     if (ST.tgt || ST.beam || ST.cine) return null;   /* plan-27: đang đánh nhau — E dành cho đòn của bạn */
@@ -1163,7 +1163,7 @@ export const pet = {
   },
 
   key(code, ctx) {
-    if (code === 'Slash' && ctx.S.mode === 'play' && petOf(ctx)) return openChat(ctx);   /* 2026-10-12 anh: bỏ Enter (trùng phím tương tác) — phím / hoặc nút Rocky trên thanh công cụ mở ô lệnh */
+    if (code === 'Slash' || code === 'KeyN') return false;   /* c33-bohopthe: bỏ ô lệnh Rocky (/) và đổi tên tại chỗ (N) — đổi tên ở bảng Đội */   /* 2026-10-12 anh: bỏ Enter (trùng phím tương tác) — phím / hoặc nút Rocky trên thanh công cụ mở ô lệnh */
     if (code !== 'KeyN' || ctx.S.mode !== 'play') return false;
     const s = sv(ctx); if (!s.pet || !ST.ent) return false;
     const p = ctx.S.player; if (Math.hypot(ST.ent.x - p.x, ST.ent.y - p.y) > 40) return false;
@@ -1308,7 +1308,8 @@ export const pet = {
 
   hudLines(ctx) {
     const t = L(ctx), s = sv(ctx);
-    if (s.pet) { const pt = s.pet, lv = lvOf(pt); if ((pt.koT || 0) > 0) return [t.hudKo(pt.name, Math.ceil(pt.koT))]; if (pt.cmd === 'home') return [t.hudHome(pt.name, lv)]; return [t.hud(pt.name, lv, t.cmd[pt.cmd] || pt.cmd) + (pt.hunger < HUNGRY_AT ? t.hungry : '')]; }
+    if (s.pet) return [];   /* c33-bohopthe: bỏ chip trạng thái thú cưng riêng ('Rocky Lv 40 · Theo') — Ubam / Rocky hiện ở thanh đội như Chấn Thú khác */
+    if (false) { const pt = s.pet, lv = lvOf(pt); if ((pt.koT || 0) > 0) return [t.hudKo(pt.name, Math.ceil(pt.koT))]; if (pt.cmd === 'home') return [t.hudHome(pt.name, lv)]; return [t.hud(pt.name, lv, t.cmd[pt.cmd] || pt.cmd) + (pt.hunger < HUNGRY_AT ? t.hungry : '')]; }
     if (s.egg) return [t.eggHud(Math.min(100, Math.round(s.egg.walked / HATCH_TILES * 100)))];
     return [];
   }

@@ -81,7 +81,7 @@ const LS = new Map();
 function lightSprite(r, col, k) {   /* đĩa sáng bậc 4 mức + dither Bayer ở ranh bậc (không gradient mịn) */
   const key = r + '|' + col + '|' + k; let c = LS.get(key); if (c) return c;
   const n = r * 2 + 1; c = document.createElement('canvas'); c.width = c.height = n; const x = c.getContext('2d'), id = x.createImageData(n, n), D = id.data;
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const d = Math.hypot(i - r, j - r) / r; if (d >= 1) continue; const v = Math.pow(1 - d, 1.25) * 4, lv = Math.min(4, Math.max(0, Math.floor(v + BAYER[(j & 3) * 4 + (i & 3)] - 0.25))) / 4 * k;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const d = Math.hypot(i - r, j - r) / r; if (d >= 1) continue; const v = Math.pow(1 - d, 1.25) * 16, lv = Math.min(16, Math.max(0, Math.round(v))) / 16 * k;   /* c42-npc-dem: 16 bậc màu liền, bỏ dither (chấm bi) */
     const o = (j * n + i) * 4; D[o] = col[0] * lv; D[o + 1] = col[1] * lv; D[o + 2] = col[2] * lv; D[o + 3] = 255; }
   x.putImageData(id, 0, 0); LS.set(key, c); return c;
 }
@@ -108,7 +108,7 @@ function drawNight(g, ctx, cx, cy) {
     const bx = o.x * TS + d.fw * 8 - cx, by = (o.y + d.fh) * TS - cy;
     if (L) put(bx + (L.dx || 0), by - L.y, L.r, L.k); else put(bx, by - old[1], old[0], old[2]);
   }
-  const p = ctx.S.player; if (p) put(p.x - cx, p.y - 10 - cy, 70, 0.62, PALE);   /* c35-demban: 44/0,42 → 70/0,62 */   /* vầng nhẹ quanh người chơi: nhân vật luôn đọc được */
+  ctx.S.night42 = kq;   /* c42-npc-dem: bỏ vầng sáng chấm bi quanh người → main.js vẽ lại nhân vật sáng sau lớp tối */   /* c35-demban: 44/0,42 → 70/0,62 */   /* vầng nhẹ quanh người chơi: nhân vật luôn đọc được */
   ST.lightN = n;
   g.save(); g.globalCompositeOperation = 'multiply'; g.imageSmoothingEnabled = false; g.drawImage(LM, 0, 0, VW, VH);
   g.globalCompositeOperation = 'lighter'; for (const [lx, ly, r, k] of HL) { const rr = Math.max(6, Math.round(r * 0.55)); g.drawImage(lightSprite(rr, HALO, k * 0.5 * kq), lx - rr, ly - rr); } g.restore();
@@ -168,7 +168,7 @@ export const halloween119 = {
   },
   drawGround(g, ctx, cx, cy) { if (on(ctx) && ST.rain && ST.wet > 0.02) drawSplash(g, ctx, cx, cy); },
   draw(g, ctx, cx, cy) {
-    if (!on(ctx)) { glowC35(g, ctx, cx, cy); return; } const AV = ctx.altView ? ctx.altView() : null; if (AV) return;
+    ctx.S.night42 = 0; if (!on(ctx)) return;   /* c42-npc-dem: bỏ glowC35 (vầng quanh người đêm thường) */ const AV = ctx.altView ? ctx.altView() : null; if (AV) return;
     drawNight(g, ctx, cx, cy); if (ST.rain && ST.wet > 0.02) drawRain(g, ctx, cx, cy);
   },
   key(code, ctx) {

@@ -203,7 +203,7 @@ function placeBtn(ctx, dt) {
   if (hb && hb.getBoundingClientRect().width) {
     const r = hb.getBoundingClientRect();
     if (r.width >= r.height) { const y = Math.round(r.top + (r.height - S0) / 2); C.push([r.left - S0 - 10, y], [r.left - S0 - 10, y - 30], [r.right + 10, y], [r.left - S0 - 10, r.top - S0 - 12]); }
-    else { const ch = document.getElementById('btn-chat'), cr = ch && ch.getBoundingClientRect(); if (cr && cr.width) C.push([cr.left - S0 - 12, Math.round(cr.top + (cr.height - S0) / 2)]);   /* điện thoại: cạnh trái nút chat (hàng nút góc trên phải) — chừa giữa màn cho bảng thông tin */
+    else { const ch = document.getElementById('btn-chat') || ['btn-rot', 'btn-photo', 'btn-menu'].map(i => document.getElementById(i)).filter(e => e && !e.hidden && e.getBoundingClientRect().width).sort((p, q) => p.getBoundingClientRect().left - q.getBoundingClientRect().left)[0], cr = ch && ch.getBoundingClientRect();   /* c33-bohopthe: nút 💬 Rocky đã bỏ → mốc = nút trái nhất hàng góc trên phải */ if (cr && cr.width) C.push([cr.left - S0 - 12, Math.round(cr.top + (cr.height - S0) / 2)]);   /* điện thoại: cạnh trái nút chat (hàng nút góc trên phải) — chừa giữa màn cho bảng thông tin */
       const x = Math.round(r.left + (r.width - S0) / 2); C.push([x, r.bottom + 14], [x, r.bottom + 40], [r.left - S0 - 10, r.bottom - S0], [x, r.top - S0 - 22]); }
   }
   C.push([innerWidth - S0 - 12, Math.round(innerHeight * 0.45)], [12, Math.round(innerHeight * 0.45)]);

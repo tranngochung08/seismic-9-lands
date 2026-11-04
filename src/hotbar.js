@@ -21,16 +21,16 @@ const QON = () => !!(deps && deps.CTX.quyen && deps.CTX.quyen.on());   /* c13-qu
    Mã ô (data-sk) giữ nguyên: 0 Đánh · 5 Chưởng · 2 Lướt Ki · 1 Rocky-ha · 4 Hợp Thể/Rồng Thần · 3 Gọi linh thú · 6 Lộn (mới, phím Shift).
    Ô chưa mở (chưa có Rocky / Rocky chưa học Rocky-ha / chưa có linh thú / chưa có Hợp Thể–Rồng) = ẨN, mở khoá thì tự hiện.
    Phím 1–5 = ô thứ 1–5 ĐANG HIỆN (nhãn trên ô = phím); ô thứ 6 trở đi dùng phím chữ riêng (linh thú U); Lộn luôn là Shift (⇧); L vẫn = Chưởng. */
-const ORDER26 = [0, 5, 2, 1, 4, 3, 6];
+const ORDER26 = [0, 5, 2, 1, 4, 3, 6];   /* c33-bohopthe (anh 04/11): ô 1 Rocky-ha (người chơi bấm) + Hợp Thể bỏ hẳn — Ubam là Chấn Thú như mọi con, tự dùng chiêu; ô 4 chỉ còn Rồng Thần (không phụ thuộc Rocky). Nút lệnh Rocky (.hb-rk, phím /) bỏ. */
 function shown26(i) {
   const C = deps.CTX;
   if (i === 0) return true;
   if (i === 5) return QON();
   if (i === 2) return !!(C.ki && C.ki.dash);
   if (i === 6) return !!(C.ki && C.ki.roll) && !mobile();   /* điện thoại đã có nút Lộn riêng (ki.js) */
-  if (i === 1) { const R = rk(); if (!R) return false; const why = R.haWhy ? R.haWhy() : 'ok'; return !/(^|,)tier/.test(why); }
+  if (i === 1) return false;   /* c33-bohopthe: bỏ ô Rocky-ha người chơi bấm */
   if (i === 3) { const o = ltState(); return !!(o && o.has); }
-  if (i === 4) return dragonOk() || !!(rk() && C.hopthe);
+  if (i === 4) return dragonOk();   /* c33-bohopthe: không còn Hợp Thể */
   return false;
 }
 const VIS26 = () => ORDER26.filter(i => !(mobile() && i === 5) && shown26(i));   /* điện thoại: Chưởng có nút riêng (quyen.js) */
@@ -191,12 +191,12 @@ const hud91 = k => { const m = deps.ART && deps.ART.man, u = m && m.ui && m.ui.h
 const T = () => (deps.CTX.lang() === 'vi' ? {
   atk: 'Đánh', rk: 'Rocky-ha', dash: 'Lướt Ki', roll: 'Lộn', tipRoll: 'Lộn né đòn — 2 Ki (phím Shift)', call: 'Gọi linh thú', back: 'Thu linh thú', fuse: 'Hợp Thể', dragon: 'Rồng Thần Giáng',
   noRk: 'Chưa có Rocky', noHa: 'Rocky chưa học Rocky-ha', rkBusy: 'Rocky đang bận / đang nghỉ', cd: 'Đang hồi chiêu', noLt: 'Chưa có linh thú — bắt ở ổ linh thú các vùng', lowKi: 'Chưa đủ Ki',
-  lock5: 'Mở khi có Rocky (Hợp Thể) hoặc Rồng Thần', tipAtk: 'Ô 1 · Đánh — cầm vũ khí; E / chuột trái để chém mục tiêu', hp: 'Máu', ki: 'Ki', xp: 'Kinh nghiệm', lv: 'Cấp',
+  lock5: 'Mở khi có Rồng Thần', tipAtk: 'Ô 1 · Đánh — cầm vũ khí; E / chuột trái để chém mục tiêu', hp: 'Máu', ki: 'Ki', xp: 'Kinh nghiệm', lv: 'Cấp',
   doBtn: 'Đồ', bag: 'Túi đồ (B)', rkCmd: 'Ra lệnh cho Rocky (phím /)', items: 'Ô 6–0: đồ', skills: 'Ô kỹ năng (phím số theo nhãn trên ô)', ht: 'Hợp Thể', eat: 'R: ăn nhanh',
 } : {
   atk: 'Attack', rk: 'Rocky-ha', dash: 'Ki Dash', roll: 'Roll', tipRoll: 'Dodge roll — 2 Ki (Shift key)', call: 'Call spirit beasts', back: 'Recall spirit beasts', fuse: 'Fusion', dragon: 'Dragon Dive',
   noRk: 'No Rocky yet', noHa: "Rocky hasn't learned Rocky-ha", rkBusy: 'Rocky is busy / resting', cd: 'Cooling down', noLt: 'No spirit beasts yet — catch them at the beast dens', lowKi: 'Not enough Ki',
-  lock5: 'Unlocks with Rocky (Fusion) or the Dragon', tipAtk: 'Slot 1 · Attack — hold your weapon; E / left-click to strike the target', hp: 'HP', ki: 'Ki', xp: 'EXP', lv: 'Lv',
+  lock5: 'Unlocks with the Dragon', tipAtk: 'Slot 1 · Attack — hold your weapon; E / left-click to strike the target', hp: 'HP', ki: 'Ki', xp: 'EXP', lv: 'Lv',
   doBtn: 'Items', bag: 'Bag (B)', rkCmd: 'Command Rocky (key /)', items: 'Slots 6–0: items', skills: 'Skill slots (number key = label on slot)', ht: 'Fusion', eat: 'R: quick eat',
 });
 const rk = () => deps.CTX.rocky && deps.CTX.rocky.pet && deps.CTX.rocky.pet() ? deps.CTX.rocky : null;
@@ -226,7 +226,7 @@ function skillInfo(i) {   /* → { icon, name, lock, cd (giây), cdMax, dim, cls
   if (i === 3) { const o = ltState(); if (!o || !o.has) return { icon: hud91('sk_call'), name: t.call, lock: true, tip: t.noLt, lt: o };
     return { icon: o.shell, pet: o.pet && o.st === 'in' ? o.pet : null, name: o.st === 'out' ? t.back : t.call, cd: o.st === 'rest' ? o.rest : 0, cdMax: 60, dim: !o.n, lt: o, tip: (o.st === 'out' ? t.back : t.call) + ' (4 / U)' }; }
   if (dragonOk()) { const d = dragonSv(), left = Math.max(0, ((d.skillAt || 0) - Date.now()) / 1000); return { icon: 'assets/px/dragon/skill_icon.png', name: t.dragon, cd: left, cdMax: 60, tip: t.dragon + ' (5 / G)' }; }
-  if (rk() && deps.CTX.hopthe) { const ct = deps.CTX.hopthe.cdText ? deps.CTX.hopthe.cdText() : ''; return { icon: hud91('sk_fuse'), name: t.fuse, cdTxt: ct, tip: t.fuse + ' (5)' }; }
+  /* c33-bohopthe: bỏ ô Hợp Thể */
   return { icon: hud91('sk_fuse'), name: t.fuse, lock: true, tip: t.lock5 };
 }
 function aimHa() {   /* ô 2: Rocky-ha nhắm con đang khoá → con gần nhất trong 10 ô → hướng nhìn của người chơi */
@@ -244,13 +244,14 @@ export function skill(i) {
   if (i === 5) { const ok = QON() ? C.quyen.press() : false; render(true); return ok; }   /* c13-quyen: ô 6 / phím L = Chưởng (cả lúc Hợp Thể không có ô này) */
   if (htOn()) { if (window.__hopthe) window.__hopthe.use(i); render(true); return true; }   /* ô 5 = tuyệt chiêu Hợp Thể (trước: R) */
   if (i === 0) { if (mobile()) hold(WEAPON); else select(-1); if (deps.strike && KB120) deps.strike(); return true; }   /* p120: chỉ PHÍM 1 ra đòn ở đây; bấm chuột ô 1 đã có c12 swingNow (tránh chém 2 lần) */   /* 2026-11-04 anh: bấm ô 1 = cầm kiếm VÀ ra đòn ngay (trước chỉ cầm, phải bấm thêm E) */
-  if (i === 1) { const R = rk(); if (!R) { C.toast(t.noRk); C.sfx('fail'); return false; }
+  if (i === 1) return false;   /* c33-bohopthe: bỏ Rocky-ha người chơi bấm (Ubam / Rocky tự bắn khi đánh) */
+  if (false) { const R = rk(); if (!R) { C.toast(t.noRk); C.sfx('fail'); return false; }
     if (!(R.haReady && R.haReady())) { const why = R.haWhy ? R.haWhy() : ''; C.toast(/tier/.test(why) ? t.noHa : /cd/.test(why) ? t.cd : t.rkBusy); C.sfx('fail'); return false; }
     const a = aimHa(); const ok = a != null && R.haFire(a); render(true); return ok; }
   if (i === 2) { const ok = C.ki && C.ki.dash ? C.ki.dash() : false; render(true); return ok; }
   if (i === 3) { const o = ltState(); if (!o || !o.has) { C.toast(t.noLt); C.sfx('fail'); return false; } C.linhthu.press(); render(true); return true; }
   if (dragonOk()) { const d = (deps.S.sys || []).find(s => s && s.id === 'dragon'); if (d && d.key) d.key('KeyG', C); render(true); return true; }
-  if (rk() && C.hopthe && C.hopthe.fuse) { C.hopthe.fuse(); render(true); return true; }
+  /* c33-bohopthe: không còn Hợp Thể */
   C.toast(t.lock5); C.sfx('fail'); return false;
 }
 /* c12-kiem swingNow (anh 04/11 "nhấn vào thanh kiếm nhưng nhân vật không chịu đánh"): bấm chuột / chạm ô 1 = cầm kiếm + VUNG LUÔN.
@@ -418,7 +419,7 @@ export function render(force) {
   }
   el.innerHTML = `<div class="hb-tip"${tipT > 0 && cur ? '' : ' hidden'}>${cur ? itemName(cur, lg) : ''}</div>` + topHTML(lg) + `<div class="hb-bar">`
     + SKL().map(skillHTML).join('') + `<b class="h91-sep" title="${esc(t.skills + ' · ' + t.items)}"></b>` + items
-    + `<div class="h91-ex">${hasRk() ? `<div class="hb-slot hb-rk" title="${esc(t.rkCmd)}">${deps.ART && deps.ART.man && deps.ART.man.ui && deps.ART.man.ui.port_rocky ? `<img src="assets/px/${deps.ART.man.ui.port_rocky}" alt="">` : '🪨'}<i class="hb-v">/</i></div>` : ''}`
+    + `<div class="h91-ex">${false ? `<div class="hb-slot hb-rk" title="${esc(t.rkCmd)}">${deps.ART && deps.ART.man && deps.ART.man.ui && deps.ART.man.ui.port_rocky ? `<img src="assets/px/${deps.ART.man.ui.port_rocky}" alt="">` : '🪨'}<i class="hb-v">/</i></div>` : ''}`
     + `${c79 ? `<div class="hb-slot hb-c79" title="${esc(lg === 'vi' ? 'Ném Ấn Thu — bắt Chấn Thú hoang đang ngất (người hạ nó dễ bắt hơn)' : 'Throw a Seal Orb — catch a fainted wild beast (easier for whoever defeated it)')}"><img src="assets/px/duel/anthu/anthu_icon.png" alt=""><i class="hb-v">${ballN()}</i></div>` : ''}`
     + `<div class="hb-bag" title="${esc(t.bag)}"><img src="assets/px/ui/tab_bag.png" alt=""></div></div></div>`;
 }

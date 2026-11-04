@@ -305,7 +305,7 @@ export function rule(t, hc = heldClass()) {   /* → { cur, act } */
   if (!t) return null;
   if (hc === 'gun') return { cur: 'gun', act: 'lock' };
   if (t.kind === 'mon' || t.kind === 'tent') return { cur: 'attack', act: 'lock' };
-  if (t.kind === 'npc') return hc === 'weapon' ? { cur: 'no', act: 'no' } : { cur: 'talk', act: hc === 'hand' ? 'talk' : 'lock' };
+  if (t.kind === 'npc') return { cur: 'talk', act: 'talk' };   /* c42-npc-dem: cầm kiếm + click NPC = đi tới nói chuyện (trước: ⛔) */
   if (t.kind === 'ani') return hc === 'weapon' ? { cur: 'no', act: 'no' } : { cur: 'hand', act: 'lock' };
   if (t.kind === 'obj') return hc === 'weapon' ? { cur: 'tool', act: 'lock' } : { cur: 'hand', act: 'lock' };
   return null;
@@ -332,7 +332,7 @@ export function clickVerdict(mt, hoverFn) {   /* main.onClick gọi đầu tiên
     if (r.act === 'no') { if (D.S.time - ST.noT > 0.8) { ST.noT = D.S.time; D.CTX.toast(NOMSG(nameOf(ent))); D.CTX.sfx('fail'); } return { stop: true, why: 'no' }; }
     lock(ent);
     if ((ent.kind === 'mon' || ent.kind === 'tent') && (hc === 'weapon' || armed())) return { chase: ent };   /* c13-quyen: tay không click quái = tự đi tới đấm */   /* p120 2026-11-04 anh: cầm vũ khí (ô 1) + click quái = khóa + TỰ ĐI TỚI rồi đánh luôn (main.chaseTick) */
-    if (r.act === 'talk' || (ent.kind === 'npc' && hc === 'item')) return dist(ent) <= 33 ? (r.act === 'talk' ? { talk: ent.ref } : {}) : { stop: true, why: 'lock' };   /* trong tầm: nói chuyện / tặng đá như cũ; xa: chỉ khóa */
+    if (r.act === 'talk') return ent.kind === 'npc' && hc === 'item' && dist(ent) <= 33 ? {} : { talk: ent.ref };   /* c42-npc-dem (anh 04/11): click NPC = main.talkGo42 tự đi tới rồi nói chuyện / mở quầy (mọi món cầm trừ súng); cầm đồ (đá tặng) đứng trong tầm: các hệ xử lý như cũ */   /* trong tầm: nói chuyện / tặng đá như cũ; xa: chỉ khóa */
     return { stop: true, why: 'lock' };   /* click = CHỈ KHÓA (không tự đi, không tự đánh / bắn) */
   }
   const hov = hoverFn ? hoverFn() : null;
@@ -347,7 +347,7 @@ export function cursorKind(hit, near, owns) {   /* main.applyCursor: huy hiệu 
   const t = ST.hover;
   if (t) { const r = rule(t); return r ? r.cur : 'arrow'; }
   if (!hit || !near) return 'arrow';
-  if (near.kind === 'npc') return heldClass() === 'weapon' ? 'no' : 'talk';
+  if (near.kind === 'npc') return 'talk';   /* c42-npc-dem */
   if (near.kind === 'sys') {
     const c = near.cand;
     if (c.need) return owns(c.needId) ? 'tool' : 'no';

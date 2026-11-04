@@ -42,14 +42,14 @@ const SLOTS = [
   { id: 'longmach', key: 'KeyR', k: 'R', boss: 'bakunawa', ult: true, vi: 'Long Mạch Lôi Thần', en: 'Dragon-Vein Thunder', bvi: 'Ngô Công', ben: 'Great Centipede' },
 ];
 const vi = ctx => ctx.lang() === 'vi';
-const sv = ctx => { const s = ctx.S.save; s.sys ||= {}; const h = (s.sys.hopthe ||= {}); h.on ??= false; h.left ??= 0; h.cd ??= 0; h.earring ??= 0; h.worn ??= false; return h; };
+const sv = ctx => { const s = ctx.S.save; s.sys ||= {}; const h = (s.sys.hopthe ||= {}); h.on ??= false; h.left ??= 0; h.cd ??= 0; h.earring ??= 0; h.worn ??= false; if (h.on || h.worn) { h.on = false; h.worn = false; h.left = 0; } return h; };   /* c33-bohopthe (anh 04/11): bỏ Hợp Thể — save cũ đang hợp thể / đeo bông tai → tắt an toàn khi nạp */
 const petOf = ctx => (((ctx.S.save.sys || {}).pet || {}).pet) || null;
 const rkLv = ctx => { const p = petOf(ctx); return p ? levelFromXp(p.xp || 0).lv : 0; };
 const ST = { e: E_MAX, cds: {}, shots: [], fx: [], el: null, sig: '', saveT: 0, fusedDraw: null, log: [], hitN: 0, lastSplit: null };
 const log = s => { ST.log.push(s); if (ST.log.length > 60) ST.log.shift(); };
 
 /* ---------------- trạng thái hợp thể ---------------- */
-const isOn = ctx => { const h = sv(ctx); return !!(h.worn || h.on); };
+const isOn = ctx => false;   /* c33-bohopthe: không còn Hợp Thể với người chơi */
 /* 29/10: bộ giáp Rocky là ảnh Hợp Thể chính thức (n_* thường, p_* vĩnh viễn) — bỏ cờ ?armor=1 */
 const form = ctx => (sv(ctx).worn ? 'p' : 'n');   /* 29/10 anh: Hợp Thể = BỘ GIÁP ROCKY (ảnh n_* / p_* = giáp; ảnh cơ bắp cũ để NPC Ở Dơ) */
 function blockReason(ctx) {
@@ -64,7 +64,8 @@ function blockReason(ctx) {
 }
 const bodyMid = ctx => { const M = meta()[form(ctx)]; return Math.round((M.foot - (M.top || 0)) / 2); };   /* nửa chiều cao thân (logic) */
 function burst(ctx) { const p = ctx.S.player; if (!(ctx.wfx && ctx.wfx('fuse', p.x, p.y + 1, {}))) ST.fx.push({ k: 'burst', x: p.x, y: p.y + 2 - bodyMid(ctx), t: 0 });   /* plan-69 */ ctx.sfx('spar_charge'); if (ctx.quake) ctx.quake(0.12); }
-function fuse(ctx, perm = false) {
+function fuse(ctx, perm = false) { return false; }   /* c33-bohopthe: chặn mọi đường kích hoạt */
+function fuse0(ctx, perm = false) {
   const h = sv(ctx), V = vi(ctx);
   if (isOn(ctx) && !perm) return false;
   const why = blockReason(ctx); if (why) { ctx.toast(why); ctx.sfx('poor'); log('block ' + why); return false; }
@@ -88,15 +89,18 @@ function split(ctx, why = 'manual') {
   else { const m = Math.ceil(h.cd / 60); ctx.toast(h.cd > 0 ? (V ? `Rocky tách ra — nghỉ ${m} phút rồi mới hợp lại được.` : `Rocky splits off — fuse again in ${m} min.`) : (V ? 'Rocky tách ra.' : 'Rocky splits off.')); }
   ctx.sfx('rocky_chirp'); log('split ' + why); ctx.persist(); return true;
 }
-function toggle(ctx) { if (sv(ctx).worn) { ctx.toast(vi(ctx) ? 'Đang đeo Bông Tai — tháo bông tai (thẻ Rocky) để tách.' : 'Wearing the Earring — take it off (Rocky tab) to split.'); return false; } return isOn(ctx) ? split(ctx, 'manual') : fuse(ctx); }
-function buyEarring(ctx) {
+function toggle(ctx) { return false; }
+function toggle0(ctx) { if (sv(ctx).worn) { ctx.toast(vi(ctx) ? 'Đang đeo Bông Tai — tháo bông tai (thẻ Rocky) để tách.' : 'Wearing the Earring — take it off (Rocky tab) to split.'); return false; } return isOn(ctx) ? split(ctx, 'manual') : fuse(ctx); }
+function buyEarring(ctx) { return false; }
+function buyEarring0(ctx) {
   const h = sv(ctx), inv = ctx.S.save.inv || (ctx.S.save.inv = {}), V = vi(ctx);
   if (h.earring) { ctx.toast(V ? 'Đã có Bông Tai Hợp Thể.' : 'You already own the Fusion Earring.'); return false; }
   if (rkLv(ctx) < EARRING_LV) { ctx.toast(V ? `Rocky cần cấp ${EARRING_LV} mới dùng được bông tai này.` : `Rocky must be Lv ${EARRING_LV}.`); ctx.sfx('poor'); return false; }
   if ((inv.stone || 0) < EARRING_PRICE) { ctx.toast(V ? 'Không đủ đá.' : 'Not enough stone.'); ctx.sfx('poor'); return false; }
   inv.stone -= EARRING_PRICE; h.earring = 1; ctx.bag.add('ht_earring', 1); ctx.sfx('buy'); ctx.toast(V ? 'Đã mua Bông Tai Hợp Thể! Đeo ở thẻ Rocky (B).' : 'Bought the Fusion Earring! Wear it in the Rocky tab (B).', true); ctx.persist(); log('buy earring'); return true;
 }
-function wear(ctx, on) {
+function wear(ctx, on) { return false; }
+function wear0(ctx, on) {
   const h = sv(ctx), V = vi(ctx); if (!h.earring && !(ctx.S.save.inv || {}).ht_earring) { ctx.toast(V ? 'Chưa có Bông Tai Hợp Thể.' : 'No Fusion Earring.'); return false; }
   if (on) { if (h.worn) return false; const why = blockReason(ctx); if (why) { ctx.toast(why); return false; } if (h.on) { h.on = false; h.left = 0; } h.worn = true; return fuse(ctx, true); }
   if (!h.worn) return false; return split(ctx, 'unwear');
@@ -338,7 +342,8 @@ function renderBar(ctx, force) {
 }
 
 /* ---------------- HTML cho menu (thẻ Rocky) + quầy Heathcliff ---------------- */
-function menuHtml(ctx) {
+function menuHtml(ctx) { return ''; }   /* c33-bohopthe: thẻ Rocky không còn mục Hợp Thể */
+function menuHtml0(ctx) {
   const h = sv(ctx), V = vi(ctx), on = isOn(ctx), have = h.earring || (ctx.S.save.inv || {}).ht_earring;
   const ic = '<img src="assets/px/hopthe/icons/earring.png" alt="" style="width:28px;height:28px;image-rendering:pixelated;vertical-align:middle">';
   const st = h.worn ? (V ? 'Vĩnh viễn (đang đeo bông tai)' : 'Permanent (earring on)') : on ? (V ? `Đang hợp thể — còn ${Math.ceil(h.left / 60)} phút` : `Fused — ${Math.ceil(h.left / 60)} min left`) : h.cd > 0 ? (V ? `Rocky mệt — ${Math.ceil(h.cd / 60)} phút nữa` : `Rocky tired — ${Math.ceil(h.cd / 60)} min`) : (V ? 'Sẵn sàng' : 'Ready');
@@ -347,7 +352,8 @@ function menuHtml(ctx) {
   return `<h3>${V ? 'Hợp Thể' : 'Fusion'}</h3><div class="mhint" style="font-size:15px">${V ? 'Trạng thái' : 'Status'}: <b style="color:var(--gold)">${st}</b></div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center">${b1}${b2}</div>`;
 }
 function menuAct(ctx, a) { if (a === 'toggle') return toggle(ctx); if (a === 'wear') return wear(ctx, true); if (a === 'unwear') return wear(ctx, false); return false; }
-function shopRow(ctx) {
+function shopRow(ctx) { return ''; }   /* c33-bohopthe: quầy Heathcliff không bán Bông Tai Hợp Thể */
+function shopRow0(ctx) {
   const h = sv(ctx), V = vi(ctx), inv = ctx.S.save.inv || {}, lvOk = rkLv(ctx) >= EARRING_LV, ok = !h.earring && lvOk && (inv.stone || 0) >= EARRING_PRICE;
   const BS = 'width:auto;margin:0;padding:6px 10px;font-size:13px';
   return `<h3 style="margin:12px 0 4px">${V ? '💍 Bông Tai Hợp Thể' : '💍 Fusion Earring'}</h3><p class="dim" style="margin:0 0 4px">${V ? 'Đeo vào là HỢP THỂ với Rocky mãi mãi (tháo ra là tách). Không mất bông tai. Cần Rocky cấp 40.' : 'Wear it to FUSE with Rocky for good (take it off to split). Never consumed. Needs Rocky Lv 40.'}</p>

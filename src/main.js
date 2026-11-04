@@ -754,13 +754,65 @@ function chaseTick() {
     if (walkTo(r.x, r.y, true)) c.path = p.autoPath; else { chaseStop(); TGT.sayFar(); }
   }
 }
-function onClick(c) {
+/* c42-npc-dem (anh 04/11): click / chạm NPC ở xa (tay không, kiếm, quyền) = TỰ ĐI TỚI rồi nói chuyện luôn như nhấn E.
+   Đường đi cập nhật theo NPC (dân đi lang thang); phím đi / cần / click chỗ khác / đổi vùng / mở bảng → thôi; tối đa 20 s. */
+let tgo42 = null;
+function talkStop42() { const p = S.player; if (tgo42 && p && tgo42.path && p.autoPath === tgo42.path) p.autoPath = null; tgo42 = null; }
+function talkArrive42(n) {   /* tới tầm: làm như trỏ chuột vào đúng người đó rồi nhấn E (NPC của hệ — thương nhân, Leader… — đi qua sys.near/interact của hệ đó) */
+  S.vm = { wx: n.x, wy: n.y - 9 }; let q = null, hit = false; try { q = findNear(); hit = MOUSE.hit; } finally { S.vm = null; }
+  if (q && hit && (q.kind !== 'npc' || q.npc === n)) { S.player.autoPath = null; S.near = q; interact(true); return; }
+  if (n.m && n.m.id) talkTo(n);
+}
+function talkGo42(npc) {
+  const p = S.player; if (!p || !npc) return;
+  if (Math.hypot(npc.x - p.x, npc.y - p.y) <= 26) { talkArrive42(npc); return; }
+  tgo42 = { npc, m: S.map, path: null, pathT: -9, gx: 0, gy: 0, t0: S.time, re: 0, arr: 0, first: 1 }; talkTick42();
+}
+function talkTick42() {
+  const c = tgo42, p = S.player; if (!c) return;
+  if (S.mode !== 'play' || !p || p.custom || S.map !== c.m || S.time - c.t0 > 20) { talkStop42(); return; }
+  const n = c.npc; if (!n || n.statue || n.stoneT || n.hurtSit || n.dead) { talkStop42(); return; }
+  if (c.path && p.autoPath !== c.path) {   /* entities bỏ autoPath giữa đường = người chơi tự lái / kẹt; hết đường = tới nơi */
+    if (c.path.length > 0) { if (input.up || input.down || input.left || input.right || ++c.re > 3) { tgo42 = null; return; } } else c.arr++;
+    c.path = null; c.pathT = -9;
+  }
+  const d = Math.hypot(n.x - p.x, n.y - p.y);
+  if (d <= 26) { talkStop42(); talkArrive42(n); return; }
+  if (d > 420 || c.arr > 3) { talkStop42(); return; }
+  if (!c.path || (S.time - c.pathT > 0.35 && Math.hypot(n.x - c.gx, n.y - c.gy) > 6)) {
+    c.pathT = S.time; c.gx = n.x; c.gy = n.y;
+    if (walkTo(n.x, n.y + 2, !c.first)) { c.path = p.autoPath; c.first = 0; } else talkStop42();
+  }
+}
+/* c42-npc-dem (anh 04/11): ban đêm bỏ vầng sáng chấm bi quanh người → chính NHÂN VẬT người chơi sáng rõ: vẽ người vào lớp riêng P,
+   xoá phần bị vật đứng trước che (destination-out), rồi dán lại SAU lớp tối (đêm thường S.dark + đêm Halloween S.night42). Tĩnh, không nhấp nháy. */
+const NL42 = { on: false, drawn: false, P: null, Pg: null, T: null, r: null,
+  self(gg, n) {
+    const T = gg.getTransform(); if (!this.P || this.P.width !== cv.width || this.P.height !== cv.height) { this.P = document.createElement('canvas'); this.P.width = cv.width; this.P.height = cv.height; this.Pg = this.P.getContext('2d'); }
+    const Pg = this.Pg, x0 = Math.floor(T.a * (n.x - 64) + T.e), y0 = Math.floor(T.d * (n.y - 112) + T.f), w = Math.ceil(T.a * 128) + 2, h = Math.ceil(T.d * 140) + 2;
+    Pg.setTransform(1, 0, 0, 1, 0, 0); Pg.globalAlpha = 1; Pg.globalCompositeOperation = 'source-over'; Pg.clearRect(x0, y0, w, h);
+    Pg.setTransform(T); Pg.imageSmoothingEnabled = false; Pg.save(); try { n.draw(Pg); } finally { Pg.restore(); }
+    gg.save(); gg.setTransform(1, 0, 0, 1, 0, 0); gg.globalAlpha = 1; gg.globalCompositeOperation = 'source-over'; gg.drawImage(Pg.canvas, x0, y0, w, h, x0, y0, w, h); gg.restore();
+    this.T = T; this.r = [x0, y0, w, h]; this.wb = [n.x - 64, n.y - 112, n.x + 64, n.y + 28]; this.drawn = true;
+  },
+  occ(o, d, by) {   /* vật vẽ SAU người (đứng trước) và chồng lên vùng người → khoét khỏi P */
+    if (!this.drawn || !d) return; const rs = ruinStage(o), ri = rs && ART.ruinOf ? ART.ruinOf(o.orig || o.type, rs) : null; let im, x, y;
+    if (ri) { const od = O[o.orig || o.type] || d; im = ri; x = o.x * TS + (od.ox || 0); y = (o.y + od.fh) * TS - ri.height / ART.hi + (od.oy || 0); }
+    else { im = o.artImg || (d.frames ? d.frames[loopFrame(d.frames.length, d.animFlag ? FPS.flag : FPS.loop, o.x * 3 + o.y)] : d.img); if (!im) return; x = o.x * TS + (o.artImg ? 0 : (d.ox || 0)); y = by - (o.artImg ? im.height / ART.hi : d.h) + (o.artImg ? 0 : (d.oy || 0)); }
+    const k = im.__hi ? (ART.hi || 1) : 1, iw = im.width / k, ih = im.height / k, b = this.wb;
+    if (x > b[2] || x + iw < b[0] || y > b[3] || y + ih < b[1]) return;
+    const Pg = this.Pg; Pg.save(); Pg.setTransform(this.T); Pg.globalCompositeOperation = 'destination-out'; try { Pg.drawImage(im, x, y); } finally { Pg.restore(); }
+  },
+  post(gg) { if (!this.drawn) return; const r = this.r; gg.save(); gg.setTransform(1, 0, 0, 1, 0, 0); gg.globalAlpha = 1; gg.globalCompositeOperation = 'source-over'; gg.drawImage(this.P, r[0], r[1], r[2], r[3], r[0], r[1], r[2], r[3]); gg.restore(); },
+};
+globalThis.__nl42 = NL42; globalThis.__c42 = { tgo: () => tgo42 };
+function onClick(c) { talkStop42();
   chaseStop();
   const mt = CTX.mouseTile(); if (!mt) return;
   /* LUẬT CLICK (target.js clickVerdict): khóa mục tiêu, CẤM (⛔ không làm gì, không đi), xác nhận 2 lần việc không hoàn tác, súng + đất trống = thôi */
   const v = TGT.clickVerdict(mt, () => { const n = findNear(); return MOUSE.hit ? n : null; });
   if (v.stop) { S.clickGoal = null; if (c && c.touch) MOUSE.on = false; return; }
-  if (v.talk) { S.clickGoal = null; S.player.autoPath = null; talkTo(v.talk); if (c && c.touch) MOUSE.on = false; return; }
+  if (v.talk) { S.clickGoal = null; S.player.autoPath = null; talkGo42(v.talk); if (c && c.touch) MOUSE.on = false; return; }
   if (v.chase) { chaseStart(v.chase); if (c && c.touch) MOUSE.on = false; return; }   /* p120: cầm vũ khí + click quái = đi tới + đánh */   /* tay không + click dân = nói chuyện (không móc túi / hóa đá) */
   for (const sy of S.sys) { try { if (sy.onClick && sy.onClick(CTX, mt)) { S.clickGoal = null; if (c && c.touch) MOUSE.on = false; return; } } catch (e) { console.error(sy.id, e); } }   /* hệ tự xử lý click (đánh quái) */
   if (!globalThis.__rf91 && S.map && !S.map.sea) { const g28 = getG(S.map, mt.tx, mt.ty); if (g28 === T.WATER || g28 === T.DEEP) globalThis.__ww91 = true; }   /* c28-xuongnuoc: click trái lên nước = đi, không câu (chuột phải giả lập vẫn câu qua __rf91) */
@@ -969,7 +1021,7 @@ function update(dt) {
   if (codexQueued) { codexQueued = false; if (S.mode === 'play') openCodex(); else if (S.mode === 'codex') { UI.closeCodex(); setMode('play'); } }
   if (clickQueued) { const c = clickQueued; clickQueued = null; if (S.mode === 'play') onClick(c); else interactQueued = true; }
   if (S.mode === 'play' && S.clickGoal) clickArrive(); else if (S.mode !== 'play' && S.player) S.player.autoPath = null;
-  if (chase) chaseTick();   /* p120: đuổi đánh quái đã click */
+  if (chase) chaseTick(); if (tgo42) talkTick42();   /* c42-npc-dem */   /* p120: đuổi đánh quái đã click */
   if (chase) window.__chase120 = { d: Math.round(TGT.dist(chase.t)), walking: !!chase.path }; else window.__chase120 = null;
   if (interactQueued) {
     interactQueued = false;
@@ -1090,8 +1142,9 @@ function render() {
   PERF.lap('r.collect');
   draws.sort((a, b) => a.y - b.y);
   PERF.lap('r.sort');
+  NL42.on = !DGB && !COVER && (S.dark > 0.02 || (S.night42 || 0) > 0.05); NL42.drawn = false;   /* c42-npc-dem */
   if (!COVER) for (const d of draws) {
-    if (d.p42o) { drawObjItem(d.p42o, d.d, d.by, cx, cy); continue; }
+    if (d.p42o) { drawObjItem(d.p42o, d.d, d.by, cx, cy); if (NL42.drawn) NL42.occ(d.p42o, d.d, d.by); continue; }
     if (!d.n) { if (d.dgRim) { const i0 = DG.recMark(); DG.recStart(g); try { d.f(); } finally { DG.recStop(g); } RIMG.push({ i0, i1: DG.recMark(), x: null, y: d.y }); } else d.f(); continue; }
     g.save(); g.translate(-cx, -cy);
     const n = d.n, mm = n.m;
@@ -1101,7 +1154,7 @@ function render() {
       else { g.fillStyle = '#ffd45e'; g.fillRect(Math.round(n.x) - 2, Math.round(n.y) - 21, 5, 2); }
     }
     if (mm && mm.elder) g.drawImage(O.elder_mark.img, Math.round(n.x) - 8, Math.round(n.y) - 28);
-    if (DGB && d.self) { const i0 = DG.recMark(); DG.recStart(g); try { n.draw(g); } finally { DG.recStop(g); } RIMG.push({ i0, i1: DG.recMark(), x: n.x, y: n.y }); } else n.draw(g);
+    if (DGB && d.self) { const i0 = DG.recMark(); DG.recStart(g); try { n.draw(g); } finally { DG.recStop(g); } RIMG.push({ i0, i1: DG.recMark(), x: n.x, y: n.y }); } else if (d.self && NL42.on) NL42.self(g, n); else n.draw(g);
     g.restore();
   }
   if (DGB) { DG.drawLight(g, S, cx, cy, VW, VH); DG.rimFlush(g, S, RIMG, cx, cy, cv.width / VW); }   /* plan-46 C: lớp sáng + viền sáng một phía SAU nhân vật, TRƯỚC hiệu ứng nổi / nhãn */
@@ -1124,6 +1177,7 @@ function render() {
       for (const [fx, fy, r] of pts) { const lx = ix + fx * d.w, ly = iy + fy * d.h; if (lx < -r || ly < -r || lx > VW + r || ly > VH + r) continue; const gr = g.createRadialGradient(lx, ly, 1, lx, ly, r); gr.addColorStop(0, `rgba(255,196,104,${(S.dark * 1.5).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,196,104,0)'); g.fillStyle = gr; g.fillRect(lx - r, ly - r, r * 2, r * 2); GLOW45.n++; } }
     g.restore();
   }
+  if (NL42.drawn) NL42.post(g);   /* c42-npc-dem: nhân vật sáng sau lớp tối */
   drawFireflies69(g, S, cx, cy, VW, VH);   /* plan-69: đom đóm sau lớp tối */
   if (m.sea) { const lh = m.objects.find(o => o.lighthouse); if (lh) { const lx = lh.x * TS + 16 - cx, ly = lh.y * TS + 32 - 58 - cy, a = S.time * 0.9; g.save(); g.globalAlpha = 0.22 + S.dark; g.fillStyle = '#fff3b0'; g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + Math.cos(a) * 160 - Math.sin(a) * 14, ly + Math.sin(a) * 160 + Math.cos(a) * 14); g.lineTo(lx + Math.cos(a) * 160 + Math.sin(a) * 14, ly + Math.sin(a) * 160 - Math.cos(a) * 14); g.closePath(); g.fill(); g.restore(); } }
   PERF.lap('r.night');
