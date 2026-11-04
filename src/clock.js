@@ -14,13 +14,28 @@ export const DAY_MIN = 1200;                 // phút game trong 1 ngày (6:00 �
 export const REAL_SEC_PER_DAY = 720;         // 12 phút thật
 export const RATE = DAY_MIN / REAL_SEC_PER_DAY;   // phút game / giây thật = 1,6667
 export const MS_PER_GAME_MIN = 600;          // "ms tương đương" của 1 phút game (dùng quy đổi t0 giây thật của cây con gather)
+/* c38-dongho: ĐỒNG HỒ THẾ GIỚI CHUNG — mọi máy cùng năm/mùa/ngày/giờ, tính từ giờ thật (Date.now() + lệch giờ máy chủ) kể từ WORLD_EPOCH, đúng RATE (1 ngày game 6:00→2:00 = 12 phút thật). */
+export const WORLD_EPOCH = Date.UTC(2026, 8, 30, 17, 0, 0);   /* 01/10/2026 00:00 giờ VN; mốc sớm để ngày chung luôn lớn hơn ngày của save cũ */
+const W = { obj: null, min: -1, day: 0, season: '', year: 0, off: 0, srv: 0, want: null };   /* off = độ lệch TẠM (phút game) cho test/preset, không lưu; srv = lệch giờ máy chủ (ms) */
+try { const q = new URLSearchParams(location.search).get('clock'); if (q) { const mt = /^(\d{1,2})(?::(\d{1,2}))?$/.exec(q); if (mt) W.want = ((+mt[1] + 24 - 6) % 24) * 60 + (+(mt[2] || 0)); else if (/^\d+(\.\d+)?$/.test(q)) W.want = +q; if (W.want != null) W.want = Math.max(0, Math.min(DAY_MIN - 1, W.want)); } } catch (e) { }   /* test: ?clock=21:00 hoặc ?clock=900 (phút từ 6:00) */
+const worldMin = () => (Date.now() + W.srv - WORLD_EPOCH) / 1000 * RATE + W.off;
+const absDayOf = c => (c.year - 1) * SEASONS.length * DAYS_PER_SEASON + Math.max(0, SEASONS.indexOf(c.season)) * DAYS_PER_SEASON + (c.day - 1);
+function nowDM() { const T = worldMin(); const D = Math.max(0, Math.floor(T / DAY_MIN)); return { D, m: Math.max(0, Math.min(DAY_MIN - 0.001, T - D * DAY_MIN)) }; }
+function syncW(c) { W.obj = c; W.min = c.min; W.day = c.day; W.season = c.season; W.year = c.year; }
+function setMin(c, m) { c.min = m; c.hour = Math.floor(6 + m / 60) % 24; c.minute = Math.floor(m % 60); }
+function writeWorld(c, D, m) { const P = SEASONS.length * DAYS_PER_SEASON; c.year = Math.floor(D / P) + 1; c.season = SEASONS[Math.floor((D % P) / DAYS_PER_SEASON)]; c.day = D % DAYS_PER_SEASON + 1; setMin(c, m); c.wd = D; syncW(c); }
+function adopt(c) {   /* save vừa nạp: save cũ (chưa có wd) hoặc ngày đã lưu ≥ ngày chung → lấy ngay giờ chung, không chuyển ngày; save mới đã qua ngày → giữ ngày cũ để tick chạy ĐÚNG 1 lần chuyển ngày */
+  if (W.want != null) { const a = nowDM(); W.off += W.want - a.m; W.want = null; }
+  const { D, m } = nowDM();
+  if (typeof c.wd !== 'number' || absDayOf(c) >= D) writeWorld(c, D, m); else { setMin(c, m); syncW(c); }
+}
 const SEASON_NAME = {
   en: { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' },
   vi: { spring: 'Xuân', summer: 'Hè', autumn: 'Thu', winter: 'Đông' }
 };
 const STR = {
-  en: { day: n => `Day ${n}`, dayShort: n => `D${n}`, newDay: 'A new day', stoneToday: 'Stones gained today', shardsToday: 'Tremor shards today', metToday: 'Artists met today', events: 'What happened', nothing: 'A quiet day.', ok: 'Wake up', year: y => `Year ${y}`, slept: 'You fell asleep… (2:00)' },
-  vi: { day: n => `Ngày ${n}`, dayShort: n => `N${n}`, newDay: 'Ngày mới', stoneToday: 'Đá thu được hôm nay', shardsToday: 'Mảnh dư chấn hôm nay', metToday: 'Nghệ sĩ gặp hôm nay', events: 'Chuyện đã xảy ra', nothing: 'Một ngày yên ả.', ok: 'Thức dậy', year: y => `Năm ${y}`, slept: 'Bạn ngủ gục… (2:00)' }
+  en: { day: n => `Day ${n}`, dayShort: n => `D${n}`, newDay: 'A new day', stoneToday: 'Stones gained today', shardsToday: 'Tremor shards today', metToday: 'Artists met today', events: 'What happened', nothing: 'A quiet day.', ok: 'Wake up', year: y => `Year ${y}`, slept: 'You fell asleep… (2:00)', rested: 'You rested: HP restored, game saved' },
+  vi: { day: n => `Ngày ${n}`, dayShort: n => `N${n}`, newDay: 'Ngày mới', stoneToday: 'Đá thu được hôm nay', shardsToday: 'Mảnh dư chấn hôm nay', metToday: 'Nghệ sĩ gặp hôm nay', events: 'Chuyện đã xảy ra', nothing: 'Một ngày yên ả.', ok: 'Thức dậy', year: y => `Năm ${y}`, slept: 'Bạn ngủ gục… (2:00)', rested: 'Đã nghỉ ngơi: hồi đầy máu, đã lưu game' }
 };
 
 function normalize(c) {
@@ -43,6 +58,7 @@ export function createClock(deps) {
   const endCbs = [], startCbs = [], pauses = new Set();
   let ending = false, ctxRef = null, hudEl = null, hudText = '', hudNarrow = false;
   const L = () => STR[deps.lang() === 'vi' ? 'vi' : 'en'];
+  try { fetch(location.href.split('#')[0], { method: 'HEAD', cache: 'no-store' }).then(r => { const d = Date.parse(r.headers.get('date') || ''); if (d > 0) { const diff = d + 500 - Date.now(); if (Math.abs(diff) > 3000) W.srv = diff; } }).catch(() => { }); } catch (e) { }   /* c38-dongho: giờ máy lệch > 3 s → theo giờ máy chủ (header Date, chính xác ~1 s) */
   const st = () => S.save.clock;
   const info = () => { const c = st(); return { day: c.day, season: c.season, year: c.year, dayIndex: clock.dayIndex }; };
 
@@ -97,6 +113,22 @@ export function createClock(deps) {
     try { const lg = deps.lang(), t = STR[lg === 'vi' ? 'vi' : 'en']; deps.toast(`☀ ${t.newDay} · ${clock.label(lg, true)}`); } catch (e) { }   /* c36: bỏ bảng Ngày mới, chỉ toast nhỏ */
   }
 
+  function rest() {   /* c38-dongho: thời gian chung → ngủ KHÔNG tua giờ; chỉ hồi đầy máu (công thức maxHp của hero.js) + lưu game + thông báo nhỏ */
+    try { const h = S.save.hero; if (h && h.lv) h.hp = 100 + 15 * (h.lv - 1); } catch (e) { }
+    deps.persist();
+    try { const lg = deps.lang(), t = STR[lg === 'vi' ? 'vi' : 'en']; deps.toast(`🛏 ${t.rested}`); } catch (e) { }
+    return true;
+  }
+  function worldNewDay(c, D, m) {   /* c38-dongho: đồng hồ chung sang ngày → onDayEnd (ngày cũ) → ngày chung → onDayStart, ĐÚNG 1 lần dù offline nhiều ngày */
+    ending = true;
+    fire(endCbs, 'onDayEnd');
+    writeWorld(c, D, m);
+    snapshotToday();
+    fire(startCbs, 'onDayStart');
+    ending = false;
+    deps.persist();
+    try { const lg = deps.lang(), t = STR[lg === 'vi' ? 'vi' : 'en']; deps.toast(`☀ ${t.newDay} · ${clock.label(lg, true)}`); } catch (e) { }
+  }
   const clock = {
     SEASONS, DAYS_PER_SEASON, DAY_MIN, RATE,
     get day() { return st().day; }, get season() { return st().season; }, get year() { return st().year; },
@@ -113,8 +145,8 @@ export function createClock(deps) {
     onDayStart: cb => { if (typeof cb === 'function' && !startCbs.includes(cb)) startCbs.push(cb); },
     log: text => { const t = st().today; if (t && text) { t.events.push(String(text).slice(0, 80)); if (t.events.length > 8) t.events.shift(); } },
     sleep: (auto = false) => {
-      if (!S.save || !S.save.clock || ending) return false;
-      ending = true; endDay(auto); return true;   /* c36: không fade đen, không bảng */   /* plan-45 BD3: tối dần 1 s → bảng Ngày mới trên nền đen → đóng bảng thì sáng dần 1 s */           // đang fade dở (đổi vùng) → thử lại sau
+      if (!S.save || !S.save.clock) return false;
+      return rest();   /* c38-dongho: không tua giờ */   /* c36: không fade đen, không bảng */   /* plan-45 BD3: tối dần 1 s → bảng Ngày mới trên nền đen → đóng bảng thì sáng dần 1 s */           // đang fade dở (đổi vùng) → thử lại sau
       ending = true; deps.setMode('sleep');                          // khóa người chơi trong lúc fade đen
       return true;
     },
@@ -132,14 +164,20 @@ export function createClock(deps) {
       const k = (m - start) / (full - start); return 0.34 * (k * k * (3 - 2 * k));   /* c35-demban: đêm bớt tối (0,45 → 0,34) */
     },
     dayT: () => { const h = 6 + st().min / 60; return (((h - 12) % 24) + 24) % 24 / 24; },   // tương thích cũ: 0 = trưa, 0,5 = nửa đêm
-    init: sv => { sv.clock = normalize(sv.clock); if (!sv.clock.today) { S.save = sv; snapshotToday(); } },
+    world: () => ({ epoch: WORLD_EPOCH, srvOffsetMs: W.srv, testOffsetMin: W.off, dayIndex: nowDM().D, min: nowDM().m }),   /* c38-dongho: xem đồng hồ chung */
+    worldReset: () => { W.off = 0; W.want = null; W.lockUrl = false; const c = W.obj; if (c) { const { D, m } = nowDM(); writeWorld(c, D, m); } },   /* c38-dongho: bỏ độ lệch test */
+    init: sv => { sv.clock = normalize(sv.clock); adopt(sv.clock); if (!sv.clock.today) { S.save = sv; snapshotToday(); } },
     set: o => { const c = st(); if (!c) return; if (o.season && SEASONS.includes(o.season)) c.season = o.season; if (o.day) c.day = Math.min(DAYS_PER_SEASON, Math.max(1, o.day | 0)); if (o.year) c.year = Math.max(1, o.year | 0); if (typeof o.min === 'number') c.min = Math.max(0, Math.min(DAY_MIN - 1, o.min)); if (typeof o.hour === 'number') c.min = Math.max(0, Math.min(DAY_MIN - 1, ((o.hour + 24 - 6) % 24) * 60 + (o.minute | 0))); c.hour = Math.floor(6 + c.min / 60) % 24; c.minute = Math.floor(c.min % 60); },   // debug/test
     tick: (dt, ctx) => {
       ctxRef = ctx;
-      if (!clock.running()) return;
-      const c = st(); c.min += dt * RATE;
-      c.hour = Math.floor(6 + c.min / 60) % 24; c.minute = Math.floor(c.min % 60);
-      if (c.min >= DAY_MIN) { c.min = DAY_MIN - 0.001; clock.sleep(true); }
+      const c = st(); if (!c) return;
+      if (c !== W.obj) adopt(c);   /* c38-dongho: save khác vừa nạp (cloud, đổi tài khoản) */
+      else if (c.min !== W.min || c.day !== W.day || c.season !== W.season || c.year !== W.year) { W.off += (absDayOf(c) * DAY_MIN + c.min) - worldMin(); syncW(c); }   /* ghi tay (test, preset, clock.set) → độ lệch TẠM, không lưu */
+      const { D, m } = nowDM(), cur = absDayOf(c);
+      if (D < cur) { writeWorld(c, D, m); return; }
+      if (D === cur) { setMin(c, m); c.wd = D; syncW(c); return; }
+      if (!clock.running()) return;   /* sang ngày khi đang ở menu / hộp thoại → chờ về chơi mới chuyển ngày */
+      worldNewDay(c, D, m);
     },
     hud: lg => {
       const hud = document.getElementById('hud'); if (!hud) return;
@@ -162,5 +200,7 @@ export function createClock(deps) {
   // tắt tab / đóng game: ghi giờ hiện tại ngay (rAF không chạy khi tab ẩn nên đồng hồ tự đứng)
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.save && S.save.clock) deps.persist(); });
   window.addEventListener('pagehide', () => { if (S.save && S.save.clock) deps.persist(); });
+  if (W.want != null) { const set0 = clock.set; clock.set = o => { if (W.want == null && W.lockUrl && o && (o.hour != null || o.min != null)) return; set0(o); }; W.lockUrl = true; }   /* c38-dongho: có ?clock= thì preset gọi clock.set({hour}) không đè giờ test (ghi tay __S.save.clock.min vẫn được) */
+  try { window.__clock38 = clock; } catch (e) { }   /* c38-dongho: móc test */
   return clock;
 }
