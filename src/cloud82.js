@@ -5,7 +5,8 @@
 // Không chạy khi: ?preset / ?promo / ?demo / ?showcase / ?find / ?auto / ?zone (ô save test hoặc game đã tự vào trước khi kịp đồng bộ).
 // Luật an toàn: mọi lỗi bị nuốt (try/catch) → game chạy ngoại tuyến; không bao giờ chặn 'Loading…'; nút tiêu đề chỉ khoá tối đa RESOLVE_MAX ms.
 // Đăng nhập: Google (nút chính) + email nhận mã 6 số — anh chốt 2026-11-03, BỎ Discord (không còn khớp roster tự động).
-import { createCloud, createSync, bumpMeta, deviceId, emailOk } from './cloud.js';
+// c24 (04/11): thêm "Tên đăng nhập & mật khẩu" (Đăng nhập | Đăng ký) — email nội bộ <tên>@players.seismic9.app, xem cloud.js. ?cloud=mock&mockconfirm=1 giả Supabase còn bật xác nhận email.
+import { createCloud, createSync, bumpMeta, deviceId, emailOk, cleanUser, userOk, PW_MIN } from './cloud.js';
 import { setWriteHook, isSyncSlot, saveKey } from './save.js';
 
 const RESOLVE_MAX = 8000;      /* ms: quá lâu thì mở khoá nút, coi như ngoại tuyến */
@@ -18,7 +19,15 @@ const TXT = {
     signIn: 'Đăng nhập Google', signInMock: 'Đăng nhập Google (thử)', emailBtn: 'Đăng nhập bằng email', signOut: 'Đăng xuất',
     emTitle: 'Đăng nhập bằng email', emBody: 'Nhập email, game gửi mã 6 số. Không cần mật khẩu.', emPh: 'email của bạn', send: 'Gửi mã', cancel: 'Huỷ',
     codeTitle: 'Nhập mã 6 số', codeBody: e => `Mã đã gửi tới ${e}. Không thấy thì xem cả hộp Thư rác.`, verify: 'Xác nhận', resend: 'Gửi lại mã', sending: 'Đang gửi…',
-    errs: { bad_email: 'Email không hợp lệ', bad_code: n => 'Mã sai' + (n ? ` — còn ${n} lần` : ''), expired: 'Mã đã hết hạn — bấm Gửi lại mã', too_many: 'Sai quá nhiều lần — bấm Gửi lại mã', rate_limit: 'Gửi mã quá nhiều — chờ vài phút rồi thử lại', network: 'Không có mạng — thử lại sau', auth: 'Không đăng nhập được — thử lại' }, mock: 'thử', offline: 'Đang chơi ngoại tuyến',
+    errs: { bad_email: 'Email không hợp lệ', bad_code: n => 'Mã sai' + (n ? ` — còn ${n} lần` : ''), expired: 'Mã đã hết hạn — bấm Gửi lại mã', too_many: 'Sai quá nhiều lần — bấm Gửi lại mã', rate_limit: 'Gửi mã quá nhiều — chờ vài phút rồi thử lại', network: 'Không có mạng — thử lại sau', auth: 'Không đăng nhập được — thử lại',
+      bad_user: 'Tên đăng nhập 3–20 ký tự, chỉ gồm a-z, 0-9, dấu _ và dấu . (không để dấu chấm ở đầu/cuối)', weak_pw: `Mật khẩu cần ít nhất ${PW_MIN} ký tự`, pw_mismatch: 'Hai lần nhập mật khẩu không khớp',
+      bad_login: 'Sai tên đăng nhập hoặc mật khẩu', taken: 'Tên này đã có người dùng — chọn tên khác',
+      confirm_on: 'Máy chủ còn bật "xác nhận email" nên chưa dùng được tên + mật khẩu — báo quản trị tắt "Confirm email" trong Supabase',
+      signup_off: 'Máy chủ đang tạm khoá đăng ký tài khoản mới', pw_off: 'Máy chủ chưa bật đăng nhập bằng mật khẩu' }, mock: 'thử', offline: 'Đang chơi ngoại tuyến',
+    userBtn: 'Tên đăng nhập & mật khẩu', pwTitle: 'Tên đăng nhập & mật khẩu', tabIn: 'Đăng nhập', tabUp: 'Đăng ký',
+    pwBodyIn: 'Không cần email. Nhập tên đăng nhập và mật khẩu bạn đã đăng ký.', pwBodyUp: 'Tạo tài khoản chỉ với tên + mật khẩu, không cần email.',
+    userPh: 'tên đăng nhập (a-z 0-9 _ .)', pwPh: `mật khẩu (ít nhất ${PW_MIN} ký tự)`, pw2Ph: 'nhập lại mật khẩu', goIn: 'Đăng nhập', goUp: 'Tạo tài khoản', working: 'Đang xử lý…',
+    pwWarn: 'Quên mật khẩu sẽ không lấy lại được — nên liên kết Google/email sau.',
     guest: 'Chưa đăng nhập — save chỉ ở máy này', syncing: 'Đang đồng bộ…', synced: rev => `Đã lưu trên mây · bản ${rev}`, as: n => `Đăng nhập: ${n}`,
     online: (a, b) => `● ${a} đang chơi · ${b} người chơi`, conflictWait: 'Có 2 bản save khác nhau — chọn ở màn tiêu đề',
     upTitle: 'Đưa save máy này lên tài khoản?', upBody: 'Save trên máy này sẽ được lưu trên mây, chơi tiếp được ở máy khác.', yes: 'Có, đưa lên', no: 'Để sau',
@@ -33,7 +42,15 @@ const TXT = {
     signIn: 'Sign in with Google', signInMock: 'Sign in with Google (test)', emailBtn: 'Sign in with email', signOut: 'Sign out',
     emTitle: 'Sign in with email', emBody: 'Enter your email and we will send a 6-digit code. No password needed.', emPh: 'your email', send: 'Send code', cancel: 'Cancel',
     codeTitle: 'Enter the 6-digit code', codeBody: e => `Code sent to ${e}. Check your Spam folder too.`, verify: 'Confirm', resend: 'Resend code', sending: 'Sending…',
-    errs: { bad_email: 'Invalid email', bad_code: n => 'Wrong code' + (n ? ` — ${n} tries left` : ''), expired: 'Code expired — tap Resend code', too_many: 'Too many wrong tries — tap Resend code', rate_limit: 'Too many codes sent — wait a few minutes', network: 'No connection — try again later', auth: 'Could not sign in — try again' }, mock: 'test', offline: 'Playing offline',
+    errs: { bad_email: 'Invalid email', bad_code: n => 'Wrong code' + (n ? ` — ${n} tries left` : ''), expired: 'Code expired — tap Resend code', too_many: 'Too many wrong tries — tap Resend code', rate_limit: 'Too many codes sent — wait a few minutes', network: 'No connection — try again later', auth: 'Could not sign in — try again',
+      bad_user: 'Username must be 3–20 characters: a-z, 0-9, _ and . (no dot at the start or end)', weak_pw: `Password needs at least ${PW_MIN} characters`, pw_mismatch: 'The two passwords do not match',
+      bad_login: 'Wrong username or password', taken: 'That username is taken — pick another one',
+      confirm_on: 'The server still has "email confirmation" on, so username sign-in cannot work yet — ask the admin to turn off "Confirm email" in Supabase',
+      signup_off: 'New sign-ups are temporarily closed', pw_off: 'Password sign-in is not enabled on the server' }, mock: 'test', offline: 'Playing offline',
+    userBtn: 'Username & password', pwTitle: 'Username & password', tabIn: 'Sign in', tabUp: 'Sign up',
+    pwBodyIn: 'No email needed. Enter the username and password you signed up with.', pwBodyUp: 'Create an account with just a username + password, no email needed.',
+    userPh: 'username (a-z 0-9 _ .)', pwPh: `password (at least ${PW_MIN} characters)`, pw2Ph: 'repeat password', goIn: 'Sign in', goUp: 'Create account', working: 'Working…',
+    pwWarn: 'A forgotten password cannot be recovered — consider linking Google/email later.',
     guest: 'Not signed in — save stays on this device', syncing: 'Syncing…', synced: rev => `Saved to cloud · rev ${rev}`, as: n => `Signed in: ${n}`,
     online: (a, b) => `● ${a} playing · ${b} players`, conflictWait: 'Two different saves — choose on the title screen',
     upTitle: 'Upload this device\'s save to your account?', upBody: 'Your save on this device will be stored in the cloud so you can continue on other devices.', yes: 'Yes, upload', no: 'Later',
@@ -80,13 +97,16 @@ export async function initCloud82(o) {
     if (btn) btn.classList.remove('discord');   /* không còn màu Discord */
     let ebtn = null;
     try { if (wrap && btn && !document.getElementById('t-email82')) { ebtn = document.createElement('button'); ebtn.id = 't-email82'; ebtn.className = btn.className; btn.insertAdjacentElement('afterend', ebtn); } } catch (e) { ebtn = null; }
+    let ubtn = null;   /* c24: nút "Tên đăng nhập & mật khẩu" ngay sau nút email */
+    try { if (wrap && btn && !document.getElementById('t-user82')) { ubtn = document.createElement('button'); ubtn.id = 't-user82'; ubtn.className = btn.className; (ebtn || btn).insertAdjacentElement('afterend', ubtn); } } catch (e) { ubtn = null; }
     let statusTxt = '', onlineTxt = '';
     const paint = () => {
       try {
         const u = cloud.status().user, t = T();
         if (btn) { btn.textContent = u ? t.signOut : (cloud.mode === 'mock' ? t.signInMock : t.signIn); btn.dataset.cloud82 = u ? 'out' : 'in'; }
         if (ebtn) { ebtn.textContent = t.emailBtn; ebtn.hidden = !!u; }
-        if (note) note.textContent = [u ? t.as(u.name || u.email || t.player) : t.guest, statusTxt, onlineTxt, cloud.mode === 'mock' ? '[' + t.mock + ']' : ''].filter(Boolean).join(' · ');
+        if (ubtn) { ubtn.textContent = t.userBtn; ubtn.hidden = !!u; }
+        if (note) note.textContent = [u ? t.as(u.username || u.name || u.email || t.player) : t.guest, statusTxt, onlineTxt, cloud.mode === 'mock' ? '[' + t.mock + ']' : ''].filter(Boolean).join(' · ');
       } catch (e) { }
     };
     if (wrap) wrap.hidden = false;
@@ -173,6 +193,10 @@ export async function initCloud82(o) {
         if (u.provider === 'email' && !u.name) {
           const sv = o.loadSave ? o.loadSave() : null, tn = $('#t-name'), nm = (sv && sv.name) || (tn && tn.value.trim()) || '';
           if (nm) { const r = await cloud.setName(nm); if (r && r.ok) u.name = r.name; }
+        } else if (u.provider === 'username') {   /* c24: tên hiển thị = tên trong save / ô tên; chưa có tên game → dùng tên đăng nhập (profile đã mang tên đăng nhập từ lúc đăng ký) */
+          const sv = o.loadSave ? o.loadSave() : null, tn = $('#t-name'), nm = (sv && sv.name) || (tn && tn.value.trim()) || '';
+          if (nm && nm !== u.name) { const r = await cloud.setName(nm); if (r && r.ok) u.name = r.name; }
+          else if (!nm && tn && u.username) tn.value = u.username;
         }
       } catch (e) { }
     };
@@ -232,8 +256,76 @@ export async function initCloud82(o) {
       return p;
     }
     dbg.emailPanel = emailPanel;
+
+    /* ---------- c24: bảng tên đăng nhập + mật khẩu — 2 thẻ Đăng nhập | Đăng ký, cùng khung pixel với bảng email ---------- */
+    let pwOpen = null;
+    function pwPanel(startTab) {
+      if (pwOpen) return pwOpen.p;
+      const t = T(), el = document.createElement('div');
+      el.id = 'cloud82-pw';
+      el.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:60;background:rgba(10,6,16,.55);padding:16px;box-sizing:border-box';
+      el.innerHTML = `<div style="border:20px solid transparent;border-image:url(assets/px/ui/frame.png) 20 / 20px round;image-rendering:pixelated;background:#1c1424;background-clip:padding-box;max-width:460px;width:100%;color:#f3e6c6;font:18px VT323,monospace;padding:4px 8px 8px;box-sizing:border-box">
+        <div data-k="title" style="font-size:22px;color:#ffd96a;margin-bottom:4px"></div>
+        <div style="display:flex;gap:6px;margin-bottom:6px"><button class="btn px" data-v="tab-in" style="flex:1"></button><button class="btn px" data-v="tab-up" style="flex:1"></button></div>
+        <div data-k="body" class="tiny"></div>
+        <form data-k="form" autocomplete="on" onsubmit="return false" style="margin:0">
+        <input data-k="user" type="text" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="20" style="${inSt}">
+        <input data-k="pw" type="password" name="password" autocomplete="current-password" maxlength="72" style="${inSt}">
+        <input data-k="pw2" type="password" name="password2" autocomplete="new-password" maxlength="72" style="${inSt}" hidden>
+        </form>
+        <div data-k="err" class="tiny" style="color:#ff8a7a;min-height:1.2em"></div>
+        <button class="btn px primary" data-v="go" style="width:100%"></button>
+        <div data-k="warn" class="tiny" style="color:#e8c37a;margin-top:6px"></div>
+        <div style="display:flex;gap:6px;margin-top:6px"><button class="btn px" data-v="cancel" style="flex:1"></button></div></div>`;
+      const $$ = k => el.querySelector(`[data-k="${k}"]`), go = el.querySelector('[data-v="go"]');
+      let tab = startTab === 'up' ? 'up' : 'in', busy = false;
+      const show = () => {
+        const up = tab === 'up';
+        $$('title').textContent = t.pwTitle;
+        $$('body').textContent = up ? t.pwBodyUp : t.pwBodyIn;
+        for (const [v, on, txt] of [['tab-in', !up, t.tabIn], ['tab-up', up, t.tabUp]]) { const b = el.querySelector(`[data-v="${v}"]`); b.textContent = txt; b.classList.toggle('primary', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+        $$('user').placeholder = t.userPh; $$('pw').placeholder = t.pwPh; $$('pw2').placeholder = t.pw2Ph;
+        $$('pw2').hidden = !up; $$('pw').autocomplete = up ? 'new-password' : 'current-password';
+        $$('warn').textContent = t.pwWarn;
+        go.textContent = busy ? t.working : up ? t.goUp : t.goIn;
+        el.querySelector('[data-v="cancel"]').textContent = t.cancel;
+      };
+      const err = k => { const f = t.errs[k] || t.errs.auth; $$('err').textContent = typeof f === 'function' ? f() : f; log('pwErr', k); };
+      $$('user').addEventListener('input', () => { const i = $$('user'), v = cleanUser(i.value).slice(0, 20); if (v !== i.value) i.value = v; });   /* lọc ký tự lạ ngay khi gõ, viết thường */
+      const submit = async () => {
+        const un = cleanUser($$('user').value), pw = $$('pw').value, up = tab === 'up';
+        $$('user').value = un;
+        if (!userOk(un)) return err(up ? 'bad_user' : 'bad_login');
+        if (pw.length < PW_MIN) return err(up ? 'weak_pw' : 'bad_login');
+        if (up && pw !== $$('pw2').value) return err('pw_mismatch');
+        busy = true; show(); $$('err').textContent = '';
+        const r = up ? await cloud.signUpPassword(un, pw) : await cloud.signInPassword(un, pw);
+        busy = false; show(); log(up ? 'pwSignUp' : 'pwSignIn', { ok: r.ok, err: r.err, detail: r.detail });
+        if (!r.ok) return err(r.err);
+        close(true);
+      };
+      let res;
+      const close = v => { try { el.remove(); } catch (e) { } pwOpen = null; res(v); };
+      el.addEventListener('click', e => {
+        const b = e.target.closest && e.target.closest('button[data-v]'); if (!b || busy) return;
+        const v = b.dataset.v;
+        if (v === 'cancel') return close(false);
+        if (v === 'tab-in' || v === 'tab-up') { tab = v === 'tab-up' ? 'up' : 'in'; $$('err').textContent = ''; $$('pw2').value = ''; show(); try { $$('user').focus(); } catch (x) { } return; }
+        if (v === 'go') submit();
+      });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter' && !busy) { e.preventDefault(); submit(); } e.stopPropagation(); });   /* phím gõ không lọt xuống game */
+      const p = new Promise(z => { res = z; });
+      pwOpen = { el, p, tab: () => tab };
+      show(); (document.getElementById('title') || document.body).appendChild(el);
+      try { $$('user').focus(); } catch (e) { }
+      log('pwOpen', tab);
+      return p;
+    }
+    dbg.pwPanel = pwPanel;
+
     const signedIn = async why => { await runResolve(why); await afterSignIn(); paint(); };
     if (ebtn) ebtn.onclick = async () => { try { if (cloud.status().user) return; if (await emailPanel()) await signedIn('email'); } catch (e) { log('err', String(e)); } };
+    if (ubtn) ubtn.onclick = async () => { try { if (cloud.status().user) return; if (await pwPanel()) await signedIn('password'); } catch (e) { log('err', String(e)); } };
 
     if (btn) btn.onclick = async () => {
       try {

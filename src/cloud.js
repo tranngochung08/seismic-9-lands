@@ -25,10 +25,19 @@ const DEV_KEY = 'seismic9.device';
 const MOCK_DB = 'seismic9.cloudmock.v1';
 const MOCK_SESS = 'seismic9.cloudmock.session';
 const MOCK_OTP = 'seismic9.cloudmock.otp';
+const MOCK_ACC = 'seismic9.cloudmock.accounts';   /* mock: tài khoản tên + mật khẩu (kho CHUNG như db) */
 export const OTP_TTL = 600;               /* giây: mã email hết hạn (mock; Supabase mặc định 1 giờ, chỉnh được) */
 export const OTP_TRIES = 5;
 export const emailOk = e => typeof e === 'string' && e.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 export const maskEmail = e => { const [a, b] = String(e || '').split('@'); return b ? a.slice(0, 1) + '***@' + b : null; };
+/* c24 (04/11): đăng nhập TÊN + MẬT KHẨU = Supabase email/password với email NỘI BỘ <tên>@USER_DOMAIN (không phải email thật, không gửi thư; anh tắt "Confirm email" trong Supabase) */
+export const USER_DOMAIN = 'players.seismic9.app';
+export const PW_MIN = 6;
+export const cleanUser = t => String(t == null ? '' : t).trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');   /* lọc ký tự lạ, không phân biệt hoa thường */
+export const userOk = u => typeof u === 'string' && /^[a-z0-9_.]{3,20}$/.test(u) && !/^\.|\.$|\.\./.test(u);   /* 3–20 ký tự; dấu chấm không ở đầu/cuối, không 2 chấm liền (email hợp lệ) */
+export const userEmail = u => u + '@' + USER_DOMAIN;
+export const userOfEmail = e => { const m = /^([^@]+)@(.+)$/.exec(String(e || '').trim().toLowerCase()); return m && m[2] === USER_DOMAIN ? m[1] : null; };
+const mockHash = s => { let h = 5381; for (const ch of String(s)) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0; return 'h' + h.toString(36); };   /* chỉ cho backend GIẢ */
 
 const nowS = () => Date.now() / 1000;
 const rid = (n = 10) => { let s = ''; const A = 'abcdefghijklmnopqrstuvwxyz0123456789'; for (let i = 0; i < n; i++) s += A[(Math.random() * A.length) | 0]; return s; };
@@ -123,7 +132,7 @@ export const teamPower = (rules, team) => { const c = checkTeam(rules, team); re
    ===================================================================================================== */
 function mockBackend(o) {
   const dbSt = o.db, devSt = o.storage, rules = o.rules || null;
-  const ctl = { latency: o.latency | 0, offline: !!o.offline, failNext: null, calls: 0 };   /* failNext: 'before' (mất mạng trước khi tới server) | 'after' (server đã làm, mất phản hồi) */
+  const ctl = { latency: o.latency | 0, offline: !!o.offline, failNext: null, calls: 0, confirm: !!o.confirm };   /* confirm: giả Supabase còn bật "Confirm email" */   /* failNext: 'before' (mất mạng trước khi tới server) | 'after' (server đã làm, mất phản hồi) */
   const load = () => { const d = jget(dbSt, MOCK_DB) || {}; for (const k of ['profiles', 'saves', 'stats', 'ghosts']) d[k] ||= {}; for (const k of ['backups', 'duels']) d[k] ||= []; d.seq ||= 1; return d; };
   const store = d => sset(dbSt, MOCK_DB, JSON.stringify(d));
   const sess = () => jget(devSt, MOCK_SESS);
@@ -180,6 +189,28 @@ function mockBackend(o) {
       const user = { id: 'mock-' + em, provider: 'email', name: null, avatar: null, email: maskEmail(em) };
       sset(devSt, MOCK_SESS, JSON.stringify({ user, at: clock() }));
       return { ok: true, user };
+    },
+    async signUpPassword(user, pw) {
+      const un = cleanUser(user); if (!userOk(un)) return { ok: false, err: 'bad_user' };
+      if (String(pw || '').length < PW_MIN) return { ok: false, err: 'weak_pw' };
+      if (ctl.latency) await sleep(ctl.latency);
+      if (ctl.offline) return { ok: false, err: 'network' };
+      const acc = jget(dbSt, MOCK_ACC) || {};
+      if (acc[un]) return { ok: false, err: 'taken' };
+      acc[un] = { pw: mockHash(pw), confirmed: !ctl.confirm, at: clock() }; sset(dbSt, MOCK_ACC, JSON.stringify(acc));
+      if (ctl.confirm) return { ok: false, err: 'confirm_on' };
+      return api.signInPassword(un, pw);
+    },
+    async signInPassword(user, pw) {
+      const un = cleanUser(user); if (!userOk(un)) return { ok: false, err: 'bad_login' };
+      if (ctl.latency) await sleep(ctl.latency);
+      if (ctl.offline) return { ok: false, err: 'network' };
+      const a = (jget(dbSt, MOCK_ACC) || {})[un];
+      if (!a || a.pw !== mockHash(pw)) return { ok: false, err: 'bad_login' };
+      if (!a.confirmed) return { ok: false, err: 'confirm_on' };
+      const uu = { id: 'mock-u-' + un, provider: 'username', name: un, avatar: null, email: null, username: un };
+      sset(devSt, MOCK_SESS, JSON.stringify({ user: uu, at: clock() }));
+      return { ok: true, user: uu };
     },
     async signOut() { sdel(devSt, MOCK_SESS); return { ok: true }; },
     ensureProfile: () => call('ensure_profile', d => {
@@ -280,7 +311,9 @@ function supabaseBackend(o) {
   const subs = new Set();
   const wrap = async fn => { try { return await fn(await sb()); } catch (e) { return { ok: false, err: 'network', detail: String(e && e.message || e) }; } };
   const rpc = (name, args) => wrap(async c => { const { data, error } = await c.rpc(name, args || {}); if (error) return { ok: false, err: 'rpc', detail: error.message }; if (Array.isArray(data)) return { ok: true, rows: data }; if (data && typeof data === 'object') return 'ok' in data ? data : { ok: true, ...data }; return { ok: true, value: data }; });
-  const mapUser = u => { if (!u) return null; const m = u.user_metadata || {}, a = u.app_metadata || {}; return { id: u.id, provider: a.provider || 'email', name: m.full_name || m.name || null, avatar: m.avatar_url || m.picture || null, email: maskEmail(u.email) }; };   /* email chỉ giữ dạng che (a***@gmail.com) */
+  const mapUser = u => { if (!u) return null; const m = u.user_metadata || {}, a = u.app_metadata || {}, un = userOfEmail(u.email); return { id: u.id, provider: un ? 'username' : (a.provider || 'email'), name: m.full_name || m.name || un || null, avatar: m.avatar_url || m.picture || null, email: un ? null : maskEmail(u.email), username: un || undefined }; };   /* email chỉ giữ dạng che (a***@gmail.com); tài khoản tên + mật khẩu không hiện email nội bộ */
+  /* lỗi đăng ký / đăng nhập mật khẩu → mã ngắn cho giao diện (Supabase Auth: user_already_exists, invalid_credentials, email_not_confirmed, weak_password, signup_disabled, over_*_rate_limit…) */
+  const pwErr = e => { const t = String(e && ((e.code || '') + ' ' + (e.message || '')) || ''); return /already|exists|registered/i.test(t) ? 'taken' : /not.?confirmed|confirmation email|sending.*email/i.test(t) ? 'confirm_on' : (e && e.status === 429) || /rate.?limit|too many/i.test(t) ? 'rate_limit' : /weak|password.*(short|least|character)/i.test(t) ? 'weak_pw' : /signups? (not allowed|disabled)|signup_disabled/i.test(t) ? 'signup_off' : /email_provider_disabled|(email|password).*(logins?|provider|sign.?ups?).*disabled/i.test(t) ? 'pw_off' : /invalid.?(login|credentials)/i.test(t) ? 'bad_login' : /email.*invalid|invalid.*email/i.test(t) ? 'bad_user' : (e && e.status === 0) || /fetch|network|load failed/i.test(t) ? 'network' : 'auth'; };
   const otpErr = e => { const t = String(e && (e.message || e.code) || ''); return /expired/i.test(t) ? 'expired' : (e && e.status === 429) || /rate|too many/i.test(t) ? 'rate_limit' : /invalid|token/i.test(t) ? 'bad_code' : 'auth'; };
   return {
     ctl: null,
@@ -304,6 +337,24 @@ function supabaseBackend(o) {
     verifyOtp: (email, code) => wrap(async c => {
       const { data, error } = await c.auth.verifyOtp({ email: String(email || '').trim().toLowerCase(), token: String(code || '').trim(), type: 'email' });
       if (error) return { ok: false, err: otpErr(error), detail: error.message };
+      lastToken = data && data.session ? data.session.access_token : lastToken;
+      return { ok: true, user: mapUser(data && data.user) };
+    }),
+    /* tên + mật khẩu: đăng ký (signUp, metadata name = tên đăng nhập → ensure_profile lấy làm tên) · đăng nhập (signInWithPassword) */
+    signUpPassword: (user, pw) => wrap(async c => {
+      const un = cleanUser(user); if (!userOk(un)) return { ok: false, err: 'bad_user' };
+      if (String(pw || '').length < PW_MIN) return { ok: false, err: 'weak_pw' };
+      const { data, error } = await c.auth.signUp({ email: userEmail(un), password: String(pw), options: { data: { name: un, username: un } } });
+      if (error) return { ok: false, err: pwErr(error), detail: error.message };
+      if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) return { ok: false, err: 'taken' };   /* Supabase còn bật xác nhận email: tên đã có → trả user giả không identity */
+      if (!data || !data.session) return { ok: false, err: 'confirm_on' };   /* tạo được nhưng chờ xác nhận email (không có thư thật) */
+      lastToken = data.session.access_token;
+      return { ok: true, user: mapUser(data.user) };
+    }),
+    signInPassword: (user, pw) => wrap(async c => {
+      const un = cleanUser(user); if (!userOk(un)) return { ok: false, err: 'bad_login' };
+      const { data, error } = await c.auth.signInWithPassword({ email: userEmail(un), password: String(pw || '') });
+      if (error) return { ok: false, err: pwErr(error), detail: error.message };
       lastToken = data && data.session ? data.session.access_token : lastToken;
       return { ok: true, user: mapUser(data && data.user) };
     }),
@@ -339,7 +390,7 @@ function supabaseBackend(o) {
 }
 
 /* ---------- chế độ OFF: mọi thứ trả 'off' ---------- */
-const OFF_FNS = ['ensureProfile', 'setName', 'verifyOtp', 'pullSave', 'pushSave', 'listBackups', 'getBackup', 'restoreBackup', 'stashBackup', 'leaderboard', 'myRank', 'publishTeam', 'pickOpponents', 'reportDuel', 'defenseSummary', 'heartbeat', 'onlineCount', 'reportUser', 'deleteAccount', 'signIn', 'signOut'];
+const OFF_FNS = ['ensureProfile', 'setName', 'verifyOtp', 'signUpPassword', 'signInPassword', 'pullSave', 'pushSave', 'listBackups', 'getBackup', 'restoreBackup', 'stashBackup', 'leaderboard', 'myRank', 'publishTeam', 'pickOpponents', 'reportDuel', 'defenseSummary', 'heartbeat', 'onlineCount', 'reportUser', 'deleteAccount', 'signIn', 'signOut'];
 function offBackend() { const b = { ctl: null, session: async () => ({ ok: true, user: null }), pushKeepalive: () => ({ ok: false, err: 'off' }) }; for (const k of OFF_FNS) b[k] = async () => ({ ok: false, err: 'off' }); return b; }
 
 /* =====================================================================================================
@@ -362,7 +413,7 @@ export function createCloud(opts = {}) {
   let mode = opts.mode || pickMode(opts.config, q);
   let be;
   try {
-    if (mode === 'mock') be = mockBackend({ db: opts.db || storage, storage, user: opts.mock && opts.mock.user, latency: (opts.mock && opts.mock.latency) || +(q.get('mocklag') || 0), offline: (opts.mock && opts.mock.offline) || q.get('mockoff') === '1', rules: opts.rules, now: opts.now });
+    if (mode === 'mock') be = mockBackend({ db: opts.db || storage, storage, user: opts.mock && opts.mock.user, latency: (opts.mock && opts.mock.latency) || +(q.get('mocklag') || 0), offline: (opts.mock && opts.mock.offline) || q.get('mockoff') === '1', confirm: (opts.mock && opts.mock.confirm) || q.get('mockconfirm') === '1', rules: opts.rules, now: opts.now });
     else if (mode === 'supabase') be = supabaseBackend({ url: opts.config.SUPABASE_URL, anonKey: opts.config.SUPABASE_ANON_KEY, redirect: opts.config.SUPABASE_REDIRECT, window: opts.window, loadLib: opts.loadLib });
     else be = offBackend();
   } catch (e) { mode = 'off'; be = offBackend(); }
@@ -380,6 +431,8 @@ export function createCloud(opts = {}) {
     session: guard(async () => { const r = await be.session(); if (r.ok) { st.user = r.user || null; } return r; }),
     signIn: guard(async (x) => { const r = await be.signIn(x); if (r.ok && r.user) { st.user = r.user; emit(); await be.ensureProfile(); } return r; }),
     verifyOtp: guard(async (email, code) => { const r = await be.verifyOtp(email, code); if (r.ok && r.user) { st.user = r.user; emit(); await be.ensureProfile(); } return r; }),
+    signUpPassword: guard(async (user, pw) => { const r = await be.signUpPassword(user, pw); if (r.ok && r.user) { st.user = r.user; emit(); await be.ensureProfile(); } return r; }),
+    signInPassword: guard(async (user, pw) => { const r = await be.signInPassword(user, pw); if (r.ok && r.user) { st.user = r.user; emit(); await be.ensureProfile(); } return r; }),
     signOut: guard(async () => { const r = await be.signOut(); st.user = null; emit(); return r; }),
     deviceId: () => deviceId(storage),
     pushKeepalive: (data, base, x) => { try { return be.pushKeepalive ? be.pushKeepalive(data, base, x) : { ok: false, err: 'nokeepalive' }; } catch (e) { return { ok: false, err: 'network' }; } }

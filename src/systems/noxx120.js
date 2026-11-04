@@ -70,7 +70,7 @@ function speciesList() {
   const J = ST.spr || {}, evoT = new Set();
   for (const k of Object.keys(SPECIES)) { const s = SPECIES[k]; if (s.evo) evoT.add(s.evo); }
   const out = Object.keys(SPECIES).filter(k => { const s = SPECIES[k]; return !evoT.has(k) && (!s.secret || k === 'elyziuma') && J[k] && J[k].idle && k !== 'rocky';   /* c15-elyz: anh cho Elyziuma vào bảng chọn */ });
-  return (SPECIES.rocky && J.rocky && J.rocky.idle ? ['rocky'] : []).concat(out);
+  return (SPECIES.rocky && J.rocky && J.rocky.idle ? ['rocky'] : []).concat(out.includes('ubam') ? ['ubam'] : [], out.filter(k => k !== 'ubam'));   /* c21-ubam: Ubam (Rocky kiểu cũ) đứng ngay sau Rocky */
 }
 function img(src) { let i = ST.img[src]; if (!i) { i = new Image(); i.src = BASE + src; ST.img[src] = i; } return i; }
 function thumb(sp, cv) {   /* khung 0 hướng nam của clip idle, cắt sát hình rồi vẽ nearest vừa ô 56 px */

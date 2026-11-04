@@ -489,6 +489,7 @@ const isHome = pt => pt.cmd === 'home' || (pt.koT || 0) > 0;
 /* ---------------------------------------------------------------- commands (plan-27) */
 function say(ctx, text, secs = 2.6) {
   const pt = petOf(ctx); if (!pt) return;
+  if (pt.ubam && typeof text === 'string') text = text.replace(/Rocky(?!-ha)/g, pt.name || 'Ubam');   /* c21-ubam: Ubam = Rocky kiểu cũ đổi tên */
   if (ST.ent) ST.bubble = { text, t: secs };
   else ctx.toast(L(ctx).far(pt.name) + text);
 }

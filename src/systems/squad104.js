@@ -136,7 +136,7 @@ function mkUnit(ctx, m) {
   return u;
 }
 function ensureF(ctx, u) {   /* sprite trận tải lười */
-  if (u.f || u.ko || isEly(ctx, u)) return u.f; const kit = ctx.ldKit; if (!kit) return null;
+  if (u.f || u.ko || isEly(ctx, u) || u.sp === 'ubam') return u.f;   /* c21-ubam: Ubam ngoài map = thú cưng pet.js (ubam121.js) */ const kit = ctx.ldKit; if (!kit) return null;
   if (!kit.ready()) { if (!ST.loading) { ST.loading = true; kit.load().then(() => { ST.loading = false; }, () => { ST.loading = false; }); } return null; }
   const p = ctx.S.player, q = kit.near(p.x - 14 + u.slot * 12, p.y + 8);
   try { const f = kit.mk(u.sp, u.lv, u.m, q.x, q.y); f.comp79 = true; f.clip = 'idle'; f.ct = 0; f.fx = 0.01; f.fy = 1; u.f = f; } catch (e) { console.error('squad104 mk', u.sp, e); return null; }

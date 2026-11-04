@@ -474,3 +474,19 @@ Object.assign(SPECIES, Object.fromEntries([
 Object.assign(SPECIES_EN, { oali: 'Croaksmug', oalipho: 'Street Croak', laooa: 'Don Croak' });
 Object.assign(MOVE_NAME_EN, MOVE_EN97);
 /* p97:species:end */
+
+/* c21-ubam:species:begin — anh 04/11: Rocky KIỂU CŨ (Rocky cam thú cưng) = Chấn Thú HIẾM 'Ubam', skill y chang bản cũ.
+   Ngoài map: Ubam là thú cưng pet.js (Đấm · Rocky-ha Lv20 · Siêu Cấp Lv40 · chiêu lõi trùm…) nối qua ubam121.js; squad104 không dựng chiến binh chung.
+   Trong trận (linhduel): 5 chiêu dưới đây mô phỏng bộ cũ bằng khung chung theo shape; sprite trận ghép từ ảnh Rocky cam có sẵn (_wip/c21-ubam/_gen/mk-sheets.py). */
+Object.assign(MOVES, Object.fromEntries([
+  M('ub_dam', 'Đấm', 'chan', 'vat', 45, 100, 1.5, 'can', { prio: 1 }),
+  M('ub_ha', 'Rocky-ha', 'chan', 'dac', 90, 95, 7, 'tia'),
+  M('ub_diachan', 'Địa Chấn', 'chan', 'vat', 80, 100, 9, 'quanh', { eff: { st: 'te', p: 0.3 } }),
+  M('ub_khien', 'Khiên Đá Bóng', 'chan', 'tt', 0, 100, 12, 'minh', { eff: { protect: 2 }, prio: 2 }),
+  M('ub_sieu', 'Siêu Cấp Rocky-ha', 'chan', 'dac', 140, 95, 22, 'tia', { ult: true }),
+].map(m => [m.id, m])));
+export const MOVE_EN_UBAM = { ub_dam: 'Punch', ub_ha: 'Rocky-ha', ub_diachan: 'Quake Stomp', ub_khien: 'Mirror Slab', ub_sieu: 'Super Rocky-ha' };
+SPECIES.ubam = S('ubam', 'Ubam', ['chan'], [75, 85, 80, 75, 65, 70], ['ub_dam', 'ub_ha', 'ub_diachan', 'ub_khien', 'ub_sieu'], { size: 's', rarity: 'hiem', ubam: true });
+SPECIES_EN.ubam = 'Ubam';
+Object.assign(MOVE_NAME_EN, MOVE_EN_UBAM);
+/* c21-ubam:species:end */
