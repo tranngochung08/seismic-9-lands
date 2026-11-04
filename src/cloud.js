@@ -477,6 +477,8 @@ export function createSync(opts) {
   const playOf = s => (s && s.stats && s.stats.sec) | 0;
   const sigOf = s => { const q = summary(s) || {}; return [q.zone, q.badges, q.caught, q.team, lenOf(s, 'met')].join('|'); };   /* c30: dấu tiến độ lúc đồng bộ cuối (vùng, huy hiệu, thú, đội, NPC đã gặp) */
 
+  /* c45: bản mây do CHÍNH máy này đẩy (cùng device) và bản máy có giờ chơi ≥ bản mây → bản máy là nối tiếp (chơi thêm rồi chưa kịp đẩy) → tự đẩy, không hỏi */
+  const selfNext = (local, cd, uid, cdev) => { if (!local || !cd) return false; const m = local.meta || {}, cm = cd.meta || {}, d = cm.dev || cdev || null; return m.cloud === uid && !!d && d === dev() && playOf(local) >= playOf(cd); };
   function adopt(data, rev, uid) {   /* nhận bản mây làm bản cục bộ */
     const s = clone(data); s.meta = { ...(s.meta || {}), rev: (s.meta && s.meta.rev) | 0, base: rev, cloud: uid, dev: dev() }; s.meta.srev = s.meta.rev; s.meta.ssec = playOf(s); s.meta.ssig = sigOf(s); s.meta.pids = []; s.meta.kas = {}; s.meta.ppid = (data && data.meta && data.meta.pid) || null;   /* ppid = mã lần đẩy của bản mây đã nhận → máy gốc nhận ra bản mây sau này nối tiếp từ nó */
     writeLocal(s); st.link = { uid, base: rev }; return s;
@@ -501,7 +503,7 @@ export function createSync(opts) {
     if (!p.data) return pushLocal(local, 0, uid);
     const m = local.meta || {}, cm = p.data.meta || {};
     if (sameSave(local, p.data)) { linkTo(local, p.rev, uid); return { ok: true, rev: p.rev, linked: true }; }
-    if ((cm.pid && Array.isArray(m.pids) && m.pids.includes(cm.pid)) || (isFreshSave(p.data) && !isFreshSave(local))) return pushLocal(local, p.rev, uid);   /* bản mây là lần đẩy trước của chính máy này / chỉ là save rỗng → đẩy đè (bản cũ vào save_backups) */
+    if ((cm.pid && Array.isArray(m.pids) && m.pids.includes(cm.pid)) || (isFreshSave(p.data) && !isFreshSave(local)) || selfNext(local, p.data, uid, p.device)) return pushLocal(local, p.rev, uid);   /* bản mây là lần đẩy trước của chính máy này / chỉ là save rỗng → đẩy đè (bản cũ vào save_backups) */
     return null;
   }
   /* đẩy bị báo xung đột: nếu bản mây chính là lần đẩy trước của máy này (pid khớp) → chỉ là mất phản hồi, nhận rev rồi đẩy lại */
@@ -518,7 +520,7 @@ export function createSync(opts) {
     const u = ss.user; if (!u) return { action: 'guest' };
     await cloud.ensureProfile();
     const pull = await cloud.pullSave(); if (!pull.ok) return { action: 'offline', err: pull.err };
-    const local = readLocal(), cl = pull.data ? { rev: pull.rev, data: pull.data } : null;
+    const local = readLocal(), cl = pull.data ? { rev: pull.rev, data: pull.data, dev: pull.device || null } : null;
     if (local && cl) {   /* c30: 2 bản cùng nội dung (vd lần đẩy keepalive đã vào mà máy không biết) → gắn luôn, không hỏi */
       const m = local.meta || {}, cm = cl.data.meta || {};
       if ((!m.cloud || m.cloud === u.id) && sameSave(local, cl.data)) { linkTo(local, cl.rev, u.id); return { action: 'same', healed: true }; }
@@ -533,6 +535,9 @@ export function createSync(opts) {
     if (act === 'download') { if (local) backupLocal(); const s = adopt(cl.data, cl.rev, u.id); return { action: 'download', save: s, reload: true }; }
     if ((act === 'conflict' || act === 'other_account') && cl && isFreshSave(local)) {   /* máy này chỉ có save mới / rỗng → tự tải bản mây (bản máy vào .bak) */
       backupLocal(); const s = adopt(cl.data, cl.rev, u.id); return { action: 'download', save: s, reload: true, auto: act };
+    }
+    if (act === 'conflict' && cl && selfNext(readLocal() || local, cl.data, u.id, cl.dev)) {   /* c45: bản máy nối tiếp bản mây của chính máy này → đẩy đè (bản mây cũ vào save_backups) */
+      const r = await pushLocal(readLocal() || local, cl.rev, u.id); if (r.ok) return { action: 'push', rev: r.rev, auto: 'self_next' };
     }
     if (act === 'conflict' && cl && local.meta && local.meta.cloud === u.id && local.meta.ssec != null && playOf(local) - (local.meta.ssec | 0) < IDLE_SEC && local.meta.ssig === sigOf(local)) {   /* máy này gần như không chơi thêm từ lần đồng bộ cuối (chỉ mở / tắt app) → lấy bản mây, bản máy cất sao lưu */
       await cloud.stashBackup(local, (local.meta || {}).rev | 0, { playSec: playOf(local), device: dev() });
@@ -554,10 +559,11 @@ export function createSync(opts) {
     return conflictFlow(local, cl, u.id);
   }
   async function conflictFlow(local, cl, uid) {
-    if (!cl) { const p = await cloud.pullSave(); if (!p.ok) return { action: 'offline', err: p.err }; cl = p.data ? { rev: p.rev, data: p.data } : null; }
+    if (!cl) { const p = await cloud.pullSave(); if (!p.ok) return { action: 'offline', err: p.err }; cl = p.data ? { rev: p.rev, data: p.data, dev: p.device || null } : null; }
     if (!cl) { const r = await pushLocal(local, 0, uid); return r.ok ? { action: 'push', rev: r.rev } : { action: 'push_failed', err: r.err }; }
     if (sameSave(local, cl.data)) { linkTo(local, cl.rev, uid); return { action: 'same', healed: true }; }   /* c30: giống nhau → không hỏi */
     if (isFreshSave(cl.data) && !isFreshSave(local)) { const r = await pushLocal(local, cl.rev, uid); if (r.ok) return { action: 'push', rev: r.rev, auto: 'cloud_fresh' }; }
+    if (selfNext(local, cl.data, uid, cl.dev)) { const r = await pushLocal(local, cl.rev, uid); if (r.ok) return { action: 'push', rev: r.rev, auto: 'self_next' }; }   /* c45 */
     st.state = 'conflict';
     const pick = await ask({ kind: 'conflict', local: summary(local, { rev: (local.meta || {}).rev | 0 }), cloud: summary(cl.data, { rev: cl.rev }) });
     if (pick === 'local') {   /* đẩy đè lên bản mây hiện tại: bản mây cũ tự vào save_backups (trigger) */
