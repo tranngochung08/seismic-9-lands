@@ -244,7 +244,7 @@ async function boot() {
   resize(); window.addEventListener('resize', resize); window.addEventListener('orientationchange', () => setTimeout(resize, 250));
   if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', viewSize); }   /* thanh địa chỉ hiện/ẩn, xoay máy */
   bindInput();
-  HB.initHotbar({ S, CTX, ART, canvas: cv, openBag: () => toggleMenu('bag'), onHold: () => MS.render(true) });
+  HB.initHotbar({ S, CTX, ART, canvas: cv, openBag: () => toggleMenu('bag'), onHold: () => MS.render(true), strike: () => swordStrike() });
   MS.initMslots({ S, CTX, ART, setMode, openFullBag: () => openMenu('bag') });
   HUD.initHud({ S, CTX, ART });
   const sv = loadSave();
@@ -670,6 +670,18 @@ function openSleepAsk() {
 function sleepNo() { const el = $('#p44-sleep'); if (el) el.hidden = true; if (S.mode === 'sleepask') setMode('play'); }
 function sleepYes(click) { if (!click && (performance.now() - sleepT0 < 600 || eLastT - ePrevT < 600)) return;   /* bấm E dồn dập (< 0,6 s giữa 2 lần) không bao giờ xác nhận — phải dừng tay rồi bấm */ const el = $('#p44-sleep'); if (el) el.hidden = true; setMode('play'); CLOCK.sleep(false); }
 S.closers.sleepask = sleepNo; (S.actions ||= {}).sleepask = () => sleepYes(false);
+/* 2026-11-04 anh: bấm ô 1 (kiếm) / phím 1 phải RA ĐÒN. Quái / mục tiêu đánh được trong tầm → chém như phím E; không có → vung kiếm vào khoảng không */
+function swordStrike() {
+  if (S.mode !== 'play' || !S.player) return;
+  const p = S.player, fight = c => !!(c && c.data && (c.data.mo || c.data.grab || c.data.tent || c.data.wreck || c.data.fight));
+  let n = findNear();
+  if (!(n && n.kind === 'sys' && fight(n.cand))) {   /* thứ gần nhất không phải việc đánh (nói chuyện, bảng…) → hỏi riêng hệ quái */
+    n = null; const ms = S.sys.find(s => s.id === 'monsters'); let c = null; try { c = ms && ms.near && ms.near(CTX); } catch (e) { console.error('monsters', e); }
+    if (fight(c) && Math.hypot(c.x - p.x, c.y - p.y) < (c.limit ?? 24)) n = { kind: 'sys', sys: ms, cand: c, label: c.label, isLock: !!c.isLock };
+  }
+  if (n) { S.near = n; interact(); return; }
+  if (!p.action && !p.custom && CTX.holding && CTX.holding('sword') && p.hasAct && p.hasAct('attack')) p.act('attack', 0);   /* không có mục tiêu: vẫn vung kiếm (audio.js tự phát tiếng vung) */
+}
 function interact(fromLock) {
   if (!fromLock && TGT.tooFar(S.near)) { TGT.sayFar(); return; }   /* đã khóa mà ở xa: KHÔNG tự đi tới (anh chốt) — chỉ báo xa quá */
   const n = S.near; if (!n) { HB.eatHeld(); return; } const lg = UI.lang(), o = n.obj;

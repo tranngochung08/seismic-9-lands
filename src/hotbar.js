@@ -212,7 +212,7 @@ function aimHa() {   /* ô 2: Rocky-ha nhắm con đang khoá → con gần nh�
 export function skill(i) {
   const C = deps.CTX, t = T(); if (deps.S.mode !== 'play') return false;
   if (htOn()) { if (window.__hopthe) window.__hopthe.use(i); render(true); return true; }   /* ô 5 = tuyệt chiêu Hợp Thể (trước: R) */
-  if (i === 0) { if (mobile()) hold(WEAPON); else select(-1); return true; }
+  if (i === 0) { if (mobile()) hold(WEAPON); else select(-1); if (deps.strike) deps.strike(); return true; }   /* 2026-11-04 anh: bấm ô 1 = cầm kiếm VÀ ra đòn ngay (trước chỉ cầm, phải bấm thêm E) */
   if (i === 1) { const R = rk(); if (!R) { C.toast(t.noRk); C.sfx('fail'); return false; }
     if (!(R.haReady && R.haReady())) { const why = R.haWhy ? R.haWhy() : ''; C.toast(/tier/.test(why) ? t.noHa : /cd/.test(why) ? t.cd : t.rkBusy); C.sfx('fail'); return false; }
     const a = aimHa(); const ok = a != null && R.haFire(a); render(true); return ok; }
