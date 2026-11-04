@@ -39,7 +39,7 @@ function myLook(ctx) { const o = (ctx.S.save && ctx.S.save.outfit) || {}, out = 
 function mkPeer(ctx, id, name, look) {
   let sheet = null; try { sheet = ctx.charSheetOf ? ctx.charSheetOf(look || {}) : null; } catch (e) { sheet = null; }
   const ent = new Entity(-999, -999, sheet); ent.ghost = true;
-  const P = { id, name: nm29(name) || 'Player', look: look || {}, ent, tx: null, ty: null, dir: 0, mov: false, diag: null, act: '', ko: false, zone: null, units: new Map(), seen: 0 };
+  const P = { id, name: nm29(name) || 'Player', look: look || {}, ent, tx: null, ty: null, dir: 0, mov: false, diag: null, act: '', ko: false, zone: null, units: new Map(), seen: ctx.S.time };   /* c31-ghost: tính giờ im từ lúc tạo */
   C.peers.set(id, P); return P;
 }
 function onSt(ctx, m) {
@@ -172,6 +172,7 @@ export const coop = {
     C.offPlay = away ? C.offPlay + dt : 0;
     if (isHost() && C.peers.size && C.offPlay > CF.yieldT) { send({ t: 'yield' }); C.offPlay = -5; lg({ ev: 'yield' }); }
     C.stT -= dt; if (C.stT <= 0) { C.stT = 1 / CF.stHz; send(stMsg(ctx)); }
+    C.ghT = (C.ghT || 0) - dt; if (C.ghT <= 0) { C.ghT = 1; for (const [id, P] of C.peers) if (ctx.S.time - (P.seen || 0) > 10) { C.peers.delete(id); lg({ ev: 'ghost', id }); } }   /* c31-ghost: người chơi im > 10 s (tắt ngang, mất mạng) → bỏ khỏi map */
     C.lookT = (C.lookT || 0) - dt; if (C.lookT <= 0 && C.st === 'on') { C.lookT = 0.5; const L1 = myLook(ctx), sg = JSON.stringify(L1); if (sg !== C.lookSig && send({ t: 'look', look: L1 })) C.lookSig = sg; }   /* c10-coop sửa 04/11 (anh: 2 máy thấy đồ khác nhau): đổi nhân vật / đồ sau khi vào phòng → gửi lại cho mọi người */
     if (isHost()) {
       C.snapT -= dt;
