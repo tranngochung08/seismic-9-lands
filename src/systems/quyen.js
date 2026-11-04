@@ -105,6 +105,7 @@ function pickTarget(ctx, p) {
   if (lk && (lk.kind === 'mon' || lk.kind === 'tent')) { const r = lk.mo || lk.ref; if (r && Math.hypot(r.x - p.x, r.y - p.y) < SK.palm.range * 1.8) return r; }
   let best = null, bd = SK.palm.range * 1.5;
   for (const mo of (ctx.monsters && ctx.monsters.list()) || []) { if (!ok(mo)) continue; const dd = Math.hypot(mo.x - p.x, mo.y - p.y); if (dd < bd) { bd = dd; best = mo; } }
+  if (ctx.pk && ctx.pk.aim) { const q17 = ctx.pk.aim(p, best ? Math.hypot(best.x - p.x, best.y - p.y) : SK.palm.range * 1.5); if (q17) return q17; }   /* c17-pk: người chơi PK gần hơn quái → Chưởng nhắm người */
   return best;
 }
 function spendKi(ctx, n) { try { if (ctx.ki && ctx.ki.spend) return ctx.ki.spend(n); if (typeof window !== 'undefined' && window.__ki && window.__ki.set) window.__ki.set(ctx.ki.get() - n); } catch (e) { } }
@@ -122,7 +123,7 @@ function palm(ctx) {
   const HAND = [[0, -9], [-8, -11], [8, -11], [0, -13]];   /* lòng bàn tay theo hướng nhìn (khung đẩy tay) */
   const org = () => { const H = HAND[dir]; return { x: p.x + H[0] + ca0 * 2, y: p.y + H[1] + sa0 * 2 }; };
   let last = tg ? { x: tg.x, y: tg.y - 8 } : { x: p.x + ca0 * SK.palm.range, y: p.y - 10 + sa0 * SK.palm.range };
-  const aim = () => { if (tg && tg.hp > 0 && ctx.monsters.list().includes(tg)) last = { x: tg.x, y: tg.y - 8 }; return last; };
+  const aim = () => { if (tg && (tg.__pk ? tg.live() : tg.hp > 0 && ctx.monsters.list().includes(tg))) last = { x: tg.x, y: tg.y - 8 }; return last; };
   const hitN = new Set(), sum = new Map(), pw = () => (ctx.hero ? ctx.hero.atk + bonusOf(sq(ctx).lv) : 10) * (ctx.atkMul ? ctx.atkMul() : 1);
   const onHit = h => {
     const o = org(), a = aim(), A = Math.atan2(a.y - o.y, a.x - o.x), ca = Math.cos(A), sa = Math.sin(A), tier = tierOf(sq(ctx).lv);
@@ -137,6 +138,7 @@ function palm(ctx) {
       if (!hitN.has(mo) && hitN.size < 3) { hitN.add(mo); addQ(ctx, 1); }
       ST.fightT = ctx.S.time;
     }
+    if (ctx.pk && ctx.pk.palmHit) ctx.pk.palmHit(h, o, a, ca, sa, pw());   /* c17-pk: Chưởng trúng người chơi đang PK */
     if (h.shake && ctx.quake) ctx.quake(0.035 * h.shake);
     if (h.k === 'boom' && ctx.pop) { for (const [mo, n] of sum) ctx.pop(mo.x, mo.y - 14, `-${n}`, '#8fd3ff'); sum.clear(); }
   };

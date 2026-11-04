@@ -495,7 +495,7 @@ export const squad104 = {
     }
   },
   drawUI(ug, ctx, cx, cy, scale) {   /* thanh máu XANH phe mình trên đầu (khung obar_s hud91 qua target91.__ob91) — chỉ khi đã mất máu */
-    if (duelOn(ctx) || ctx.S.mode !== 'play') return; const ob = globalThis.__ob91, su = ctx.scaleUI || scale;
+    if (duelOn(ctx) || ctx.S.mode !== 'play' || globalThis.__nd22on) return; /* c22-nhandien: nhandien22 vẽ tên + thanh luôn hiện */ const ob = globalThis.__ob91, su = ctx.scaleUI || scale;
     for (const u of ST.U.values()) { const E = isEly(ctx, u) && ctx.elyz95.E ? ctx.elyz95.E() : null; if (E) { if (!E.ko && E.hp < E.max - 0.5 && ob) { const w = Math.round(su * 13); ob(ug, (globalThis.__R89||Math.round)((E.x - cx) * scale - w / 2), (globalThis.__R89||Math.round)((E.y - cy - 46) * scale - su * 2.6), w, E.hp / E.max, 'ally', su); } continue; }
       if (isEly(ctx, u) || !u.f || u.ko || !(u.hp < u.max - 0.5)) continue; const w = Math.round(su * 11), sx = (u.f.x - cx) * scale, sy = (u.f.y - cy - (u.sp === 'rocky' ? 36 : u.f.tier === 'l' ? 34 : 26)) * scale;
       if (ob) ob(ug, Math.round(sx - w / 2), Math.round(sy - su * 2.6), w, u.hp / u.max, 'ally', su); else { ug.fillStyle = '#0b0d1e'; ug.fillRect(sx - w / 2, sy, w, 4); ug.fillStyle = '#7bd04a'; ug.fillRect(sx - w / 2 + 1, sy + 1, (w - 2) * Math.max(0, u.hp / u.max), 2); } }

@@ -41,6 +41,7 @@ function mkPeer(ctx, id, name, look) {
 }
 function onSt(ctx, m) {
   const P = C.peers.get(m.f) || mkPeer(ctx, m.f, 'Player', {}); P.seen = ctx.S.time;
+  P.st = m;   /* c17-pk: giữ tin 'st' cuối (pk / lv / hp / hm) cho pk.js */
   P.zone = m.z || null; P.ko = !!m.k; P.mov = !!m.m; P.dir = m.d | 0; P.diag = m.g == null ? null : m.g | 0;
   if (P.tx == null || Math.hypot(m.x - P.ent.x, m.y - P.ent.y) > CF.snap) { P.ent.x = m.x; P.ent.y = m.y; }
   P.tx = m.x; P.ty = m.y;
@@ -110,6 +111,7 @@ function onMsg(ctx, m) {
     case 'mcaught': { faintGone(m.n); if (isHost()) netClaim(m.n); const P = C.peers.get(m.f); lg({ ev: 'mcaught', n: m.n, by: m.f }); void P; return; }
     case 'claim': if (isHost()) { const ok = netClaim(m.n); send({ t: 'claimed', to: m.f, n: m.n, ok }); lg({ ev: 'claim', n: m.n, by: m.f, ok }); } return;
     case 'claimed': { const Q = C.claims.get(m.n); if (Q) { C.claims.delete(m.n); Q.cb(!!m.ok); } return; }
+    case 'pvp': case 'pvpok': if (ctx.pk && ctx.pk.onMsg) ctx.pk.onMsg(m); return;   /* c17-pk: đòn PvP gửi riêng (to) — máy nhận tự kiểm */
     case 'full': toast(ctx, vi(ctx) ? 'Phòng chơi chung đã đầy' : 'Co-op room is full'); return;
   }
 }
@@ -119,7 +121,7 @@ function stMsg(ctx) {
   const p = ctx.S.player, a = p.action && !p.action.walk ? p.action.name : '', units = [];
   const q = ctx.squad104 && ctx.squad104.units ? ctx.squad104 : null;
   if (q) { try { for (const u of q.units()) { if (!u.onField() || !u.f || units.length >= 3) continue; const f = u.f; units.push([f.sp || u.sp, Math.round(f.x), Math.round(f.y), f.clip || 'idle', Math.round((f.fx || 0) * 100) / 100, f.lv | 0]); } } catch (e) { } }
-  return { t: 'st', x: Math.round(p.x * 2) / 2, y: Math.round(p.y * 2) / 2, d: p.dir | 0, m: p.moving ? 1 : 0, g: p.diag == null ? null : p.diag, a, k: ctx.hero && ctx.hero.fainted ? 1 : 0, z: ctx.S.zone ? ctx.S.zone.id : null, u: units };
+  return { t: 'st', x: Math.round(p.x * 2) / 2, y: Math.round(p.y * 2) / 2, d: p.dir | 0, m: p.moving ? 1 : 0, g: p.diag == null ? null : p.diag, a, k: ctx.hero && ctx.hero.fainted ? 1 : 0, z: ctx.S.zone ? ctx.S.zone.id : null, u: units, ...(ctx.pk && ctx.pk.st ? ctx.pk.st() : {}) };   /* c17-pk: + pk, lv, hp, hm */
 }
 
 export const coop = {
@@ -128,6 +130,7 @@ export const coop = {
   onZoneEnter(ctx) {
     C.ctx = ctx; C.url = cfgURL();
     NET.peerObj = peerObj;
+    NET.pkApi = { on: () => C.st === 'on' && inZone(C.ctx || ctx), id: () => C.id, send, peers: () => { const c0 = C.ctx || ctx, out = []; for (const P of C.peers.values()) if (peerHere(P, c0)) out.push(P); return out; } };   /* c17-pk */
     NET.peers = () => { const out = []; for (const P of C.peers.values()) if (peerHere(P, ctx) && !P.ko) out.push({ who: 'r:' + P.id, o: P.ent }); return out; };
     NET.nearest = (x, y) => { let b = null, bd = 1e9; for (const P of C.peers.values()) { if (!peerHere(P, ctx) || P.ko) continue; const d = Math.hypot(P.ent.x - x, P.ent.y - y); if (d < bd) { bd = d; b = P; } } return b ? { id: b.id, d: bd } : null; };
     NET.hurt = (pid, d, mo) => { if (send({ t: 'hurt', to: pid, d, n: mo && mo.id })) C.n.hurtTx++; };
@@ -202,7 +205,7 @@ export const coop = {
       if (!peerHere(P, ctx)) continue; const sx = (P.ent.x - cx) * scale, sy = (P.ent.y - 22 - cy) * scale; if (sx < -80 || sy < -40 || sx > ug.canvas.width + 80 || sy > ug.canvas.height + 40) continue;
       const t = P.name, w = ug.measureText(t).width + 8, h = fs + 4;
       ug.fillStyle = 'rgba(13,11,20,.55)'; ug.beginPath(); if (ug.roundRect) ug.roundRect(sx - w / 2, sy - h, w, h, 3); else ug.rect(sx - w / 2, sy - h, w, h); ug.fill();
-      ug.fillStyle = P.ko ? '#9a9aa8' : '#9fe0ff'; ug.fillText(t, sx, sy - 2);
+      ug.fillStyle = P.ko ? '#9a9aa8' : P.st && P.st.pk ? '#ff6a5a' : '#9fe0ff';   /* c17-pk: đang bật PK → tên đỏ */ ug.fillText(t, sx, sy - 2);
     }
     ug.restore();
   },

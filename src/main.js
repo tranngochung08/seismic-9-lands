@@ -41,12 +41,28 @@ globalThis.__R89 = Math.round;
 const DUEL89FAR = new URLSearchParams(location.search).get('duel89') !== 'near';
 const DAN89 = new URLSearchParams(location.search).get('dan89') === '1';
 let ZOOM110 = (() => { try { const v = +localStorage.getItem('seismic.zoom110'); return v >= 1 && v <= 3 ? v : null; } catch (e) { return null; } })();   /* p110: mức góc nhìn người chơi chọn (null = mức chốt) */
-const cam89F = (w, h) => ZOOM110 != null ? ZOOM110 : cam89F0(w, h);
+const cam89F = (w, h) => cam89F0(w, h);   /* c19-zoom: bỏ nấc góc nhìn cũ p110 (seismic.zoom110) — Cỡ hiển thị thay thế, người chưa chọn dùng mặc định MỚI */
+/* c19-zoom (anh 04/11): CỠ HIỂN THỊ — Nhỏ / Vừa (mặc định MỚI) / Lớn / Rất lớn. Mỗi mức = K điểm ảnh THIẾT BỊ nguyên cho 1 px logic (ưu tiên K chẵn → mỗi pixel ảnh art ½ px = số nguyên điểm ảnh);
+   anh chê mặc định cũ quá nhỏ ("nhìn đau mắt") → Vừa = K0 sao cho khung cao ≈ 250 px logic (người ~20 px ≈ 8 % chiều cao; màn cảm ứng 200 px) và cạnh ngắn ≥ 190 px logic (điện thoại dọc không quá hẹp) — màn càng to thì phóng càng lớn, không thấy xa hơn;
+   Nhỏ ≈ K0·0,75 (≈ mặc định cũ) · Lớn ≈ K0·1,4 · Rất lớn ≈ K0·2. Khung logic ≥ 100 × 100 px, ≤ 1100 px.
+   Chữ / nhãn / HUD giữ cỡ (scaleUI không đổi). Trận đấu thú, hầm, trùm thu khung (S.zoomOut) dùng camera riêng như cũ. ?size19=s|m|l|xl = ép mức (không lưu). Lưu theo máy: localStorage 'seismic.size19'. */
+const SZ19 = ['s', 'm', 'l', 'xl'], SZM19 = { s: 0.75, m: 1, l: 1.4, xl: 2 }, VH19 = 250, VH19T = 200, SIDE19 = 190,   /* VH19T: màn cảm ứng (điện thoại) phóng hơn 1 chút — người ~10 % chiều cao khi xoay ngang */
+ SZQ19 = new URLSearchParams(location.search).get('size19');
+let SIZE19 = SZ19.includes(SZQ19) ? SZQ19 : (() => { try { const v = localStorage.getItem('seismic.size19'); return SZ19.includes(v) ? v : null; } catch (e) { return null; } })();
+function size19Levels(w, h) {   /* → { s, m, l, xl } = K thiết bị (0 = mức không dùng được trên màn này) */
+  const dpr = window.devicePixelRatio || 1, hi = Math.max(2, Math.floor(Math.min(h, w) * dpr / 100)), lo = Math.max(2, Math.min(hi, Math.ceil(Math.max(w, h) * dpr / 1100)));
+  const cl = v => Math.max(lo, Math.min(hi, v)), pick = t => { t = cl(t); const ev = 2 * Math.round(t / 2); return Math.abs(ev - t) / t <= 0.12 && ev >= lo && ev <= hi ? ev : cl(Math.round(t)); };
+  const vh = window.matchMedia && matchMedia('(pointer:coarse)').matches ? VH19T : VH19, K0 = pick(Math.min(h * dpr / vh, Math.min(w, h) * dpr / SIDE19)), o = { m: K0, s: Math.min(K0, pick(K0 * SZM19.s)) }; if (o.s >= K0) o.s = 0;
+  o.l = Math.max(K0 + 1, pick(K0 * SZM19.l)); if (o.l > hi) o.l = 0;
+  o.xl = Math.max((o.l || K0) + 1, pick(K0 * SZM19.xl)); if (o.xl > hi) o.xl = 0;
+  return o;
+}
+function size19Ki(w, h) { if (!ART.on) return 0; if (CTX.duel && CTX.duel.active && CTX.duel.active()) return 0; const L = size19Levels(w, h); return L[SIZE19 || 'm'] || L.m; }
 const cam89F0 = (w, h) => CAM89 !== -1 ? CAM89 : (Math.min(w, h) < 600 || (window.matchMedia && matchMedia('(pointer:coarse)').matches)) ? 1.5 : 2;
 const OPT89 = new URLSearchParams(location.search).get('opt89') !== '0', K89FULL = !OPT89 || new URLSearchParams(location.search).get('k89') === 'full';   /* &opt89=0 tắt 3 tối ưu vòng 4 (canvas K = hi, dải vật, đọc nền thưa) để đo A/B */   /* vòng 4 hiệu năng: canvas vẽ ở K = ART.hi (ảnh art 1:1) rồi CSS phóng pixelated lên K thiết bị; &k89=full = vẽ thẳng độ phân giải thiết bị (để so) */
 const cam89K = (su, dpr, f) => { const t = su * dpr / f, e = Math.max(2, 2 * Math.round(t / 2)); return Math.abs(e - t) / t <= 0.12 ? e : Math.max(1, Math.round(t)); };   /* K nguyên (chẵn nếu được) */
 /* p110: đổi mức góc nhìn (dir > 0 = lùi xa). Kd = điểm ảnh thiết bị / ô logic, nguyên, từ gốc (scaleUI·dpr) xuống ≥ 2 và view ≤ 2,5. */
-let zoomT110 = 0; function zoom110(dir) { const dpr = window.devicePixelRatio || 1, KM = Math.max(2, Math.round(scaleUI * dpr)), cur = S.cam89 ? S.cam89.Kd : KM, Kmin = Math.max(2, Math.ceil(scaleUI * dpr / 2.5)); const K = Math.max(Kmin, Math.min(KM, cur + (dir > 0 ? -1 : 1))); if (K !== cur) { ZOOM110 = K >= KM ? 1 : scaleUI * dpr / K; try { localStorage.setItem('seismic.zoom110', String(ZOOM110)); } catch (e) { } resize(); } const v = S.cam89 ? scaleUI / scale : 1, t = (UI.lang && UI.lang() === 'en' ? 'Zoom: ×' : 'Góc nhìn: ×') + (Math.round(v * 100) / 100).toString().replace('.', UI.lang && UI.lang() === 'en' ? '.' : ','); let el = document.getElementById('zoom110'); if (!el) { el = document.createElement('div'); el.id = 'zoom110'; el.style.cssText = 'position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:60;padding:3px 10px;background:rgba(13,11,20,.72);color:#ffd45e;font:16px VT323,monospace;border-radius:4px;pointer-events:none'; document.body.appendChild(el); } el.textContent = t; el.style.display = ''; clearTimeout(zoomT110); zoomT110 = setTimeout(() => { el.style.display = 'none'; }, 1000); return v; }
+let zoomT110 = 0; function zoom110(dir) { if (CTX.size19) CTX.size19.step(dir > 0 ? -1 : 1); return S.cam89 ? scaleUI / scale : 1; }   /* c19-zoom: phím − / + và Ctrl+lăn chuột = đổi Cỡ hiển thị (thay nấc góc nhìn p110) */
 window.addEventListener('keydown', e => { if (!S || S.mode !== 'play' || e.repeat || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return; if (e.code === 'Minus' || e.code === 'NumpadSubtract' || e.code === 'BracketLeft') zoom110(1); else if (e.code === 'Equal' || e.code === 'NumpadAdd' || e.code === 'BracketRight') zoom110(-1); });
 let zoomW110 = 0; window.addEventListener('wheel', e => { if (!(e.ctrlKey || e.altKey) || !S || S.mode !== 'play') return; e.preventDefault(); e.stopImmediatePropagation(); const now = performance.now(); if (now - zoomW110 < 180) return; zoomW110 = now; zoom110(e.deltaY > 0 ? 1 : -1); }, { passive: false, capture: true });
 window.__zoom110 = d => zoom110(d);
@@ -282,6 +298,16 @@ async function boot() {
   $('#loading').hidden = true; $('#title').hidden = false;
   TITLE.initTitle({ resize, persist: () => { if (S.save) persist(); } }); TITLE.showTitle();   /* plan-13 */
   for (const b of document.querySelectorAll('#title .btn')) if (ART.on && ART.man && ART.man.ui && ART.man.ui.title && ART.man.ui.title.btn) b.classList.add('px');
+  { const N19 = { vi: { t: 'Cỡ hiển thị', s: 'Nhỏ', m: 'Vừa', l: 'Lớn', xl: 'Rất lớn', h: 'Phóng to nhân vật & cảnh — máy tính: phím − / +' }, en: { t: 'Display size', s: 'Small', m: 'Medium', l: 'Large', xl: 'Huge', h: 'Zoom characters & world — desktop: − / + keys' } };   /* c19-zoom: Cỡ hiển thị (thẻ Cài đặt + phím − / +) */
+    const nm = () => N19[UI.lang() === 'vi' ? 'vi' : 'en'], avail = () => { const { w, h } = viewSize(), L = size19Levels(w, h); return SZ19.filter(k => L[k]); };
+    try { const st = document.createElement('style'); st.id = 'sz19css'; st.textContent = '#menu .msz19{margin:8px 0}#menu .msz19>span{display:block;font-size:18px;margin-bottom:3px}#menu .msz19 .r{display:flex;gap:4px}#menu .msz19 .btn{margin:0;flex:1 1 0;min-width:0;white-space:nowrap;padding:3px 2px!important;font-size:16px}#menu .msz19 .btn.primary{outline:2px solid #ffd45e;outline-offset:1px;font-weight:700}#menu .msz19 small{display:block;opacity:.75;font-size:14px;margin-top:3px}'; document.head.appendChild(st); } catch (e) { }
+    CTX.size19 = {
+      cur: () => SIZE19 || 'm', levels: avail,
+      set(k, quiet) { if (!SZ19.includes(k)) return; SIZE19 = k; ZOOM110 = null; try { localStorage.setItem('seismic.size19', k); localStorage.removeItem('seismic.zoom110'); } catch (e) { } S.d19 = false; resize(); if (!quiet) UI.toast(nm().t + ': ' + nm()[k]); },
+      step(d) { const a = avail(), c = SIZE19 || 'm', i = Math.max(0, a.indexOf(c) < 0 ? a.indexOf('m') : a.indexOf(c)), j = Math.max(0, Math.min(a.length - 1, i + d)); if (a[j] !== c) this.set(a[j]); else UI.toast(nm().t + ': ' + nm()[c]); return a[j]; },
+      html(vi) { const n = N19[vi ? 'vi' : 'en'], c = SIZE19 || 'm'; return '<div class="msz19"><span>⊕ ' + n.t + '</span><div class="r">' + avail().map(k => '<button class="btn' + (k === c ? ' primary' : '') + '" data-size19="' + k + '">' + n[k] + '</button>').join('') + '</div><small>' + n.h + '</small></div>'; },
+    };
+    window.__size19 = CTX.size19; }
   CTX.gfxLow = GFX.low; CTX.gfx = GFX;   /* plan-37 (h): bậc đồ hoạ tự động — hệ hỏi ctx.gfxLow() */
   PERF.init({ on: PERF.autoOn, systems: SYSTEMS, canvas: () => cv, tier: () => GFX.tierName() });
   requestAnimationFrame(loop);
@@ -547,7 +573,7 @@ function resize() {
   if (ART.on) scale = Math.max(ART.hi, Math.round(scale / ART.hi) * ART.hi), VW = Math.ceil(w / scale), VH = Math.ceil(h / scale); // bội của hi → mỗi pixel art = số nguyên pixel màn hình
   if (ART.on && S.zoomOut) { const z = scale - ART.hi * S.zoomOut; if (z >= 2 && Math.ceil(w / z) <= 760) { scale = z; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); } }   /* 2026-10-14 trùm khổng lồ: thu nhỏ khung nhìn (bớt 1 bậc pixel) để thấy trọn con trùm — CTX.setZoomOut */
   scaleUI = scale; S.cam89 = null;
-  { const f = cam89F(w, h), dpr = window.devicePixelRatio || 1; if (ART.on && f > 1 && !S.zoomOut && !S.dz89 && !(S.map && S.map.dungeon)) { const Ki = cam89K(scale, dpr, f); scale = Ki / dpr; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); S.cam89 = { K: (K89FULL || SMOOTH113) ? Ki : Math.min(Ki, ART.hi), Kd: Ki, f, view: scaleUI / scale }; } }
+  { const k19 = S.zoomOut || S.dz89 || (S.map && S.map.dungeon) ? 0 : size19Ki(w, h), dpr = window.devicePixelRatio || 1, f = k19 ? scale * dpr / k19 : cam89F(w, h); S.k19 = k19; if (ART.on && (f > 1 || k19) && !S.zoomOut && !S.dz89 && !(S.map && S.map.dungeon)) { const Ki = k19 || cam89K(scale, dpr, f);   /* c19-zoom: k19 = K của Cỡ hiển thị đã chọn */ scale = Ki / dpr; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); S.cam89 = { K: (K89FULL || SMOOTH113) ? Ki : Math.min(Ki, ART.hi), Kd: Ki, f, view: scaleUI / scale }; } }
   let K = S.cam89 ? S.cam89.K : ART.hi; S.dgZoom = 0;
   if (ART.on && !S.zoomOut && S.map && S.map.dungeon && DG.DUNGEON.zoom > 1) { scale *= DG.DUNGEON.zoom; VW = Math.ceil(w / scale); VH = Math.ceil(h / scale); K = Math.min(scale, ART.hi * DG.DUNGEON.zoom * 2); S.dgZoom = DG.DUNGEON.zoom; }   /* plan-46 C: vùng hầm gần 1,25× — canvas ≈ độ phân giải màn (K) để pixel lẻ 2,5× đều hơn; UI/HUD (DOM, #ui) không phóng */
   if (SMOOTH113 && S.cam89) { VW += 1; VH += 1; }   /* đi mượt: thừa 1 cột / hàng để phép dịch phần lẻ camera không hở mép */
@@ -653,7 +679,7 @@ function chaseTick() {
   const r = c.t.ref;
   if (!TGT.is(r) || !(TGT.armed ? TGT.armed() : TGT.heldClass() === 'weapon') || r.hp <= 0 || r.state === 'dead' || r.statue) { chaseStop(); return; }
   if (c.path) {   /* đang tự đi: entities bỏ autoPath giữa đường = người chơi tự lái / kẹt → thôi đuổi; hết đường (tới nơi) → bình thường */
-    if (p.autoPath !== c.path) { if (c.path.length > 0) { chase = null; return; } c.path = null; }
+    if (p.autoPath !== c.path) { if (c.path.length > 0) { if (input.up || input.down || input.left || input.right || (c.stuck19 = (c.stuck19 || 0) + 1) > 3) { chase = null; return; } c.pathT = -9; } c.path = null; }   /* c19-zoom (hồi quy c13_click): bị Chấn Thú / NPC đi theo chắn (entities kẹt 0,6 s bỏ autoPath) → tìm đường lại tối đa 3 lần; người chơi tự lái (phím / cần) mới thôi đuổi */
   }
   const d = TGT.dist(c.t);
   if (d > CH_MAX) { chaseStop(); return; }
@@ -940,6 +966,7 @@ function objBands89(m) { if (OB89 && OB89.m === m && OB89.n === m.objects.length
 const JIT110 = new URLSearchParams(location.search).get('jit110') === '0';   /* &jit110=0 = camera cũ (đo so) */
 function render() {
   const m = S.map, p = S.player;
+  { const d19 = !!(CTX.duel && CTX.duel.active && CTX.duel.active()); if (d19 !== !!S.d19) { S.d19 = d19; resize(); } }   /* c19-zoom: trận đấu thú dùng cỡ mặc định (sân có zoom riêng) */
   if (CAM89 !== 1 && !DUEL89FAR) { const dz = !!(CTX.duel && CTX.duel.active && CTX.duel.active()); if (dz !== !!S.dz89) { S.dz89 = dz; resize(); } }   /* p89 vòng 4: trận đấu thú dùng camera gốc */
   const mw = m.w * TS, mh = m.h * TS;
   let cx = JIT110 ? Math.round(p.x - VW / 2 + (S.camDX || 0)) : Math.round(p.x) - (VW >> 1) + Math.round(S.camDX || 0), cy = JIT110 ? Math.round(p.y - 8 - VH / 2 + (S.camDY || 0)) : Math.round(p.y) - 8 - (VH >> 1) + Math.round(S.camDY || 0);   /* p110 khựng/rung: camera theo vị trí người ĐÃ làm tròn (cùng Math.round khi vẽ người) → người đứng yên trên màn khi đi */   /* plan-30: S.camDX — camera trận trùm (bosscam.js) giữ cả người + trùm trong khung */   /* plan-29: S.camDY — cảnh gọi Rồng Thần nhìn lên trời */
@@ -1190,8 +1217,8 @@ function drawLabels0(cx, cy) {
   const av = selfAvatar();
   const headUp = ((p.sheet && p.sheet.skin && p.sheet.skin.headUp) || 0) + (p.labelUp || 0);   /* plan-31: p.labelUp — đang cưỡi Rocky bay (sky.js) thì tên lên trên đầu */   /* plan-29: ngoại hình cao (Chad) → tên/ảnh đại diện lên trên đầu */
   ug.font = `bold ${fs}px VT323, monospace`;
-  if (av) { let [sx, sy] = lxy(p.x, p.y - 22 - headUp, cx, cy); const r = Math.round(scaleUI * 4); sy += lblPlace(sx - r, sy - 2 * r, 2 * r, 2 * r, 'me', 'me'); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }
-  else if (S.save.name) label(S.save.name, p.x, p.y - headUp, '#ffd45e', false, 'me');   /* plan-45 D5: tên người chơi xếp TRƯỚC (giữ chỗ), nhãn khác né */
+  if (av) { let [sx, sy] = lxy(p.x, p.y - 22 - headUp, cx, cy); const r = Math.round(scaleUI * 4); sy += lblPlace(sx - r, sy - 2 * r, 2 * r, 2 * r, 'me', 'me'); ug.save(); ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.clip(); ug.drawImage(av, sx - r, sy - 2 * r, 2 * r, 2 * r); ug.restore(); ug.strokeStyle = CTX.pk && CTX.pk.isOn && CTX.pk.isOn() ? '#ff6a5a' : '#ffd45e'; ug.lineWidth = 2; ug.beginPath(); ug.arc(sx, sy - r, r, 0, 7); ug.stroke(); }   /* c17-pk: viền ảnh đại diện đỏ khi bật PK */
+  else if (S.save.name) label(S.save.name, p.x, p.y - headUp, CTX.pk && CTX.pk.isOn && CTX.pk.isOn() ? '#ff6a5a' : '#ffd45e', false, 'me');   /* c17-pk: bật PK → tên mình đỏ */   /* plan-45 D5: tên người chơi xếp TRƯỚC (giữ chỗ), nhãn khác né */
   if (!S.altSys) for (const n of S.staff || []) if (n.bubble) UI.drawBubble(ug, n, lxy(n.x, n.y - 20, cx, cy)[0], lxy(n.x, n.y - 20, cx, cy)[1] - fs - 6, fs);
   if (!S.altSys) for (const n of allNpcs()) {
     if (n.bubble) UI.drawBubble(ug, n, lxy(n.x, n.y - 20, cx, cy)[0], lxy(n.x, n.y - 20, cx, cy)[1] - fs - 6, fs);   /* plan-12: bong bóng nổi */

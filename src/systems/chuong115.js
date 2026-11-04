@@ -17,6 +17,7 @@ function tongue(p, q, C, t) {
   const k = q.age / q.max, sp = Math.hypot(q.vx, q.vy) || 1, ux = q.vx / sp, uy = q.vy / sp, s = q.s * (1 + k * 2.2), L = s * (1.6 + Math.min(1.4, sp / 260)), W = s * 0.62;
   const heat = clamp(1 - k * 1.15 + q.hot * 0.25), x0 = q.x, y0 = q.y, R = L + 2;
   if (k > 0.97) return;
+  if (p.tx === 0 && p.ty === 0 && p.fx === 1 && p.cs === 1 && p.sn === 0) { tongueFast(p, q, C, t, k, ux, uy, L, W, heat, x0, y0, R); return; }   /* c18-perf: đường nhanh (cùng điểm, cùng màu) */
   p.shade(x0 - R, y0 - R, x0 + R, y0 + R, (x, y, o) => {
     const dx = x - x0, dy = y - y0, u = dx * ux + dy * uy, v = dx * -uy + dy * ux;   /* u dọc (đầu = +), v ngang */
     const uu = (u + L * 0.35) / L; if (uu < 0 || uu > 1) return;
@@ -26,6 +27,36 @@ function tongue(p, q, C, t) {
     const c = h > 0.86 ? WHITE : h > 0.7 ? C[7] : h > 0.55 ? C[6] : h > 0.4 ? C[5] : h > 0.25 ? C[4] : h > 0.12 ? C[3] : C[2];
     o.c = c; o.a = k < 0.82 ? 1 : 1 - (k - 0.82) / 0.15; if (h > 0.6) { o.l = C[6]; o.k = 0.05; }
   });
+}
+
+/* c18-perf: tongue() đường nhanh cho Painter đồng nhất. Giống hệt p.shade + hàm điểm của tongue (thứ tự phép tính giữ nguyên),
+   nhưng mỗi hàng chỉ quét đoạn x mà tâm điểm có thể nằm trong hộp u ∈ [-0,35L, 0,65L], |v| ≤ 1,55W (jag ≤ 1,55; các hệ số khác ≤ 1) — nới 1 điểm mỗi phía. */
+function span18(a, b, m0, m1) {   /* tập dx thoả m0 ≤ a·dx + b ≤ m1 → [lo, hi] (null = rỗng) */
+  if (Math.abs(a) < 1e-9) return b >= m0 && b <= m1 ? [-1e9, 1e9] : null;
+  const p0 = (m0 - b) / a, p1 = (m1 - b) / a; return p0 < p1 ? [p0, p1] : [p1, p0];
+}
+function tongueFast(p, q, C, t, k, ux, uy, L, W, heat, x0, y0, R) {
+  const f = p.f, PW = p.w, PH = p.h, OX = p.ox, OY = p.oy, Cb = p.C, fade = p.fade, ak = k < 0.82 ? 1 : 1 - (k - 0.82) / 0.15, kf = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3 * 0.8;
+  const sy0 = Math.max(Math.floor(y0 - R), OY), sy1 = Math.min(Math.ceil(y0 + R), OY + PH - 1), bx0 = Math.max(Math.floor(x0 - R), OX), bx1 = Math.min(Math.ceil(x0 + R), OX + PW - 1);
+  const uLo = -L * 0.35 - 1, uHi = L * 0.65 + 1, vM = W * 1.55 + 1, C6 = C[6], L35 = L * 0.35, j1 = q.seed + t * 38, j2 = q.seed * 2.1 + t * 23, vB = W * 1.55 * kf * 1.001 + 1e-6, PI = Math.PI;   /* j1 / j2 / L35: cùng phép cộng trái → phải như bản gốc */
+  for (let sy = sy0; sy <= sy1; sy++) {
+    const y = sy + 0.5, dy = y - y0;
+    const su = span18(ux, dy * uy, uLo, uHi); if (!su) continue;
+    const sv = span18(-uy, dy * ux, -vM, vM); if (!sv) continue;
+    const lo = Math.max(su[0], sv[0]), hi = Math.min(su[1], sv[1]); if (lo > hi) continue;
+    const sx0 = Math.max(bx0, Math.floor(x0 + lo - 0.5) - 1), sx1 = Math.min(bx1, Math.ceil(x0 + hi - 0.5) + 1);
+    for (let sx = sx0; sx <= sx1; sx++) {
+      const x = sx + 0.5, dx = x - x0, u = dx * ux + dy * uy, v = dx * -uy + dy * ux;
+      const uu = (u + L35) / L; if (uu < 0 || uu > 1) continue;
+      const av = Math.abs(v), e1 = PI * Math.sqrt(uu), e2 = PI * (1 - uu); if (av > vB * (e1 < 1 ? (e1 < e2 ? e1 : e2) : e2 < 1 ? e2 : 1) * (1 - uu * 0.35)) continue;   /* chặn trên rẻ: sin(πx) ≤ min(1, πx, π(1−x)), x = uu^0,7 ≤ √uu */
+      const jag = 1 + 0.35 * Math.sin(j1 + uu * 9) + 0.2 * Math.sin(j2 - uu * 14);
+      const half = W * jag * Math.sin(Math.PI * Math.pow(uu, 0.7)) * (1 - uu * 0.35) * kf; if (Math.abs(v) > half) continue;
+      const rim = Math.abs(v) / (half || 1), h = heat - rim * 0.35 - (1 - uu) * 0.12;
+      const c = h > 0.86 ? WHITE : h > 0.7 ? C[7] : h > 0.55 ? C6 : h > 0.4 ? C[5] : h > 0.25 ? C[4] : h > 0.12 ? C[3] : C[2];
+      if (c) { const a = ak * fade; if (!(a < 1 && a <= bayer(sx, sy))) { const X = sx - OX, Y = sy - OY; Cb[Y * PW + X] = c; if (X < f.x0) f.x0 = X; if (X > f.x1) f.x1 = X; if (Y < f.y0) f.y0 = Y; if (Y > f.y1) f.y1 = Y; } }
+      if (h > 0.6) p.add(sx, sy, C6, 0.05);
+    }
+  }
 }
 
 /* cảnh chung: org() = gốc (lòng bàn tay, px logic), aim() = điểm đích (px logic), tg() = danh sách mục tiêu cho phản ứng (do preview / game xử lý qua hit cb) */

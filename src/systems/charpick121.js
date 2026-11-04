@@ -9,6 +9,8 @@
 const BASE = 'assets/px/';
 export const SEIS_PRICE = 200;   /* giá nhân vật Seismic (đá Seismic) */
 export const HAIR_PRICE = 50;    /* giá mỗi kiểu tóc khác ở Noxx */
+export const LEADER_PRICE = 200; /* c20-leader: giá mỗi nhân vật Leader (đề xuất = Seismic, chờ anh chốt) */
+const LEADERS = [['ld_1198988206394314782', 'cigsafter.'], ['ld_1233038347744706645', 'mzain2292'], ['ld_398382848081526796', 'shroomskull'], ['ld_1217852123296043117', 'snow_2147'], ['ld_876438741856682024', 'thoai0lor'], ['ld_876809355230580746', 'nguyentunek'], ['ld_201360516961009665', 'tomjke'], ['ld_400729437303209985', 'vadim_kesha'], ['ld_1060594551301083229', 'k2sbhai'], ['ld_1108740964991897681', 'kristina.eth'], ['ld_200627755358879744', 'origin91'], ['ld_1011391283757056132', 'zella.nft']];   /* c20-leader: hero id = chars.fixed.ld_<discord> (plan-117, ảnh theo pfp) · tên = username Leader */
 const HERO = 'hung_b';
 const CHARS = [   /* skin / hair trùng gói Làng chars.base → art.js chọn đúng thân c0–c5; price 0 = có sẵn */
   { id: 'c0', skin: '#f6d3b5', hair: '#2b1d14', vi: 'Nam', en: 'Male', price: 0 },
@@ -17,19 +19,33 @@ const CHARS = [   /* skin / hair trùng gói Làng chars.base → art.js chọn 
   { id: 'c1', skin: '#f6d3b5', hair: '#c98b2e', vi: 'Tóc vàng', en: 'Blond', price: HAIR_PRICE },
   { id: 'c2', skin: '#c98b5f', hair: '#1f1f1f', vi: 'Tóc đen', en: 'Black hair', price: HAIR_PRICE },
   { id: 'c3', skin: '#8d5a3b', hair: '#1f1f1f', vi: 'Da nâu', en: 'Dark skin', price: HAIR_PRICE },
-  { id: 'c5', skin: '#c98b5f', hair: '#3a4fb2', vi: 'Tóc xanh', en: 'Blue hair', price: HAIR_PRICE }];
+  { id: 'c5', skin: '#c98b5f', hair: '#3a4fb2', vi: 'Tóc xanh', en: 'Blue hair', price: HAIR_PRICE },
+  ...LEADERS.map(([h, n]) => ({ id: h, vi: n, en: n, price: LEADER_PRICE, hero: h, ld: 1 }))];   /* c20-leader: id = hero id, owned 'char:ld_…' */
 const BODIES = CHARS.filter(c => !c.hero);
 /* Tủ đồ chỉ BÁN thân đã có đủ clip động tác (gói Làng chars.actions ≥ 20 clip) — kiểu tóc chưa làm động tác thì ẩn, làm xong tự hiện (04/11 anh: đưa lên game 2 nhân vật Nữ + tóc vàng) */
 const ready = (ctx, id) => { try { const vp = ctx.ART && ctx.ART.packs && ctx.ART.packs.village, c = vp && (vp.chars || []).find(x => x.file === `chars/${id}.png`); return !!(c && c.actions && Object.keys(c.actions).length >= 20); } catch (e) { return false; } };
+/* c20-leader: Leader chỉ có sheet đi + clip walk / idle / throw (plan-117) → clip việc khác MƯỢN 'throw' (vung tay) để không đứng khựng;
+   clip không mượn (fish, reel, swim, carry, paddle, hurt, stagger, knock*, roll, dash, hover, dive, climb, eat, puton, attack2/3) → hệ tự xử lý như thân chưa có clip */
+const LD_ALIAS = { attack: 'atk', chop: 'work', mine: 'work', hammer: 'work', hoe: 'work', harvest: 'work', pick: 'work', water: 'work', cast: 'work', shoot: 'work' };
+const ldReady = (ctx, h) => !!(ctx.ART && ctx.ART.fixed && ctx.ART.fixed[h] && ctx.ART.fixed[h].img);
+function ldFill(ctx) {   /* gắn clip mượn vào sheet Leader (đối tượng ART.fixed dùng chung: người chơi, máy khác trong phòng, NPC) — 1 lần mỗi sheet */
+  const F = ctx.ART && ctx.ART.fixed; if (!F) return 0; let n = 0;
+  for (const [h] of LEADERS) {
+    const img = F[h] && F[h].img, A = img && img.actions, th = A && A.throw; if (!th || A.__c20) continue;
+    for (const [k, kind] of Object.entries(LD_ALIAS)) if (!A[k]) { A[k] = kind === 'atk' ? { ...th, fps: Math.round(th.n / 0.45), impact: Math.max(1, Math.round(th.n * 0.6)), __c20: 'throw' } : { ...th, fps: 12, impact: Math.max(1, Math.round(th.n * 0.6)), __c20: 'throw' }; n++; }
+    A.__c20 = 1;
+  }
+  return n;
+}
 const SHIRTS = ['#ffffff', '#e04b4b', '#3d6db5', '#5a9c58', '#ffd45e', '#1f1f1f'];
 const STR = {
   vi: { title: 'Chọn nhân vật', lead: 'Nam hay nữ? Muốn nhân vật đẹp hơn thì gặp Noxx để mua bằng đá Seismic.',
-    shop: 'Tủ đồ Noxx', leadShop: 'Nhân vật đẹp hơn · mua bằng đá Seismic · đã mua thì đổi lại miễn phí', shopBtn: '👕 Tủ đồ Noxx',
+    leaders: 'Leader · theo ảnh đại diện', shop: 'Tủ đồ Noxx', leadShop: 'Nhân vật đẹp hơn · mua bằng đá Seismic · đã mua thì đổi lại miễn phí', shopBtn: '👕 Tủ đồ Noxx',
     shirt: 'Áo', have: n => `Bạn có ${n} 🪨`, owned: 'Đã có', free: 'Có sẵn',
     pick: '✓ Chọn', wear: '✓ Mặc', worn: 'Đang mặc', buy: p => `Mua · ${p} 🪨`, close: 'Đóng',
     poor: (p, n) => `Chưa đủ đá Seismic — cần ${p} 🪨 (bạn có ${n}). Đào tinh thể tím, bán đồ cho Thương nhân…`, bought: n => `Đã mua: ${n}!`, changed: 'Đã đổi nhân vật' },
   en: { title: 'Choose your character', lead: 'Male or female? For a cooler character, visit Noxx and buy one with Seismic stones.',
-    shop: "Noxx's Wardrobe", leadShop: 'Cooler characters · paid with Seismic stones · switch back for free once bought', shopBtn: "👕 Noxx's Wardrobe",
+    leaders: 'Leaders · from their pfp', shop: "Noxx's Wardrobe", leadShop: 'Cooler characters · paid with Seismic stones · switch back for free once bought', shopBtn: "👕 Noxx's Wardrobe",
     shirt: 'Shirt', have: n => `You have ${n} 🪨`, owned: 'Owned', free: 'Free',
     pick: '✓ Choose', wear: '✓ Wear', worn: 'Wearing', buy: p => `Buy · ${p} 🪨`, close: 'Close',
     poor: (p, n) => `Not enough Seismic stones — you need ${p} 🪨 (you have ${n}). Mine purple crystals, sell to the Trader…`, bought: n => `Unlocked: ${n}!`, changed: 'Character changed' }
@@ -55,17 +71,18 @@ function migrate(ctx) {
   f.p121 = 1; log('migrate', { k }); ctx.persist();
 }
 function bodyOf(o) {   /* nhân vật đang mặc: 'seis' hoặc thân gần nhất theo màu */
-  if (o && o.hero) return 'seis';
+  if (o && o.hero) { const lc = CHARS.find(c => c.ld && c.hero === o.hero); return lc ? lc.id : 'seis'; }   /* c20-leader */
   const hx = h => [1, 3, 5].map(i => parseInt(String(h || '#000000').slice(i, i + 2), 16) || 0), d = (a, b) => { const x = hx(a), y = hx(b); return (x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2 + (x[2] - y[2]) ** 2; };
   let best = BODIES[0], bd = Infinity; for (const b of BODIES) { const v = d(b.skin, o && o.skin) * 1.5 + d(b.hair, o && o.hair); if (v < bd) { bd = v; best = b; } } return best.id;
 }
 function outfitFor(ctx, id, shirt) {
   const cur = ctx.S.save.outfit || {};
   if (id === 'seis') return { ...cur, hero: HERO };
+  { const lc = CHARS.find(c => c.ld && c.id === id); if (lc) return { ...cur, hero: lc.hero }; }   /* c20-leader */
   const b = BODIES.find(x => x.id === id) || BODIES[0]; return { ...cur, skin: b.skin, hair: b.hair, shirt: shirt || cur.shirt || '#ffffff', pants: cur.pants || '#2f3b5e', hero: null };
 }
 function wear(ctx, o) {   /* sửa TẠI CHỖ: art.js nhận diện người chơi bằng c === S.save.outfit */
-  const sv = ctx.S.save; if (!sv.outfit) sv.outfit = {}; Object.assign(sv.outfit, o);
+  const sv = ctx.S.save; if (!sv.outfit) sv.outfit = {}; Object.assign(sv.outfit, o); ldFill(ctx);   /* c20-leader */
   try { ctx.S.player.sheet = ctx.charSheet(sv.outfit); } catch (e) { console.error('p121 sheet', e); }
   ctx.persist();
 }
@@ -92,6 +109,9 @@ function css() {
 #p121pick .pv b{font-size:19px;color:#ffe9b0;line-height:1;text-align:center;max-width:120px}
 #p121pick .gr{flex:1 1 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:4px;align-content:start;min-width:0}
 #p121pick.nw .gr{grid-template-columns:repeat(2,1fr);align-content:center}
+#p121pick:not(.nw) .gr{max-height:min(330px,calc(94vh - 250px));overflow-y:auto;overscroll-behavior:contain;padding-right:2px;scrollbar-width:thin;scrollbar-color:#ffd45e #120e1c}
+#p121pick .gr .sec{grid-column:1/-1;font-size:17px;line-height:1;color:#9fe3ff;text-align:center;padding:3px 0 1px;border-top:2px dashed #4a3c5c;margin-top:2px}
+#p121pick .cd.ld b{color:#9fe3ff}
 #p121pick .cd{position:relative;display:flex;flex-direction:column;align-items:center;background:#2a1f38;border:2px solid #4a3c5c;border-radius:8px;padding:2px 2px 4px;color:#f5ecdc;font:16px VT323,monospace;cursor:pointer;touch-action:manipulation;min-width:0}
 #p121pick.px .cd{border:8px solid transparent;border-image:var(--np-tile) 6 / 8px round;background-clip:padding-box;border-radius:0;padding:0 1px 2px}
 #p121pick .cd.on{background:#3a2c4c;border-color:#ffd45e}#p121pick.px .cd.on{border-image-source:var(--np-tile-on)}
@@ -116,7 +136,7 @@ function css() {
 #p121pick button.lt{font:18px VT323,monospace;background:none;border:none;color:#cfc4b4;cursor:pointer;text-decoration:underline;touch-action:manipulation}
 #p121-dbtn{position:absolute;right:14px;top:-40px;font:20px VT323,monospace;padding:0 12px;color:#3b1d08;background:#e8913a;border:2px solid #ffd45e;border-radius:8px;cursor:pointer;pointer-events:auto;touch-action:manipulation;z-index:2}
 #p121-dbtn.px{border:12px solid transparent;border-image:var(--np-btn) 8 / 12px round;background-clip:padding-box;border-radius:0;padding:0 8px;image-rendering:pixelated;top:-46px}
-@media (max-width:520px){#p121pick:not(.nw) .top{flex-direction:column;align-items:center}#p121pick:not(.nw) .gr{width:100%;grid-template-columns:repeat(4,1fr)}#p121pick .pv canvas{width:64px;height:80px}#p121pick h3{font-size:22px}}`;
+@media (max-width:520px){#p121pick:not(.nw) .top{flex-direction:column;align-items:center}#p121pick:not(.nw) .gr{width:100%;grid-template-columns:repeat(4,1fr);max-height:calc(94vh - 330px);min-height:150px}#p121pick .cd.ld b{font-size:13px}#p121pick .pv canvas{width:64px;height:80px}#p121pick h3{font-size:22px}}`;
   document.head.appendChild(s);
 }
 const npVars = (ctx, el) => {
@@ -131,11 +151,11 @@ function close(ctx) {
 /* isNew: bảng Nam / Nữ lúc vào game · không isNew: Tủ đồ Noxx (mọi nhân vật, mua bằng đá) */
 function open(ctx, isNew) {
   if (!ctx.S.save || !ctx.S.player) return; css(); close(ctx); migrate(ctx);
-  const t = L(ctx), lg = lgOf(ctx), o0 = ctx.S.save.outfit || {}, list = isNew ? CHARS.filter(c => !c.price) : CHARS.filter(c => !c.price || c.hero || ready(ctx, c.id));
+  const t = L(ctx), lg = lgOf(ctx), o0 = ctx.S.save.outfit || {}, list = isNew ? CHARS.filter(c => !c.price) : CHARS.filter(c => !c.price || (c.hero && (!c.ld || ldReady(ctx, c.hero))) || ready(ctx, c.id));   /* c20-leader: Leader chỉ hiện khi manifest có sheet */
   let sel = isNew ? list[0].id : bodyOf(o0), shirt = isNew ? SHIRTS[0] : (o0.shirt || SHIRTS[0]);
   ST.isNew = !!isNew;
   const el = document.createElement('div'); el.id = 'p121pick'; if (isNew) el.classList.add('nw'); npVars(ctx, el);
-  const cards = list.map(c => `<button type="button" class="cd${c.hero ? ' se' : ''}" data-id="${c.id}"><canvas width="32" height="40"></canvas><b>${esc(c[lg])}</b>${isNew ? '' : '<span class="pr"></span>'}</button>`).join('');
+  const cards = list.map((c, i) => `${c.ld && !(list[i - 1] || {}).ld ? `<div class="sec">${esc(t.leaders)}</div>` : ''}<button type="button" class="cd${c.hero ? ' se' : ''}${c.ld ? ' ld' : ''}" data-id="${c.id}"><canvas width="32" height="40"></canvas><b>${esc(c[lg])}</b>${isNew ? '' : '<span class="pr"></span>'}</button>`).join('');
   el.innerHTML = `<div class="pk"><h3>${esc(isNew ? t.title : t.shop)}</h3><p class="ld">${esc(isNew ? t.lead : t.leadShop)}</p>
     <div class="top"><div class="pv"><canvas width="32" height="40"></canvas><b id="p121-nm"></b></div><div class="gr">${cards}</div></div>
     <div class="sh" id="p121-sh"><span>${esc(t.shirt)}:</span>${SHIRTS.map(c => `<button type="button" data-shirt="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>
@@ -208,15 +228,17 @@ export const charpick121 = {
   id: 'charpick121',
   always: true,
   onZoneEnter(ctx) {
-    ST.ctx = ctx; if (ST.open && !ST.isNew) close(ctx);
+    ST.ctx = ctx; if (ST.open && !ST.isNew) close(ctx); ldFill(ctx);   /* c20-leader */
     migrate(ctx);
     if (typeof window !== 'undefined') window.__p121 = {
       state: () => ({ open: ST.open, isNew: ST.isNew, need: needPick(ctx), flag: !!flags(ctx).p121, shopReady: shopReady(ctx), owned: CHARS.filter(c => c.price && owns(ctx, c.id)).map(c => c.id), stones: stones(ctx),
         outfit: { ...(ctx.S.save.outfit || {}) }, body: bodyOf(ctx.S.save.outfit), mode: ctx.S.mode, cards: [...document.querySelectorAll('#p121pick .cd')].map(b => b.dataset.id), dbtn: !!document.getElementById('p121-dbtn') }),
-      open: () => open(ctx, false), close: () => close(ctx), log: () => ST.log.slice(), chars: () => CHARS.map(c => ({ id: c.id, price: c.price })) };
+      open: () => open(ctx, false), close: () => close(ctx), log: () => ST.log.slice(), chars: () => CHARS.map(c => ({ id: c.id, price: c.price })),
+      leaders: () => LEADERS.map(([h, n]) => { const A = (ldReady(ctx, h) && ctx.ART.fixed[h].img.actions) || {}; return { hero: h, name: n, ready: ldReady(ctx, h), own: Object.keys(A).filter(k => A[k] && A[k].img && !A[k].__c20 && !k.startsWith('__')), alias: Object.keys(A).filter(k => A[k] && A[k].__c20 && !k.startsWith('__')) }; }) };   /* c20-leader */
   },
   update(dt, ctx) {
     if (!ctx.S.save) return;
+    if (!ST.ld20) { ST.ld20 = 1; ldFill(ctx); }   /* c20-leader: chắc chắn gắn clip mượn cả khi vào game không qua onZoneEnter */
     if (!ST.open && ctx.S.mode === 'play' && needPick(ctx)) open(ctx, true);
     dlgBtn(ctx);
   }

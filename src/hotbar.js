@@ -20,7 +20,7 @@ const QON = () => !!(deps && deps.CTX.quyen && deps.CTX.quyen.on());   /* c13-qu
 const SKL = () => (QON() && !htOn() ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4]);   /* c13-quyen: thanh kỹ năng máy tính thêm ô 6 Chưởng (Hợp Thể giữ 5 ô riêng) */
 const LABEL = ['6', '7', '8', '9', '0'];
 const WEAPON = 'sword';
-let deps = null, el = null, sig = '', tipT = 0, off = false;
+let deps = null, el = null, sig = '', tipT = 0, off = false, sig18 = '';   /* c18-perf: sig18 = khoá không tính số giây hồi chiêu */
 export function disable(ctx) { off = true; for (const k of ['held', 'holding', 'heldKind', 'heldSeed', 'needHold', 'hold']) delete ctx[k]; if (el) el.hidden = true; }
 
 const sv = () => deps && deps.S.save;
@@ -368,10 +368,16 @@ export function render(force) {
   if (hide) return;
   sync(); css(); el.classList.add('h91'); el.classList.toggle('h91m', mob); el.classList.toggle('open', mob && DO.open);
   const s = sv(), lg = deps.CTX.lang() === 'vi' ? 'vi' : 'en', h = deps.CTX.hero, c79 = c79Slot();
-  const sk = SKL().map(skillInfo).map(x => [x.icon, x.lock, x.dim, x.on, Math.round((x.cd || 0) * 10), x.cdTxt, x.name, x.pet].join(','));
+  const SK18 = SKL(), INF18 = SK18.map(skillInfo), sk = INF18.map(x => [x.icon, x.lock, x.dim, x.on, Math.round((x.cd || 0) * 10), x.cdTxt, x.name, x.pet].join(','));
+  const sk18 = INF18.map(x => [x.icon, x.lock, x.dim, x.on, (x.cd || 0) > 0.05 ? 1 : 0, x.cdTxt, x.name, x.pet].join(','));   /* c18-perf */
   const ki = deps.CTX.ki ? Math.round(deps.CTX.ki.get() * 2) : 0, hs = s.hero || {};
-  const key = JSON.stringify([sk, h ? [Math.ceil(h.hp), h.max, h.lv] : 0, hs.xp, ki, PORT.url && PORT.url.length, hasRk(), c79 && [c79.out, c79.sp, c79.lbl, ballN()], s.hotbar, s.hotSel, mob && s.mHeld, mob && DO.open, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0, htOn() && window.__hopthe ? Math.round(window.__hopthe.state().e) + '|' + Math.floor(window.__hopthe.state().left) : 0]);
-  if (!force && key === sig) return; sig = key;
+  const rest18 = [h ? [Math.ceil(h.hp), h.max, h.lv] : 0, hs.xp, ki, PORT.url && PORT.url.length, hasRk(), c79 && [c79.out, c79.sp, c79.lbl, ballN()], s.hotbar, s.hotSel, mob && s.mHeld, mob && DO.open, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0, htOn() && window.__hopthe ? Math.round(window.__hopthe.state().e) + '|' + Math.floor(window.__hopthe.state().left) : 0], key = JSON.stringify([sk, ...rest18]), key18 = JSON.stringify([sk18, ...rest18]);
+  if (!force && key === sig) return;
+  if (!force && key18 === sig18 && el.firstChild) {   /* c18-perf: chỉ số giây hồi chiêu đổi → thay chữ tại chỗ, không dựng lại cả thanh */
+    let ok18 = true; INF18.forEach((x, j) => { if (!ok18) return; const n = el.querySelector(`[data-sk="${SK18[j]}"] .cd`), want = (x.cd || 0) > 0.05 ? cdTxt(x.cd) : x.cdTxt || '';
+      if (want) { if (!n) ok18 = false; else if (n.textContent !== want) n.textContent = want; } else if (n) ok18 = false; });
+    if (ok18) { sig = key; return; } }
+  sig = key; sig18 = key18;
   const cur = held(), t = T();
   const items = s.hotbar.map((id, i) => {
       const n = id && !isTool(id) ? s.inv[id] || 0 : 0;

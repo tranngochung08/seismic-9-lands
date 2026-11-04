@@ -503,6 +503,342 @@
       "cw": 32
      }
     }
+   },
+   "ld_1198988206394314782": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_1198988206394314782.png",
+    "note": "plan-117 v2a: Leader cigsafter. từ pfp (PixelLab 8382a016-c57f-4fc8-a5ed-cd31637d7720)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_1198988206394314782_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_1198988206394314782_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_1198988206394314782_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_1233038347744706645": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_1233038347744706645.png",
+    "note": "plan-117 v2a: Leader mzain2292 từ pfp (PixelLab 603c09fb-f706-43f3-b02e-8f25c34f8204)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_1233038347744706645_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_1233038347744706645_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_1233038347744706645_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_398382848081526796": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_398382848081526796.png",
+    "note": "plan-117 v2a: Leader shroomskull từ pfp (PixelLab eccd3277-a034-4a11-b4f5-015d48a9c1de)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_398382848081526796_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_398382848081526796_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_398382848081526796_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_1217852123296043117": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_1217852123296043117.png",
+    "note": "plan-117 v2a: Leader snow_2147 từ pfp (PixelLab 6263f902-4185-4526-8d8f-0c14c1d67334)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_1217852123296043117_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_1217852123296043117_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_1217852123296043117_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_876438741856682024": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_876438741856682024.png",
+    "note": "plan-117 v2a: Leader thoai0lor từ pfp (PixelLab cde83ae6-60f8-4c3f-933c-640ea2de47b6)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_876438741856682024_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_876438741856682024_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_876438741856682024_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_876809355230580746": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_876809355230580746.png",
+    "note": "plan-117 v2a: Leader nguyentunek từ pfp (PixelLab cf6b1ef2-a5a4-40da-9077-3d606e1b5efc)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_876809355230580746_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_876809355230580746_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_876809355230580746_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_201360516961009665": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_201360516961009665.png",
+    "note": "plan-117 v2a: Leader tomjke từ pfp (PixelLab 9d136d05-9978-45ed-8430-7ce72eb3b5aa)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_201360516961009665_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_201360516961009665_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_201360516961009665_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_400729437303209985": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_400729437303209985.png",
+    "note": "plan-117 v2a: Leader vadim_kesha từ pfp (PixelLab 3cf5f8c9-bbb8-402c-8329-31186c5e012e)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_400729437303209985_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_400729437303209985_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_400729437303209985_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_1060594551301083229": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_1060594551301083229.png",
+    "note": "plan-117 v2a: Leader k2sbhai từ pfp (PixelLab f6b8dbca-5c6d-4569-854c-d613f82deb3e)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_1060594551301083229_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_1060594551301083229_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_1060594551301083229_act_throw.png",
+      "n": 6,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_1108740964991897681": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_1108740964991897681.png",
+    "note": "plan-117 v2a: Leader kristina.eth từ pfp (PixelLab 397c0e01-b757-4d1d-ac6f-37ae9c45d7a1)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_1108740964991897681_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_1108740964991897681_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_1108740964991897681_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_200627755358879744": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_200627755358879744.png",
+    "note": "plan-117 v2a: Leader origin91 từ pfp (PixelLab b80d9a46-c258-4ff5-8991-900a76641737)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_200627755358879744_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_200627755358879744_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_200627755358879744_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "ld_1011391283757056132": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/ld_1011391283757056132.png",
+    "note": "plan-117 v2a: Leader zella.nft từ pfp (PixelLab b415de54-05bf-45b8-a1ee-3ad1c093c217)",
+    "actions": {
+     "walk": {
+      "file": "chars/ld_1011391283757056132_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/ld_1011391283757056132_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/ld_1011391283757056132_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
    }
   },
   "shirtHue": [

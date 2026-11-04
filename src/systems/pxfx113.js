@@ -63,6 +63,10 @@ export function pal(p, o = {}) {
 const BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
 export const bayer = (x, y) => BAY[((Math.floor(y) & 3) << 2) | (Math.floor(x) & 3)];
 export function createFrame(w, h) { return { w, h, ox: 0, oy: 0, color: new Uint32Array(w * h), light: new Uint32Array(w * h), x0: w, y0: h, x1: -1, y1: -1 }; }
+function sizeFrame18(f, w, h) {   /* c18-perf: khung cỡ w×h dùng lại bộ đệm cũ nếu đủ chỗ (xoá vùng bẩn theo bố cục CŨ trước → cả bộ đệm = 0) */
+  const n = w * h; if (!f || !f.cap || f.cap < n) { const cap = Math.ceil(n * 1.25) + 64, cb = new Uint32Array(cap), lb = new Uint32Array(cap); return { w, h, ox: 0, oy: 0, cap, cb, lb, color: cb.subarray(0, n), light: lb.subarray(0, n), x0: w, y0: h, x1: -1, y1: -1 }; }
+  clearFrame(f); f.w = w; f.h = h; f.color = f.cb.subarray(0, n); f.light = f.lb.subarray(0, n); f.x0 = w; f.y0 = h; f.x1 = -1; f.y1 = -1; return f;
+}
 export function clearFrame(f) { if (f.x1 < f.x0) return f; for (let y = f.y0; y <= f.y1; y++) { const i = y * f.w; f.color.fill(0, i + f.x0, i + f.x1 + 1); f.light.fill(0, i + f.x0, i + f.x1 + 1); } f.x0 = f.w; f.y0 = f.h; f.x1 = -1; f.y1 = -1; return f; }
 const call = (v, ...a) => (typeof v === 'function' ? v(...a) : v);
 const OUT = { c: 0, a: 1, l: 0, k: 0 };
@@ -216,7 +220,7 @@ export function inst(scene, o = {}) {
     blit(g, cx, cy, layer) {   /* vẽ 1 lớp vào khung riêng rồi dán lên canvas game */
       if (I.done) return; const t0 = typeof performance !== 'undefined' ? performance.now() : 0, bx = scene.box(I.t, I);
       const X0 = Math.floor(bx[0] * 2), Y0 = Math.floor(bx[1] * 2), W = Math.max(2, Math.ceil(bx[2] * 2) - X0), H = Math.max(2, Math.ceil(bx[3] * 2) - Y0);
-      let F = I.fr[layer]; if (!F || F.w !== W || F.h !== H) { F = I.fr[layer] = createFrame(W, H); F.cvs = null; } F.ox = X0; F.oy = Y0; clearFrame(F);
+      let F = I.fr[layer]; if (!F || F.w !== W || F.h !== H) { F = I.fr[layer] = sizeFrame18(F, W, H); F.cvs = null; } F.ox = X0; F.oy = Y0; clearFrame(F);   /* c18-perf: dùng lại bộ đệm khi hộp đổi cỡ */
       const p = new Painter(F); p.lightK = CFG113.light * (o.light ?? 1); scene.draw(p, layer, I.t, I);
       if (F.x1 >= F.x0) blitFrame(g, F, cx, cy);
       CFG113.stat.ms += (typeof performance !== 'undefined' ? performance.now() : 0) - t0; CFG113.stat.px += W * H; },
@@ -225,16 +229,15 @@ export function inst(scene, o = {}) {
 }
 /* dán khung: màu (alpha nguyên / bán trong suốt) + sáng cộng ('lighter'). Chỉ vùng bẩn. */
 function blitFrame(g, F, cx, cy) {
-  const dw = F.x1 - F.x0 + 1, dh = F.y1 - F.y0 + 1, c = getCanvas(dw, dh); if (!c) return;
+  const dw = F.x1 - F.x0 + 1, dh = F.y1 - F.y0 + 1, c = getCanvas(dw, dh * 2); if (!c) return;   /* c18-perf: màu ở nửa trên, sáng ở nửa dưới → 1 lần putImageData */
   try {
     if (!c.img || c.img.width !== c.cv.width || c.img.height !== c.cv.height) { c.img = c.g.createImageData(c.cv.width, c.cv.height); c.u32 = new Uint32Array(c.img.data.buffer); c.u32L = new Uint32Array(c.cv.width * c.cv.height); }
-    const W = c.cv.width, U = c.u32, UL = c.u32L; let anyL = false;
-    for (let y = 0; y < dh; y++) { const si = (F.y0 + y) * F.w + F.x0, di = y * W; for (let x = 0; x < dw; x++) { U[di + x] = F.color[si + x]; const l = F.light[si + x]; UL[di + x] = l; if (l) anyL = true; } }
-    c.g.putImageData(c.img, 0, 0, 0, 0, dw, dh);
+    const W = c.cv.width, U = c.u32, LO = W * dh, FC = F.color, FL = F.light; let anyL = false;   /* c18-perf */
+    for (let y = 0; y < dh; y++) { const si = (F.y0 + y) * F.w + F.x0, di = y * W; for (let x = 0; x < dw; x++) { U[di + x] = FC[si + x]; const l = FL[si + x]; U[LO + di + x] = l; if (l) anyL = true; } }
+    c.g.putImageData(c.img, 0, 0, 0, 0, dw, anyL ? dh * 2 : dh);
     const X = (F.ox + F.x0) / 2 - cx, Y = (F.oy + F.y0) / 2 - cy;
     g.drawImage(c.cv, 0, 0, dw, dh, X, Y, dw / 2, dh / 2);
-    if (anyL) { U.set(UL.subarray(0, W * dh)); for (let i = 0; i < W * dh; i++) if (!U[i]) U[i] = 0; c.g.putImageData(c.img, 0, 0, 0, 0, dw, dh);
-      const op = g.globalCompositeOperation; g.globalCompositeOperation = 'lighter'; g.drawImage(c.cv, 0, 0, dw, dh, X, Y, dw / 2, dh / 2); g.globalCompositeOperation = op; }
+    if (anyL) { const op = g.globalCompositeOperation; g.globalCompositeOperation = 'lighter'; g.drawImage(c.cv, 0, dh, dw, dh, X, Y, dw / 2, dh / 2); g.globalCompositeOperation = op; }
   } finally { c.busy = false; }
 }
 /* chạy KHÔNG trình duyệt (node, ảnh xem trước nền tối): ghép khung vào bộ đệm RGBA cỡ màn — composite màu rồi cộng sáng (kẹp 255) */
