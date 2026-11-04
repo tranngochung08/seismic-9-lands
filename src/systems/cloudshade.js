@@ -32,7 +32,7 @@ export const cloudshade = {
     const day = 1 - Math.min(1, (ctx.S.dark || 0) / 0.3); if (day <= 0.02) return;   /* tối dần → bóng mờ dần, đêm không có */
     const fight = typeof document !== 'undefined' && document.body.classList.contains('bk-fight') ? 0.4 : 1;   /* 2026-10-14 anh: trận trùm bị bóng mây làm tối đục → nhạt bớt khi đang đánh */
     if (fight < 1 && ctx.gfxLow && ctx.gfxLow()) return;   /* plan-37: bậc đồ hoạ nhẹ → tắt bóng mây trong trận */
-    g.save(); g.globalAlpha = ALPHA * day * fight; g.imageSmoothingEnabled = true; g.globalCompositeOperation = 'multiply';   /* nhân màu: đất tối đi mà GIỮ sắc (như ảnh mẫu anh gửi), không phủ xám */   /* bóng mềm: cho phép nội suy (chỉ trong khối này) */
+    g.save(); g.globalAlpha = ALPHA * day * fight * ((globalThis.__codat25 && globalThis.__codat25.cloud) ?? 1);   /* c25: bóng mây nhạt theo ?codat (c/d) */ g.imageSmoothingEnabled = true; g.globalCompositeOperation = 'multiply';   /* nhân màu: đất tối đi mà GIỮ sắc (như ảnh mẫu anh gửi), không phủ xám */   /* bóng mềm: cho phép nội suy (chỉ trong khối này) */
     for (const c of ST.list) {
       const im = ST.img[c.k]; if (!im || !im.complete || !im.naturalWidth) continue;
       const w = Math.round(im.naturalWidth * SC), h = Math.round(im.naturalHeight * SC), sx = Math.round(c.x - cx), sy = Math.round(c.y - cy);
@@ -42,4 +42,4 @@ export const cloudshade = {
     g.restore();
   },
 };
-if (typeof window !== 'undefined') window.__cloudshade = { n: () => ST.list.length, zone: () => ST.zone, list: () => ST.list.map(c => [Math.round(c.x), Math.round(c.y), c.k]), img: () => ST.img.map(i => i.complete && i.naturalWidth) };
+if (typeof window !== 'undefined') window.__cloudshade = { __st: () => ST, n: () => ST.list.length, zone: () => ST.zone, list: () => ST.list.map(c => [Math.round(c.x), Math.round(c.y), c.k]), img: () => ST.img.map(i => i.complete && i.naturalWidth) };

@@ -45,7 +45,7 @@ function onSt(ctx, m) {
   P.zone = m.z || null; P.ko = !!m.k; P.mov = !!m.m; P.dir = m.d | 0; P.diag = m.g == null ? null : m.g | 0;
   if (P.tx == null || Math.hypot(m.x - P.ent.x, m.y - P.ent.y) > CF.snap) { P.ent.x = m.x; P.ent.y = m.y; }
   P.tx = m.x; P.ty = m.y;
-  const a = m.a || ''; if (a !== P.act) { P.act = a; if (a) P.ent.act(a, 0.4); else P.ent.endAct(); }
+  const a = m.a || ''; if (a !== P.act) { P.act = a; if (a === 'knockdown' && m.k) P.ent.action = { name: a, t: 0, dur: 0.55, hold: true, walk: false, loop: false }; else if (a) P.ent.act(a, 0.4); else P.ent.endAct(); }   /* c27-chet: người khác chết → ngã rồi NẰM (giữ khung) tới khi hồi */
   const U = Array.isArray(m.u) ? m.u.slice(0, 4) : [], keep = new Set();
   U.forEach((r, i) => { const [sp, x, y, clip, fx, lv] = r; if (typeof sp !== 'string') return; const k = i + ':' + sp; keep.add(k); let u = P.units.get(k);
     if (!u) { let e = null; try { e = ctx.ldKit && ctx.ldKit.ready() ? ctx.ldKit.mk(sp, lv || 5, null, x, y) : null; } catch (er) { e = null; } if (!e) return; u = { e, tx: x, ty: y }; P.units.set(k, u); }

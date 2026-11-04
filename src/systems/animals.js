@@ -623,7 +623,7 @@ function catchLand(ctx, a) {
 function castTarget(ctx) {
   const map = ctx.S.map, p = ctx.S.player;
   const ptx = tileOf(p.x), pty = tileOf(p.y);
-  if (isWaterT(ctx, ptx, pty)) return null;                     // must stand on a dry tile
+  if (isWaterT(ctx, ptx, pty) || ctx.getG(map, ptx, pty) === ctx.T.DEEP) return null;   /* must stand on a dry tile — c28-xuongnuoc: đang bơi ô sâu cũng không phải bờ */
   let adj = null;
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
     if (isWaterT(ctx, ptx + dx, pty + dy)) { adj = { tx: ptx + dx, ty: pty + dy, dx, dy }; break; }

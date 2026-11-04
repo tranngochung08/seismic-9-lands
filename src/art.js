@@ -12,7 +12,12 @@ const STY89 = { v: null, decor: {}, cliff: false }; const SQ89 = u => (STY89.v &
 /* p89 vòng 2 (sty89=d, CHỈ để chơi thử): HUD gọn — dòng nhiệm vụ / Cứu Lyron thu nhỏ + mờ (rê chuột hiện rõ), thông báo dài (hướng dẫn Ki) nhỏ lại và tự mờ sau 4 s. Không bỏ chức năng nào. */
 function sty89HUD() { const st = document.createElement('style'); st.textContent = 'body.sty89d .hud-tl #h-quest,body.sty89d .hud-tl #h-story,body.sty89d .hud-tl #h-task{transform:scale(.8);transform-origin:0 0;opacity:.72;margin-bottom:-5px;transition:opacity .2s}body.sty89d .hud-tl:hover #h-quest,body.sty89d .hud-tl:hover #h-story{opacity:1}body.sty89d #px-notes .pn.long{transform:scale(.8);transform-origin:0 100%;animation:p89fade .5s 4s forwards}@keyframes p89fade{to{opacity:0;visibility:hidden}}'; document.head.appendChild(st); document.body.classList.add('sty89d'); }
 
-const load1 = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('art: ' + src)); i.src = SQ89(src); });
+/* c25 (04/11 anh: mặt cỏ + đất Làng 'rối mắt' → làm dịu): ?codat=a|b|c|d|off, không tham số = C25_DEF. Ảnh Wang cỏ/đất (wang/a2d, wang/b2) đã ép tương phản theo bảng màu (_wip/c25-codat/_gen/codat.py): mọi bản trừ off nạp từ assets/px/_c25/<v>/ (c, d dùng ảnh b; không phụ thuộc thứ tự lớp sty/d), off = đường dẫn gốc. a = bớt hạt; b = a + cỏ sáng/tối gần nhau; c = b + bóng mây nhạt; d = c + thưa hoa / cỏ dại. */
+const C25_DEF = 'd', C25_SET = { off: ['off', 1, 1], a: ['a', 1, 1], b: ['b', 1, 1], c: ['b', 0.4, 1], d: ['b', 0.4, 0.45] };   /* [ảnh, hệ số bóng mây, hệ số decor Làng] */
+const C25 = (() => { let v = null; try { v = new URLSearchParams(location.search).get('codat'); } catch (e) {} return C25_SET[v] ? v : C25_DEF; })(), C25_IMG = C25_SET[C25][0], C25_IMG0 = C25_SET[C25_DEF][0];
+const C25U = u => (C25_IMG !== 'off' && typeof u === 'string' && /assets\/px\/wang\/(a2d|b2)\/\d\d\.png/.test(u) ? u.replace('assets/px/wang/', 'assets/px/_c25/' + C25_IMG + '/wang/') : u);
+globalThis.__codat25 = { v: C25, img: C25_IMG, cloud: C25_SET[C25][1], decor: C25_SET[C25][2] };
+const load1 = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('art: ' + src)); i.src = SQ89(C25U(src)); });
 // tải ảnh: thử lại 3 lần (server tĩnh hay rớt khi nạp hàng nghìn ảnh cùng lúc); thất bại → ảnh 1×1 trong suốt, không kéo cả gói xuống
 const BLANK = mkCanvas(2, 2);
 const LOADS = new Map();   /* bộ nhớ đệm theo URL: tải trước song song (prefetchPack) rồi các bước sau lấy lại, không tải lần 2 */
@@ -107,7 +112,7 @@ async function loadPack(file, id) {
     }
     p.layers.push({ upper: L.upper, byKey });
   }
-  for (const [tile, list] of Object.entries(j.decor || {})) p.decor[tile] = await Promise.all(list.map(async f => ({ img: toCanvas(await load(BASE + f.file)), p: (f.p ?? 1) * (STY89.decor[f.file] ?? 1), n: f.n ?? 1 })));
+  for (const [tile, list] of Object.entries(j.decor || {})) p.decor[tile] = await Promise.all(list.map(async f => ({ img: toCanvas(await load(BASE + f.file)), p: (f.p ?? 1) * (STY89.decor[f.file] ?? 1) * (id === 'village' ? __codat25.decor : 1), n: f.n ?? 1 })));
   for (const [tile, files] of Object.entries(j.tiles || {})) { const arr = await Promise.all(files.map(f => load(BASE + f).then(toCanvas))); arr.pick = (tx, ty) => arr[h2(tx, ty) % arr.length]; p.tiles[tile] = arr; }
   await Promise.all(Object.entries(j.objects || {}).map(async ([name, spec]) => {
     const f = typeof spec === 'string' ? spec : spec.file; const img = await load(BASE + f);

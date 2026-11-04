@@ -151,13 +151,13 @@ const CTX = {
   duelSfx: (name, d) => AUDIO.duelSfx(name, d),   /* p49c: tiếng Đấu Chấn Thú (file mp3, bản nháp audio.js) */
   nationName: key => { const n = nationOf({ ro: [key] }); return n ? n.name : key; },
   // BFS on tiles from (x0,y0) to (x1,y1) in tile units; returns pixel waypoints (tile centres) or null. Limited to a box around both points.
-  pathTo: (x0, y0, x1, y1, margin = 6) => {
+  pathTo: (x0, y0, x1, y1, margin = 6, solidFn = null) => {   /* c28-xuongnuoc: solidFn tuỳ chọn (người chơi dùng luật va chạm của chính mình) */
     const m = S.map, bx0 = Math.max(0, Math.min(x0, x1) - margin), by0 = Math.max(0, Math.min(y0, y1) - margin), bx1 = Math.min(m.w - 1, Math.max(x0, x1) + margin), by1 = Math.min(m.h - 1, Math.max(y0, y1) + margin);
     const W = bx1 - bx0 + 1, H = by1 - by0 + 1, prev = new Int32Array(W * H).fill(-1), k = (x, y) => (y - by0) * W + (x - bx0);
     const q = [[x0, y0]]; prev[k(x0, y0)] = k(x0, y0);
     while (q.length) {
       const [x, y] = q.shift(); if (x === x1 && y === y1) break;
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < bx0 || ny < by0 || nx > bx1 || ny > by1) continue; if (prev[k(nx, ny)] !== -1 || (isSolid(m, nx, ny) && !(nx === x1 && ny === y1))) continue; prev[k(nx, ny)] = k(x, y); q.push([nx, ny]); }
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < bx0 || ny < by0 || nx > bx1 || ny > by1) continue; if (prev[k(nx, ny)] !== -1 || ((solidFn ? solidFn(m, nx, ny) : isSolid(m, nx, ny)) && !(nx === x1 && ny === y1))) continue; prev[k(nx, ny)] = k(x, y); q.push([nx, ny]); }
     }
     if (prev[k(x1, y1)] === -1) return null;
     const out = []; let c = k(x1, y1); while (c !== k(x0, y0)) { out.push({ x: (c % W + bx0) * TS + 8, y: (Math.floor(c / W) + by0) * TS + 12 }); c = prev[c]; }
@@ -626,11 +626,15 @@ const INFO_KINDS = new Set(['nation', 'sign', 'rocky', 'hall', 'quiz', 'bed']); 
 const PROMPT = { npc: 'talk', bed: 'sleep', sign: 'read', hall: 'hall', nation: 'nationBoard', rocky: 'rocky', shop: 'shop', fire: 'light', ore: 'mine', lever: 'pull', quiz: 'study', item: 'pickup' };
 /* ---- trỏ + click để đi (anh yêu cầu 2026-10-10) ---- */
 /* đoạn thẳng a→b đi được không: kiểm 4 góc hộp chân (10×6) mỗi 3 px */
+/* c28-xuongnuoc (anh 04/11): click trái xuống nước = đi thẳng xuống nước (lội / bơi do swim.js), không đi vòng qua cầu.
+   Tìm đường theo đúng luật va chạm của người chơi: p.passable (swim.js cho đi ô nước) nếu có, không thì isSolid.
+   Vùng biển (map.sea: bè / lặn / tàu có luật riêng) giữ luật cũ = nước chặn. */
+function pSolid(m, x, y) { const p = S.player; return p && p.passable && !m.sea ? !p.passable(m, x, y) : isSolid(m, x, y); }
 function lineClear(ax, ay, bx, by) {
   const m = S.map, d = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.ceil(d / 3));
   for (let i = 1; i <= n; i++) {
     const x = ax + (bx - ax) * i / n, y = ay + (by - ay) * i / n;
-    for (const [ox, oy] of [[-5, -6], [4, -6], [-5, -1], [4, -1]]) if (isSolid(m, Math.floor((x + ox) / TS), Math.floor((y + oy) / TS))) return false;
+    for (const [ox, oy] of [[-5, -6], [4, -6], [-5, -1], [4, -1]]) if (pSolid(m, Math.floor((x + ox) / TS), Math.floor((y + oy) / TS))) return false;   /* c28-xuongnuoc */
   }
   return true;
 }
@@ -646,12 +650,12 @@ function smoothPath(p, path) {   /* "kéo dây": từ vị trí hiện tại nh�
 function walkTo(wx, wy, quiet) {
   const p = S.player, m = S.map; let tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
   const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
-  let path = isSolid(m, tx, ty) ? null : CTX.pathTo(ptx, pty, tx, ty, 10);
+  let path = pSolid(m, tx, ty) ? null : CTX.pathTo(ptx, pty, tx, ty, 10, pSolid);   /* c28-xuongnuoc: nước đi được → đi thẳng */
   if (!path) {   /* đích bị chắn (cây, nhà, nước) hoặc không tới được → ô trống gần đích nhất mà đi tới được (bán kính 3) */
     const cand = [];
-    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const x = tx + dx, y = ty + dy; if ((dx || dy) && !isSolid(m, x, y)) cand.push({ x, y, d: Math.hypot(dx, dy) * 16 + Math.hypot(x * TS + 8 - p.x, y * TS + 12 - p.y) * 0.05 }); }
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const x = tx + dx, y = ty + dy; if ((dx || dy) && !pSolid(m, x, y)) cand.push({ x, y, d: Math.hypot(dx, dy) * 16 + Math.hypot(x * TS + 8 - p.x, y * TS + 12 - p.y) * 0.05 }); }
     cand.sort((a, b) => a.d - b.d);
-    for (const c of cand.slice(0, 10)) { path = CTX.pathTo(ptx, pty, c.x, c.y, 10); if (path) { tx = c.x; ty = c.y; wx = tx * TS + 8; wy = ty * TS + 12; break; } }
+    for (const c of cand.slice(0, 10)) { path = CTX.pathTo(ptx, pty, c.x, c.y, 10, pSolid); if (path) { tx = c.x; ty = c.y; wx = tx * TS + 8; wy = ty * TS + 12; break; } }
     if (!path) return false;
   }
   if (path.length) path[path.length - 1] = { x: wx, y: Math.max(wy, ty * TS + 7) };   /* đến đúng điểm click (chân trong ô) */
@@ -704,6 +708,7 @@ function onClick(c) {
   if (v.talk) { S.clickGoal = null; S.player.autoPath = null; talkTo(v.talk); if (c && c.touch) MOUSE.on = false; return; }
   if (v.chase) { chaseStart(v.chase); if (c && c.touch) MOUSE.on = false; return; }   /* p120: cầm vũ khí + click quái = đi tới + đánh */   /* tay không + click dân = nói chuyện (không móc túi / hóa đá) */
   for (const sy of S.sys) { try { if (sy.onClick && sy.onClick(CTX, mt)) { S.clickGoal = null; if (c && c.touch) MOUSE.on = false; return; } } catch (e) { console.error(sy.id, e); } }   /* hệ tự xử lý click (đánh quái) */
+  if (!globalThis.__rf91 && S.map && !S.map.sea) { const g28 = getG(S.map, mt.tx, mt.ty); if (g28 === T.WATER || g28 === T.DEEP) globalThis.__ww91 = true; }   /* c28-xuongnuoc: click trái lên nước = đi, không câu (chuột phải giả lập vẫn câu qua __rf91) */
   S.near = findNear();
   if (S.near && MOUSE.hit) { S.player.autoPath = null; S.clickGoal = null; interact(); }   /* trúng thứ trong tầm → làm luôn */
   else { S.clickGoal = { wx: mt.wx, wy: mt.wy }; if (!walkTo(mt.wx, mt.wy)) S.clickGoal = null; }   /* không thì đi tới; tới tầm của thứ đã click thì tự làm */
