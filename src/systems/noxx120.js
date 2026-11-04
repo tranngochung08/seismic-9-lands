@@ -65,11 +65,11 @@ export function fresh120(sv) {
 }
 
 /* ---------- danh sách loài: dạng gốc có sprite đấu, Rocky đầu ---------- */
-function loadSpr() { if (ST.sprP) return ST.sprP; ST.sprP = fetch(BASE + 'linhduel/duel_sprites.json').then(r => r.json()).then(j => { ST.spr = j; }).catch(() => { ST.sprP = null; }); return ST.sprP; }
+function loadSpr() { if (ST.sprP) return ST.sprP; ST.sprP = fetch(BASE + 'linhduel/duel_sprites.json').then(r => r.json()).then(j => fetch(BASE + 'chanthu/elyziuma/ely.json').then(r => r.json()).then(m => { if (m && m.idle && !j.elyziuma) j.elyziuma = { idle: m.idle }; }).catch(() => { }).then(() => { ST.spr = j; }))   /* c15-elyz: Elyziuma chưa có sprite trận → dùng ảnh đi theo cho ô chọn */.catch(() => { ST.sprP = null; }); return ST.sprP; }
 function speciesList() {
   const J = ST.spr || {}, evoT = new Set();
   for (const k of Object.keys(SPECIES)) { const s = SPECIES[k]; if (s.evo) evoT.add(s.evo); }
-  const out = Object.keys(SPECIES).filter(k => { const s = SPECIES[k]; return !evoT.has(k) && !s.secret && J[k] && J[k].idle && k !== 'rocky'; });
+  const out = Object.keys(SPECIES).filter(k => { const s = SPECIES[k]; return !evoT.has(k) && (!s.secret || k === 'elyziuma') && J[k] && J[k].idle && k !== 'rocky';   /* c15-elyz: anh cho Elyziuma vào bảng chọn */ });
   return (SPECIES.rocky && J.rocky && J.rocky.idle ? ['rocky'] : []).concat(out);
 }
 function img(src) { let i = ST.img[src]; if (!i) { i = new Image(); i.src = BASE + src; ST.img[src] = i; } return i; }

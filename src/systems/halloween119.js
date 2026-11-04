@@ -6,9 +6,14 @@
    (3) MƯA vẽ code từng pixel: vệt xiên 2 lớp (xa: nét đứt dither, gần: nét liền), toé 1–3 điểm trên đất + gợn vòng trên nước (lớp nền drawGround, neo theo thế giới). Không trạng thái, không cấp phát mỗi khung.
    Bật: tự theo ngày máy 25/10 – 10/11 · ?halloween=1 / 0 ép bật / tắt · phím F7 bật / tắt trong game · chỉ ở vùng Làng (village). ?rain119=0 tắt riêng mưa. window.__h119 để test. */
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams('');
-const URLF = Q.get('halloween'), RAIN_OFF = Q.get('rain119') === '0';
+const URLF = Q.get('halloween'), RAIN_OFF = Q.get('rain119') === '0', RAIN_ON = Q.get('rain119') === '1';   /* c14-thoitiet: =1 ép mưa (test) */
 function dateOn(d = new Date()) { const mo = d.getMonth(), da = d.getDate(); return (mo === 9 && da >= 25) || (mo === 10 && da <= 10); }
-const ST = { force: URLF === '1' ? true : URLF === '0' ? false : null, placed: [], lightN: 0, amb: [84, 92, 150], rain: !RAIN_OFF, rainK: 0.4, log: [] };
+const ST = { force: URLF === '1' ? true : URLF === '0' ? false : null, placed: [], lightN: 0, amb: [84, 92, 150], rain: !RAIN_OFF, rainK: 0.4, log: [], dk: 0, wet: 0 };   /* c14-thoitiet: dk = độ tối đêm theo đồng hồ (0…1), wet = độ mưa hiện tại (0…1) */
+/* c14-thoitiet: lịch mưa — khung 2 giờ game, ~35 % mưa, băm theo năm/ngày/khung (mọi máy giống nhau); vào / tạnh dần */
+function wetStep(ctx, dt) { const c = ctx.S.save && ctx.S.save.clock; let want = 0;
+  if (RAIN_ON) want = 1; else if (c) { const blk = Math.floor((c.min || 0) / 120), sd = (c.year || 1) * 977 + (c.day || 1) * 31 + blk + (c.season ? c.season.length * 7 : 0); want = HSH(sd, 3) < 0.35 ? 1 : 0; }
+  return ST.wet + Math.max(-dt * 0.15, Math.min(dt * 0.15, want - ST.wet)); }
+const HSH = (i, k) => { let h = Math.imul(i + 1, 2654435761) ^ Math.imul(k + 7, 1597334677); h = Math.imul(h ^ (h >>> 15), 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
 function on(ctx) { const S = ctx.S; if (!S || !S.zone || S.zone.id !== 'village' || !S.map || !S.map.v88) return false; return ST.force === null ? dateOn() : ST.force; }
 
 /* ---------- vật trang trí ---------- */
@@ -83,9 +88,10 @@ function lightSprite(r, col, k) {   /* đĩa sáng bậc 4 mức + dither Bayer 
 const WARM = [255, 150, 70], HALO = [150, 62, 14], PALE = [150, 150, 120], LIGHT_OLD = { lantern: [26, 10, 1], torch: [24, 12, 1], campfire: [30, 6, 1], arena_pillar: [26, 20, 0.9], crystal_p: [22, 10, 0.6], crystal_b: [20, 10, 0.6] };
 let LM = null, LMg = null; const LC = { m: null, n: -1, list: [] };
 function drawNight(g, ctx, cx, cy) {
+  const kq = Math.round(ST.dk * 10) / 10; if (kq < 0.1) return;   /* c14-thoitiet: ban ngày không phủ đêm; bậc 0,1 để ảnh đèn khỏi tạo mới mỗi khung */
   const VW = ctx.VW, VH = ctx.VH, m = ctx.S.map, O = ctx.O, TS = 16;
   if (!LM || LM.width !== VW || LM.height !== VH) { LM = document.createElement('canvas'); LM.width = VW; LM.height = VH; LMg = LM.getContext('2d'); }
-  const a = ST.amb; LMg.globalCompositeOperation = 'source-over'; LMg.fillStyle = `rgb(${a[0]},${a[1]},${a[2]})`; LMg.fillRect(0, 0, VW, VH);
+  const a = ST.amb.map(v => Math.round(255 - (255 - v) * kq)); LMg.globalCompositeOperation = 'source-over';   /* c14-thoitiet: tối dần theo giờ */ LMg.fillStyle = `rgb(${a[0]},${a[1]},${a[2]})`; LMg.fillRect(0, 0, VW, VH);
   LMg.globalCompositeOperation = 'lighter'; let n = 0; const HL = [];   /* p119w: tâm đèn — lớp cộng sáng cam sau multiply (multiply trên cỏ xanh ra vàng xanh) */
   const put = (lx, ly, r, k, col = WARM) => { lx = Math.round(lx); ly = Math.round(ly); if (lx < -r || ly < -r || lx > VW + r || ly > VH + r) return; LMg.drawImage(lightSprite(r, col, k), lx - r, ly - r); n++; if (col === WARM) HL.push([lx, ly, r, k]); };
   if (LC.m !== m || LC.n !== m.objects.length) { LC.m = m; LC.n = m.objects.length; LC.list = m.objects.filter(o => (o.h119 && DECO[o.type.slice(5)]) || LIGHT_OLD[o.type]); }   /* p119: nhớ vật phát sáng, không quét cả map mỗi khung */
@@ -99,7 +105,7 @@ function drawNight(g, ctx, cx, cy) {
   const p = ctx.S.player; if (p) put(p.x - cx, p.y - 10 - cy, 44, 0.42, PALE);   /* vầng nhẹ quanh người chơi: nhân vật luôn đọc được */
   ST.lightN = n;
   g.save(); g.globalCompositeOperation = 'multiply'; g.imageSmoothingEnabled = false; g.drawImage(LM, 0, 0, VW, VH);
-  g.globalCompositeOperation = 'lighter'; for (const [lx, ly, r, k] of HL) { const rr = Math.max(6, Math.round(r * 0.55)); g.drawImage(lightSprite(rr, HALO, k * 0.5), lx - rr, ly - rr); } g.restore();
+  g.globalCompositeOperation = 'lighter'; for (const [lx, ly, r, k] of HL) { const rr = Math.max(6, Math.round(r * 0.55)); g.drawImage(lightSprite(rr, HALO, k * 0.5 * kq), lx - rr, ly - rr); } g.restore();
 }
 
 /* ---------- mưa ---------- */
@@ -151,12 +157,13 @@ export const halloween119 = {
     if (act && !ST.placed.length && ctx.S.zone.id === 'village' && !ST.tried) { ST.tried = 1; placeAll(ctx); }
     if (!act && ST.placed.length) removeAll(ctx);
     if (!act) ST.tried = 0;
+    if (act) { ST.dk = Math.max(0, Math.min(1, (ctx.S.dark || 0) / 0.45)); ST.wet = wetStep(ctx, dt); ST.rainK = 0.4 * ST.wet; }   /* c14-thoitiet: đọc độ tối đồng hồ TRƯỚC khi tắt đêm thường */
     if (act) ctx.S.dark = 0;   /* đêm Halloween thay đêm thường (không tối 2 lần) */
   },
-  drawGround(g, ctx, cx, cy) { if (on(ctx) && ST.rain) drawSplash(g, ctx, cx, cy); },
+  drawGround(g, ctx, cx, cy) { if (on(ctx) && ST.rain && ST.wet > 0.02) drawSplash(g, ctx, cx, cy); },
   draw(g, ctx, cx, cy) {
     if (!on(ctx)) return; const AV = ctx.altView ? ctx.altView() : null; if (AV) return;
-    drawNight(g, ctx, cx, cy); if (ST.rain) drawRain(g, ctx, cx, cy);
+    drawNight(g, ctx, cx, cy); if (ST.rain && ST.wet > 0.02) drawRain(g, ctx, cx, cy);
   },
   key(code, ctx) {
     if (code !== 'F7' || !ctx.S.zone || ctx.S.zone.id !== 'village') return false;
@@ -164,6 +171,6 @@ export const halloween119 = {
   },
 };
 if (typeof window !== 'undefined') window.__h119 = {
-  st: () => ({ force: ST.force, date: dateOn(), placed: ST.placed.map(o => [o.type, o.x, o.y]), lightN: ST.lightN, log: ST.log, rain: ST.rain, amb: ST.amb }),
+  st: () => ({ force: ST.force, date: dateOn(), placed: ST.placed.map(o => [o.type, o.x, o.y]), lightN: ST.lightN, log: ST.log, rain: ST.rain, amb: ST.amb, dk: +ST.dk.toFixed(2), wet: +ST.wet.toFixed(2) }),
   on: () => !!(window.__CTX && on(window.__CTX)), set: o => Object.assign(ST, o), dateOn,
 };

@@ -298,6 +298,7 @@ export function drawUI(ug, cx, cy, scale) {
    · Gợi ý "cần cầm X" (need) KHÔNG BAO GIỜ thắng việc làm được ngay bằng món đang cầm (main.findNear); chỉ thắng khi quái đang đánh sát (urgent).
    · Điện thoại: chạm = trỏ + click, cùng luật. Phím E: findNear + mục tiêu đã khóa.
    ===================================================================================================== */
+export function armed() { const hc = heldClass(); return hc === 'weapon' || (hc === 'hand' && !!(D.CTX.quyen && D.CTX.quyen.on()) && !!D.CTX.held && !D.CTX.held()); }   /* c13-quyen: tay không cũng là 'đánh được' (đấm) */
 export function heldClass() { const md = mode(); if (md) return md === 'hand' && D.CTX.held && D.CTX.held() === 'stone' ? 'item' : md; return 'item'; }
 export function petrifiable(n) { const C = D.CTX, vl = C.villagers; return !!(vl && (D.S.npcs.includes(n) || n.chief) && !n.custom && !n.lyron && !(vl.immune && vl.immune(n)) && !(n.m && (n.m.guide || n.m.friend))); }
 export function rule(t, hc = heldClass()) {   /* → { cur, act } */
@@ -330,7 +331,7 @@ export function clickVerdict(mt, hoverFn) {   /* main.onClick gọi đầu tiên
     const r = rule(ent, hc);
     if (r.act === 'no') { if (D.S.time - ST.noT > 0.8) { ST.noT = D.S.time; D.CTX.toast(NOMSG(nameOf(ent))); D.CTX.sfx('fail'); } return { stop: true, why: 'no' }; }
     lock(ent);
-    if ((ent.kind === 'mon' || ent.kind === 'tent') && hc === 'weapon') return { chase: ent };   /* p120 2026-11-04 anh: cầm vũ khí (ô 1) + click quái = khóa + TỰ ĐI TỚI rồi đánh luôn (main.chaseTick) */
+    if ((ent.kind === 'mon' || ent.kind === 'tent') && (hc === 'weapon' || armed())) return { chase: ent };   /* c13-quyen: tay không click quái = tự đi tới đấm */   /* p120 2026-11-04 anh: cầm vũ khí (ô 1) + click quái = khóa + TỰ ĐI TỚI rồi đánh luôn (main.chaseTick) */
     if (r.act === 'talk' || (ent.kind === 'npc' && hc === 'item')) return dist(ent) <= 33 ? (r.act === 'talk' ? { talk: ent.ref } : {}) : { stop: true, why: 'lock' };   /* trong tầm: nói chuyện / tặng đá như cũ; xa: chỉ khóa */
     return { stop: true, why: 'lock' };   /* click = CHỈ KHÓA (không tự đi, không tự đánh / bắn) */
   }

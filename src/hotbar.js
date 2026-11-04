@@ -15,7 +15,9 @@ const BAGW = 12;   /* bề ngang túi giữ 12 ô như cũ */
 export const ACTIVE = ['petgun', 'sword', 'bua', 'axe', 'pickaxe', 'shovel', 'scythe', 'knife', 'rod', 'torch'];
 const PLACE = ['scarecrow', 'pen1', 'pen2', 'seed', 'hay', 'revive', 'stone', 'a_fish', 'a_fishbig'];
 const KEYS = { Digit6: 0, Digit7: 1, Digit8: 2, Digit9: 3, Digit0: 4 };
-const SKEYS = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4 };
+const SKEYS = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, KeyL: 5 };   /* c13-quyen: L = ô 6 Chưởng (H đã có squad104 / photo) */
+const QON = () => !!(deps && deps.CTX.quyen && deps.CTX.quyen.on());   /* c13-quyen: hệ Quyền bật */
+const SKL = () => (QON() && !htOn() ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4]);   /* c13-quyen: thanh kỹ năng máy tính thêm ô 6 Chưởng (Hợp Thể giữ 5 ô riêng) */
 const LABEL = ['6', '7', '8', '9', '0'];
 const WEAPON = 'sword';
 let deps = null, el = null, sig = '', tipT = 0, off = false;
@@ -185,6 +187,7 @@ const HT_SLOTS = [   /* = hopthe.js SLOTS (ảnh + tên); trạng thái / hồi 
 ];
 function skillInfo(i) {   /* → { icon, name, lock, cd (giây), cdMax, dim, cls, extra } */
   const t = T(), C = deps.CTX;
+  if (i === 5) return QON() ? C.quyen.palmSlot() : { icon: hud91('kioff'), name: C.lang() === 'vi' ? 'Chưởng' : 'Ki Palm', lock: true };   /* c13-quyen: ô 6 Chưởng */
   if (htOn()) {
     const sl = HT_SLOTS[i], st = window.__hopthe ? window.__hopthe.state() : { cds: {} }, sys = sv().sys || {};
     const un = sl.id === 'hacha' ? ((sys.hacrocky || {}).wins || 0) > 0 : false;
@@ -212,6 +215,7 @@ function aimHa() {   /* ô 2: Rocky-ha nhắm con đang khoá → con gần nh�
 let KB120 = false;   /* p120: skill() đang được gọi từ phím (không phải chuột) */
 export function skill(i) {
   const C = deps.CTX, t = T(); if (deps.S.mode !== 'play') return false;
+  if (i === 5) { const ok = QON() ? C.quyen.press() : false; render(true); return ok; }   /* c13-quyen: ô 6 / phím L = Chưởng (cả lúc Hợp Thể không có ô này) */
   if (htOn()) { if (window.__hopthe) window.__hopthe.use(i); render(true); return true; }   /* ô 5 = tuyệt chiêu Hợp Thể (trước: R) */
   if (i === 0) { if (mobile()) hold(WEAPON); else select(-1); if (deps.strike && KB120) deps.strike(); return true; }   /* p120: chỉ PHÍM 1 ra đòn ở đây; bấm chuột ô 1 đã có c12 swingNow (tránh chém 2 lần) */   /* 2026-11-04 anh: bấm ô 1 = cầm kiếm VÀ ra đòn ngay (trước chỉ cầm, phải bấm thêm E) */
   if (i === 1) { const R = rk(); if (!R) { C.toast(t.noRk); C.sfx('fail'); return false; }
@@ -344,10 +348,10 @@ function topHTML(lg) {
 }
 const cdTxt = c => (c >= 10 ? Math.ceil(c) + 's' : c.toFixed(1) + 's');
 function skillHTML(i) {
-  const s = skillInfo(i), lockImg = 'assets/px/hopthe/icons/lock.png', col = ['#c9c9c9', '#ff9a3a', '#5ad1ff', '#7bd04a', '#c58bff'][i];
+  const s = skillInfo(i), lockImg = 'assets/px/hopthe/icons/lock.png', col = ['#c9c9c9', '#ff9a3a', '#5ad1ff', '#7bd04a', '#c58bff', '#8fd3ff'][i];
   const lt = i === 3 && s.lt && !htOn() ? ' hb-lt' : '';
   return `<div class="hb-slot sk${s.on ? ' on' : ''}${s.lock ? ' lock' : ''}${s.dim ? ' dim' : ''}${lt}" data-sk="${i}" title="${esc(s.name + (s.tip && s.tip !== s.name ? ' — ' + s.tip : ''))}">`
-    + `<i class="hb-k">${i + 1}</i>${s.icon ? `<img src="${s.icon}" alt="">` : ''}${s.pet ? `<img class="pe" src="${s.pet}" alt="">` : ''}${s.lock ? `<img class="lk" src="${lockImg}" alt="">` : ''}`
+    + `<i class="hb-k">${i === 5 ? 'L' : i + 1}</i>${s.icon ? `<img src="${s.icon}" alt="">` : ''}${s.pet ? `<img class="pe" src="${s.pet}" alt="">` : ''}${s.lock ? `<img class="lk" src="${lockImg}" alt="">` : ''}`
     + `${s.cd > 0.05 ? `<span class="cd">${cdTxt(s.cd)}</span>` : s.cdTxt ? `<span class="cd">${s.cdTxt}</span>` : ''}<b class="bar" style="background:${col}"></b></div>`;
 }
 const hasRk = () => !!rk();
@@ -364,7 +368,7 @@ export function render(force) {
   if (hide) return;
   sync(); css(); el.classList.add('h91'); el.classList.toggle('h91m', mob); el.classList.toggle('open', mob && DO.open);
   const s = sv(), lg = deps.CTX.lang() === 'vi' ? 'vi' : 'en', h = deps.CTX.hero, c79 = c79Slot();
-  const sk = [0, 1, 2, 3, 4].map(skillInfo).map(x => [x.icon, x.lock, x.dim, x.on, Math.round((x.cd || 0) * 10), x.cdTxt, x.name, x.pet].join(','));
+  const sk = SKL().map(skillInfo).map(x => [x.icon, x.lock, x.dim, x.on, Math.round((x.cd || 0) * 10), x.cdTxt, x.name, x.pet].join(','));
   const ki = deps.CTX.ki ? Math.round(deps.CTX.ki.get() * 2) : 0, hs = s.hero || {};
   const key = JSON.stringify([sk, h ? [Math.ceil(h.hp), h.max, h.lv] : 0, hs.xp, ki, PORT.url && PORT.url.length, hasRk(), c79 && [c79.out, c79.sp, c79.lbl, ballN()], s.hotbar, s.hotSel, mob && s.mHeld, mob && DO.open, s.hotbar.map(id => (id && !isTool(id) ? s.inv[id] || 0 : 0)), lg, tipT > 0, htOn() && window.__hopthe ? Math.round(window.__hopthe.state().e) + '|' + Math.floor(window.__hopthe.state().left) : 0]);
   if (!force && key === sig) return; sig = key;
@@ -381,7 +385,7 @@ export function render(force) {
     return;
   }
   el.innerHTML = `<div class="hb-tip"${tipT > 0 && cur ? '' : ' hidden'}>${cur ? itemName(cur, lg) : ''}</div>` + topHTML(lg) + `<div class="hb-bar">`
-    + [0, 1, 2, 3, 4].map(skillHTML).join('') + `<b class="h91-sep" title="${esc(t.skills + ' · ' + t.items)}"></b>` + items
+    + SKL().map(skillHTML).join('') + `<b class="h91-sep" title="${esc(t.skills + ' · ' + t.items)}"></b>` + items
     + `<div class="h91-ex">${hasRk() ? `<div class="hb-slot hb-rk" title="${esc(t.rkCmd)}">${deps.ART && deps.ART.man && deps.ART.man.ui && deps.ART.man.ui.port_rocky ? `<img src="assets/px/${deps.ART.man.ui.port_rocky}" alt="">` : '🪨'}<i class="hb-v">/</i></div>` : ''}`
     + `${c79 ? `<div class="hb-slot hb-c79" title="${esc(lg === 'vi' ? 'Ném Ấn Thu — bắt Chấn Thú hoang đang ngất (người hạ nó dễ bắt hơn)' : 'Throw a Seal Orb — catch a fainted wild beast (easier for whoever defeated it)')}"><img src="assets/px/duel/anthu/anthu_icon.png" alt=""><i class="hb-v">${ballN()}</i></div>` : ''}`
     + `<div class="hb-bag" title="${esc(t.bag)}"><img src="assets/px/ui/tab_bag.png" alt=""></div></div></div>`;

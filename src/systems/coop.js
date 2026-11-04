@@ -30,7 +30,7 @@ const inZone = ctx => !!(ctx.S.zone && ctx.S.zone.id === ZONE && ctx.S.player);
 const isHost = () => NET.role === 'host';
 function send(o) { const w = C.ws; if (!w || w.readyState !== 1) return false; try { w.send(JSON.stringify(o)); C.n.tx++; return true; } catch (e) { return false; } }
 function myName(ctx) { const s = ctx.S.save || {}; return (s.name || (s.self && (s.self.n || s.self.name)) || 'Player').toString().slice(0, 24); }
-function myLook(ctx) { const o = (ctx.S.save && ctx.S.save.outfit) || {}, out = {}; for (const k of ['skin', 'hair', 'shirt', 'pants', 'hero']) if (typeof o[k] === 'string') out[k] = o[k]; return out; }
+function myLook(ctx) { const o = (ctx.S.save && ctx.S.save.outfit) || {}, out = {}; for (const k of ['skin', 'hair', 'shirt', 'pants']) if (typeof o[k] === 'string') out[k] = o[k]; out.hero = typeof o.hero === 'string' && o.hero ? o.hero : 'none'; return out; }   /* c10-coop sửa 04/11: hero null (chọn Nam/Nữ) gửi rõ 'none' — thiếu khoá thì máy khác vẽ nhầm */
 
 /* ---------- người chơi khác ---------- */
 function mkPeer(ctx, id, name, look) {
@@ -76,7 +76,7 @@ function connect(ctx) {
   if (C.ws || !C.url) return; C.st = 'conn'; lg({ ev: 'conn', url: C.url });
   let ws; try { ws = new WebSocket(C.url); } catch (e) { C.st = 'off'; retry(); return; }
   C.ws = ws;
-  ws.onopen = () => { send({ t: 'hello', room: ROOM, name: myName(ctx), look: myLook(ctx), v: 1 }); };
+  ws.onopen = () => { const L0 = myLook(ctx); C.lookSig = JSON.stringify(L0); send({ t: 'hello', room: ROOM, name: myName(ctx), look: L0, v: 1 }); };
   ws.onmessage = ev => { C.n.rx++; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } try { onMsg(C.ctx || ctx, m); } catch (e) { console.error('coop msg', m && m.t, e); } };
   ws.onclose = () => { if (C.ws !== ws) return; C.ws = null; const had = C.st === 'on'; C.st = 'off'; toSolo('close'); if (had) toast(ctx, vi(ctx) ? 'Mất kết nối chơi chung — đang chơi một mình' : 'Co-op disconnected — playing solo'); retry(); };
   ws.onerror = () => { };
@@ -138,7 +138,7 @@ export const coop = {
     NET.claim = (key, cb) => { if (!send({ t: 'claim', host: 1, n: key })) { cb(true); return; } C.claims.set(key, { cb, t: ctx.S.time }); };   /* khách ném Ấn Thu trúng → xin chủ phòng (ai xin trước được) */
     NET.guestFall = mo => { const h = netFall(mo); if (send({ t: 'hit', host: 1, l: [h] })) C.n.hitTx++; return true; };
     if (typeof window !== 'undefined') window.__coop = {
-      state: () => ({ st: C.st, url: C.url, id: C.id, host: C.host, role: NET.role, peers: [...C.peers.values()].map(P => ({ id: P.id, name: P.name, zone: P.zone, x: Math.round(P.ent.x), y: Math.round(P.ent.y), ko: P.ko, units: P.units.size })), n: { ...C.n }, f106: netStat() }),
+      state: () => ({ st: C.st, url: C.url, id: C.id, host: C.host, role: NET.role, peers: [...C.peers.values()].map(P => ({ id: P.id, name: P.name, zone: P.zone, x: Math.round(P.ent.x), y: Math.round(P.ent.y), ko: P.ko, units: P.units.size, look: P.look })), n: { ...C.n }, f106: netStat() }),
       log: () => C.log.slice(), close: () => close('test'), yieldHost: () => send({ t: 'yield' }), url: u => { C.url = u; },
     };
     if (typeof window !== 'undefined') window.__coopCtx = () => C.ctx;   /* móc test */
@@ -165,6 +165,7 @@ export const coop = {
     C.offPlay = away ? C.offPlay + dt : 0;
     if (isHost() && C.peers.size && C.offPlay > CF.yieldT) { send({ t: 'yield' }); C.offPlay = -5; lg({ ev: 'yield' }); }
     C.stT -= dt; if (C.stT <= 0) { C.stT = 1 / CF.stHz; send(stMsg(ctx)); }
+    C.lookT = (C.lookT || 0) - dt; if (C.lookT <= 0 && C.st === 'on') { C.lookT = 0.5; const L1 = myLook(ctx), sg = JSON.stringify(L1); if (sg !== C.lookSig && send({ t: 'look', look: L1 })) C.lookSig = sg; }   /* c10-coop sửa 04/11 (anh: 2 máy thấy đồ khác nhau): đổi nhân vật / đồ sau khi vào phòng → gửi lại cho mọi người */
     if (isHost()) {
       C.snapT -= dt;
       if (C.snapT <= 0 && C.peers.size) {

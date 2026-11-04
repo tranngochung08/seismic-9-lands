@@ -191,7 +191,8 @@ function restoreRoster(ctx, list) {
     if (r.spot != null) { mo.spot = r.spot; mo.home = { x: mo.x, y: mo.y }; } if (r.hp) mo.hp = Math.max(1, Math.min(mo.max, r.hp)); ST.list.push(mo); }
 }
 function bestWeapon(ctx) { return ctx.tool.tier('sword') > 0 ? 'sword' : 'axe'; }
-function heldWeapon(ctx) { if (!ctx.holding) return bestWeapon(ctx); return WEAPONS.find(w => ctx.holding(w)) || null; }
+function heldWeapon(ctx) { if (!ctx.holding) return bestWeapon(ctx); return WEAPONS.find(w => ctx.holding(w)) || (ctx.quyen && ctx.quyen.on() && ctx.held && !ctx.held() ? 'fist' : null); }   /* c13-quyen: không cầm gì = tay không ('fist') */
+const switchW = ctx => { const w = heldWeapon(ctx); return w !== 'fist' && w !== bestWeapon(ctx); };   /* c13-quyen: tay không là lựa chọn — không tự rút kiếm */
 function warn(ctx, txt) { if (ctx.S.time - ST.warnT < 8) return; ST.warnT = ctx.S.time; ctx.toast(txt); }
 
 function steer(ctx, mo, tx, ty, speed, dt) {
@@ -254,8 +255,8 @@ function strike(ctx, mo, seg = -1, tent = null, fin = false) {   /* plan-46: fin
   if (!ST.list.includes(mo) || (tent && tent.st !== 'stuck')) return;   /* xúc tu Kraken đã rút → hụt */
   const p = ctx.S.player, body = seg >= 0 && mo.segs && mo.segs[seg], tgt = tent || body || mo;   /* plan-26 B1: rắn khổng lồ — đánh vào đốt thân (vảy cứng) hay vào đầu */
   if (dist(tgt, p) > REACH + 10 + (mo.c.boss && !body && !tent ? 10 : 0)) return;
-  const c = mo.c, w = heldWeapon(ctx), wt = w === 'sword' ? ctx.tool.tier('sword') : 0;
-  const raw = ctx.hero ? ctx.hero.atk + ctx.hero.weaponBonus(wt) : 10, mul = ctx.atkMul ? ctx.atkMul() : 1;
+  const c = mo.c, w = heldWeapon(ctx), fist = w === 'fist' && !!ctx.quyen, wt = w === 'sword' ? ctx.tool.tier('sword') : fist ? ctx.quyen.tier() : 0;   /* c13-quyen: đấm so giáp bằng bậc Quyền */
+  const raw = ctx.hero ? ctx.hero.atk + (fist ? ctx.quyen.bonus() : ctx.hero.weaponBonus(wt)) : 10, mul = ctx.atkMul ? ctx.atkMul() : 1;
   let dmg = mul === 1 ? raw : Math.max(1, Math.round(raw * mul));   /* plan-26: dưới nước ×0,5 — áp lên tổng (sức cơ bản + phần cộng của kiếm) */
   if (wt < c.armor) { dmg = 1; if (ctx.S.time - ST.needT > 3) { ST.needT = ctx.S.time; ctx.toast(T(ctx).armor(c.armor)); } }
   const shut = !tent && ((c.shell && !mo.open) || !!body); if (tent) tent.flash = 0.18; else if (c.shell && !mo.open) { dmg = Math.max(1, Math.round(dmg * 0.25)); if (ctx.S.time - ST.shellT > 4) { ST.shellT = ctx.S.time; ctx.toast(c.tip ? (vi(ctx) ? c.tip.vi : c.tip.en) : T(ctx).shell); } }   /* vỏ cứng: chỉ 25 % — trừ lúc đang giơ càng / hở giáp */
@@ -269,27 +270,30 @@ function strike(ctx, mo, seg = -1, tent = null, fin = false) {   /* plan-46: fin
   if (ctx.pop) ctx.pop(tgt.x, tgt.y - 14, `-${dmg}`, wt >= c.armor && !shut ? '#fff6c8' : '#a79a86');
   if (ctx.vfx) {   /* vệt chém theo cấp vũ khí (t0 rìu … t6 kiếm Seismic) — càng cao càng nhiều chi tiết; quái giáp dày → đá vụn */
     const sl = `slash_t${wt}`, left = tgt.x < p.x;
-    if (ctx.wfx && ctx.wfx('hit', tgt.x, tgt.y, { dir: { x: tgt.x - p.x, y: tgt.y - p.y }, fin, step: ST.combo, tier: (ctx.hopthe && ctx.hopthe.on && ctx.hopthe.on()) ? 6 : wt, armor: c.armor >= 2, shell: shut || wt < c.armor, h: c.h || 16, follow: () => (ST.list.includes(mo) ? { x: mo.x, y: mo.y } : null) })) { /* plan-69: chớp + vết cắt + tia lửa + bụi; đòn 3: hitstop + zoom + sóng đất + nứt + vệt trượt */ }
+    if (ctx.wfx && ctx.wfx('hit', tgt.x, tgt.y, { dir: { x: tgt.x - p.x, y: tgt.y - p.y }, fin, fist, step: ST.combo, tier: (ctx.hopthe && ctx.hopthe.on && ctx.hopthe.on()) ? 6 : wt, armor: c.armor >= 2, shell: shut || wt < c.armor, h: c.h || 16, follow: () => (ST.list.includes(mo) ? { x: mo.x, y: mo.y } : null) })) { /* plan-69: chớp + vết cắt + tia lửa + bụi; đòn 3: hitstop + zoom + sóng đất + nứt + vệt trượt */ }
     else if (p.hasAct && p.hasAct('attack2')) { /* plan-46: clip combo PixMiniMax đã có vệt chém riêng → không vẽ thêm vệt code */ }
     else if (!ctx.vfx(sl, (p.x + tgt.x) / 2 + (left ? -4 : 4), tgt.y + 4, 0, true, left)) ctx.vfx(c.armor >= 2 ? 'rock_debris' : 'wood_chips', tgt.x, tgt.y + 2);
     if ((wt >= 6 || fin) && ctx.quake) ctx.quake(fin ? 0.12 : 0.2);   /* kiếm Seismic: rung rất ngắn đúng lúc chém (không định kỳ) */
   }
   ctx.sfx('hit');
+  if (fist) ctx.quyen.onHit();   /* c13-quyen: đòn đấm trúng → +1 Quyền */
   if (mo.hp <= 0) killMonster(ctx, mo);
 }
 function attack(ctx, mo, seg = -1, tent = null) {
   if (mo.c.ai === 'kraken' && krHeld(mo)) { krMash(ctx, mo); return; }   /* đang bị xúc tu túm: mỗi lần bấm = 1 lần vùng */
-  const p = ctx.S.player; if (ST.cd > 0) return; if (ctx.skyMelee && !ctx.skyMelee(mo)) return; ST.cd = 0.45;   /* plan-31: quái trời — kiếm chỉ trúng quái CÙNG TẦNG (sky.js báo 'Khác tầng') */
-  if (ctx.hold && heldWeapon(ctx) && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* đang cầm rìu mà có kiếm → đổi sang kiếm */
+  const p = ctx.S.player; if (ST.cd > 0) return; if (ctx.skyMelee && !ctx.skyMelee(mo)) return; ST.cd = 0.45 * (heldWeapon(ctx) === 'fist' && ctx.quyen ? ctx.quyen.cdMul() : 1);   /* c13-quyen: nhịp đấm nhanh dần theo cấp */   /* plan-31: quái trời — kiếm chỉ trúng quái CÙNG TẦNG (sky.js báo 'Khác tầng') */
+  const fist13 = heldWeapon(ctx) === 'fist' && !!ctx.quyen;   /* c13-quyen */
+  if (ctx.hold && heldWeapon(ctx) && switchW(ctx)) ctx.hold(bestWeapon(ctx));   /* đang cầm rìu mà có kiếm → đổi sang kiếm */
   const tg = tent || seg >= 0 && mo.segs && mo.segs[seg] || mo; if (p.faceTo) p.faceTo(tg.x, tg.y);
   const step = ST.comboT > 0 ? (ST.combo + 1) % 3 : 0, want = ['attack', 'attack2', 'attack3'][step]; ST.combo = step; ST.comboT = 0.8;   /* plan-46: bấm tiếp trong 0,8 s → đòn kế (chém ngang → chém ngược → nhảy đập) */
   const fused = !!(ctx.hopthe && ctx.hopthe.on());   /* plan-50: Hợp Thể có combo 3 đòn tay không riêng (hopthe.js vẽ) → luôn đủ 3 đòn */
-  const clip = fused ? want : p.hasAct && p.hasAct(want) ? want : p.hasAct && p.hasAct('attack') ? 'attack' : p.hasAct && p.hasAct('chop') ? 'chop' : null;
+  const q13 = !fused && fist13 ? ctx.quyen.clip(step) : null;   /* c13-quyen: clip tay không q_punch1/2/3 */
+  const clip = fused ? want : q13 ? q13 : p.hasAct && p.hasAct(want) ? want : p.hasAct && p.hasAct('attack') ? 'attack' : p.hasAct && p.hasAct('chop') ? 'chop' : null;
   if (clip && fused) { p.action = { name: clip, t: 0, dur: clip === 'attack3' ? 0.48 : 0.32, hold: false, walk: false, loop: false }; ST.comboT = 0.9; }   /* Hợp Thể: thời lượng đòn riêng (không theo clip kiếm của người) */
   else if (clip && (!p.custom || uwOn(ctx) || p.airBody || (ctx.playerAir && ctx.playerAir()) || (ctx.S.map && ctx.S.map.sky))) p.act(clip, 0);   /* 2026-10-14: bay (sân trời / trời / tầng Trung) vẫn hiện clip chém */   /* plan-26: dưới nước dáng bơi tự vẽ clip chém (underwater.drawSwim) */
   const sh = clip && p.sheet.actions[clip], at = sh && sh.impact != null ? sh.impact / (sh.fps || 12) : 0.18;
-  ST.hitQ.push({ mo, t: at, seg, tent, fin: clip === 'attack3' });
-  if (clip === 'attack3') ST.cd = 0.62;   /* đòn kết dài hơn: nghỉ lâu hơn chút */
+  ST.hitQ.push({ mo, t: at, seg, tent, fin: clip === 'attack3' || clip === 'q_punch3' });
+  if (clip === 'attack3') ST.cd = 0.62; else if (clip === 'q_punch3') ST.cd = 0.62 * ctx.quyen.cdMul();   /* đòn kết dài hơn: nghỉ lâu hơn chút */
 }
 
 /* ---------------- plan-26 B0: AI dưới nước ---------------- */
@@ -694,7 +698,7 @@ export const monsters = {
     for (const o of ST.list) if (o.c.ai === 'kraken') { if (krHeld(o)) { krMash(ctx, o); return true; } const k = krNearTent(o, ctx.S.player, mt); if (k && k.under) { ST.chase = o; ST.chaseTent = k.s; return true; } }   /* click xúc tu đang kẹt → đuổi chém xúc tu */
     ST.chaseTent = null;
     const mo = ST.list.find(o => Math.abs(mt.wx - o.x) < o.c.w * 0.7 + 3 && mt.wy > o.y - o.c.h - 8 && mt.wy < o.y + 5); if (!mo) return false;
-    ST.chase = mo; if (ctx.hold && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ return true;
+    ST.chase = mo; if (ctx.hold && switchW(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ return true;
   },
   update(dt, ctx) {
     const z = ST.cfg; if (!z || ctx.S.mode !== 'play') return;
@@ -708,7 +712,7 @@ export const monsters = {
     for (let i = ST.hitQ.length - 1; i >= 0; i--) { const h = ST.hitQ[i]; h.t -= dt; if (h.t <= 0) { ST.hitQ.splice(i, 1); strike(ctx, h.mo, h.seg ?? -1, h.tent || null, !!h.fin); } }
     if (ST.chase) {   /* đuổi theo quái đã click */
       const mo = ST.chase, ct = ST.chaseTent, tg = ct || mo; if (!ST.list.includes(mo) || (ctx.S.player.custom && !uw) || (ct && ct.st !== 'stuck')) { ST.chase = null; ST.chaseTent = null; }
-      else if (dist(tg, p) <= REACH + (mo.c.boss && !ct ? 8 : 0)) { p.autoPath = null; if (ST.cd <= 0) { if (ctx.hold && heldWeapon(ctx) !== bestWeapon(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ attack(ctx, mo, -1, ct); } }
+      else if (dist(tg, p) <= REACH + (mo.c.boss && !ct ? 8 : 0)) { p.autoPath = null; if (ST.cd <= 0) { if (ctx.hold && switchW(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ attack(ctx, mo, -1, ct); } }
       else if (!p.autoPath || (ST.chaseT = (ST.chaseT || 0) - dt) <= 0) { ST.chaseT = 0.3; p.autoPath = [{ x: tg.x, y: tg.y }]; }
     }
     const canHit = !(ctx.hero && ctx.hero.fainted) && (!p.custom || uw) && !(ctx.isDarkRevealed && ctx.isDarkRevealed());   /* plan-25 B4: lộ mặt → quái là 'người của ta'; plan-26: đang bơi dưới nước vẫn bị đánh */

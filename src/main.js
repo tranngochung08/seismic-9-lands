@@ -278,6 +278,7 @@ async function boot() {
   document.addEventListener('fullscreenchange', resize);
   setInterval(() => { if (cv.width !== CVW || cv.height !== CVH || Math.abs(cv.clientWidth - viewSize().w) > 1 || Math.abs(cv.clientHeight - viewSize().h) > 1) resize(); }, 500);
   setupDiscord();
+  if (new URLSearchParams(location.search).get('cloud82') === '1') { const q82 = location.search; import('./cloud82.js').then(m => m.initCloud82({ S, CTX, UI, $, byId, CONFIG, loadSave, persist, search: q82 })).catch(e => console.warn('cloud82', e)); }   /* c1-p82: lớp mạng plan-82, mặc định TẮT */
   $('#loading').hidden = true; $('#title').hidden = false;
   TITLE.initTitle({ resize, persist: () => { if (S.save) persist(); } }); TITLE.showTitle();   /* plan-13 */
   for (const b of document.querySelectorAll('#title .btn')) if (ART.on && ART.man && ART.man.ui && ART.man.ui.title && ART.man.ui.title.btn) b.classList.add('px');
@@ -650,7 +651,7 @@ function chaseTick() {
   const c = chase, p = S.player; if (!c) return;
   if (S.mode !== 'play' || !p || p.custom) { chaseStop(); return; }
   const r = c.t.ref;
-  if (!TGT.is(r) || TGT.heldClass() !== 'weapon' || r.hp <= 0 || r.state === 'dead' || r.statue) { chaseStop(); return; }
+  if (!TGT.is(r) || !(TGT.armed ? TGT.armed() : TGT.heldClass() === 'weapon') || r.hp <= 0 || r.state === 'dead' || r.statue) { chaseStop(); return; }
   if (c.path) {   /* đang tự đi: entities bỏ autoPath giữa đường = người chơi tự lái / kẹt → thôi đuổi; hết đường (tới nơi) → bình thường */
     if (p.autoPath !== c.path) { if (c.path.length > 0) { chase = null; return; } c.path = null; }
   }
