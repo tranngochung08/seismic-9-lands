@@ -151,7 +151,7 @@ export const target91 = {
   onZoneEnter(ctx) {
     globalThis.__t91 = true; ST.port = { ref: null, url: null, t: 0 };
     const s = ctx.S.save; if (s) { s.sys ||= {}; const k = (s.sys.t91 ||= {}); ST.mode = k.bars || 'fight'; }
-    for (const k of ['obar_s', 'hover', 'ring', 'port_r', 'port_y', 'port_g', 'tframe']) img(k);
+    for (const k of ['obar_s', 'hover', 'ring', 'tri', 'port_r', 'port_y', 'port_g', 'tframe']) img(k);
     if (typeof window !== 'undefined') window.__t91 = {
       mode: m => { if (m) { ST.mode = m; const s2 = ctx.S.save; (s2.sys.t91 ||= {}).bars = m; ctx.persist && ctx.persist(); } return ST.mode; },
       drawn: () => ST.drawn.slice(), frame: () => (ST.el && !ST.el.hidden ? { ...ST.frame, rect: (() => { const r = ST.el.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; })() } : null),
@@ -172,7 +172,8 @@ export const target91 = {
     }
     renderFrame(ctx);
   },
-  drawGround(g, ctx, cx, cy) {   /* vòng cam TĨNH dưới chân con đang khoá */
+  drawGround(g, ctx, cx, cy) {   /* vòng cam TĨNH dưới chân con đang khoá — p120 (anh 04/11): thay bằng tam giác lộn ngược trên đầu (drawUI) */
+    if (globalThis.__tri120 !== false) return;
     const t = ctx.S.mode === 'play' ? TGT.get() : null; if (!t) return;
     const q = TGT.pos(t), r = t.mo || t.ref, bw = t.kind === 'mon' ? Math.max(14, Math.min(46, Math.round((r.c.w || 12) * 1.5))) : t.kind === 'obj' ? 22 : 16;
     const im = img('ring'), w = bw, h = im ? Math.max(5, Math.round(w * im.height / im.width)) : Math.round(w / 2.6), x = Math.round(q.x - cx - w / 2), y = Math.round(q.y - cy - h / 2 + 1);
@@ -192,6 +193,14 @@ export const target91 = {
       if (e.ref === lref || e.ref === href) { const lv = e.kind === 'mon' ? lvOf(e.ref) : null; nameTag(ug, TGT.nameOf({ kind: 'mon', ref: e.ref }) + (lv != null ? ` ${L(ctx).lv}${lv}` : ''), sx, b.y - 2, fs, e.side === 'foe'); tag = true; }
       ST.drawn.push({ id: e.ref.id ?? null, key: e.ref.c ? e.ref.c.key : e.kind, side: e.side, x: b.x, y: b.y, w: b.w, h: b.h, tag, lock: e.ref === lref });
     }
+    if (lk && globalThis.__tri120 !== false) {   /* p120 anh 04/11: con đang khoá = TAM GIÁC LỘN NGƯỢC tĩnh trên đầu (ảnh tri.png cắt từ mũi tên PixelLab target_arrow) */
+      const d = ST.drawn.find(x => x.lock), q = TGT.pos(lk), hh = TGT.heightOf ? TGT.heightOf(lk) : 16;
+      const top = d ? d.y - 2 - (d.tag ? fs + 2 : 0) : Math.round((q.y - hh - 2 - cy) * scale - su * 5.5);   /* không có thanh target91: chừa thanh máu + Lv của hệ khác (c10-vsnho / monsters) */
+      const im = img('tri'), tw = Math.round(su * 4.6), th = im ? Math.round(tw * im.height / im.width) : Math.round(tw * 0.7), tx = Math.round((q.x - cx) * scale - tw / 2), ty = Math.round(top - th - 2);
+      ST.tri = { x: tx, y: ty, w: tw, h: th };
+      if (im) { ug.save(); ug.imageSmoothingEnabled = false; ug.drawImage(im, 0, 0, im.width, im.height, tx, ty, tw, th); ug.restore(); }
+      else { ug.save(); ug.fillStyle = '#ffd45e'; ug.strokeStyle = '#4a2430'; ug.lineWidth = 2; ug.beginPath(); ug.moveTo(tx, ty); ug.lineTo(tx + tw, ty); ug.lineTo(tx + tw / 2, ty + th); ug.closePath(); ug.fill(); ug.stroke(); ug.restore(); }
+    } else ST.tri = null;
     if (hv && href !== lref) {   /* trỏ chuột: 4 góc xanh quanh thứ đang trỏ (con đang khoá đã có vòng cam) */
       const q = TGT.pos(hv), hh = TGT.heightOf ? TGT.heightOf(hv) : 16, ww = hv.kind === 'mon' ? (href.c.w || 12) + 6 : hv.kind === 'obj' ? 18 : 14;
       corners(ug, Math.round((q.x - ww / 2 - cx) * scale), Math.round((q.y - hh - 2 - cy) * scale), Math.round((q.x + ww / 2 - cx) * scale), Math.round((q.y + 3 - cy) * scale), su);
