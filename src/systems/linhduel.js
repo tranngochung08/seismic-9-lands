@@ -1198,6 +1198,7 @@ function startBattle(ctx, opts = {}) { reset84();   /* p84 */   /* bắt đầu 
   ST.t = 0; ST.ph = 'intro'; ST.introT = 0; ST.on = true; ST.stats = { acts: {}, hits: 0 }; ST.hitstop = 0; ST.imp = null; ST.impLast = -99; ST.impLog = []; ST.warn = null; ST.warnLog = []; ST.dimA = 0; ST.dimOn = false; ST.dimLog = []; ST.flashW = 0; ST.slowOn = false; ST.opts = opts; ST.terr = terrainOf(ctx); ST.terrT = 2;
   /* plan-58: bụi mở màn chuyển sang lúc Ấn Chấn rơi / bung */
   ctx.S.camZoomUI = !!ST.inField;   /* review7: camera gần (camZoom) mà lớp UI vẫn vẽ mỗi khung — main.js bản nháp */
+  try { if (globalThis.__tr37) globalThis.__tr37('in'); } catch (e) { }   /* c37-dauhoang: chụp khung cũ TRƯỚC khi zoom / camera trận đổi → mờ dần + phóng */
   ctx.setMode(ST.inField ? 'duel' : 'play'); hidePanel(); showMoves(ctx, true); hideAsk(); zoom(ctx, true);   /* sân tạm: người chơi đứng xem ở đầu sân (không đi vào) */
   camCut(ctx);   /* plan-52 #10: đổi thú (trận mới / đấu lại) = cắt cứng */
 }
@@ -1216,6 +1217,7 @@ function zoom(ctx, on) {   /* chỉ trong trận: máy tính (khung ngang) phón
   try { window.dispatchEvent(new Event('resize')); } catch (e) { }
 }
 function endBattle(ctx) {   /* xong trận: vòng biến mất, trả dân / huấn luyện viên / Rocky / điều khiển */
+  try { if (globalThis.__tr37 && ST.on && ctx.S.zone.id !== 'duel_field') globalThis.__tr37('out'); } catch (e) { }   /* c37-dauhoang: chụp khung cuối trận + giữ máu + camera trượt về */
   ST.on = false; ST.ph = 'off'; ST.catch = null; catchBtn(null); ST.orbs = []; ST.streaks = []; ST.fxo = []; ST.sw = [null, null]; ST.sendQ = null; ST.team = [[], []]; ST.multi = false; ST.teamRects = []; ST.waves = []; ST.scars = []; ST.trenches = []; ST.ko = null; ST.F = []; ST.fx = []; ST.gfx = []; ST.decals = []; ST.shots = []; ST.runners = []; ST.timers = []; ST.texts = [];
   for (const k of ST.knocks || []) k.n.busy = k.busy; ST.knocks = []; unwrapAll();
 

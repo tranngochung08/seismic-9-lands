@@ -47,7 +47,7 @@ function rkShieldHit(ctx, att, raw) {   /* người chơi trúng đòn trong lú
 }
 if (typeof window !== 'undefined') window.__sqrk = () => (RK ? { ...RK.debug(), shieldOn: now() < (ST.rkShUntil || 0) } : null);
 
-const MAXN = 3;
+const MAXN = 6;   /* c37-dauhoang: thả được cả đội (6) — anh 04/11 'muốn nhảy ra đánh bao nhiêu cũng được' */
 const vi = ctx => ctx.lang() !== 'en';
 const duelOn = ctx => !!(ctx.duel && ctx.duel.active && ctx.duel.active());
 const duelLocal = ctx => duelOn(ctx) && ctx.S.mode === 'play';   /* đấu tại chỗ: người vẫn đứng trên map, quái vẫn chạy */
@@ -453,7 +453,7 @@ export const squad104 = {
     const api = { press: () => press(ctx), toggle: id => toggle(ctx, id), isOut: sp => { const k = sv(ctx); return k.out.some(id => { const m = member(ctx, id); return m && m.sp === sp; }); },
       idOf: sp => { const k = sv(ctx); return k.out.find(id => { const m = member(ctx, id); return m && m.sp === sp; }) ?? null; },
       modeOf: sp => { const id = api.idOf(sp); return id == null ? 'guard' : modeOf(ctx, id); }, focusOf: sp => { const id = api.idOf(sp); return id == null ? null : focusOf(id); },
-      rally: () => ST.rallyOn, danger: () => danger(ctx), ai: (mo, dt, steer) => monAI(mo, dt, steer), tauntOf: mo => tauntOf(mo), hurt: (u, d, src) => hurtU(ctx, u, d, src), units: () => [...ST.U.values()] };
+      rally: () => ST.rallyOn, danger: () => danger(ctx), ai: (mo, dt, steer) => monAI(mo, dt, steer), tauntOf: mo => tauntOf(mo), hurt: (u, d, src) => hurtU(ctx, u, d, src), units: () => [...ST.U.values()], out: () => sv(ctx).out.slice(), team: () => team(ctx).slice(), maxN: () => MAXN, focus: (id, mo) => { if (mo) ST.focus.set(id, mo); else ST.focus.delete(id); }, put: id => toggle(ctx, id, true) };   /* c37-dauhoang: API cho dauhoang37 (tự thả / nhắm con hoang) */
     ctx.squad104 = api;
     if (ctx.comp79) {   /* comp79 (ô Ấn Chấn / J / feed80 / fieldct) hỏi bộ quản lý chung */
       const C = ctx.comp79; C.press = () => press(ctx); C.out = () => sv(ctx).out.length > 0;
