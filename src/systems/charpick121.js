@@ -54,6 +54,8 @@ const ST = { ctx: null, open: false, isNew: false, timer: 0, log: [] };
 const L = ctx => STR[ctx.lang() === 'vi' ? 'vi' : 'en'];
 const lgOf = ctx => (ctx.lang() === 'vi' ? 'vi' : 'en');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const STONE29 = '<img class="st29" src="assets/px/ui/items/stone.png" alt="" style="display:inline-block;width:1em;height:1em;margin:0 1px;vertical-align:-0.15em;image-rendering:pixelated">';   /* c29-vat: icon đá Seismic (ảnh túi đồ) thay ký tự 🪨 — máy thiếu font hiện ô vuông */
+const setTx = (el, s) => { el.innerHTML = esc(s).replace(/\u{1FAA8}\uFE0F?/gu, STONE29); };   /* c29-vat: chữ có 🪨 → HTML có icon ảnh */
 const log = (ev, o) => { ST.log.push({ t: +(performance.now() / 1000).toFixed(1), ev, ...(o || {}) }); if (ST.log.length > 60) ST.log.shift(); };
 const flags = ctx => { const sv = ctx.S.save; sv.flags = sv.flags || {}; return sv.flags; };
 const ownKey = id => 'char:' + (id === 'seis' ? 'seismic' : id);
@@ -173,13 +175,13 @@ function open(ctx, isNew) {
     const c = C(sel), have = owns(ctx, sel), n = stones(ctx), cur = bodyOf(ctx.S.save.outfit);
     for (const b of el.querySelectorAll('.cd')) {
       const id = b.dataset.id, h = owns(ctx, id), ci = C(id); b.classList.toggle('on', id === sel); b.classList.toggle('lk', !h);
-      const pr = b.querySelector('.pr'); if (pr) { pr.textContent = !ci.price ? t.free : h ? t.owned : `${ci.price} 🪨`; pr.classList.toggle('ok', h); }
+      const pr = b.querySelector('.pr'); if (pr) { setTx(pr, !ci.price ? t.free : h ? t.owned : `${ci.price} 🪨`);   /* c29-vat */ pr.classList.toggle('ok', h); }
     }
     for (const b of shE.querySelectorAll('button')) b.classList.toggle('on', b.dataset.shirt === shirt);
     shE.classList.toggle('off', !!c.hero);
-    nm.textContent = c[lg]; if (stE) stE.textContent = t.have(n);
-    note.textContent = !have && n < c.price ? t.poor(c.price, n) : '';
-    if (!have) { okB.textContent = t.buy(c.price); okB.classList.toggle('dim', n < c.price); }
+    nm.textContent = c[lg]; if (stE) setTx(stE, t.have(n));   /* c29-vat */
+    setTx(note, !have && n < c.price ? t.poor(c.price, n) : '');   /* c29-vat */
+    if (!have) { setTx(okB, t.buy(c.price));   /* c29-vat */ okB.classList.toggle('dim', n < c.price); }
     else { okB.classList.remove('dim'); okB.textContent = isNew ? t.pick : (cur === sel && (c.hero || (ctx.S.save.outfit || {}).shirt === shirt) ? t.worn : t.wear); }
   };
   let fi = 0; const DIRS = [0, 1, 3, 2], SEQ = [0, 1, 0, 2];   /* xoay S → W → N → E, bước đi 3 khung */

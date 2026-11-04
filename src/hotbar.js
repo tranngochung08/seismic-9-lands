@@ -17,7 +17,31 @@ const PLACE = ['scarecrow', 'pen1', 'pen2', 'seed', 'hay', 'revive', 'stone', 'a
 const KEYS = { Digit6: 0, Digit7: 1, Digit8: 2, Digit9: 3, Digit0: 4 };
 const SKEYS = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, KeyL: 5 };   /* c13-quyen: L = ô 6 Chưởng (H đã có squad104 / photo) */
 const QON = () => !!(deps && deps.CTX.quyen && deps.CTX.quyen.on());   /* c13-quyen: hệ Quyền bật */
-const SKL = () => (QON() && !htOn() ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4]);   /* c13-quyen: thanh kỹ năng máy tính thêm ô 6 Chưởng (Hợp Thể giữ 5 ô riêng) */
+/* c26-coban (anh 04/11 "bỏ các skill không dùng được khi mới vào game, thay bằng chiêu cơ bản"): thanh chỉ hiện ô DÙNG ĐƯỢC, chiêu cơ bản trước.
+   Mã ô (data-sk) giữ nguyên: 0 Đánh · 5 Chưởng · 2 Lướt Ki · 1 Rocky-ha · 4 Hợp Thể/Rồng Thần · 3 Gọi linh thú · 6 Lộn (mới, phím Shift).
+   Ô chưa mở (chưa có Rocky / Rocky chưa học Rocky-ha / chưa có linh thú / chưa có Hợp Thể–Rồng) = ẨN, mở khoá thì tự hiện.
+   Phím 1–5 = ô thứ 1–5 ĐANG HIỆN (nhãn trên ô = phím); ô thứ 6 trở đi dùng phím chữ riêng (linh thú U); Lộn luôn là Shift (⇧); L vẫn = Chưởng. */
+const ORDER26 = [0, 5, 2, 1, 4, 3, 6];
+function shown26(i) {
+  const C = deps.CTX;
+  if (i === 0) return true;
+  if (i === 5) return QON();
+  if (i === 2) return !!(C.ki && C.ki.dash);
+  if (i === 6) return !!(C.ki && C.ki.roll) && !mobile();   /* điện thoại đã có nút Lộn riêng (ki.js) */
+  if (i === 1) { const R = rk(); if (!R) return false; const why = R.haWhy ? R.haWhy() : 'ok'; return !/(^|,)tier/.test(why); }
+  if (i === 3) { const o = ltState(); return !!(o && o.has); }
+  if (i === 4) return dragonOk() || !!(rk() && C.hopthe);
+  return false;
+}
+const VIS26 = () => ORDER26.filter(i => !(mobile() && i === 5) && shown26(i));   /* điện thoại: Chưởng có nút riêng (quyen.js) */
+const DIG26 = () => VIS26().filter(i => i !== 6).slice(0, 5);   /* ô được phím số 1–5 */
+function key26(i) {   /* nhãn phím của ô i trên thanh */
+  if (htOn()) return i === 5 ? 'L' : String(i + 1);
+  if (i === 6) return '⇧';
+  const n = DIG26().indexOf(i); if (n >= 0) return String(n + 1);
+  return i === 5 ? 'L' : i === 3 ? 'U' : '';
+}
+const SKL = () => (htOn() ? [0, 1, 2, 3, 4] : VIS26());   /* c26-coban (thay c13: [0..5] cố định có ô khoá xám) — Hợp Thể giữ 5 ô riêng */
 const LABEL = ['6', '7', '8', '9', '0'];
 const WEAPON = 'sword';
 let deps = null, el = null, sig = '', tipT = 0, off = false, sig18 = '';   /* c18-perf: sig18 = khoá không tính số giây hồi chiêu */
@@ -115,7 +139,7 @@ export function cycle(d) { const s = sv(); let i = (s.hotSel == null || s.hotSel
 export function key(code, rep) {
   if (hidden()) return false;
   if (code === 'KeyR') { if (!rep) eatBest(); return true; }
-  if (code in SKEYS) { if (!rep) { KB120 = true; try { skill(SKEYS[code]); } finally { KB120 = false; } } return true; }
+  if (code in SKEYS) { if (!rep) { const n26 = SKEYS[code], i26 = htOn() || n26 === 5 ? n26 : DIG26()[n26]; if (i26 != null) { KB120 = true; try { skill(i26); } finally { KB120 = false; } } } return true; }   /* c26-coban: Digit n = ô thứ n đang hiện */
   if (!(code in KEYS)) return false;
   const i = KEYS[code], id = sv().hotbar[i]; select(i);
   if (kindOf(id) === 'food' && !rep) eatTap(id);
@@ -165,15 +189,15 @@ const DO = { open: false };
 const PH91 = typeof location !== 'undefined' && /[?&]hud91m/.test(location.search);   /* đợt D (điện thoại) HOÃN theo anh 02/11 — bản nháp chỉ bật bằng ?hud91m; mặc định điện thoại giữ HUD cũ */   /* điện thoại: hàng đồ 6–0 đang mở */
 const hud91 = k => { const m = deps.ART && deps.ART.man, u = m && m.ui && m.ui.hud91; return 'assets/px/' + ((u && u[k]) || `ui/hud91/${k}.png`); };
 const T = () => (deps.CTX.lang() === 'vi' ? {
-  atk: 'Đánh', rk: 'Rocky-ha', dash: 'Lướt Ki', call: 'Gọi linh thú', back: 'Thu linh thú', fuse: 'Hợp Thể', dragon: 'Rồng Thần Giáng',
+  atk: 'Đánh', rk: 'Rocky-ha', dash: 'Lướt Ki', roll: 'Lộn', tipRoll: 'Lộn né đòn — 2 Ki (phím Shift)', call: 'Gọi linh thú', back: 'Thu linh thú', fuse: 'Hợp Thể', dragon: 'Rồng Thần Giáng',
   noRk: 'Chưa có Rocky', noHa: 'Rocky chưa học Rocky-ha', rkBusy: 'Rocky đang bận / đang nghỉ', cd: 'Đang hồi chiêu', noLt: 'Chưa có linh thú — bắt ở ổ linh thú các vùng', lowKi: 'Chưa đủ Ki',
   lock5: 'Mở khi có Rocky (Hợp Thể) hoặc Rồng Thần', tipAtk: 'Ô 1 · Đánh — cầm vũ khí; E / chuột trái để chém mục tiêu', hp: 'Máu', ki: 'Ki', xp: 'Kinh nghiệm', lv: 'Cấp',
-  doBtn: 'Đồ', bag: 'Túi đồ (B)', rkCmd: 'Ra lệnh cho Rocky (phím /)', items: 'Ô 6–0: đồ', skills: 'Ô 1–5: kỹ năng', ht: 'Hợp Thể', eat: 'R: ăn nhanh',
+  doBtn: 'Đồ', bag: 'Túi đồ (B)', rkCmd: 'Ra lệnh cho Rocky (phím /)', items: 'Ô 6–0: đồ', skills: 'Ô kỹ năng (phím số theo nhãn trên ô)', ht: 'Hợp Thể', eat: 'R: ăn nhanh',
 } : {
-  atk: 'Attack', rk: 'Rocky-ha', dash: 'Ki Dash', call: 'Call spirit beasts', back: 'Recall spirit beasts', fuse: 'Fusion', dragon: 'Dragon Dive',
+  atk: 'Attack', rk: 'Rocky-ha', dash: 'Ki Dash', roll: 'Roll', tipRoll: 'Dodge roll — 2 Ki (Shift key)', call: 'Call spirit beasts', back: 'Recall spirit beasts', fuse: 'Fusion', dragon: 'Dragon Dive',
   noRk: 'No Rocky yet', noHa: "Rocky hasn't learned Rocky-ha", rkBusy: 'Rocky is busy / resting', cd: 'Cooling down', noLt: 'No spirit beasts yet — catch them at the beast dens', lowKi: 'Not enough Ki',
   lock5: 'Unlocks with Rocky (Fusion) or the Dragon', tipAtk: 'Slot 1 · Attack — hold your weapon; E / left-click to strike the target', hp: 'HP', ki: 'Ki', xp: 'EXP', lv: 'Lv',
-  doBtn: 'Items', bag: 'Bag (B)', rkCmd: 'Command Rocky (key /)', items: 'Slots 6–0: items', skills: 'Slots 1–5: skills', ht: 'Fusion', eat: 'R: quick eat',
+  doBtn: 'Items', bag: 'Bag (B)', rkCmd: 'Command Rocky (key /)', items: 'Slots 6–0: items', skills: 'Skill slots (number key = label on slot)', ht: 'Fusion', eat: 'R: quick eat',
 });
 const rk = () => deps.CTX.rocky && deps.CTX.rocky.pet && deps.CTX.rocky.pet() ? deps.CTX.rocky : null;
 const htOn = () => !!(deps.CTX.hopthe && deps.CTX.hopthe.on && deps.CTX.hopthe.on());
@@ -188,6 +212,7 @@ const HT_SLOTS = [   /* = hopthe.js SLOTS (ảnh + tên); trạng thái / hồi 
 function skillInfo(i) {   /* → { icon, name, lock, cd (giây), cdMax, dim, cls, extra } */
   const t = T(), C = deps.CTX;
   if (i === 5) return QON() ? C.quyen.palmSlot() : { icon: hud91('kioff'), name: C.lang() === 'vi' ? 'Chưởng' : 'Ki Palm', lock: true };   /* c13-quyen: ô 6 Chưởng */
+  if (i === 6) { const k = kiState(), cd = k ? k.cd.roll : 0, low = k ? k.ki < 2 : false; return { icon: 'assets/px/ui/ki/roll.png', name: t.roll, cd, cdMax: 1.2, dim: low, tip: low ? t.lowKi : t.tipRoll }; }   /* c26-coban: Lộn né (2 Ki) */
   if (htOn()) {
     const sl = HT_SLOTS[i], st = window.__hopthe ? window.__hopthe.state() : { cds: {} }, sys = sv().sys || {};
     const un = sl.id === 'hacha' ? ((sys.hacrocky || {}).wins || 0) > 0 : false;
@@ -215,6 +240,7 @@ function aimHa() {   /* ô 2: Rocky-ha nhắm con đang khoá → con gần nh�
 let KB120 = false;   /* p120: skill() đang được gọi từ phím (không phải chuột) */
 export function skill(i) {
   const C = deps.CTX, t = T(); if (deps.S.mode !== 'play') return false;
+  if (i === 6) { const ok = C.ki && C.ki.roll ? C.ki.roll() : false; render(true); return ok; }   /* c26-coban: ô Lộn */
   if (i === 5) { const ok = QON() ? C.quyen.press() : false; render(true); return ok; }   /* c13-quyen: ô 6 / phím L = Chưởng (cả lúc Hợp Thể không có ô này) */
   if (htOn()) { if (window.__hopthe) window.__hopthe.use(i); render(true); return true; }   /* ô 5 = tuyệt chiêu Hợp Thể (trước: R) */
   if (i === 0) { if (mobile()) hold(WEAPON); else select(-1); if (deps.strike && KB120) deps.strike(); return true; }   /* p120: chỉ PHÍM 1 ra đòn ở đây; bấm chuột ô 1 đã có c12 swingNow (tránh chém 2 lần) */   /* 2026-11-04 anh: bấm ô 1 = cầm kiếm VÀ ra đòn ngay (trước chỉ cầm, phải bấm thêm E) */
@@ -348,10 +374,10 @@ function topHTML(lg) {
 }
 const cdTxt = c => (c >= 10 ? Math.ceil(c) + 's' : c.toFixed(1) + 's');
 function skillHTML(i) {
-  const s = skillInfo(i), lockImg = 'assets/px/hopthe/icons/lock.png', col = ['#c9c9c9', '#ff9a3a', '#5ad1ff', '#7bd04a', '#c58bff', '#8fd3ff'][i];
+  const s = skillInfo(i), lockImg = 'assets/px/hopthe/icons/lock.png', col = ['#c9c9c9', '#ff9a3a', '#5ad1ff', '#7bd04a', '#c58bff', '#8fd3ff', '#9fe0a0'][i], k26 = key26(i), tp0 = String(s.tip || '').replace(/^(Ô|Slot) \d+( \([A-Z]\))? · /, '').replace(/\s*\([^()]*\)\s*$/, ''), tp26 = tp0.indexOf(s.name + ' — ') === 0 ? tp0.slice(s.name.length + 3) : tp0;
   const lt = i === 3 && s.lt && !htOn() ? ' hb-lt' : '';
-  return `<div class="hb-slot sk${s.on ? ' on' : ''}${s.lock ? ' lock' : ''}${s.dim ? ' dim' : ''}${lt}" data-sk="${i}" title="${esc(s.name + (s.tip && s.tip !== s.name ? ' — ' + s.tip : ''))}">`
-    + `<i class="hb-k">${i === 5 ? 'L' : i + 1}</i>${s.icon ? `<img src="${s.icon}" alt="">` : ''}${s.pet ? `<img class="pe" src="${s.pet}" alt="">` : ''}${s.lock ? `<img class="lk" src="${lockImg}" alt="">` : ''}`
+  return `<div class="hb-slot sk${s.on ? ' on' : ''}${s.lock ? ' lock' : ''}${s.dim ? ' dim' : ''}${lt}" data-sk="${i}" title="${esc(s.name + (tp26 && tp26 !== s.name ? ' — ' + tp26 : '') + (k26 ? ' [' + (k26 === '⇧' ? 'Shift' : k26) + ']' : ''))}">`
+    + `<i class="hb-k">${k26}</i>${s.icon ? `<img src="${s.icon}" alt="">` : ''}${s.pet ? `<img class="pe" src="${s.pet}" alt="">` : ''}${s.lock ? `<img class="lk" src="${lockImg}" alt="">` : ''}`
     + `${s.cd > 0.05 ? `<span class="cd">${cdTxt(s.cd)}</span>` : s.cdTxt ? `<span class="cd">${s.cdTxt}</span>` : ''}<b class="bar" style="background:${col}"></b></div>`;
 }
 const hasRk = () => !!rk();
@@ -385,7 +411,7 @@ export function render(force) {
     }).join('');
   if (mob) {   /* p91 đợt D: điện thoại — cụm ngang đáy màn, 5 ô kỹ năng to + nút Đồ (mở hàng 6–0) */
     const fd = pickFood(), fn = fd ? s.inv[fd] || 0 : 0;
-    el.innerHTML = topHTML(lg) + `<div class="h91-it">${items}</div><div class="hb-bar">` + [0, 1, 2, 3, 4].map(skillHTML).join('')
+    el.innerHTML = topHTML(lg) + `<div class="h91-it">${items}</div><div class="hb-bar">` + SKL().slice(0, 5).map(skillHTML).join('')
       + `<div class="hb-slot h91-do" title="${esc(t.items)}">${fd ? iconHTML(fd) : `<img src="assets/px/ui/tab_bag.png" alt="">`}${fn > 1 ? `<b class="hb-n">${fn}</b>` : ''}<i class="lt-l">${t.doBtn}${DO.open ? '▼' : '▲'}</i></div></div>`;
     requestAnimationFrame(() => { const hh = el.offsetHeight; if (hh) document.documentElement.style.setProperty('--h91h', (DO.open ? hh - 58 : hh) + 'px'); });   /* nút cảm ứng (#touch) nâng lên trên cụm; hàng đồ mở thì đè tạm */
     return;
@@ -419,5 +445,5 @@ export function initHotbar(d) {
   const cv = d.canvas;
   cv.addEventListener('wheel', e => { if (hidden() || (window.__altWheel && window.__altWheel())) return; e.preventDefault(); cycle(e.deltaY > 0 ? 1 : -1); }, { passive: false });
   cv.addEventListener('contextmenu', e => { if (hidden()) return; e.preventDefault(); eatHeld(); });
-  if (typeof window !== 'undefined') window.__hb91 = { skill, skillState, swing: swingNow, sw12: () => ({ ...SW12 }), migrate, held, sel: () => sv() && sv().hotSel, bar: () => sv() && sv().hotbar.slice(), bag: () => bagSlots().slice(), portrait: () => PORT.url };
+  if (typeof window !== 'undefined') window.__hb91 = { skill, skillState, vis26: () => SKL().map(i => ({ sk: i, key: key26(i), name: skillInfo(i).name, lock: !!skillInfo(i).lock })), swing: swingNow, sw12: () => ({ ...SW12 }), migrate, held, sel: () => sv() && sv().hotSel, bar: () => sv() && sv().hotbar.slice(), bag: () => bagSlots().slice(), portrait: () => PORT.url };
 }

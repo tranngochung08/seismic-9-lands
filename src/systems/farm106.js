@@ -25,18 +25,20 @@ const TS = 16;
 const ZR = {   /* vùng → cấp quái thường + thủ lĩnh (loài có sprite đấu) + quái thường (khoá monsters.js) */
   /* anh chốt 02/11: mỗi vùng ĐÚNG 1 Chấn Thú = THỦ LĨNH (2–4 chiêu thật), 7 vùng = 7 loài khác nhau, không trùng Chấn Thú trong đội (Rocky golem, Elyziuma); còn lại là quái thường (1–2 chiêu nhỏ).
      Bỏ Yêu Đá (khối đá nâu giống Rocky golem) → Bọ Cạp Cát. */
-  stream: { lv: [3, 5], lead: { sp: 'bachkinh', lv: 9, lead: true }, cts: [], mins: ['crab', 'puffer', 'eel'] },
-  camp_coc: { lv: [4, 6], lead: { sp: 'coc2', lv: 10, lead: true }, cts: [], mins: ['crab', 'slime', 'slime'] },
-  south: { lv: [2, 4], lead: { sp: 'saola', lv: 7, lead: true }, cts: [], mins: ['slime', 'wolf', 'crow', 'slime', 'wolf', 'crow', 'slime'] },   /* p121: anh 03/11 tăng quái đầu bãi 3 → 7 */
-  camp_chui: { lv: [6, 8], lead: { sp: 'chuichui2', lv: 13, lead: true }, cts: [], mins: ['scorpion', 'slime', 'wolf'] },
-  cliff: { lv: [5, 7], lead: { sp: 'utchan', lv: 11, lead: true }, cts: [], mins: ['scorpion', 'scorpion', 'wolf'] },
-  plateau: { lv: [8, 10], lead: { sp: 'daibang', lv: 14, lead: true }, cts: [], mins: ['crow', 'crow', 'gull'] },
-  north: { lv: [9, 11], lead: { sp: 'loiho', lv: 15, lead: true }, cts: [], mins: ['wolf', 'wolf', 'scorpion'] },
+  /* c23-farmmap (anh 04/11 'tăng thêm nhiều quái và Chấn Thú để farm'): quái thường mỗi vùng 3 -> 6 (Đồng Cỏ 7 -> 10) + Chấn Thú hoang 1 CHIÊU (bắt được bằng Ấn Thu);
+     mỗi loài Chấn Thú hoang chỉ ở 1 vùng, không trùng thủ lĩnh / dạng tiến hoá của thủ lĩnh / đội (Rocky, Elyziuma); chỉ thủ lĩnh nhiều chiêu (luật anh 02/11). */
+  stream: { lv: [3, 5], lead: { sp: 'bachkinh', lv: 9, lead: true }, cts: [{ sp: 'cachep', lv: 5 }], mins: ['crab', 'puffer', 'eel', 'crab', 'puffer', 'eel'] },
+  camp_coc: { lv: [4, 6], lead: { sp: 'coc2', lv: 10, lead: true }, cts: [{ sp: 'diepnhan', lv: 6 }], mins: ['crab', 'slime', 'slime', 'crab', 'slime', 'crow'] },
+  south: { lv: [2, 4], lead: { sp: 'saola', lv: 7, lead: true }, cts: [{ sp: 'de', lv: 4 }, { sp: 'vitbao', lv: 3 }], mins: ['slime', 'wolf', 'crow', 'slime', 'wolf', 'crow', 'slime', 'wolf', 'crow', 'slime'] },   /* p121: anh 03/11 tăng quái đầu bãi 3 → 7 */
+  camp_chui: { lv: [6, 8], lead: { sp: 'chuichui2', lv: 13, lead: true }, cts: [{ sp: 'tinhmieu', lv: 8 }], mins: ['scorpion', 'slime', 'wolf', 'scorpion', 'slime', 'wolf'] },
+  cliff: { lv: [5, 7], lead: { sp: 'utchan', lv: 11, lead: true }, cts: [{ sp: 'hacgiac', lv: 7 }], mins: ['scorpion', 'scorpion', 'wolf', 'scorpion', 'wolf', 'crow'] },
+  plateau: { lv: [8, 10], lead: { sp: 'daibang', lv: 14, lead: true }, cts: [{ sp: 'cuoitho', lv: 9 }, { sp: 'hoahung', lv: 10 }], mins: ['crow', 'crow', 'gull', 'crow', 'gull', 'wolf'] },
+  north: { lv: [9, 11], lead: { sp: 'loiho', lv: 15, lead: true }, cts: [{ sp: 'nguuson', lv: 11 }, { sp: 'thanhong', lv: 10 }], mins: ['wolf', 'wolf', 'scorpion', 'wolf', 'scorpion', 'crow'] },
 };
 const AQUA = { cachep: 1, bachkinh: 1, puffer: 1, eel: 1 }, WADE = { coc: 1, coc2: 1 }, AMPH = { crab: 1 }, FLY = { daibang: 1, hac: 1, crow: 1, gull: 1 };
 const SHOT_CLIPS = ['cast', 'spit', 'zap', 'spout', 'flap', 'beam', 'shine', 'shout', 'blow', 'gaze', 'tongue', 'pulse', 'wave', 'throw'];
 const HGT = { xs: 15, s: 18, m: 24, l: 30 };
-const CF = { aggroR: 28, aggroT: 0.7, packR: 80, packN: 2, bite: 20, near: 16, shotMin: 30, shotMax: 90, shotV: 105, leashOut: 56, leashHome: 300, tauntT: 5, respawn: 60, respawnLead: 180, sleepR: 520, floorP: 0.35, floorC: 0.25, fleeT: 5, roam: 72, sepR: 18, respawnCt: 90, ctXp: 1.5, gcd: [1.6, 2.6], leadXp: 2.5 };
+const CF = { aggroR: 28, aggroT: 0.7, packR: 80, packN: 2, bite: 20, near: 16, shotMin: 30, shotMax: 90, shotV: 105, leashOut: 56, leashHome: 300, tauntT: 5, respawn: 30, respawnLead: 120, sleepR: 520, floorP: 0.35, floorC: 0.25, fleeT: 5, roam: 72, sepR: 18, respawnCt: 60, ctXp: 1.5, gcd: [1.6, 2.6], leadXp: 2.5 };
 const ST = { ctx: null, on: false, mons: [], rq: [], shots: [], dying: [], fx6: [], tiles: {}, log: [], n: { spawn: 0, kill: 0, killLead: 0, angry: 0, pack: 0, calm: 0, back: 0, shot: 0, bite: 0, hitP: 0, hitC: 0, floor: 0, duel: 0, respawn: 0, scatter: 0 }, xp: { ely: 0, c79: 0, pl: 0 }, errs: 0, vanT: 0, im: null };
 /* c10-coop (chơi chung): NET.role 'solo' | 'host' (mô phỏng quái, phát cho mọi người) | 'guest' (quái = bóng theo chủ phòng). coop.js gắn hàm vào NET. */
 export const NET = { role: 'solo', peerObj: null, peers: null, nearest: null, hurt: null, onKill: null, fx: null, take: null, guestFall: null };
@@ -130,7 +132,7 @@ function hpOf(spec, lv, c) { if (spec.sp) { const s = SPECIES[spec.sp], b = s &&
 function spawnOne(ctx, rid, spec, avoidP) {
   const Z = ZR[rid], ct = !!spec.sp, lead = !!spec.lead, k = kindOf(spec.sp || spec.key), p = ctx.S.player; if (!ctx.monsters || !ctx.monsters.add) return null;
   const L0 = tileList(rid, k === 'aqua' ? 'aqua' : k === 'amph' ? 'amph' : 'land'); if (!L0.length) return null;
-  const near = lead ? (t => nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_R)) : (t => !nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_AVOID) && inFront(rid, t[0] * TS + 8, t[1] * TS + 12));   /* p121: hang thủ lĩnh cuối bãi; quái thường ở đầu bãi */
+  const near = lead ? (t => nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_R)) : ct ? (t => !nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_AVOID)) : (t => !nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_AVOID) && inFront(rid, t[0] * TS + 8, t[1] * TS + 12));   /* p121: hang thủ lĩnh cuối bãi; quái thường ở đầu bãi */
   let q = null; const cand = near ? L0.filter(near) : L0, pool = cand.length >= 4 ? cand : L0;
   for (let i = 0; i < 50 && !q; i++) { const t = pick(pool), x = t[0] * TS + 8, y = t[1] * TS + 12; if (avoidP && Math.hypot(x - p.x, y - p.y) < 130) continue; if (k !== 'fly' && !body(ctx, x, y, k)) continue; if (ST.mons.some(o => Math.hypot(o.x - x, o.y - y) < 18)) continue; q = { x, y }; }
   if (!q) { ST.spFail = (ST.spFail || 0) + 1; log({ ev: 'spawnfail', rid, sp: spec.sp || spec.key, why: 'tile', pool: pool.length }); return null; }
@@ -139,7 +141,7 @@ function spawnOne(ctx, rid, spec, avoidP) {
   if (!c) { log({ ev: 'spawnfail', rid, spec: JSON.stringify(spec), why: 'cfg' }); return null; }
   const lv = ct ? spec.lv : Z.lv[0] + ((Math.random() * (Z.lv[1] - Z.lv[0] + 1)) | 0), mo = ctx.monsters.add(c, q.x, q.y), max = hpOf(spec, lv, c);
   mo.max = max; mo.hp = max; mo.fx = Math.random() < 0.5 ? -1 : 1; mo.angry = false;
-  mo.f6 = { rid, sp: spec.sp || null, key: spec.key || null, lead, ct, lv, kind: k, he: ct ? heOf(spec.sp) : (MHE[spec.key] || 'chan'), mvs: ct ? movesOf(spec.sp) : (MKEY[spec.key] || []).slice(), mcd: ct ? {} : Object.fromEntries((MKEY[spec.key] || []).map(id => [id, R(2, 6)])), gcd: R(1, 2.5), tel: null, home: { x: q.x, y: q.y }, rect: rectOf(rid), mode: 'calm', goal: null, wait: R(0.3, 2.5), cd: { bite: 0, shot: R(1, 3) }, act: null, tg: 'pl', tgT: 0,
+  mo.f6 = { rid, sp: spec.sp || null, key: spec.key || null, lead, ct, lv, kind: k, he: ct ? heOf(spec.sp) : (MHE[spec.key] || 'chan'), mvs: ct ? movesOf(spec.sp).slice(0, lead ? 4 : 1) : (MKEY[spec.key] || []).slice(), mcd: ct ? {} : Object.fromEntries((MKEY[spec.key] || []).map(id => [id, R(2, 6)])), gcd: R(1, 2.5), tel: null, home: { x: q.x, y: q.y }, rect: rectOf(rid), mode: 'calm', goal: null, wait: R(0.3, 2.5), cd: { bite: 0, shot: R(1, 3) }, act: null, tg: 'pl', tgT: 0,
     prevHp: max, acc: 0, cr: {}, last: null, nearT: 0, stuck: 0, calmT: 0, backT: 0, fleeT: 0, fx: mo.fx, fy: 0.4, alt: lead && k === 'fly' ? 9 : 0, e: null, shotClip: null, ct0: Math.random() * 2, regen: 0 };   /* ct0: đồng hồ hoạt ảnh (khoá 'ct' là cờ Chấn Thú hoang) */
   ST.mons.push(mo); ST.n.spawn++; log({ ev: 'spawn', id: mo.id, sp: spec.sp || spec.key, lead, rid, lv, x: Math.round(q.x), y: Math.round(q.y) });
   return mo;
@@ -492,7 +494,9 @@ function crown(g, X, Y) {   /* vương miện TĨNH 9×5 px logic (viền tối,
   for (let j = 0; j < 5; j++) for (let i = 0; i < 9; i++) { const c = M[j][i]; if (c === '.') continue; g.fillStyle = P[c]; g.fillRect(X - 4 + i, Y + j, 1, 1); }
 }
 function drawLead(g, mo, x, y) {
-  const ctx = ST.ctx, F = mo.f6; if (!ctx || !F) return; const e = fighter(ctx, mo), H = hOf(mo);
+  const ctx = ST.ctx, F = mo.f6; if (!ctx || !F) return;
+  { const T = g.getTransform ? g.getTransform() : null; if (T) { const sx = T.a * x + T.e, sy = T.d * y + T.f, m = 80 * Math.abs(T.a); if (sx < -m || sx > g.canvas.width + m || sy < -m || sy > g.canvas.height + m * 1.5) return; } }   /* c23-farmmap: Chấn Thú ngoài khung hình không vẽ (đông thú hơn) */
+  const e = fighter(ctx, mo), H = hOf(mo);
   if (SHADOW.on && !onWater(ctx, mo.x, mo.y)) shadowFor(g, mo.x, mo.y, Math.round(x), Math.round(y) + 1, (globalThis.__fw110 ? globalThis.__fw110((mo.f6 && (mo.f6.sp || mo.f6.key)) || (mo.c && mo.c.key), H >= 24 ? 15 : 12) : H >= 24 ? 15 : 12), F.alt || 0);   /* bóng dưới chân (trên nước thì bỏ) */
   if (!e) { g.fillStyle = TYPE_COLOR[F.he] || '#9a6c48'; g.fillRect(Math.round(x) - 5, Math.round(y) - 10 - F.alt, 10, 10); return; }
   e.x = mo.x; e.y = mo.y; e.alt = F.alt || 0; e.fx = F.fx; e.fy = F.fy; e.flash = mo.flash > 0 ? mo.flash : 0;
@@ -629,6 +633,21 @@ export const farm106 = {
 const MODE106 = ['calm', 'angry', 'return', 'flee'];
 const NETM = new Map();   /* khách: id quái của chủ phòng → bóng ở máy mình */
 const r2 = v => Math.round(v * 2) / 2;
+/* c23-farmmap: ghim bản đồ M (zonemap.js) — khu quái (đầu bãi) + cấp + còn/tổng · thủ lĩnh (hang) · Chấn Thú hoang · chấm quái đang sống */
+export function mapPins(lg) {
+  if (!ST.on) return []; const V = lg === 'vi', out = [], ctx = ST.ctx, live = m => m.f6 && m.hp > 0 && !m.dead;
+  for (const [rid, Z] of Object.entries(ZR)) {
+    const R0 = REGIONS.find(r => r.id === rid), nm = R0 ? (V ? R0.vi : R0.en) : rid, lvT = 'Lv' + Z.lv[0] + '–' + Z.lv[1];
+    const n = ST.mons.filter(m => live(m) && m.f6.rid === rid && !m.f6.ct).length, F0 = frontOf(rid);
+    if (F0) out.push({ x: F0.x, y: F0.y, kind: 'farm', rid, lvT, n, tot: Z.mins.length, label: nm + ' ' + lvT });
+    const ld = ST.mons.find(m => live(m) && m.f6.lead && m.f6.rid === rid), L0 = ld || lairOf(rid), q = ST.rq.find(r => r.lead && r.rid === rid);
+    if (L0) out.push({ x: L0.x, y: L0.y - 4, kind: 'lead', rid, dead: !ld, label: (V ? 'Thủ lĩnh ' : 'Leader ') + spName(ctx, Z.lead.sp) + ' Lv' + Z.lead.lv + (ld ? '' : q ? (V ? ' · hồi sinh ' : ' · back in ') + Math.ceil(Math.max(0, q.t)) + 's' : (V ? ' · đã hạ' : ' · defeated')) });
+  }
+  for (const mo of ST.mons) { if (!live(mo)) continue; const F = mo.f6; if (F.lead) continue;
+    if (F.ct) out.push({ x: mo.x, y: mo.y - 4, kind: 'wild', rid: F.rid, label: spName(ctx, F.sp) + ' Lv' + F.lv });
+    else out.push({ x: mo.x, y: mo.y - 2, kind: 'mob', rid: F.rid, small: true, ang: F.mode === 'angry', label: '' }); }
+  return out;
+}
 export function netSnap() {
   const l = [];
   for (const mo of ST.mons) { const F = mo.f6; if (!F || !(mo.hp > 0) || mo.dead) continue; l.push([mo.id, r2(mo.x), r2(mo.y), Math.ceil(mo.hp), Math.max(0, MODE106.indexOf(F.mode)), (F.e && F.e.clip) || '', Math.round((F.fx || 0) * 100) / 100, Math.round((F.fy || 0) * 100) / 100, Math.round(F.alt || 0)]); }
@@ -660,7 +679,7 @@ export function netBecomeGuest() {
 }
 function mkF6(def, k, max) {
   const lead = !!def.lead, ct = !!def.sp;
-  return { rid: def.rid, sp: def.sp || null, key: def.key || null, lead, ct, lv: def.lv, kind: k, he: ct ? heOf(def.sp) : (MHE[def.key] || 'chan'), mvs: ct ? movesOf(def.sp) : (MKEY[def.key] || []).slice(), mcd: ct ? {} : Object.fromEntries((MKEY[def.key] || []).map(id => [id, R(2, 6)])), gcd: R(1, 2.5), tel: null, home: { x: def.hx, y: def.hy }, rect: rectOf(def.rid), mode: 'calm', goal: null, wait: R(0.3, 2.5), cd: { bite: 0, shot: R(1, 3) }, act: null, tg: 'pl', tgT: 0,
+  return { rid: def.rid, sp: def.sp || null, key: def.key || null, lead, ct, lv: def.lv, kind: k, he: ct ? heOf(def.sp) : (MHE[def.key] || 'chan'), mvs: ct ? movesOf(def.sp).slice(0, lead ? 4 : 1) : (MKEY[def.key] || []).slice(), mcd: ct ? {} : Object.fromEntries((MKEY[def.key] || []).map(id => [id, R(2, 6)])), gcd: R(1, 2.5), tel: null, home: { x: def.hx, y: def.hy }, rect: rectOf(def.rid), mode: 'calm', goal: null, wait: R(0.3, 2.5), cd: { bite: 0, shot: R(1, 3) }, act: null, tg: 'pl', tgT: 0,
     prevHp: def.hp, acc: 0, cr: {}, last: null, nearT: 0, stuck: 0, calmT: 0, backT: 0, fleeT: 0, fx: 1, fy: 0.4, alt: lead && k === 'fly' ? 9 : 0, e: null, shotClip: null, ct0: Math.random() * 2, regen: 0 };
 }
 export function netSpawn(def) {

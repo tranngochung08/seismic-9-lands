@@ -29,19 +29,23 @@ function cfgURL() {
 const inZone = ctx => !!(ctx.S.zone && ctx.S.zone.id === ZONE && ctx.S.player);
 const isHost = () => NET.role === 'host';
 function send(o) { const w = C.ws; if (!w || w.readyState !== 1) return false; try { w.send(JSON.stringify(o)); C.n.tx++; return true; } catch (e) { return false; } }
-function myName(ctx) { const s = ctx.S.save || {}; return (s.name || (s.self && (s.self.n || s.self.name)) || 'Player').toString().slice(0, 24); }
+const nm29 = v => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim().slice(0, 16);   /* c29-vat: lọc tên — ≤ 16 ký tự, bỏ ký tự điều khiển / < > */
+function acct29() { try { const c = typeof window !== 'undefined' && window.__cloud82 && window.__cloud82.cloud, u = c && c.status && c.status().user; return u ? (u.username || (u.provider !== 'email' && u.name) || '') : ''; } catch (e) { return ''; } }   /* c29-vat: tên đăng nhập tài khoản (không bao giờ email) */
+function myName(ctx) { const s = ctx.S.save || {}; return nm29(s.name || (s.self && (s.self.n || s.self.name)) || acct29()) || 'Player'; }   /* c29-vat: save chưa có tên → tên tài khoản */
+let NM29 = { t: -1e9, v: '' }; const myNameC = ctx => { const now = Date.now(); if (now - NM29.t > 1000) NM29 = { t: now, v: myName(ctx) }; return NM29.v; };   /* c29-vat: đọc lại tên mỗi 1 s (đặt tên ở Noxx sau khi vào phòng vẫn cập nhật) */
 function myLook(ctx) { const o = (ctx.S.save && ctx.S.save.outfit) || {}, out = {}; for (const k of ['skin', 'hair', 'shirt', 'pants']) if (typeof o[k] === 'string') out[k] = o[k]; out.hero = typeof o.hero === 'string' && o.hero ? o.hero : 'none'; return out; }   /* c10-coop sửa 04/11: hero null (chọn Nam/Nữ) gửi rõ 'none' — thiếu khoá thì máy khác vẽ nhầm */
 
 /* ---------- người chơi khác ---------- */
 function mkPeer(ctx, id, name, look) {
   let sheet = null; try { sheet = ctx.charSheetOf ? ctx.charSheetOf(look || {}) : null; } catch (e) { sheet = null; }
   const ent = new Entity(-999, -999, sheet); ent.ghost = true;
-  const P = { id, name: name || 'Player', look: look || {}, ent, tx: null, ty: null, dir: 0, mov: false, diag: null, act: '', ko: false, zone: null, units: new Map(), seen: 0 };
+  const P = { id, name: nm29(name) || 'Player', look: look || {}, ent, tx: null, ty: null, dir: 0, mov: false, diag: null, act: '', ko: false, zone: null, units: new Map(), seen: 0 };
   C.peers.set(id, P); return P;
 }
 function onSt(ctx, m) {
   const P = C.peers.get(m.f) || mkPeer(ctx, m.f, 'Player', {}); P.seen = ctx.S.time;
   P.st = m;   /* c17-pk: giữ tin 'st' cuối (pk / lv / hp / hm) cho pk.js */
+  if (typeof m.n === 'string') { const n29 = nm29(m.n); if (n29 && n29 !== P.name) P.name = n29; }   /* c29-vat: tên đi kèm tin 'st' → đổi tên trên đầu khi người kia đặt / đổi tên */
   P.zone = m.z || null; P.ko = !!m.k; P.mov = !!m.m; P.dir = m.d | 0; P.diag = m.g == null ? null : m.g | 0;
   if (P.tx == null || Math.hypot(m.x - P.ent.x, m.y - P.ent.y) > CF.snap) { P.ent.x = m.x; P.ent.y = m.y; }
   P.tx = m.x; P.ty = m.y;
@@ -121,7 +125,7 @@ function stMsg(ctx) {
   const p = ctx.S.player, a = p.action && !p.action.walk ? p.action.name : '', units = [];
   const q = ctx.squad104 && ctx.squad104.units ? ctx.squad104 : null;
   if (q) { try { for (const u of q.units()) { if (!u.onField() || !u.f || units.length >= 3) continue; const f = u.f; units.push([f.sp || u.sp, Math.round(f.x), Math.round(f.y), f.clip || 'idle', Math.round((f.fx || 0) * 100) / 100, f.lv | 0]); } } catch (e) { } }
-  return { t: 'st', x: Math.round(p.x * 2) / 2, y: Math.round(p.y * 2) / 2, d: p.dir | 0, m: p.moving ? 1 : 0, g: p.diag == null ? null : p.diag, a, k: ctx.hero && ctx.hero.fainted ? 1 : 0, z: ctx.S.zone ? ctx.S.zone.id : null, u: units, ...(ctx.pk && ctx.pk.st ? ctx.pk.st() : {}) };   /* c17-pk: + pk, lv, hp, hm */
+  return { t: 'st', x: Math.round(p.x * 2) / 2, y: Math.round(p.y * 2) / 2, d: p.dir | 0, m: p.moving ? 1 : 0, g: p.diag == null ? null : p.diag, a, k: ctx.hero && ctx.hero.fainted ? 1 : 0, z: ctx.S.zone ? ctx.S.zone.id : null, u: units, n: myNameC(ctx), ...(ctx.pk && ctx.pk.st ? ctx.pk.st() : {}) };   /* c29-vat: + n (tên) */   /* c17-pk: + pk, lv, hp, hm */
 }
 
 export const coop = {

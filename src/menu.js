@@ -19,10 +19,10 @@ import { exportCode, parseCode, importSave } from './save.js';   /* plan-44 Q6: 
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ROMAN = ['', 'I', 'II', 'III'];
-const TABS = ['bag', 'shop', 'hero', 'rocky', 'anlinh', 'quest', 'gear'];   /* 2026-10-15: thẻ Ấn Linh (linh thú + nâng cấp) */   /* plan-27: thẻ Rocky */   /* 2026-10-10 anh yêu cầu: 'Mua nhanh' công cụ bằng đá Seismic, không qua NPC (phím O) */
+const TABS = ['bag', 'shop', 'hero', 'anlinh', 'quest', 'gear'];   /* c29-vat (anh 04/11 'Bỏ mục Rocky này ra khỏi game'): bỏ thẻ Rocky (rockyBody / pet.js giữ nguyên) */   /* 2026-10-15: thẻ Ấn Linh (linh thú + nâng cấp) */   /* plan-27: thẻ Rocky */   /* 2026-10-10 anh yêu cầu: 'Mua nhanh' công cụ bằng đá Seismic, không qua NPC (phím O) */
 const STR = {
   en: {
-    tabs: { bag: 'Bag', shop: 'Quick buy', hero: 'Character', rocky: 'Rocky', anlinh: 'Spirit Seal', quest: 'Quests', gear: 'Settings' }, foot: 'Esc · close   ·   ← → or 1-7 · tabs   ·   B bag · O quick buy · Q quests', footTouch: 'Esc · close   ·   tap a tab to switch',
+    tabs: { bag: 'Bag', shop: 'Quick buy', hero: 'Character', rocky: 'Rocky', anlinh: 'Spirit Seal', quest: 'Quests', gear: 'Settings' }, foot: 'Esc · close   ·   ← → or 1-6 · tabs   ·   B bag · O quick buy · Q quests', footTouch: 'Esc · close   ·   tap a tab to switch',
     shopHint: 'Buy tools and supplies instantly with Seismic stones — no need to find a trader. Bought goods drop at your feet.', tier: 'tier', buyT: (n, p) => `Tier ${n} · ${p} 🪨`, maxT: 'Max tier', buyN: (n, p) => `×${n} · ${p} 🪨`, poor: 'Not enough Seismic stones', boughtT: (n, k) => `${n} tier ${k} — ready on your hotbar`, supplies: 'Supplies', tools: 'Tools',
     equip: 'Equipment', progress: 'Progress', tool: 'Tool tier', currency: 'Currency — gift it to villagers so they can fight', food: 'Food — right-click / E to eat', seedK: 'Seed — plant on tilled soil', dragHint: 'Drag to rearrange · top row = hotbar', trash: 'Drop here to throw away', sort: 'Sort', noTrash: "That can't be thrown away.", trashAsk: (n, k) => `Throw away ${n}${k > 1 ? ' (×' + k + ')' : ''}?`, trash1: 'Throw 1', trashAll: 'Throw all', shards: 'Tremor shards', met: 'Artists met', items: 'Items', load: 'Bag load', empty: 'Nothing in the bag yet — chop, mine, gather.', tipHint: 'Hover or tap a slot to read about it.',
     locked: 'Not crafted yet', weight: 'weight', count: 'count', sell: 'Sell at the village trader', sell1: 'Sell 1', sellAll: 'Sell all', toBar: k => `To slot ${k}`, onBar: (n, k) => `${n} → hotbar slot ${k}`, eat: 'Eat', ate: n => `Yum, ${n}! You feel lively — walking faster for 30 s`, sellHere: 'sell right from the bag', material: 'Crafting / building material', story: 'Story item',
@@ -43,7 +43,7 @@ const STR = {
     resume: 'Resume', lang: 'Tiếng Việt', musicVol: 'Music', sfxVol: 'Sound effects', music: 'Music', fs: 'Fullscreen', quit: 'Save & quit to title', on: 'on', off: 'off'
   },
   vi: {
-    tabs: { bag: 'Túi đồ', shop: 'Mua nhanh', hero: 'Nhân vật', rocky: 'Rocky', anlinh: 'Ấn Linh', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-7 · đổi thẻ   ·   B túi · O mua nhanh · Q nhiệm vụ', footTouch: 'Esc · đóng   ·   chạm thẻ để đổi',
+    tabs: { bag: 'Túi đồ', shop: 'Mua nhanh', hero: 'Nhân vật', rocky: 'Rocky', anlinh: 'Ấn Linh', quest: 'Nhiệm vụ', gear: 'Cài đặt' }, foot: 'Esc · đóng   ·   ← → hoặc 1-6 · đổi thẻ   ·   B túi · O mua nhanh · Q nhiệm vụ', footTouch: 'Esc · đóng   ·   chạm thẻ để đổi',
     shopHint: 'Mua công cụ và vật tư ngay bằng đá Seismic — không cần tìm thương nhân. Đồ mua rơi ngay dưới chân.', tier: 'cấp', buyT: (n, p) => `Cấp ${n} · ${p} 🪨`, maxT: 'Cấp tối đa', buyN: (n, p) => `×${n} · ${p} 🪨`, poor: 'Không đủ đá Seismic', boughtT: (n, k) => `${n} cấp ${k} — đã lên thanh công cụ`, supplies: 'Vật tư', tools: 'Công cụ',
     equip: 'Trang bị', progress: 'Tiến độ', tool: 'Dụng cụ cấp', currency: 'Tiền — tặng dân làng để họ biết chiến đấu', food: 'Đồ ăn — chuột phải / E để ăn', seedK: 'Hạt giống — gieo trên đất đã cày', dragHint: 'Kéo để xếp · hàng trên = thanh công cụ', trash: 'Thả vào đây để vứt', sort: 'Xếp gọn', noTrash: 'Món này không vứt được.', trashAsk: (n, k) => `Vứt ${n}${k > 1 ? ' (×' + k + ')' : ''}?`, trash1: 'Vứt 1', trashAll: 'Vứt hết', shards: 'Mảnh địa chấn', met: 'Nghệ sĩ đã gặp', items: 'Vật phẩm', load: 'Tải túi', empty: 'Túi chưa có gì — chặt cây, đập đá, nhặt đồ đi.', tipHint: 'Rê chuột hoặc chạm ô để xem mô tả.',
     locked: 'Chưa chế', weight: 'nặng', count: 'số lượng', sell: 'Bán ở Thương nhân Làng', sell1: 'Bán 1', sellAll: 'Bán hết', toBar: k => `Lên ô ${k}`, onBar: (n, k) => `${n} → ô ${k} trên thanh`, eat: 'Ăn', ate: n => `Ngon quá, ${n}! Thấy khoẻ khoắn — đi nhanh hơn 30 giây`, sellHere: 'bán ngay tại túi', material: 'Nguyên liệu chế tạo / xây dựng', story: 'Vật phẩm cốt truyện',
@@ -163,7 +163,7 @@ function act(k) {
 export const menuOpen = () => !!(el && !el.hidden);
 export function openMenu(t) {
   if (!deps || !deps.S.save || !deps.S.map) return;
-  if (t) tab = t; tip = ''; render(); el.hidden = false; deps.setMode('menu');
+  if (t) tab = TABS.includes(t) ? t : 'bag'; tip = ''; render(); el.hidden = false; deps.setMode('menu');   /* c29-vat: thẻ đã bỏ (rocky) → Túi đồ */
   clearInterval(timer); timer = setInterval(() => { if (!el.hidden) { if (!drag && tab !== 'gear') render(true); } else clearInterval(timer); }, 1500);   /* thẻ Cài đặt không vẽ lại (đang kéo thanh âm lượng) */
 }
 export function closeMenu() {
@@ -177,7 +177,7 @@ export function menuKey(code) {
   const i = TABS.indexOf(tab);
   if (code === 'ArrowLeft' || code === 'KeyA') { tab = TABS[(i + TABS.length - 1) % TABS.length]; render(); return true; }
   if (code === 'ArrowRight' || code === 'KeyD') { tab = TABS[(i + 1) % TABS.length]; render(); return true; }
-  if (/^Digit[1-7]$/.test(code)) { tab = TABS[+code[5] - 1] || tab; render(); return true; }
+  if (/^Digit[1-9]$/.test(code) && TABS[+code[5] - 1]) { tab = TABS[+code[5] - 1]; render(); return true; }   /* c29-vat: số thẻ theo TABS (6 thẻ) */
   return code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS';   /* nuốt phím di chuyển cho người chơi không đi */
 }
 
@@ -606,11 +606,21 @@ function questBody() {
 }
 
 // ---------------------------------------------------------------- cài đặt
-function gearBody() {
+/* c26-coban (anh 04/11 "bỏ được phần nào bỏ, vì từ giờ save game bằng tài khoản"): bỏ khối 'Chuyển save sang máy khác' (saveBox) khỏi Cài đặt;
+   thay bằng 1 dòng trạng thái tài khoản (cloud82): đã đăng nhập → tên; chưa → nút 'Đăng nhập để lưu game' (lưu & về màn hình chính, nơi có nút đăng nhập). Cloud tắt (preset/test) → không hiện. */
+function acct26() {
+  const vi = isVi(); let c = null, u = null;
+  try { c = typeof window !== 'undefined' && window.__cloud82 && window.__cloud82.cloud; if (!c || !c.status || c.mode === 'off') return ''; u = c.status().user; } catch (e) { return ''; }
+  const nm = u ? (u.username || u.name || u.email || (vi ? 'Người chơi' : 'Player')) : '';
+  return `<div class="c26-acct" style="display:contents">`
+    + (u ? `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Đã đăng nhập' : 'Signed in'}: <b style="color:#ffd96a">${esc(nm)}</b> · ${vi ? 'tự lưu theo tài khoản' : 'auto-saves to account'}</span>`
+      : `<span style="text-align:center;font:18px VT323,monospace;color:#cfc4b4;margin-top:4px">☁ ${vi ? 'Chưa đăng nhập' : 'Not signed in'}</span><button class="btn" data-act="quit">${vi ? 'Đăng nhập để lưu game' : 'Sign in to save your game'}</button>`) + `</div>`;
+}
+function gearBody() {   /* c26-coban: bỏ thanh Nhạc nền + nút ♪ Nhạc (anh 04/11 bỏ nhạc), giữ thanh Hiệu ứng; bỏ khối chuyển save */
   const t = L(), A = deps.actions || {}, on = A.musicOn ? A.musicOn() : true;
   const vol = (k, label, v) => `<label class="mvol"><span>${label}</span><input type="range" min="0" max="100" value="${Math.round(v * 100)}" data-vol="${k}"><b>${Math.round(v * 100)}%</b></label>`;
   const mv = AUDIO.getMusicVolume ? AUDIO.getMusicVolume() : 0.5, sv = AUDIO.getSfxVolume ? AUDIO.getSfxVolume() : 0.5;
   return `<div class="mgear"><button class="btn primary" data-act="resume">${t.resume}</button><button class="btn" data-act="lang">${t.lang}</button>
-    ${vol('music', t.musicVol, mv)}${vol('sfx', t.sfxVol, sv)}${deps.CTX.size19 ? deps.CTX.size19.html(deps.CTX.lang() === 'vi') : ''}
-    <button class="btn" data-act="music">♪ ${t.music}: ${on ? t.on : t.off}</button><button class="btn" data-diff="1" title="${deps.CTX.lang() === 'vi' ? 'Dễ: máu & đòn của quái, bạn tập, trùm ×0,6 — phần thưởng giữ nguyên' : 'Easy: monsters, sparring partners and bosses have ×0.6 HP & damage — same rewards'}">⚖ ${diffLabel(deps.CTX.lang() === 'vi', deps.S.save)}</button>${deps.CTX.ki ? `<button class="btn" data-kimode="1">◉ ${deps.CTX.ki.menuLabel()}</button>` : ''}${deps.CTX.gfx ? `<button class="btn" data-gfx="1">▣ ${deps.CTX.gfx.label(deps.CTX.lang() === 'vi')}</button>` : ''}<button class="btn" data-act="fs">⛶ ${t.fs}</button><button class="btn" data-act="quit">${t.quit}</button></div>${saveBox()}`;
+    ${vol('sfx', t.sfxVol, sv)}${deps.CTX.size19 ? deps.CTX.size19.html(deps.CTX.lang() === 'vi') : ''}
+    <button class="btn" data-diff="1" title="${deps.CTX.lang() === 'vi' ? 'Dễ: máu & đòn của quái, bạn tập, trùm ×0,6 — phần thưởng giữ nguyên' : 'Easy: monsters, sparring partners and bosses have ×0.6 HP & damage — same rewards'}">⚖ ${diffLabel(deps.CTX.lang() === 'vi', deps.S.save)}</button>${deps.CTX.ki ? `<button class="btn" data-kimode="1">◉ ${deps.CTX.ki.menuLabel()}</button>` : ''}${deps.CTX.gfx ? `<button class="btn" data-gfx="1">▣ ${deps.CTX.gfx.label(deps.CTX.lang() === 'vi')}</button>` : ''}<button class="btn" data-act="fs">⛶ ${t.fs}</button><button class="btn" data-act="quit">${t.quit}</button>${acct26()}</div>`;
 }

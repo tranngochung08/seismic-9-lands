@@ -12,7 +12,7 @@ import { TRACKS, STINGERS } from './audio/songs.js';
 import * as S108 from './sfx108.js';   /* p108: tiếng riêng từng chiêu Chấn Thú + cổng chồng tiếng + __sfxlog */
 
 let ac = null, M = null, timer = null, hidden = false;
-let musicOn = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('music') === '0');   /* p110m: &music=0 → tắt nhạc nền (không lưu), giữ tiếng chiêu */
+let musicOn = false;   /* c26-coban (anh 04/11 "bỏ khỏi game phần NHẠC, chỉ để lại sound effect"): nhạc nền + nhạc ngắn tắt hẳn; stinger() phát tiếng hiệu ứng thay thế */   /* p110m: &music=0 → tắt nhạc nền (không lưu), giữ tiếng chiêu */
 
 /* ---------------- âm lượng (0–1; 0,5 = mức chuẩn; khoá cũ 'seismic.vol' vẫn được đọc) ---------------- */
 const clamp01 = v => Math.max(0, Math.min(1, Number(v) || 0));
@@ -99,7 +99,7 @@ export function setZone(z) {
   refreshMusic(1.0, false);
 }
 export function setEnabled(on) {   /* p110m */ if (on && typeof location !== 'undefined' && new URLSearchParams(location.search).get('music') === '0') on = false;   /* nút "♪ Nhạc: bật/tắt" — chỉ tắt nhạc, tiếng động vẫn còn (có thanh âm lượng riêng) */
-  musicOn = !!on; applyLevels();
+  on = false; musicOn = false; applyLevels();   /* c26-coban: không bật lại được nhạc */
   if (!M) return;
   if (!musicOn) { M.stopMusic(0.4); playing = null; } else { want = null; refreshMusic(1.2); }
 }
@@ -109,7 +109,7 @@ export function musicClock() { if (!M || !musicOn || !M.clock || !ac || ac.state
 /* trúng đòn quan trọng → nhạc 'lỡ nhịp': nhạc nghẹt + chùng xuống 0,8 s */
 let hiccupUntil = 0;
 export function musicHiccup() { hiccupUntil = performance.now() + 800; if (M) try { M.muffle(true); } catch (e) { } }
-export function playTrack(id) { want = id; mlog(id); if (M && musicOn) { M.playTrack(id, { fade: 0.8 }); playing = id; } }   /* trang nghe thử / test */
+export function playTrack(id) { want = id; mlog(id); if (false && M && musicOn) { M.playTrack(id, { fade: 0.8 }); playing = id; } }   /* trang nghe thử / test */
 export function stinger(id) {
   const st = STINGERS[id]; if (!st) return false;
   logIt('♪' + id, 'st');
