@@ -278,7 +278,7 @@ async function boot() {
   document.addEventListener('fullscreenchange', resize);
   setInterval(() => { if (cv.width !== CVW || cv.height !== CVH || Math.abs(cv.clientWidth - viewSize().w) > 1 || Math.abs(cv.clientHeight - viewSize().h) > 1) resize(); }, 500);
   setupDiscord();
-  if (new URLSearchParams(location.search).get('cloud82') === '1') { const q82 = location.search; import('./cloud82.js').then(m => m.initCloud82({ S, CTX, UI, $, byId, CONFIG, loadSave, persist, search: q82 })).catch(e => console.warn('cloud82', e)); }   /* c1-p82: lớp mạng plan-82, mặc định TẮT */
+  if (new URLSearchParams(location.search).get('cloud82') !== '0') { const q82 = location.search; import('./cloud82.js').then(m => m.initCloud82({ S, CTX, UI, $, byId, CONFIG, loadSave, persist, search: q82 })).catch(e => console.warn('cloud82', e)); }   /* c1-p82: lớp mạng plan-82, mặc định TẮT */
   $('#loading').hidden = true; $('#title').hidden = false;
   TITLE.initTitle({ resize, persist: () => { if (S.save) persist(); } }); TITLE.showTitle();   /* plan-13 */
   for (const b of document.querySelectorAll('#title .btn')) if (ART.on && ART.man && ART.man.ui && ART.man.ui.title && ART.man.ui.title.btn) b.classList.add('px');

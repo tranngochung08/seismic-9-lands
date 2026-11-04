@@ -225,7 +225,10 @@ function tickU(ctx, u, dt) {
   if ((md === 'guard' || ST.rallyOn) && u.cd.guard <= 0 && danger(ctx) && hostileNear(ctx, p.x, p.y, 56) && castGuard(ctx, u)) return;
   const mo = pickTarget(ctx, u); u.tgt = mo; const sp = spdOf(f);
   if (!mo && isGuardian(ctx, u)) { const sh = ST.shooter, k = hyp(sh, p) || 1, R = reachOf(u), gx = p.x + (sh.x - p.x) / k * R, gy = p.y + (sh.y - p.y) / k * R * 0.75; if (moveTo(ctx, u, gx, gy, sp * 1.4, dt, 2)) face(f, sh.x, sh.y); return; }   /* đứng chắn giữa người và kẻ bắn */
-  if (!mo) { if (u.hp < u.max) u.hp = Math.min(u.max, u.hp + CFG.regen * dt); const g = slotGoal(ctx, u); if (hyp(f, p) < 30 && hyp(f, g) < 12) { if (f.clip !== 'idle') { f.clip = 'idle'; f.ct = 0; } face(f, p.x, p.y + 30); return; } moveTo(ctx, u, g.x, g.y, hyp(f, p) > 80 ? sp * 1.5 : sp, dt, 4); return; }
+  if (!mo) { if (u.hp < u.max) u.hp = Math.min(u.max, u.hp + CFG.regen * dt); const g = slotGoal(ctx, u); if (p.moving || p.autoPath || hyp(f, p) > 72) u.rest16 = false;   /* c16-dungyen: người đi / thú xa → thôi đứng */
+    if (!u.rest16 && !p.moving && !p.autoPath && (p.idleT || 0) > 0.5 && hyp(f, p) < 72) u.rest16 = true;   /* c16-dungyen: người đứng yên > 0,5 s → thú đứng luôn (ô bị chắn thì không bao giờ tới nơi → chạy tại chỗ) */
+    if (u.rest16 || (hyp(f, p) < 30 && hyp(f, g) < 12)) { u.rest16 = !p.moving; if (f.clip !== 'idle') { f.clip = 'idle'; f.ct = 0; } face(f, p.x, p.y + 30); return; }   /* c16-dungyen: đứng yên tại chỗ */
+    if (moveTo(ctx, u, g.x, g.y, hyp(f, p) > 80 ? sp * 1.5 : sp, dt, 4) && !p.moving) u.rest16 = true; return; }
   const d = hyp(f, mo), mv = atkMove(u), rng = mv && mv.shape === 'can' ? 26 : 96;
   if (u.cd.skill <= 0 && mv && d <= rng && castSkill(ctx, u, mo)) return;
   if (d < 22 && u.atkT <= 0) { const clip = kit.has(f, 'atk') ? 'atk' : 'idle', Tc = Math.max(0.35, kit.clipT(f, clip)); face(f, mo.x, mo.y); f.clip = clip; f.ct = 0; D107.stop(u.f, 'act'); u.act = { kind: 'bite', mo, t: 0, T: Tc, imp: Math.min(Tc * 0.6, kit.impT(clip)), hit: false }; u.atkT = 1.0; return; }

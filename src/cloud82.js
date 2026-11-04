@@ -51,7 +51,7 @@ const hm = s => { s = s | 0; const h = Math.floor(s / 3600), m = Math.floor(s % 
 
 export function wantCloud82(search) {
   const q = new URLSearchParams(search || '');
-  if (q.get('cloud82') !== '1') return { on: false, why: 'flag' };
+  if (q.get('cloud82') === '0') return { on: false, why: 'flag' };   /* anh 04/11: đăng nhập BẬT MẶC ĐỊNH cho mọi người (?cloud82=0 để tắt) */
   for (const k of SKIP_Q) if (q.has(k)) return { on: false, why: k };
   return { on: true, q };
 }
