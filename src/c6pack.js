@@ -14,15 +14,30 @@
   IDX.b.forEach(function (x, i) {
     var o = 0; B.push({ f: x[0], k: x[1], s: x[2], p: null, d: null });
     x[3].forEach(function (e) { var U = new URL(e[0], base); MAP[U.origin + U.pathname] = { b: i, o: o, n: e[1], r: e[0], u: null }; o += e[1]; });
+    B[i].n = o;   /* c34-loading: tổng byte gói ảnh (gói JSON = 0, chưa biết) cho màn tải */
   });
   var key = function (s) { try { var U = new URL(s, location.href); return U.origin === ORIGIN ? U.origin + U.pathname : null; } catch (e) { return null; } };
   var F0 = window.fetch;   /* bản fetch đã bọc thử lại 429 của index.html (p121) */
   function get(i) {
     var b = B[i]; if (b.p) return b.p;
-    b.p = F0(new URL(b.f, base).href).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return b.k === 'j' ? r.json() : r.blob(); })
+    b.p = F0(new URL(b.f, base).href).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return rd(r, i, b); })
       .then(function (d) { b.d = d; ST.bundles++; ST.done.push([b.f, Date.now() - ST.t0]); return d; },
         function (e) { ST.bad++; ST.badT = Date.now() - ST.t0; console.warn('c6: gói hỏng → tắt c6, tải lẻ như cũ', b.f, e && e.message); B.forEach(function (x) { if (!x.d) x.bad = true; }); return null; });   /* cầu dao: 1 gói hỏng (đã thử lại hết) → mọi gói chưa có đều coi hỏng, khỏi chờ thêm */
     return b.p;
+  }
+  /* c34-loading: đọc gói theo luồng để báo byte đã về cho màn tải (window.__ld34.c6(i, đã về, tổng, xong)); không có màn tải / trình duyệt cũ → như cũ */
+  function rd(r, i, b) {
+    var L = window.__ld34, cb = L && L.c6;
+    if (typeof cb !== 'function' || !r.body || !r.body.getReader) return b.k === 'j' ? r.json() : r.blob();
+    var cl = +r.headers.get('content-length') || 0, enc = r.headers.get('content-encoding'), tot = b.n || (enc && enc !== 'identity' ? 0 : cl);
+    var got = 0, parts = [], rr = r.body.getReader(), rep = function (dn) { try { cb(i, got, tot, dn); } catch (e) { } };
+    rep(0);
+    return (function pump() {
+      return rr.read().then(function (x) {
+        if (x.done) { rep(1); var bl = new Blob(parts, { type: r.headers.get('content-type') || '' }); return b.k === 'j' ? new Response(bl).json() : bl; }
+        parts.push(x.value); got += x.value.byteLength; rep(0); return pump();
+      });
+    })();
   }
   function blobUrl(m) { if (!m.u) m.u = URL.createObjectURL(B[m.b].d.slice(m.o, m.o + m.n, mimeOf(m.r))); return m.u; }
   /* 1. ảnh */

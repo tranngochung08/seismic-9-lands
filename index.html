@@ -18,7 +18,7 @@
 </script>
 <script>/* c6 (Việc 6): nạp src/c6pack.js (gộp ảnh / JSON lượt đầu thành vài gói) — thử lại khi 429 / lỗi mạng; game (main.js) chờ c6 sẵn sàng (≤ 15 s) rồi mới nạp. Hỏng hẳn → game tải lẻ như cũ. ?c6=0 tắt. */
 (function () { if (/[?&]c6=0(&|$)/.test(location.search)) return; var W = [400, 900, 1800, 3200, 5000], i = 0;
-  var p = new Promise(function (res) { (function go() { var s = document.createElement('script'); s.src = 'src/c6pack.js?v=fb53253823' + (i ? '&r=' + i : ''); s.onload = function () { res(); };
+  var p = new Promise(function (res) { (function go() { var s = document.createElement('script'); s.src = 'src/c6pack.js?v=229c23848a' + (i ? '&r=' + i : ''); s.onload = function () { res(); };
     s.onerror = function () { s.remove(); if (i < W.length) setTimeout(go, W[i++] * (0.8 + Math.random() * 0.4)); else res(); }; document.head.appendChild(s); })(); });
   window.__swReady = Promise.all([window.__swReady, Promise.race([p, new Promise(function (r) { setTimeout(r, 15000); })])]).then(function () { });
 })();
@@ -27,6 +27,124 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<style>/* c34-loading (anh 04/11): màn tải có tiến độ THẬT + Rocky cam đẩy đá Seismic dọc thanh. Ảnh = PixelLab có sẵn (rockypet_p47_walk_e, rockypet_cheer_s, ui/items/stone.png, ui/hud91/obar.png) ghép bởi _wip/c34-loading/_gen/mk_sheet.py */
+#ld34{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#16121d;color:#f1e2c2;font-family:VT323,ui-monospace,monospace;transition:opacity .35s;-webkit-user-select:none;user-select:none}
+#ld34 canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+#ld34 .p{font-size:30px;line-height:1;letter-spacing:1px}
+#ld34 .m{font-size:19px;line-height:1.1;color:#b9a68e;min-height:21px;text-align:center;padding:0 12px}
+#ld34 .m.e{color:#ff8f7a}
+#ld34.out{opacity:0;pointer-events:none}
+</style>
+<div id="ld34" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><canvas width="160" height="56"></canvas><div class="p">0%</div><div class="m"></div></div>
+<script>/* c34-loading: tiến độ THẬT = vỏ trang (sw / c6pack) 4 % + module src/*.js (PerformanceObserver, ~155 module đo 04/11) 27 % + byte gói ảnh/JSON c6 nhóm 0 (c6pack.js báo từng mẩu qua __ld34.c6) 64 % + 5 % khi game sẵn sàng (#loading bị main.js ẩn / #title hiện). Chưa sẵn sàng thì không quá 97 %; bò chậm khi đứng chờ. Tới 100 %: đá nảy + tia sáng 1 lần, Rocky reo, rồi mờ dần (không lặp). */
+(function () {
+  var O = document.getElementById('ld34'); if (!O) return;
+  var CV = O.querySelector('canvas'), PC = O.querySelector('.p'), MS = O.querySelector('.m'), g = CV.getContext('2d');
+  var RC = {"w":[[0,0,24,26],[24,0,24,26],[48,0,24,26],[72,0,24,26],[96,0,24,26],[120,0,24,26],[144,0,24,26],[168,0,24,26]],"c":[[192,0,32,28],[224,0,32,28],[256,0,32,28],[288,0,32,28],[320,0,32,28],[352,0,32,28]],"s":[[384,0,21,30]],"b":[[405,0,52,16]]}, IMG = new Image(); IMG.src = 'data:image/png;base64,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';
+  var q = location.search, lang = (/[?&]lang=(vi|en)(&|$)/.exec(q) || [])[1];
+  if (!lang) { try { var sv = localStorage.getItem('seismic9.save.v1'), mm = sv && /"lang"\s*:\s*"(vi|en)"/.exec(sv); if (mm) lang = mm[1]; } catch (e) { } }
+  if (!lang) lang = /^vi/i.test(navigator.language || '') ? 'vi' : 'en';
+  var TX = { vi: { a: 'Đang mở cổng…', j: 'Đang tải mã game', i: 'Đang tải hình ảnh', w: 'Đang dựng thế giới…', d: 'Xong!', e: 'Lỗi tải game — hãy tải lại trang' }, en: { a: 'Opening the gate…', j: 'Loading game code', i: 'Loading art', w: 'Building the world…', d: 'Done!', e: 'Failed to load — please reload the page' } }[lang];
+  var JS_N = 155, W = 160, H = 56, BY = 40, BX = 4, BW = 152, SW0 = 22;
+  var t0 = performance.now(), last = t0, js = 0, seen = {}, C6 = {}, shellOk = false, ready = false, err = null, d = 0, T = 0, fin = 0, finT = 0, dist = 0, prevX = null, gone = false, ph = 'a', lastT = 0, lastTt = t0;
+  var isJs = function (n) { return /\/src\/.*\.js(\?|#|$)/.test(n) && !/c6pack/.test(n); };
+  var addE = function (l) { for (var k = 0; k < l.length; k++) { var n = l[k].name; if (isJs(n) && !seen[n]) { seen[n] = 1; js++; } } };
+  try { new PerformanceObserver(function (l) { addE(l.getEntries()); }).observe({ type: 'resource', buffered: true }); } catch (e) { setInterval(function () { try { addE(performance.getEntriesByType('resource')); } catch (e2) { } }, 300); }
+  if (window.__swReady && window.__swReady.then) window.__swReady.then(function () { shellOk = true; });
+  window.__ld34 = {
+    c6: function (i, got, tot, dn) { C6[i] = { g: got, t: tot, d: dn }; },
+    info: function () { return { d: d, T: T, ph: ph, js: js, ready: ready, fin: fin, err: err }; },
+  };
+  var LD = document.getElementById('loading');
+  var chk = function () {
+    if (!LD) LD = document.getElementById('loading');
+    if (LD && /^Error/.test(LD.textContent || '')) { err = LD.textContent; return; }
+    var TT = document.getElementById('title');
+    if ((LD && LD.hidden) || (TT && !TT.hidden)) ready = true;
+  };
+  try { new MutationObserver(chk).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['hidden'], childList: true, characterData: true }); } catch (e) { }
+  function c6frac() {
+    var c = window.__c6; if (!c || !c.B) return null;
+    var G = 0, Tt = 0, any = false;
+    for (var i = 0; i < c.B.length; i++) {
+      var b = c.B[i], x = C6[i]; if (b.s !== 0 && !x) continue;
+      var tot = (x && x.t) || b.n || 0, got = x ? x.g : 0;
+      if (!tot) tot = x && x.d ? got : Math.max(got / 0.8, b.s === 0 ? 1.5e6 : 2e5);
+      if (x && got > 0) any = true;
+      G += x && x.d ? tot : Math.min(got, tot * 0.97); Tt += tot;
+    }
+    return { f: Tt ? G / Tt : 0, any: any, mb: G / 1e6, tmb: Tt / 1e6 };
+  }
+  function target(now) {
+    var sh = shellOk || window.__c6 ? 1 : Math.min(0.9, (now - t0) / 3000), c = c6frac();
+    var jf = c && c.any ? 1 : Math.min(1, js / JS_N), cf = c ? c.f : 0;
+    if (!c && jf >= 1) cf = Math.min(0.9, (now - t0) / 30000);   /* c6 tắt / hỏng → không đo được byte ảnh: ước theo thời gian, không tới đích */
+    ph = ready ? 'd' : (c && c.f >= 0.999) || (jf >= 1 && cf >= 0.999) ? 'w' : (c && c.any) || (!c && jf >= 1) ? 'i' : js > 0 ? 'j' : 'a';
+    if (ph === 'i' && c) MS.textContent = TX.i + ' ' + c.mb.toFixed(1) + ' / ' + c.tmb.toFixed(1) + ' MB';
+    else if (ph === 'j') MS.textContent = TX.j + ' (' + Math.min(js, JS_N) + '/' + JS_N + ')';
+    else MS.textContent = ph === 'i' ? TX.i + '…' : TX[ph];
+    return 0.04 * sh + 0.27 * jf + 0.64 * cf + (ready ? 0.05 : 0);
+  }
+  /* hạt sáng lúc tới đích (vẽ code, 1 lần) */
+  var P = [], PAL = ['#ffffff', '#e9dcff', '#b99be0', '#8a6bb8', '#ffe39a'];
+  function burst(x, y) { for (var k = 0; k < 16; k++) { var a = -Math.PI * (0.08 + 0.84 * k / 15) + (Math.random() - 0.5) * 0.3, v = 34 + Math.random() * 40; P.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, l: 0.5 + Math.random() * 0.35, c: PAL[k % PAL.length] }); } }
+  function size() {
+    var vw = window.innerWidth || 360, vh = window.innerHeight || 640, dpr = window.devicePixelRatio || 1;
+    var s = Math.max(1, Math.min(4, Math.floor(Math.min(vw * 0.9 / W, vh * 0.45 / H)))), S = Math.max(1, Math.round(s * dpr));
+    if (CV.width !== W * S) { CV.width = W * S; CV.height = H * S; }
+    CV.style.width = (W * S / dpr) + 'px'; CV.style.height = (H * S / dpr) + 'px';
+    PC.style.fontSize = (14 + 6 * s) + 'px'; MS.style.fontSize = (12 + 3 * s) + 'px';
+    return S;
+  }
+  function blit(r, x, y, S, cx, cw) { var sx = r[0] + (cx || 0), w = cw || r[2]; g.drawImage(IMG, sx, r[1], w, r[3], Math.round(x) * S, Math.round(y) * S, w * S, r[3] * S); }
+  function draw(now) {
+    var S = size(); g.imageSmoothingEnabled = false; g.clearRect(0, 0, CV.width, CV.height);
+    if (!IMG.complete || !IMG.naturalWidth) return;
+    var b = RC.b[0], st = RC.s[0], wk = RC.w;
+    /* khung thanh: mép trái 8 / giữa lát lặp / mép phải 8 (ảnh obar 52×16 của HUD) */
+    var mid = b[2] - 16, x = BX + 8, end = BX + BW - 8;
+    while (x < end) { var w = Math.min(mid, end - x); g.drawImage(IMG, b[0] + 8, b[1], w, b[3], x * S, BY * S, w * S, b[3] * S); x += w; }
+    blit(b, BX, BY, S, 0, 8); g.drawImage(IMG, b[0] + b[2] - 8, b[1], 8, b[3], (BX + BW - 8) * S, BY * S, 8 * S, b[3] * S);
+    /* phần đã tải: tím Seismic trong khe (hàng 6–9) */
+    var fw = Math.round((BW - 12) * d);
+    if (fw > 0) { var rows = ['#c7aef0', '#9d7fd0', '#8466b8', '#5e4790']; for (var k = 0; k < 4; k++) { g.fillStyle = rows[k]; g.fillRect((BX + 6) * S, (BY + 6 + k) * S, fw * S, S); } }
+    /* hòn đá + Rocky: vị trí = tiến độ */
+    var sx = BX + SW0 + d * (BW - SW0 - st[2]), hop = 0;
+    if (fin) { var u = (now - finT) / 1000; if (u < 0.36) hop = -Math.round(Math.sin(u / 0.36 * Math.PI) * 5); }
+    var px = Math.round(sx); if (prevX !== null) dist += Math.abs(px - prevX); prevX = px;
+    var bob = fin ? 0 : (Math.floor(dist / 4) % 2);
+    blit(st, sx, BY + 3 - st[3] - bob + hop, S);
+    var rx = sx - 19;
+    if (fin && RC.c.length) { var cf = RC.c[Math.min(RC.c.length - 1, Math.floor((now - finT) / 100))]; blit(cf, rx - 5, BY + 3 - cf[3], S); }
+    else {
+      var fr = wk[(Math.floor(dist / 2)) % wk.length], top = 13, yy = BY + 3 - fr[3];
+      /* nghiêng người đẩy: nửa trên lệch tới trước 1 px, tay chạm đá */
+      g.drawImage(IMG, fr[0], fr[1], fr[2], top, Math.round(rx + 1) * S, yy * S, fr[2] * S, top * S);
+      g.drawImage(IMG, fr[0], fr[1] + top, fr[2], fr[3] - top, Math.round(rx) * S, (yy + top) * S, fr[2] * S, (fr[3] - top) * S);
+    }
+    for (var i = 0; i < P.length; i++) { var p = P[i]; if (p.l <= 0) continue; g.fillStyle = p.c; var z = p.l > 0.25 ? 2 : 1; g.fillRect(Math.round(p.x) * S, Math.round(p.y) * S, z * S, z * S); }
+  }
+  function tick(now) {
+    if (gone) return;
+    var rdt = Math.min(0.5, Math.max(0, (now - last) / 1000)), dt = Math.min(0.1, rdt); last = now; chk();
+    if (err) { MS.textContent = TX.e; MS.className = 'm e'; PC.textContent = Math.floor(d * 100) + '%'; draw(now); requestAnimationFrame(tick); return; }
+    T = target(now);
+    var cap = ready ? 1 : 0.97, goal = Math.min(T, cap);
+    if (goal > lastT + 0.002) { lastT = goal; lastTt = now; }
+    if (!ready && now - lastTt > 400) goal = Math.min(cap, T + 0.06, Math.max(goal, d + dt * 0.004));   /* đứng chờ (giải nén / dựng) → bò chậm 0,4 %/s, không quá thật + 6 % */
+    if (ready) d = Math.min(1, d + Math.max((1 - d) * rdt * 6, rdt * 1.6));   /* game đã sẵn sàng → chạy nốt tới đích nhanh (≤ ~0,6 s) kể cả khi khung hình giật */
+    else d += (Math.max(goal, d) - d) * Math.min(1, rdt * 3);
+    if (ready && d > 0.995) d = 1;
+    if (d >= 1 && !fin) { fin = 1; finT = now; var st = RC.s[0]; burst(BX + BW - st[2] / 2 - 2, BY - st[3] / 2); setTimeout(function () { O.className = 'out'; }, 800); setTimeout(function () { gone = true; O.style.display = 'none'; }, 1150); }
+    for (var i = 0; i < P.length; i++) { var p = P[i]; p.l -= dt; p.vy += 140 * dt; p.vx *= 1 - 2 * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+    var pc = Math.floor(d * 100); PC.textContent = pc + '%'; O.setAttribute('aria-valuenow', pc);
+    draw(now); requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  /* thẻ nền (rAF ngừng) → vẫn gỡ màn tải sau khi game sẵn sàng */
+  var iv = setInterval(function () { if (gone) return clearInterval(iv); chk(); if (ready && document.hidden) { gone = true; O.style.display = 'none'; clearInterval(iv); } }, 500);
+})();
+</script>
 <canvas id="c"></canvas>
 <canvas id="ui"></canvas>
 
@@ -179,7 +297,7 @@
 </div>
 
 <div id="toast" hidden></div>
-<div id="loading">Loading…</div>
+<div id="loading" style="display:none">Loading…</div>
 <script>/* p121: nạp game sau khi sw sẵn sàng; import hỏng (429) thì thử lại; CSS hỏng thì nạp lại */
 __swReady.then(function () {
   [].forEach.call(document.querySelectorAll('link[rel=stylesheet]'), function (L) { if (!L.sheet) { var c = L.cloneNode(); c.href = L.getAttribute('href') + '?r=1'; L.parentNode.insertBefore(c, L.nextSibling); } });
