@@ -128,8 +128,8 @@ export function createClock(deps) {
     darkness: () => {
       const c = st(); if (!c) return 0;
       const start = c.season === 'winter' ? 600 : 660, full = start + 240, m = c.min;
-      if (m <= start) return 0; if (m >= full) return 0.45;
-      const k = (m - start) / (full - start); return 0.45 * (k * k * (3 - 2 * k));
+      if (m <= start) return 0; if (m >= full) return 0.34;
+      const k = (m - start) / (full - start); return 0.34 * (k * k * (3 - 2 * k));   /* c35-demban: đêm bớt tối (0,45 → 0,34) */
     },
     dayT: () => { const h = 6 + st().min / 60; return (((h - 12) % 24) + 24) % 24 / 24; },   // tương thích cũ: 0 = trưa, 0,5 = nửa đêm
     init: sv => { sv.clock = normalize(sv.clock); if (!sv.clock.today) { S.save = sv; snapshotToday(); } },

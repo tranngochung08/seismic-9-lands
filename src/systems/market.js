@@ -4,11 +4,11 @@ import { getCarry, removeCarry, clearCarry } from './animals.js';
 const STR = {
   en: {
     sign: 'Trader', near: 'Trade', title: 'Trader',
-    lead: 'Sell what you are carrying in your hands — and the animals and fish in your bag.',
+    lead: 'Sell anything in your bag for Seismic stones — and whatever you carry in your hands.',
     head: 'On your head', goods: 'Goods', shop: 'For sale',
     stones: 'Stones', sell: 'Sell', sell1: 'Sell 1', sellAll: 'Sell all', close: 'Close', buy: 'Buy', owned: 'Owned ✓',
     empty: 'Your head is empty — go catch something!',
-    each: 'each', got: n => `+${n} 🪨`,
+    each: 'each', got: n => `+${n} Seismic stones`,
     rod: '🎣 Fishing rod', rodNote: 'Cast at any shore', gotRod: 'Fishing rod bought! Cast at the shore.',
     poor: 'Not enough stones — mine purple veins (bare hands), chop trees and sell the wood here, sell animals/fish, meet new artists',   /* plan-44 Q3 */
     firstMine: n => `First Seismic vein! +${n} 🪨 newcomer bonus — enough to start saving for a Sword (30 🪨)`,
@@ -17,11 +17,11 @@ const STR = {
   },
   vi: {
     sign: 'Thương nhân', near: 'Mua bán', title: 'Thương nhân',
-    lead: 'Bán thứ đang bế trên tay — và thú, cá trong túi.',
+    lead: 'Bán mọi vật phẩm trong túi lấy đá Seismic — và thứ đang bế trên tay.',
     head: 'Trên đầu bạn', goods: 'Hàng hóa', shop: 'Bán cho bạn',
     stones: 'Đá', sell: 'Bán', sell1: 'Bán 1', sellAll: 'Bán hết', close: 'Đóng', buy: 'Mua', owned: 'Đã có ✓',
     empty: 'Trên đầu chưa có gì — đi bắt thú đi!',
-    each: 'mỗi cái', got: n => `+${n} 🪨`,
+    each: 'mỗi cái', got: n => `+${n} đá Seismic`,
     rod: '🎣 Cần câu', rodNote: 'Thả câu ở bờ nước', gotRod: 'Đã mua cần câu! Ra bờ nước thả câu.',
     poor: 'Không đủ đá — đào mỏ tím (tay không), chặt cây rồi bán gỗ ở đây, bán thú/cá, gặp nghệ sĩ mới',   /* plan-44 Q3 */
     firstMine: n => `Mỏ đá Seismic đầu tiên! +${n} 🪨 thưởng người mới — gom đủ 30 🪨 là mua được Kiếm`,
@@ -49,6 +49,27 @@ Object.assign(PRICE, { turnip: 3, strawberry: 4, tomato: 4, corn: 5, pumpkin: 8,
 const TILE = 16;
 const keyOf = it => (it.kind === 'fish' && it.big ? 'fishBig' : it.kind);
 const priceOf = it => PRICE[keyOf(it)] || 0;
+/* c35-demban (anh 04/11): MỌI vật phẩm trong túi bán được lấy đá Seismic. Có giá trong PRICE → giữ; không có → theo loại (≈ 50 % giá mua nếu biết, tối thiểu 1).
+   KHÔNG bán: tiền (stone), công cụ / kiếm / trang bị (tag tool + mã công cụ), đồ nhiệm vụ / cốt truyện (quest, story), Ngọc Rồng (sưu tầm), Bông Tai Hợp Thể. */
+const SI = '<img src="assets/px/ui/items/stone.png" alt="" style="width:14px;height:14px;vertical-align:-2px;image-rendering:pixelated">';
+const NOSELL_ID = new Set(['stone', 'bua', 'axe', 'pickaxe', 'rod', 'shovel', 'scythe', 'knife', 'torch', 'sword', 'ht_earring', 'divebell', 'trenchmap']);
+const NOSELL_TAG = ['currency', 'tool', 'quest', 'story', 'dragonball'];
+const BUYP = { pill_s: 20, pill_l: 50 };   /* giá mua đã biết (items.js PILLS) → bán nửa giá */
+const TAGP = [['trophy', 10], ['book', 5], ['sky', 3], ['sea', 3], ['monster', 2], ['placeable', 3], ['revive', 3], ['crop', 3], ['food', 2], ['seed', 1], ['material', 1]];
+function priceId(ctx, id) {
+  if (PRICE[id]) return PRICE[id];
+  const it = ctx.ITEMS && ctx.ITEMS[id]; if (!it || NOSELL_ID.has(id) || /^(sword|kiem|blade)/.test(id)) return 0;
+  const tg = it.tags || []; if (NOSELL_TAG.some(t => tg.includes(t))) return 0;
+  if (BUYP[id]) return Math.max(1, Math.round(BUYP[id] / 2));
+  if (/^seed_/.test(id)) return Math.max(1, Math.round(SEED_PRICE / 2));
+  for (const [t, p] of TAGP) if (tg.includes(t)) return p;
+  return 1;
+}
+function goodsList(ctx, inv) {
+  const base = GOODS.filter(id => id === 'wood' || inv[id] > 0);
+  const more = Object.keys(inv).filter(id => !GOODS.includes(id) && typeof inv[id] === 'number' && inv[id] > 0 && priceId(ctx, id) > 0).sort();
+  return base.concat(more);
+}
 
 let stall = null;   // the placed object in the current map
 let el = null;      // the panel element
@@ -106,7 +127,7 @@ function goodsRow(ctx, id, n) {
   const bs = BS + (n > 0 ? '' : ';opacity:.35;cursor:default');
   const name = S.names[id] || `${ctx.itemIcon(id)} ${ctx.itemName(id)}`;
   return `<div class="hrow">
-    <span class="hwho"><b>${name}</b> <span class="chip">${PRICE[id]} 🪨 ${S.each}</span></span>
+    <span class="hwho"><b>${name}</b> <span class="chip">${priceId(ctx, id)} ${SI} ${S.each}</span></span>
     <span class="hnum"><b>×${n}</b></span>
     <button class="btn" data-w="1" data-g="${id}" style="${bs}"${dis}>${S.sell1}</button>
     <button class="btn primary" data-w="all" data-g="${id}" style="${bs}"${dis}>${S.sellAll}</button>
@@ -117,7 +138,7 @@ function rodRow(ctx) {
   const can = !has && stone >= ROD_PRICE;
   const bs = BS + (can ? '' : ';opacity:.35;cursor:default');
   return `<div class="hrow">
-    <span class="hwho"><b>${S.rod}</b> <span class="chip">${ROD_PRICE} 🪨</span> <span class="dim">${S.rodNote}</span></span>
+    <span class="hwho"><b>${S.rod}</b> <span class="chip">${ROD_PRICE} ${SI}</span> <span class="dim">${S.rodNote}</span></span>
     <span class="hnum"></span>
     ${has ? `<span class="chip">${S.owned}</span>`
       : `<button class="btn primary" data-buy="rod" style="${bs}"${can ? '' : ' disabled'}>${S.buy}</button>`}
@@ -127,7 +148,7 @@ function seedRow(ctx, id) {
   const S = L(ctx), inv = ctx.S.save.inv || {}, can = (inv.stone || 0) >= SEED_PRICE;
   const bs = BS + (can ? '' : ';opacity:.35;cursor:default');
   return `<div class="hrow">
-    <span class="hwho"><b>${ctx.itemIcon(id)} ${ctx.itemName(id)}</b> <span class="chip">${SEED_PRICE} 🪨</span></span>
+    <span class="hwho"><b>${ctx.itemIcon(id)} ${ctx.itemName(id)}</b> <span class="chip">${SEED_PRICE} ${SI}</span></span>
     <span class="hnum"><b>×${inv[id] || 0}</b></span>
     <button class="btn primary" data-seed="${id}" style="${bs}"${can ? '' : ' disabled'}>${S.buy}</button>
   </div>`;
@@ -144,14 +165,14 @@ function buySeed(ctx, id) {
 function render(ctx) {
   const S = L(ctx), inv = ctx.S.save.inv || {}, carry = getCarry(ctx);
   const total = carry.reduce((a, it) => a + priceOf(it), 0);
-  const html = `<h2>🏪 ${S.title}<span class="chip">🪨 ${inv.stone || 0}</span></h2>
+  const html = `<h2>🏪 ${S.title}<span class="chip">${SI} ${inv.stone || 0}</span></h2>
     <div class="shopw"><div class="shop-side"><div class="shop-port"><img src="assets/px/ui/port_trader.png" alt=""></div><p class="shop-say">${S.lead}</p></div>   <!-- plan-22: quầy kiểu Stardew: chân dung + lời chào bên trái -->
     <div class="scroll shop-main">
       <div class="hrow" style="opacity:.7"><span class="hwho"><b>${S.head}</b></span><span class="hnum"></span>
-        <button class="btn primary" data-i="all" style="${BS}${carry.length ? '' : ';opacity:.35;cursor:default'}"${carry.length ? '' : ' disabled'}>${S.sellAll}${total ? ` · +${total} 🪨` : ''}</button></div>
+        <button class="btn primary" data-i="all" style="${BS}${carry.length ? '' : ';opacity:.35;cursor:default'}"${carry.length ? '' : ' disabled'}>${S.sellAll}${total ? ` · +${total} ${SI}` : ''}</button></div>
       ${carry.length ? carry.map((it, i) => carryRow(ctx, it, i)).join('') : `<p class="dim" style="margin:6px 0 10px">${S.empty}</p>`}
       <div class="hrow" style="opacity:.7"><span class="hwho"><b>${S.goods}</b></span><span class="hnum"></span><span></span></div>
-      ${GOODS.filter(id => id === 'wood' || inv[id] > 0).map(id => goodsRow(ctx, id, inv[id] || 0)).join('')}
+      ${goodsList(ctx, inv).map(id => goodsRow(ctx, id, inv[id] || 0)).join('')}
       <div class="hrow" style="opacity:.7"><span class="hwho"><b>${S.shop}</b></span><span class="hnum"></span><span></span></div>
       ${rodRow(ctx)}
       ${ctx.chanthuShopRow ? ctx.chanthuShopRow() : ''}
@@ -189,13 +210,13 @@ function sellCarry(ctx, which) {
 export function bagPrice(ctx, id) {
   const carry = getCarry(ctx).filter(it => it.kind === id);
   if (carry.length) return { one: priceOf(carry[0]), all: carry.reduce((a, it) => a + priceOf(it), 0), n: carry.length };
-  const n = (ctx.S.save.inv || {})[id] || 0; return PRICE[id] && n > 0 ? { one: PRICE[id], all: PRICE[id] * n, n } : null;
+  const n = (ctx.S.save.inv || {})[id] || 0; const pp = priceId(ctx, id); return pp && n > 0 ? { one: pp, all: pp * n, n } : null;
 }
 export function sellFromBag(ctx, id, how) {
   const S = L(ctx), inv = ctx.S.save.inv; let earned = 0, sold = 0;
   const idx = () => getCarry(ctx).findIndex(it => it.kind === id);
   if (idx() >= 0) { do { const it = removeCarry(ctx, idx()); if (!it) break; earned += priceOf(it); sold++; } while (how === 'all' && idx() >= 0); }
-  else { const have = inv[id] || 0; if (have <= 0 || !PRICE[id]) return 0; sold = how === 'all' ? have : 1; inv[id] = have - sold; earned = sold * PRICE[id]; }
+  else { const have = inv[id] || 0; const pp = priceId(ctx, id); if (have <= 0 || !pp) return 0; sold = how === 'all' ? have : 1; inv[id] = have - sold; earned = sold * pp; }
   if (!sold) return 0;
   /* 2026-10-11 anh: bán qua TÚI ở vùng không có quầy (M1…) không nhận được đá — trước đây rơi đá ở toạ độ quầy (không có → mất). Giờ cộng THẲNG vào túi */
   ctx.bag.add('stone', earned); if (ctx.flyToSlot) try { ctx.flyToSlot('stone'); } catch (e) { } ctx.persist(); ctx.sfx && ctx.sfx('sell'); ctx.toast(S.got(earned));
@@ -203,12 +224,12 @@ export function sellFromBag(ctx, id, how) {
 }
 function sellGoods(ctx, id, how) {
   const S = L(ctx), inv = ctx.S.save.inv, have = inv[id] || 0;
-  if (have <= 0 || !PRICE[id]) return;
+  if (have <= 0 || !priceId(ctx, id)) return;
   const n = how === 'all' ? have : 1;
   inv[id] = have - n;
-  ctx.give('stone', n * PRICE[id], stall ? stall.x * TILE + 16 : undefined, stall ? (stall.y + 2) * TILE : undefined);
+  ctx.give('stone', n * priceId(ctx, id), stall ? stall.x * TILE + 16 : undefined, stall ? (stall.y + 2) * TILE : undefined);
   ctx.persist();
-  ctx.toast(S.got(n * PRICE[id]));
+  ctx.toast(S.got(n * priceId(ctx, id)));
   render(ctx);
 }
 function buyRod(ctx) {

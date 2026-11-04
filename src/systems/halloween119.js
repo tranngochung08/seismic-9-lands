@@ -8,7 +8,7 @@
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams('');
 const URLF = Q.get('halloween'), RAIN_OFF = Q.get('rain119') === '0', RAIN_ON = Q.get('rain119') === '1';   /* c14-thoitiet: =1 ép mưa (test) */
 function dateOn(d = new Date()) { const mo = d.getMonth(), da = d.getDate(); return (mo === 9 && da >= 25) || (mo === 10 && da <= 10); }
-const ST = { force: URLF === '1' ? true : URLF === '0' ? false : null, placed: [], lightN: 0, amb: [84, 92, 150], rain: !RAIN_OFF, rainK: 0.4, log: [], dk: 0, wet: 0 };   /* c14-thoitiet: dk = độ tối đêm theo đồng hồ (0…1), wet = độ mưa hiện tại (0…1) */
+const ST = { force: URLF === '1' ? true : URLF === '0' ? false : null, placed: [], lightN: 0, amb: [116, 124, 172], rain: !RAIN_OFF, rainK: 0.4, log: [], dk: 0, wet: 0 };   /* c14-thoitiet: dk = độ tối đêm theo đồng hồ (0…1), wet = độ mưa hiện tại (0…1) */
 /* c14-thoitiet: lịch mưa — khung 2 giờ game, ~35 % mưa, băm theo năm/ngày/khung (mọi máy giống nhau); vào / tạnh dần */
 function wetStep(ctx, dt) { const c = ctx.S.save && ctx.S.save.clock; let want = 0;
   if (RAIN_ON) want = 1; else if (c) { const blk = Math.floor((c.min || 0) / 120), sd = (c.year || 1) * 977 + (c.day || 1) * 31 + blk + (c.season ? c.season.length * 7 : 0); want = HSH(sd, 3) < 0.35 ? 1 : 0; }
@@ -87,6 +87,12 @@ function lightSprite(r, col, k) {   /* đĩa sáng bậc 4 mức + dither Bayer 
 }
 const WARM = [255, 150, 70], HALO = [150, 62, 14], PALE = [150, 150, 120], LIGHT_OLD = { lantern: [26, 10, 1], torch: [24, 12, 1], campfire: [30, 6, 1], arena_pillar: [26, 20, 0.9], crystal_p: [22, 10, 0.6], crystal_b: [20, 10, 0.6] };
 let LM = null, LMg = null; const LC = { m: null, n: -1, list: [] };
+function glowC35(g, ctx, cx, cy) {   /* c35-demban: đêm thường — vầng sáng tĩnh quanh người chơi (vẽ trước lớp tối của main.js nên bù 1/(1-tối)) */
+  const S = ctx.S, d = S.dark || 0, p = S.player; if (d < 0.05 || !p || (ctx.altView && ctx.altView())) return;
+  const lx = Math.round(p.x - cx), ly = Math.round(p.y - 10 - cy), r = 72, a = Math.min(0.45, d * 0.6 / (1 - d));
+  const gr = g.createRadialGradient(lx, ly, 4, lx, ly, r); gr.addColorStop(0, `rgba(200,190,150,${a.toFixed(3)})`); gr.addColorStop(0.55, `rgba(200,186,140,${(a * 0.5).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,228,170,0)');
+  g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = gr; g.fillRect(lx - r, ly - r, r * 2, r * 2); g.restore();
+}
 function drawNight(g, ctx, cx, cy) {
   const kq = Math.round(ST.dk * 10) / 10; if (kq < 0.1) return;   /* c14-thoitiet: ban ngày không phủ đêm; bậc 0,1 để ảnh đèn khỏi tạo mới mỗi khung */
   const VW = ctx.VW, VH = ctx.VH, m = ctx.S.map, O = ctx.O, TS = 16;
@@ -102,7 +108,7 @@ function drawNight(g, ctx, cx, cy) {
     const bx = o.x * TS + d.fw * 8 - cx, by = (o.y + d.fh) * TS - cy;
     if (L) put(bx + (L.dx || 0), by - L.y, L.r, L.k); else put(bx, by - old[1], old[0], old[2]);
   }
-  const p = ctx.S.player; if (p) put(p.x - cx, p.y - 10 - cy, 44, 0.42, PALE);   /* vầng nhẹ quanh người chơi: nhân vật luôn đọc được */
+  const p = ctx.S.player; if (p) put(p.x - cx, p.y - 10 - cy, 70, 0.62, PALE);   /* c35-demban: 44/0,42 → 70/0,62 */   /* vầng nhẹ quanh người chơi: nhân vật luôn đọc được */
   ST.lightN = n;
   g.save(); g.globalCompositeOperation = 'multiply'; g.imageSmoothingEnabled = false; g.drawImage(LM, 0, 0, VW, VH);
   g.globalCompositeOperation = 'lighter'; for (const [lx, ly, r, k] of HL) { const rr = Math.max(6, Math.round(r * 0.55)); g.drawImage(lightSprite(rr, HALO, k * 0.5 * kq), lx - rr, ly - rr); } g.restore();
@@ -157,12 +163,12 @@ export const halloween119 = {
     if (act && !ST.placed.length && ctx.S.zone.id === 'village' && !ST.tried) { ST.tried = 1; placeAll(ctx); }
     if (!act && ST.placed.length) removeAll(ctx);
     if (!act) ST.tried = 0;
-    if (act) { ST.dk = Math.max(0, Math.min(1, (ctx.S.dark || 0) / 0.45)); ST.wet = wetStep(ctx, dt); ST.rainK = 0.4 * ST.wet; }   /* c14-thoitiet: đọc độ tối đồng hồ TRƯỚC khi tắt đêm thường */
+    if (act) { ST.dk = Math.max(0, Math.min(1, (ctx.S.dark || 0) / 0.34));   /* c35-demban: đồng hồ tối đa 0,34 */ ST.wet = wetStep(ctx, dt); ST.rainK = 0.4 * ST.wet; }   /* c14-thoitiet: đọc độ tối đồng hồ TRƯỚC khi tắt đêm thường */
     if (act) ctx.S.dark = 0;   /* đêm Halloween thay đêm thường (không tối 2 lần) */
   },
   drawGround(g, ctx, cx, cy) { if (on(ctx) && ST.rain && ST.wet > 0.02) drawSplash(g, ctx, cx, cy); },
   draw(g, ctx, cx, cy) {
-    if (!on(ctx)) return; const AV = ctx.altView ? ctx.altView() : null; if (AV) return;
+    if (!on(ctx)) { glowC35(g, ctx, cx, cy); return; } const AV = ctx.altView ? ctx.altView() : null; if (AV) return;
     drawNight(g, ctx, cx, cy); if (ST.rain && ST.wet > 0.02) drawRain(g, ctx, cx, cy);
   },
   key(code, ctx) {
