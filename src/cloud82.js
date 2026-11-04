@@ -194,6 +194,12 @@ export async function initCloud82(o) {
       return r;
     };
     dbg.resolve = runResolve;
+    /* c39-mot-phien: mỗi tài khoản 1 phiên chơi — giành phiên TRƯỚC khi đồng bộ (máy đang chơi đẩy save + dừng, máy này tải đúng bản đó) */
+    let S39 = null;
+    try { S39 = await (await import('./session39.js')).initSession39({ cloud, sync, storage, key: KEY, S: o.S, persist: o.persist, CONFIG: o.CONFIG || {}, lang: () => (UI.lang && UI.lang()), log }); } catch (e) { log('s39', String(e && e.message || e)); }
+    dbg.s39 = S39;
+    const s39Claim = async why => { if (!S39 || !cloud.status().user) return; lock(true); statusTxt = T().syncing; paint(); try { await S39.claim(why); } catch (e) { log('s39', String(e)); } finally { lock(false); } };
+    const s39After = why => { try { if (S39) S39.after(why); } catch (e) { } };
 
     const afterSignIn = async () => {   /* email không có tên → đặt tên theo save / ô tên ở màn tiêu đề (không bao giờ hiện email làm tên công khai) */
       const u = cloud.status().user; if (!u) return;
@@ -385,13 +391,13 @@ export async function initCloud82(o) {
     dbg.renamePanel = renamePanel;
     dbg.displayName = curName;
 
-    const signedIn = async why => { await runResolve(why); await afterSignIn(); paint(); };
+    const signedIn = async why => { await s39Claim(why); await runResolve(why); await afterSignIn(); paint(); s39After(why); };
     if (ebtn) ebtn.onclick = async () => { try { if (cloud.status().user) return; if (await emailPanel()) await signedIn('email'); } catch (e) { log('err', String(e)); } };
     if (ubtn) ubtn.onclick = async () => { try { if (cloud.status().user) return; if (await pwPanel()) await signedIn('password'); } catch (e) { log('err', String(e)); } };
 
     if (btn) btn.onclick = async () => {
       try {
-        if (cloud.status().user) { await sync.flushNow('signout'); await cloud.signOut(); statusTxt = ''; paint(); return; }
+        if (cloud.status().user) { await sync.flushNow('signout'); try { if (S39) await S39.leave(); } catch (e) { } await cloud.signOut(); statusTxt = ''; paint(); return; }
         const r = await cloud.signIn({ provider: 'google' }); log('signIn', r);   /* bản thật: chuyển sang Google rồi quay về ?code= → lần mở sau tự đồng bộ */
         if (r.ok && !r.redirect) await signedIn('signin');
       } catch (e) { log('err', String(e)); }
@@ -420,7 +426,7 @@ export async function initCloud82(o) {
     /* ---------- lúc mở game: đã có phiên → đồng bộ ngay ---------- */
     paint();
     const ss = await cloud.session();
-    if (ss && ss.ok && ss.user) { await runResolve('boot'); await afterSignIn(); }
+    if (ss && ss.ok && ss.user) { await s39Claim('boot'); await runResolve('boot'); await afterSignIn(); s39After('boot'); }
     else { statusTxt = ss && ss.ok ? '' : T().offline; paint(); }
     beat();
     st.ready = true; log('ready', cloud.mode);

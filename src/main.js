@@ -278,7 +278,7 @@ async function boot() {
   $('#p-quit').onclick = () => { persist(); location.reload(); };
   $('#t-fs').onclick = toggleFullscreen; $('#btn-fs').onclick = toggleFullscreen;
   $('#t-demo').onclick = () => { location.href = location.pathname + '?demo&lang=' + UI.lang(); };
-  $('#btn-map').onclick = () => { mapQueued = true; }; $('#btn-codex').onclick = () => { codexQueued = true; };
+  $('#btn-map').onclick = () => { mapQueued = true; }; { const bs = $('#btn-set'); if (bs) bs.onclick = () => { if (S.save && S.map && (S.mode === 'play' || S.mode === 'menu')) toggleMenu('gear'); }; }   /* c40-nho: nút ⚙ góc trên phải = mở thẻ Cài đặt */ $('#btn-codex').onclick = () => { codexQueued = true; };
   $('#m-close').onclick = () => { UI.closeMap(); setMode('play'); };
   $('#s-close').onclick = () => { UI.closeShop(); setMode('play'); };
   $('#c-close').onclick = () => { UI.closeCodex(); setMode('play'); };

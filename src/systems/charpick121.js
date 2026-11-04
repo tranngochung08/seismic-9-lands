@@ -7,9 +7,9 @@
    · Khung pixel ui.npick như bảng chọn Chấn Thú (p120). Chữ vi / en.
    Móc test: window.__p121. */
 const BASE = 'assets/px/';
-export const SEIS_PRICE = 200;   /* giá nhân vật Seismic (đá Seismic) */
-export const HAIR_PRICE = 50;    /* giá mỗi kiểu tóc khác ở Noxx */
-export const LEADER_PRICE = 200; /* c20-leader: giá mỗi nhân vật Leader (đề xuất = Seismic, chờ anh chốt) */
+export const SEIS_PRICE = 20;   /* c40-nho: anh 04/11 — nhân vật rẻ ~20 đá */   /* giá nhân vật Seismic (đá Seismic) */
+export const HAIR_PRICE = 20;   /* c40-nho */    /* giá mỗi kiểu tóc khác ở Noxx */
+export const LEADER_PRICE = 20; /* c40-nho */ /* c20-leader: giá mỗi nhân vật Leader (đề xuất = Seismic, chờ anh chốt) */
 const LEADERS = [['ld_1198988206394314782', 'cigsafter.'], ['ld_1233038347744706645', 'mzain2292'], ['ld_398382848081526796', 'shroomskull'], ['ld_1217852123296043117', 'snow_2147'], ['ld_876438741856682024', 'thoai0lor'], ['ld_876809355230580746', 'nguyentunek'], ['ld_201360516961009665', 'tomjke'], ['ld_400729437303209985', 'vadim_kesha'], ['ld_1060594551301083229', 'k2sbhai'], ['ld_1108740964991897681', 'kristina.eth'], ['ld_200627755358879744', 'origin91'], ['ld_1011391283757056132', 'zella.nft']];   /* c20-leader: hero id = chars.fixed.ld_<discord> (plan-117, ảnh theo pfp) · tên = username Leader */
 const HERO = 'hung_b';
 const CHARS = [   /* skin / hair trùng gói Làng chars.base → art.js chọn đúng thân c0–c5; price 0 = có sẵn */
