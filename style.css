@@ -739,3 +739,5 @@ body.p45-boss #seis{display:none!important}
   #herobar{top:200px}
   body.p45-boss #h-zone{font-size:16px!important}   /* tên trùm dài (Cổng Trời · Ngô Công Lôi Thần) vừa 1 dòng */
 }
+/* p121 (anh 04/11): nút ✕ đóng bảng (Túi đồ / Cài đặt…) cả trên MÁY TÍNH — cuối hàng thẻ */
+@media (pointer:fine){ #menu .mframe{position:relative} #menu .mtabs .m-x{display:block;position:absolute;right:-22px;top:-22px} }
