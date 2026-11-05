@@ -839,6 +839,34 @@
       "ch": 24
      }
     }
+   },
+   "m9_1214559654378733588": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1214559654378733588.png",
+    "note": "c58-mag9: Mag 9 harix_137 từ pfp (PixelLab 4eb01fb0-6160-47e3-8c41-4ee2af580721)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1214559654378733588_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1214559654378733588_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1214559654378733588_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
    }
   },
   "shirtHue": [

@@ -11,6 +11,8 @@ export const SEIS_PRICE = 20;   /* c40-nho: anh 04/11 — nhân vật rẻ ~20 �
 export const HAIR_PRICE = 20;   /* c40-nho */    /* giá mỗi kiểu tóc khác ở Noxx */
 export const LEADER_PRICE = 20; /* c40-nho */ /* c20-leader: giá mỗi nhân vật Leader (đề xuất = Seismic, chờ anh chốt) */
 const LEADERS = [['ld_1198988206394314782', 'cigsafter.'], ['ld_1233038347744706645', 'mzain2292'], ['ld_398382848081526796', 'shroomskull'], ['ld_1217852123296043117', 'snow_2147'], ['ld_876438741856682024', 'thoai0lor'], ['ld_876809355230580746', 'nguyentunek'], ['ld_201360516961009665', 'tomjke'], ['ld_400729437303209985', 'vadim_kesha'], ['ld_1060594551301083229', 'k2sbhai'], ['ld_1108740964991897681', 'kristina.eth'], ['ld_200627755358879744', 'origin91'], ['ld_1011391283757056132', 'zella.nft']];   /* c20-leader: hero id = chars.fixed.ld_<discord> (plan-117, ảnh theo pfp) · tên = username Leader */
+export const MAG9_PRICE = 20;   /* c58-mag9: anh 05/11 — nhân vật Mag 9 giá 20 đá */
+const MAG9 = [['m9_1214559654378733588', 'harix_137']];   /* c58-mag9: hero id = chars.fixed.m9_<discord> (ảnh PixelLab theo pfp, cách Leader v2a) · tên = username */
 const HERO = 'hung_b';
 const CHARS = [   /* skin / hair trùng gói Làng chars.base → art.js chọn đúng thân c0–c5; price 0 = có sẵn */
   { id: 'c0', skin: '#f6d3b5', hair: '#2b1d14', vi: 'Nam', en: 'Male', price: 0 },
@@ -20,7 +22,8 @@ const CHARS = [   /* skin / hair trùng gói Làng chars.base → art.js chọn 
   { id: 'c2', skin: '#c98b5f', hair: '#1f1f1f', vi: 'Tóc đen', en: 'Black hair', price: HAIR_PRICE },
   { id: 'c3', skin: '#8d5a3b', hair: '#1f1f1f', vi: 'Da nâu', en: 'Dark skin', price: HAIR_PRICE },
   { id: 'c5', skin: '#c98b5f', hair: '#3a4fb2', vi: 'Tóc xanh', en: 'Blue hair', price: HAIR_PRICE },
-  ...LEADERS.map(([h, n]) => ({ id: h, vi: n, en: n, price: LEADER_PRICE, hero: h, ld: 1 }))];   /* c20-leader: id = hero id, owned 'char:ld_…' */
+  ...LEADERS.map(([h, n]) => ({ id: h, vi: n, en: n, price: LEADER_PRICE, hero: h, ld: 1 })),
+  ...MAG9.map(([h, n]) => ({ id: h, vi: n, en: n, price: MAG9_PRICE, hero: h, ld: 1, m9: 1 }))];   /* c58-mag9: cùng cơ chế Leader (ld), owned 'char:m9_…' */   /* c20-leader: id = hero id, owned 'char:ld_…' */
 const BODIES = CHARS.filter(c => !c.hero);
 /* Tủ đồ chỉ BÁN thân đã có đủ clip động tác (gói Làng chars.actions ≥ 20 clip) — kiểu tóc chưa làm động tác thì ẩn, làm xong tự hiện (04/11 anh: đưa lên game 2 nhân vật Nữ + tóc vàng) */
 const ready = (ctx, id) => { try { const vp = ctx.ART && ctx.ART.packs && ctx.ART.packs.village, c = vp && (vp.chars || []).find(x => x.file === `chars/${id}.png`); return !!(c && c.actions && Object.keys(c.actions).length >= 20); } catch (e) { return false; } };
@@ -30,7 +33,7 @@ const LD_ALIAS = { attack: 'atk', chop: 'work', mine: 'work', hammer: 'work', ho
 const ldReady = (ctx, h) => !!(ctx.ART && ctx.ART.fixed && ctx.ART.fixed[h] && ctx.ART.fixed[h].img);
 function ldFill(ctx) {   /* gắn clip mượn vào sheet Leader (đối tượng ART.fixed dùng chung: người chơi, máy khác trong phòng, NPC) — 1 lần mỗi sheet */
   const F = ctx.ART && ctx.ART.fixed; if (!F) return 0; let n = 0;
-  for (const [h] of LEADERS) {
+  for (const [h] of [...LEADERS, ...MAG9]) {   /* c58-mag9 */
     const img = F[h] && F[h].img, A = img && img.actions, th = A && A.throw; if (!th || A.__c20) continue;
     for (const [k, kind] of Object.entries(LD_ALIAS)) if (!A[k]) { A[k] = kind === 'atk' ? { ...th, fps: Math.round(th.n / 0.45), impact: Math.max(1, Math.round(th.n * 0.6)), __c20: 'throw' } : { ...th, fps: 12, impact: Math.max(1, Math.round(th.n * 0.6)), __c20: 'throw' }; n++; }
     A.__c20 = 1;
@@ -40,12 +43,12 @@ function ldFill(ctx) {   /* gắn clip mượn vào sheet Leader (đối tượn
 const SHIRTS = ['#ffffff', '#e04b4b', '#3d6db5', '#5a9c58', '#ffd45e', '#1f1f1f'];
 const STR = {
   vi: { title: 'Chọn nhân vật', lead: 'Nam hay nữ? Muốn nhân vật đẹp hơn thì gặp Noxx để mua bằng đá Seismic.',
-    leaders: 'Leader · theo ảnh đại diện', shop: 'Tủ đồ Noxx', leadShop: 'Nhân vật đẹp hơn · mua bằng đá Seismic · đã mua thì đổi lại miễn phí', shopBtn: '👕 Tủ đồ Noxx',
+    leaders: 'Leader · theo ảnh đại diện', mag9: 'Mag 9 · theo ảnh đại diện', shop: 'Tủ đồ Noxx', leadShop: 'Nhân vật đẹp hơn · mua bằng đá Seismic · đã mua thì đổi lại miễn phí', shopBtn: '👕 Tủ đồ Noxx',
     shirt: 'Áo', have: n => `Bạn có ${n} 🪨`, owned: 'Đã có', free: 'Có sẵn',
     pick: '✓ Chọn', wear: '✓ Mặc', worn: 'Đang mặc', buy: p => `Mua · ${p} 🪨`, close: 'Đóng',
     poor: (p, n) => `Chưa đủ đá Seismic — cần ${p} 🪨 (bạn có ${n}). Đào tinh thể tím, bán đồ cho Thương nhân…`, bought: n => `Đã mua: ${n}!`, changed: 'Đã đổi nhân vật' },
   en: { title: 'Choose your character', lead: 'Male or female? For a cooler character, visit Noxx and buy one with Seismic stones.',
-    leaders: 'Leaders · from their pfp', shop: "Noxx's Wardrobe", leadShop: 'Cooler characters · paid with Seismic stones · switch back for free once bought', shopBtn: "👕 Noxx's Wardrobe",
+    leaders: 'Leaders · from their pfp', mag9: 'Mag 9 · from their pfp', shop: "Noxx's Wardrobe", leadShop: 'Cooler characters · paid with Seismic stones · switch back for free once bought', shopBtn: "👕 Noxx's Wardrobe",
     shirt: 'Shirt', have: n => `You have ${n} 🪨`, owned: 'Owned', free: 'Free',
     pick: '✓ Choose', wear: '✓ Wear', worn: 'Wearing', buy: p => `Buy · ${p} 🪨`, close: 'Close',
     poor: (p, n) => `Not enough Seismic stones — you need ${p} 🪨 (you have ${n}). Mine purple crystals, sell to the Trader…`, bought: n => `Unlocked: ${n}!`, changed: 'Character changed' }
@@ -157,7 +160,7 @@ function open(ctx, isNew) {
   let sel = isNew ? list[0].id : bodyOf(o0), shirt = isNew ? SHIRTS[0] : (o0.shirt || SHIRTS[0]);
   ST.isNew = !!isNew;
   const el = document.createElement('div'); el.id = 'p121pick'; if (isNew) el.classList.add('nw'); npVars(ctx, el);
-  const cards = list.map((c, i) => `${c.ld && !(list[i - 1] || {}).ld ? `<div class="sec">${esc(t.leaders)}</div>` : ''}<button type="button" class="cd${c.hero ? ' se' : ''}${c.ld ? ' ld' : ''}" data-id="${c.id}"><canvas width="32" height="40"></canvas><b>${esc(c[lg])}</b>${isNew ? '' : '<span class="pr"></span>'}</button>`).join('');
+  const cards = list.map((c, i) => `${c.ld && (!(list[i - 1] || {}).ld || !!(list[i - 1] || {}).m9 !== !!c.m9) ? `<div class="sec">${esc(c.m9 ? t.mag9 : t.leaders)}</div>` : ''}<button type="button" class="cd${c.hero ? ' se' : ''}${c.ld ? ' ld' : ''}" data-id="${c.id}"><canvas width="32" height="40"></canvas><b>${esc(c[lg])}</b>${isNew ? '' : '<span class="pr"></span>'}</button>`).join('');
   el.innerHTML = `<div class="pk"><h3>${esc(isNew ? t.title : t.shop)}</h3><p class="ld">${esc(isNew ? t.lead : t.leadShop)}</p>
     <div class="top"><div class="pv"><canvas width="32" height="40"></canvas><b id="p121-nm"></b></div><div class="gr">${cards}</div></div>
     <div class="sh" id="p121-sh"><span>${esc(t.shirt)}:</span>${SHIRTS.map(c => `<button type="button" data-shirt="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>
@@ -235,7 +238,7 @@ export const charpick121 = {
     if (typeof window !== 'undefined') window.__p121 = {
       state: () => ({ open: ST.open, isNew: ST.isNew, need: needPick(ctx), flag: !!flags(ctx).p121, shopReady: shopReady(ctx), owned: CHARS.filter(c => c.price && owns(ctx, c.id)).map(c => c.id), stones: stones(ctx),
         outfit: { ...(ctx.S.save.outfit || {}) }, body: bodyOf(ctx.S.save.outfit), mode: ctx.S.mode, cards: [...document.querySelectorAll('#p121pick .cd')].map(b => b.dataset.id), dbtn: !!document.getElementById('p121-dbtn') }),
-      open: () => open(ctx, false), close: () => close(ctx), log: () => ST.log.slice(), chars: () => CHARS.map(c => ({ id: c.id, price: c.price })),
+      open: () => open(ctx, false), close: () => close(ctx), log: () => ST.log.slice(), chars: () => CHARS.map(c => ({ id: c.id, price: c.price })), mag9: () => MAG9.map(([h, n]) => ({ hero: h, name: n, ready: ldReady(ctx, h), price: MAG9_PRICE })),   /* c58-mag9 */
       leaders: () => LEADERS.map(([h, n]) => { const A = (ldReady(ctx, h) && ctx.ART.fixed[h].img.actions) || {}; return { hero: h, name: n, ready: ldReady(ctx, h), own: Object.keys(A).filter(k => A[k] && A[k].img && !A[k].__c20 && !k.startsWith('__')), alias: Object.keys(A).filter(k => A[k] && A[k].__c20 && !k.startsWith('__')) }; }) };   /* c20-leader */
   },
   update(dt, ctx) {
