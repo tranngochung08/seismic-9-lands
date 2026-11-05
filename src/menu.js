@@ -98,6 +98,7 @@ export function initMenu(d) {
     const a = e.target.closest('[data-act]'); if (a) { e.preventDefault(); act(a.dataset.act); }
     const b = e.target.closest('[data-sell]'); if (b) { e.preventDefault(); doSell(b.dataset.sell, b.dataset.w); }
     const f = e.target.closest('[data-eat]'); if (f) { e.preventDefault(); doEat(f.dataset.eat); }
+    const af50 = e.target.closest('[data-af50]'); if (af50) { e.preventDefault(); if (deps.CTX.autofarm50 && deps.CTX.autofarm50.use()) act('resume'); else render(); return; }   /* c50-autofarm: Dùng phiếu từ túi → đóng túi để thấy đồng hồ */
     const rb = e.target.closest('[data-rkread]'); if (rb) { e.preventDefault(); doRead(rb.dataset.rkread); return; }   /* 2026-10-13 anh: đọc sách Rocky từ túi */
     const hb = e.target.closest('[data-hrbook]'); if (hb) { e.preventDefault(); closeMenu(); if (deps.CTX.hrBook) deps.CTX.hrBook.open(); return; }   /* plan-30: sách bậc 8 (thưởng Hắc Rocky) */
     const z19 = e.target.closest('[data-size19]'); if (z19) { e.preventDefault(); if (deps.CTX.size19) deps.CTX.size19.set(z19.dataset.size19); render(); return; }   /* c19-zoom: Cỡ hiển thị */
@@ -205,6 +206,7 @@ function kindText(id) {
   const t = L(), d = ITEMS[id], C = deps.CTX;
   if (TOOLS[id]) { const tier = C.tool.tier(id); return `${t.tool} ${ROMAN[tier] || tier}`; }
   if (id === 'stone') return t.currency;
+  if (d && d.tags.includes('ticket')) return UI.lang() === 'vi' ? 'Vật phẩm dùng — chọn rồi bấm Dùng' : 'Usable item — select, then Use';   /* c50-autofarm: phiếu không phải nguyên liệu */
   if (d && d.rk) return UI.lang() === 'vi' ? 'Sách luyện Rocky — chọn rồi bấm Đọc (máy tính: bấm đúp)' : 'Rocky training book — select, then Read (desktop: double-click)';   /* 2026-10-13 anh */
   return d.tags.includes('food') ? t.food : id.startsWith('seed') ? t.seedK : d.tags.includes('carry') ? t.sell : d.tags.includes('sea') || /divebell|trenchmap|greatcrystal|scarf/.test(id) ? t.story : t.material;
 }
@@ -216,7 +218,8 @@ function tipOf(id) {
   const sb = pr ? `<button class="btn" data-sell="${id}" data-w="1">${esc(t.sell1)} · +${pr.one} 🪨</button>${pr.n > 1 ? `<button class="btn primary" data-sell="${id}" data-w="all">${esc(t.sellAll)} · +${pr.all} 🪨</button>` : ''}` : '';
   const dr = /^dball\d$/.test(id) && C.dragon && C.dragon.hasAll() ? `<button class="btn primary" data-dragon="1">${esc(C.dragon.label())}</button>` : '';   /* plan-29: đủ 7 Ngọc Rồng → gọi Rồng Thần */
   const rd = d && d.rk ? `<button class="btn primary" data-rkread="${id}">${UI.lang() === 'vi' ? '📖 Đọc' : '📖 Read'}</button>` : '';   /* 2026-10-13 anh: sách Rocky */
-  const btn = eat || sb || dr || rd ? ` <span class="msell">${rd}${dr}${eat}${sb}</span>` : '';
+  const af = id === 'auto_ticket' && C.autofarm50 && n > 0 ? `<button class="btn primary" data-af50="1">${lg === 'vi' ? 'Dùng' : 'Use'}</button>` : '';   /* c50-autofarm: Dùng phiếu ngay trong túi */
+  const btn = af || eat || sb || dr || rd ? ` <span class="msell">${af}${rd}${dr}${eat}${sb}</span>` : '';
   return pxText(`${itemName(id, lg)}${n > 1 ? ' ×' + n : ''} · ${d && d.desc ? d.desc[lg] || d.desc.en : kindText(id)}${pr ? ' · ' + t.sellHere : ''}`) + btn.replace(/🪨/g, img('ui/items/stone.png'));
 }
 function invSlot(pos, id, key) {

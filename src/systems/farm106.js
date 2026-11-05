@@ -38,7 +38,8 @@ const ZR = {   /* vùng → cấp quái thường + thủ lĩnh (loài có sprit
 const AQUA = { cachep: 1, bachkinh: 1, puffer: 1, eel: 1 }, WADE = { coc: 1, coc2: 1 }, AMPH = { crab: 1 }, FLY = { daibang: 1, hac: 1, crow: 1, gull: 1, macuu: 1 };
 const SHOT_CLIPS = ['cast', 'spit', 'zap', 'spout', 'flap', 'beam', 'shine', 'shout', 'blow', 'gaze', 'tongue', 'pulse', 'wave', 'throw'];
 const HGT = { xs: 15, s: 18, m: 24, l: 30 };
-const CF = { aggroR: 28, aggroT: 0.7, packR: 80, packN: 2, bite: 20, near: 16, shotMin: 30, shotMax: 90, shotV: 105, leashOut: 56, leashHome: 300, tauntT: 5, respawn: 30, respawnLead: 120, sleepR: 520, floorP: 0.35, floorC: 0.25, fleeT: 5, roam: 72, sepR: 18, respawnCt: 60, ctXp: 1.5, gcd: [1.6, 2.6], leadXp: 2.5 };
+for (const Z of Object.values(ZR)) { Z.mins = Z.mins.concat(Z.mins.slice(0, Math.ceil(Z.mins.length / 2))); if ((Z.cts || []).length === 1) Z.cts = Z.cts.concat([{ ...Z.cts[0], lv: Math.max(1, Z.cts[0].lv - 1) }]); }   /* c50-autofarm: anh 05/11 thêm quái +50 % mỗi vùng (63 → 91 con) */
+const CF = { aggroR: 28, aggroT: 0.7, packR: 80, packN: 2, bite: 20, near: 16, shotMin: 30, shotMax: 90, shotV: 105, leashOut: 56, leashHome: 300, tauntT: 5, respawn: 15, respawnLead: 60, sleepR: 520, floorP: 0.35, floorC: 0.25, fleeT: 5, roam: 72, sepR: 18, respawnCt: 15, ctXp: 1.5, gcd: [1.6, 2.6], leadXp: 2.5 };
 const ST = { ctx: null, on: false, mons: [], rq: [], shots: [], dying: [], fx6: [], tiles: {}, log: [], n: { spawn: 0, kill: 0, killLead: 0, angry: 0, pack: 0, calm: 0, back: 0, shot: 0, bite: 0, hitP: 0, hitC: 0, floor: 0, duel: 0, respawn: 0, scatter: 0 }, xp: { ely: 0, c79: 0, pl: 0 }, errs: 0, vanT: 0, im: null };
 /* c10-coop (chơi chung): NET.role 'solo' | 'host' (mô phỏng quái, phát cho mọi người) | 'guest' (quái = bóng theo chủ phòng). coop.js gắn hàm vào NET. */
 export const NET = { role: 'solo', peerObj: null, peers: null, nearest: null, hurt: null, onKill: null, fx: null, take: null, guestFall: null };
@@ -146,7 +147,7 @@ function spawnOne(ctx, rid, spec, avoidP) { if (rid === 'sky49') return spawnSky
   ST.mons.push(mo); ST.n.spawn++; log({ ev: 'spawn', id: mo.id, sp: spec.sp || spec.key, lead, rid, lv, x: Math.round(q.x), y: Math.round(q.y) });
   return mo;
 }
-function spawnAll(ctx) { for (const s of SKY49) spawnOne(ctx, 'sky49', s, false); for (const [rid, Z] of Object.entries(ZR)) { spawnOne(ctx, rid, Z.lead, false); for (const s of Z.cts || []) spawnOne(ctx, rid, s, false); for (const key of Z.mins) spawnOne(ctx, rid, { key }, false); } }
+function spawnAll(ctx) { for (const s of SKY49) spawnOne(ctx, 'sky49', s, false); for (const [rid, Z] of Object.entries(ZR)) { spawnOne(ctx, rid, Z.lead, false); for (const s of Z.cts || []) if (!spawnOne(ctx, rid, s, false)) ST.rq.push({ rid, spec: s, lead: false, ct: true, t: 3 }); for (const key of Z.mins) if (!spawnOne(ctx, rid, { key }, false)) ST.rq.push({ rid, spec: { key }, lead: false, ct: false, t: 3 }); } }   /* c50-autofarm: sinh hỏng lúc vào vùng → xếp hàng sinh lại (trước: mất hẳn) */
 function clearVanilla(ctx) {   /* Chũi / Cóc hoang cũ của fieldct + quái thường tự sinh của monsters.js trên Làng mới → thay bằng bầy theo vùng */
   if (!ctx.monsters) return; for (const o of ctx.monsters.list().slice()) if (o && o.c && !o.c.f106 && !o.c.f106m && !o.c.b49 && !o.c.spar && !o.c.boss && !o.c.gang95 && !o.farm103 && !o.f6) { try { ctx.monsters.remove(o); } catch (e) { } }
 }
@@ -787,7 +788,8 @@ export function netTakeOver() {   /* khách → chủ phòng (chủ cũ rời / 
     const have = ST.mons.filter(m => m.f6 && m.f6.rid === rid && m.hp > 0 && !m.dead);
     if (!have.some(m => m.f6.lead) && !ST.rq.some(q => q.rid === rid && q.lead)) ST.rq.push({ rid, spec: Z.lead, lead: true, ct: true, t: 30 });
     const want = Z.mins.length - have.filter(m => !m.f6.ct).length - ST.rq.filter(q => q.rid === rid && !q.ct).length;
-    for (let i = 0; i < want; i++) ST.rq.push({ rid, spec: { key: Z.mins[i % Z.mins.length] }, lead: false, ct: false, t: 4 + i * 2 });
+    for (let i = 0; i < want; i++) ST.rq.push({ rid, spec: { key: Z.mins[i % Z.mins.length] }, lead: false, ct: false, t: 1.5 + i * 0.7 });   /* c50-autofarm: bù nhanh hơn (đàn 91 con, hồi sinh 15 s) */
+    { const C0 = Z.cts || [], wc = C0.length - have.filter(m => m.f6.ct && !m.f6.lead).length - ST.rq.filter(q => q.rid === rid && q.ct && !q.lead).length; for (let i = 0; i < wc; i++) ST.rq.push({ rid, spec: C0[i % C0.length], lead: false, ct: true, t: 2 + i }); }   /* c50-autofarm: trước đây đổi chủ phòng thì Chấn Thú hoang đang chờ hồi sinh mất hẳn */
   }
   log({ ev: 'takeover', n: ST.mons.length, rq: ST.rq.length });
 }
