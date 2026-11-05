@@ -117,6 +117,7 @@ function onMsg(ctx, m) {
     case 'claimed': { const Q = C.claims.get(m.n); if (Q) { C.claims.delete(m.n); Q.cb(!!m.ok); } return; }
     case 'pvu': case 'pvuok': if (ctx.pkthu && ctx.pkthu.onMsg) ctx.pkthu.onMsg(m); return;   /* c32-pkthu: đòn lên Chấn Thú */
     case 'pvp': case 'pvpok': if (ctx.pk && ctx.pk.onMsg) ctx.pk.onMsg(m); return;   /* c17-pk: đòn PvP gửi riêng (to) — máy nhận tự kiểm */
+    case 'wb': case 'wbhit': case 'wbend': if (ctx.wb44 && ctx.wb44.onMsg) ctx.wb44.onMsg(m, m.f === C.host); return;   /* c44-boss: boss the gioi (khach chi nhan wb / wbend tu chu phong) */
     case 'full': toast(ctx, vi(ctx) ? 'Phòng chơi chung đã đầy' : 'Co-op room is full'); return;
   }
 }
@@ -199,7 +200,7 @@ export const coop = {
     if (!C.peers.size || !inZone(ctx)) return []; const g = ctx.g, out = [], VW = ctx.VW || 480, VH = ctx.VH || 270;
     for (const P of C.peers.values()) {
       if (!peerHere(P, ctx)) continue; const e = P.ent;
-      if (e.x > cx - 48 && e.x < cx + VW + 48 && e.y > cy - 16 && e.y < cy + VH + 72 && e.sheet) out.push({ y: e.y + ((P.h49 || 0) > 0 ? 1e5 : 0), f: () => { P.hd = (P.hd || 0) + ((P.h49 || 0) - (P.hd || 0)) * 0.2; if (Math.abs(P.hd - (P.h49 || 0)) < 0.3) P.hd = P.h49 || 0; g.save(); g.translate(-cx, -cy - Math.round(P.hd)); if (P.ko) g.globalAlpha = 0.5; try { e.draw(g); } catch (er) { } g.restore(); } });
+      if (e.x > cx - 48 && e.x < cx + VW + 48 && e.y > cy - 16 && e.y < cy + VH + 72 && e.sheet) out.push({ y: e.y + ((P.h49 || 0) > 0 ? 1e5 : 0), f: () => { P.hd = (P.hd || 0) + ((P.h49 || 0) - (P.hd || 0)) * 0.2; if (Math.abs(P.hd - (P.h49 || 0)) < 0.3) P.hd = P.h49 || 0; g.save(); g.translate(-cx, -cy - Math.round(P.hd)); if (P.ko) g.globalAlpha = 0.5; const t52 = (P.hd || 0) > 0.5 && globalThis.__tilt52 ? globalThis.__tilt52(P, P.dir, P.diag, P.mov, ctx.S.time) : null, mv52 = e.moving;   /* c52-tuthebay: người khác đang bay nghiêng theo hướng + nhấp nhô nhẹ */ if (t52) { const by = Math.round(Math.sin(ctx.S.time * 3) * 1.5); g.translate(e.x, e.y - 9 + by); g.rotate(t52.a); g.scale(1, t52.s); g.translate(-e.x, -(e.y - 9)); if (Math.abs(t52.a) > 0.01 || t52.s < 0.995) e.moving = false; } try { e.draw(g); } catch (er) { } e.moving = mv52; g.restore(); } });
       if (ctx.ldKit) for (const u of P.units.values()) out.push({ y: u.e.y, f: () => { try { ctx.ldKit.draw(g, u.e, cx, cy); } catch (er) { } } });
     }
     return out;
@@ -208,7 +209,7 @@ export const coop = {
     if (!C.peers.size || !inZone(ctx) || ctx.S.mode !== 'play') return; const su = ctx.scaleUI || scale, fs = Math.max(10, Math.round(su * 3));
     ug.save(); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom';
     for (const P of C.peers.values()) {
-      if (!peerHere(P, ctx)) continue; const sx = (P.ent.x - cx) * scale, sy = (P.ent.y - 22 - cy) * scale; if (sx < -80 || sy < -40 || sx > ug.canvas.width + 80 || sy > ug.canvas.height + 40) continue;
+      if (!peerHere(P, ctx)) continue; const sx = (P.ent.x - cx) * scale, sy = (P.ent.y - 22 - Math.round(P.hd || 0) - cy) * scale;   /* c52-tuthebay: tên theo độ cao người đang bay */ if (sx < -80 || sy < -40 || sx > ug.canvas.width + 80 || sy > ug.canvas.height + 40) continue;
       const t = P.name, w = ug.measureText(t).width + 8, h = fs + 4;
       ug.fillStyle = 'rgba(13,11,20,.55)'; ug.beginPath(); if (ug.roundRect) ug.roundRect(sx - w / 2, sy - h, w, h, 3); else ug.rect(sx - w / 2, sy - h, w, h); ug.fill();
       ug.fillStyle = P.ko ? '#9a9aa8' : P.st && P.st.pk ? '#ff6a5a' : '#9fe0ff';   /* c17-pk: đang bật PK → tên đỏ */ ug.fillText(t, sx, sy - 2);

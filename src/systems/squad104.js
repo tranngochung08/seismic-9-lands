@@ -11,6 +11,7 @@ import { SPECIES, MOVES, MOVE_NAME_EN } from './duel-data.js';
 import * as FX from './fx78.js';
 import { SHADOW, shadowFor } from './shadow.js';
 import * as D107 from './dash107.js';   /* plan-107: LAO NHANH tới */
+import * as J46 from './jump46.js';   /* c46-thunhay: nhảy qua vật cản / sông */
 import * as TGT from './target.js';
 
 /* p104rk: BỘ NÃO LOÀI Rocky golem = rktk.js (p90, 6 chiêu: Nắm Đấm Đá Bay · Địa Chấn Khối · Tách Khối Bão Đá · Khiên Ngực Seismic · Lao Thạch Cự · Nắm Đấm Đá Khổng Lồ).
@@ -22,7 +23,7 @@ function rkPt(u) { const p = u.__pt || (u.__pt = { golem: true }); p.hp = u.hp; 
 function rkPool(ctx, u, fo) { const p = ctx.S.player, f = u.f; if (!f) return []; return monList(ctx).filter(mo => alive(mo) && !(mo.c && mo.c.fct && !mo.angry) && (!(mo.c && mo.c.boss) || mo === fo) && (hyp(mo, p) < 150 || hyp(mo, f) < 190)); }
 function rkH(ctx, u) { return u.__H || (u.__H = { ctx, pet: () => rkPt(u), ent: () => u.f, stats: () => ({ max: u.max }), atk: () => Math.max(12, ((u.f && u.f.st && u.f.st.atk) || 40) * 0.35), mons: () => rkPool(ctx, u, focusOf(u.id)),
   deal: (mo, dmg, kb) => { if (u.f) dealHit(ctx, u, mo, dmg, kb || 0, 'rk'); }, face8: (e, dx, dy) => { face(e, e.x + dx, e.y + dy); rkSync(e); },
-  passable: (x, y) => !(ctx.isSolid && ctx.isSolid(ctx.S.map, Math.floor(x / 16), Math.floor(y / 16))), origin: (pt, e, ang) => RK.originOf(e, ang), dust: () => { }, quake: s => { if (ctx.quake && typeof location !== 'undefined' && /[?&]quake113=1/.test(location.search)) ctx.quake(s); } }); }
+  passable: (x, y) => !(ctx.isSolid && ctx.isSolid(ctx.S.map, Math.floor(x / 16), Math.floor(y / 16))) || J46.isWater(ctx, x, y),   /* c46: nước không chặn chiêu */ origin: (pt, e, ang) => RK.originOf(e, ang), dust: () => { }, quake: s => { if (ctx.quake && typeof location !== 'undefined' && /[?&]quake113=1/.test(location.search)) ctx.quake(s); } }); }
 function rkPose(ctx, f) { const P = f.tkPose; if (!P || !ctx.ldKit) return; const clip = P.clip === 'punch' ? 'atk' : P.clip === 'ha' ? 'cast' : (ctx.ldKit.has && ctx.ldKit.has(f, P.clip) ? P.clip : 'cast');   /* p115: tư thế riêng từng chiêu */ if (f.clip !== clip) f.clip = clip; f.ct = P.prog * Math.max(0.2, ctx.ldKit.clipT(f, clip)) * 0.98; }
 function rkTick(ctx, u, dt) {
   const f = u.f, p = ctx.S.player, H = rkH(ctx, u), pt = rkPt(u); rkSync(f); u.cd.skill = 99; u.cd.guard = 99;   /* 6 chiêu riêng thay chiêu chung */
@@ -91,7 +92,7 @@ const air49 = (ctx, u) => !!(ctx && ctx.b49Air && ctx.b49Air()) && !!(u && FLY49
 const tier49 = (ctx, u, mo) => air49(ctx, u) === !!(mo && mo.c && mo.c.b49);   /* thú dưới đất đánh quái dưới đất, thú đang bay đánh quái trên trời */
 function lift49(ctx, u, f, dt) { if (air49(ctx, u)) { f.b49 = true; f.alt = Math.min(24, (f.alt || 0) + dt * 50); } else if (f.b49) { f.alt = Math.max(0, (f.alt || 0) - dt * 50); if (f.alt <= 0) { f.alt = 0; f.b49 = false; } } }
 function alive(mo) { return !!mo && mo.hp > 0 && !mo.dead && mo.state !== 'dead' && !mo.hide && !mo.statue && !(mo.c && mo.c.spar); }
-function valid(mo) { return alive(mo) && !(mo.c && mo.c.boss) && !(mo.c && mo.c.fct && !mo.angry); }   /* Chũi / Cóc hoang hiền: để bắt; trùm: chỉ khi ra lệnh G */
+function valid(mo) { return alive(mo) && !(mo.c && mo.c.boss && !mo.c.wb44) && !(mo.c && mo.c.fct && !mo.angry); }   /* Chũi / Cóc hoang hiền: để bắt; trùm: chỉ khi ra lệnh G */
 function focusOf(id) { const mo = ST.focus.get(id); if (mo && alive(mo) && monList(ST.ctx).includes(mo)) return mo; if (mo) ST.focus.delete(id); return null; }
 function hostileNear(ctx, x, y, r) { let best = null, bd = r; for (const mo of monList(ctx)) { if (mo.__pk32 || !alive(mo) || (mo.c && mo.c.fct && !mo.angry)) continue; const d = Math.hypot(mo.x - x, mo.y - y); if (d < bd) { bd = d; best = mo; } } return best; }
 function rangedNear(ctx, p, r) {   /* đòn từ xa (chiêu Chấn Thú hoang nổi giận / côn đồ): con hung gần nhất trong r */
@@ -165,8 +166,13 @@ function hurtU(ctx, u, dmg, src) {
   if (u.hp <= 0) { u.ko = true; u.koT = CFG.koT; u.act = null; u.dash = null; ST.n.ko++; FX.sink(u.f.x, u.f.y, skinU(u), FX.power(0.3)); try { ctx.toast(L(ctx).ko(nameOf(ctx, u.m))); } catch (e) { } log({ ev: 'ko', id: u.id }); u.f = null; }
 }
 function face(f, x, y) { const dx = x - f.x, dy = y - f.y, d = Math.hypot(dx, dy); if (d > 0.5) { f.fx = dx / d; f.fy = dy / d; } }
+/* c46-thunhay: cản = ô cứng; nước cũng là cản khi chủ KHÔNG bơi và thú chưa xuống nước (chủ bơi → thú bơi theo như c10-boi) */
+function block46(ctx, f) { const wet = J46.ownerWet(ctx) || J46.isWater(ctx, f.x, f.y); return (x, y) => J46.solid(ctx, x, y) && !(wet && J46.isWater(ctx, x, y)); }
+function jump46(ctx, u, gx, gy) { const f = u.f, kit = ctx.ldKit; if (!f || (kit && kit.has(f, 'fly')) || f.sp === 'bachkinh') return false;   /* thú bay / thú bơi giữ cách đi riêng */
+  if (!J46.ahead(ctx, f, gx, gy, { blocked: block46(ctx, f), why: 'sq' })) return false; D107.stop(f, 'jump'); u.stuck = 0; log({ ev: 'jump', id: u.id }); return true; }
 function moveTo(ctx, u, gx, gy, sp, dt, near0 = 3) {
   const f = u.f, kit = ctx.ldKit, dx = gx - f.x, dy = gy - f.y, d = Math.hypot(dx, dy);
+  if (jump46(ctx, u, gx, gy)) return false;   /* c46-thunhay */
   { const r = D107.goFighter(ctx, f, gx, gy, sp, dt, near0, { trig: 70 }); if (r) { u.stuck = 0; return r === 'arrive'; } }   /* plan-107 */
   if (d <= near0) { if (f.clip !== 'idle' && !u.act) { f.clip = 'idle'; f.ct = 0; } u.stuck = 0; return true; }
   const st = Math.min(d, sp * dt), ok = kit.move(f, dx / d * st, dy / d * st); face(f, gx, gy); if (f.clip !== 'run' && kit.has(f, 'run')) { f.clip = 'run'; f.ct = 0; }
@@ -193,8 +199,32 @@ function slotGoal(ctx, u) {
   const p = ctx.S.player, dv = [[0, 1], [-1, 0], [1, 0], [0, -1]][p.dir] || [0, 1], k = u.slot - 1, lx = -dv[1], ly = dv[0];
   const big = u.f && u.f.tier === 'l' ? 1.4 : u.f && u.f.tier === 's' ? 0.85 : 1; return { x: p.x - dv[0] * CFG.follow * big + lx * k * 20 * big, y: p.y - dv[1] * 16 * big + ly * k * 13 * big + 3 };
 }
+const DIG46 = { don_tho: 1, dao_ham_vo: 1 };   /* c46-thunhay: chiêu chui đất — đi NGẦM (không bị sông / vật cản chặn), trồi lên dưới chân mục tiêu */
+const dig46Under = u => !!(u.act && u.act.kind === 'dig' && u.act.ph === 'under');
+function digStart(ctx, u, mv, mo, forced) {
+  const f = u.f, kit = ctx.ldKit; face(f, mo.x, mo.y); D107.stop(f, 'act'); J46.cancel(f);
+  u.act = { kind: 'dig', mv, mo, t: 0, ph: 'down', tx: mo.x, ty: mo.y, dq: 0 }; u.cd.skill = CFG.skillCd; ST.n.skill++;
+  f.clip = kit.has(f, 'dig') ? 'dig' : kit.has(f, 'stomp') ? 'stomp' : 'idle'; f.ct = 0;
+  FX.shout(f.x, f.y - 30, mvName(ctx, mv).toUpperCase(), '#ffe9a0', 1, 0.8); try { if (globalThis.__sfx108) globalThis.__sfx108.move(ctx, mv.id, 'cast', f.x, f.y, { type: mv.type }); } catch (e) { }
+  log({ ev: 'skill', id: u.id, mv: mv.id, forced: !!forced, dig: true }); return true;
+}
+function digDust(f, n, sp) { const D = f.d107; if (!D || !D.pt) return; for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = sp * (0.4 + Math.random() * 0.6); D.pt.push({ x: f.x + (Math.random() - 0.5) * 8, y: f.y + (Math.random() - 0.5) * 3, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.5, z: 0, vz: 12 + Math.random() * 20, t: 0, T: 0.32 + Math.random() * 0.2, r: 1.5 + Math.random() * 1.6 }); } }
+function digTick(ctx, u, dt) {   /* xuống 0,3 s (bụi) → đi ngầm 150 px/s (bụi theo dấu trên đất; dưới nước / dưới vật thì không thấy) → trồi lên ô đi được + đòn vùng 26 px */
+  const A = u.act, f = u.f, mo = A.mo, kit = ctx.ldKit; A.t += dt; if (alive(mo)) { A.tx = mo.x; A.ty = mo.y; }
+  const dry = (x, y) => !J46.isWater(ctx, x, y) && !J46.solid(ctx, x, y);
+  if (A.ph === 'down') { if ((A.dq -= dt) <= 0) { A.dq = 0.08; if (dry(f.x, f.y)) digDust(f, 2, 30); } if (A.t >= 0.3) { A.ph = 'under'; A.t = 0; if (dry(f.x, f.y)) digDust(f, 6, 50); } return; }
+  if (A.ph === 'under') { const dx = A.tx - f.x, dy = A.ty - f.y, d = Math.hypot(dx, dy), st = Math.min(d, 150 * dt); if (d > 0.5) { f.x += dx / d * st; f.y += dy / d * st; face(f, A.tx, A.ty); }
+    if ((A.dq -= dt) <= 0) { A.dq = 0.06; if (dry(f.x, f.y)) digDust(f, 1, 22); }
+    if (d < 4 || A.t > 1.4) { if (!dry(f.x, f.y)) { const q = kit.near(f.x, f.y); f.x = q.x; f.y = q.y; }
+      A.ph = 'up'; A.t = 0; f.clip = kit.has(f, 'atk') ? 'atk' : 'idle'; f.ct = 0; digDust(f, 10, 70); let n = 0;
+      for (const o of monList(ctx)) if ((valid(o) || o === mo) && alive(o) && Math.hypot(o.x - f.x, o.y - f.y) <= 26) { dealHit(ctx, u, o, biteDmg(u, o) * 2.4, 150, 'skill'); n++; }
+      try { FX.impact(f.x, f.y, 10, skinU(u), FX.power(0.6), { ring: true, q: 0.5 }); if (ctx.envfx) ctx.envfx.hit(f.x, f.y, 24, A.mv.type, 0.9, { noFlood: true }); } catch (e) { }
+      if (n) try { if (globalThis.__sfx108) globalThis.__sfx108.move(ctx, A.mv.id, 'hit', f.x, f.y, { type: A.mv.type }); } catch (e) { } log({ ev: 'skillHit', id: u.id, n, dig: true }); }
+    return; }
+  if (A.t >= 0.35) { u.act = null; f.clip = 'idle'; f.ct = 0; }
+}
 function castSkill(ctx, u, mo, forced) {
-  const mv = atkMove(u); if (!mv || !mo) return false; const f = u.f, kit = ctx.ldKit;
+  const mv = atkMove(u); if (!mv || !mo) return false; if (DIG46[mv.id]) return digStart(ctx, u, mv, mo, forced);   /* c46 */ const f = u.f, kit = ctx.ldKit;
   const clip = kit.has(f, 'cast') && mv.shape !== 'can' ? 'cast' : kit.has(f, 'atk') ? 'atk' : 'idle', Tc = Math.max(0.45, kit.clipT(f, clip));
   face(f, mo.x, mo.y); f.clip = clip; f.ct = 0; D107.stop(u.f, 'act'); u.act = { kind: 'skill', mv, mo, t: 0, T: Tc, imp: Math.min(Tc * 0.6, kit.impT(clip)), hit: false }; u.cd.skill = CFG.skillCd; ST.n.skill++;
   FX.shout(f.x, f.y - 30, mvName(ctx, mv).toUpperCase(), '#ffe9a0', 1, 0.8); if (mv.shape !== 'can') FX.muzzle(f.x + f.fx * 6, f.y, 8, skinU(u), FX.power(0.3), f.fx, f.fy);
@@ -214,8 +244,9 @@ function castGuard(ctx, u) {
   log({ ev: 'guardSk', id: u.id, kind: G.kind, mv: G.mv.id, n: att.length }); return true;
 }
 function tickU(ctx, u, dt) {
-  const f = u.f, kit = ctx.ldKit, p = ctx.S.player; f.ct += dt; D107.tick(f, dt); if (f.flash > 0) f.flash = Math.max(0, f.flash - dt); u.atkT -= dt; u.blkT -= dt; for (const k in u.cd) u.cd[k] -= dt;
+  const f = u.f, kit = ctx.ldKit, p = ctx.S.player; f.ct += dt; D107.tick(f, dt); if (f.flash > 0) f.flash = Math.max(0, f.flash - dt); u.atkT -= dt; u.blkT -= dt; for (const k in u.cd) u.cd[k] -= dt; if (J46.tick(ctx, f, dt, c => kit.has(f, c))) { u.stuck = 0; return; }   /* c46: đang nhảy */
   if (u.dash) { const D = u.dash; D.t += dt; const k = Math.min(1, D.t / D.T); kit.move(f, D.x0 + (D.x1 - D.x0) * k - f.x, D.y0 + (D.y1 - D.y0) * k - f.y); if (k >= 1) u.dash = null; return; }
+  if (u.act && u.act.kind === 'dig') { digTick(ctx, u, dt); return; }   /* c46: đang chui đất */
   if (u.act) { const A = u.act; A.t += dt;
     if (!A.hit && A.t >= A.imp) { A.hit = true; const mo = A.mo;
       if (A.kind === 'bite') { if (alive(mo) && hyp(mo, f) <= 30) { dealHit(ctx, u, mo, biteDmg(u, mo)); FX.bite(mo.x, mo.y, 6, skinU(u), FX.power(FX.powerP(SPECIES[u.sp], u.lv))); } }
@@ -230,11 +261,12 @@ function tickU(ctx, u, dt) {
   if ((md === 'guard' || ST.rallyOn) && u.cd.guard <= 0 && danger(ctx) && hostileNear(ctx, p.x, p.y, 56) && castGuard(ctx, u)) return;
   const mo = pickTarget(ctx, u); u.tgt = mo; const sp = spdOf(f);
   if (!mo && isGuardian(ctx, u)) { const sh = ST.shooter, k = hyp(sh, p) || 1, R = reachOf(u), gx = p.x + (sh.x - p.x) / k * R, gy = p.y + (sh.y - p.y) / k * R * 0.75; if (moveTo(ctx, u, gx, gy, sp * 1.4, dt, 2)) face(f, sh.x, sh.y); return; }   /* đứng chắn giữa người và kẻ bắn */
-  if (!mo) { if (u.hp < u.max) u.hp = Math.min(u.max, u.hp + CFG.regen * dt); const g = slotGoal(ctx, u); if (p.moving || p.autoPath || hyp(f, p) > 72) u.rest16 = false;   /* c16-dungyen: người đi / thú xa → thôi đứng */
+  if (!mo) { if (u.hp < u.max) u.hp = Math.min(u.max, u.hp + CFG.regen * dt); const g = slotGoal(ctx, u); if (!J46.ownerWet(ctx) && J46.isWater(ctx, g.x, g.y) && kit.near) { const q = kit.near(g.x, g.y); g.x = q.x; g.y = q.y; }   /* c46 */ if (p.moving || p.autoPath || hyp(f, p) > 72) u.rest16 = false;   /* c16-dungyen: người đi / thú xa → thôi đứng */
     if (!u.rest16 && !p.moving && !p.autoPath && (p.idleT || 0) > 0.5 && hyp(f, p) < 72) u.rest16 = true;   /* c16-dungyen: người đứng yên > 0,5 s → thú đứng luôn (ô bị chắn thì không bao giờ tới nơi → chạy tại chỗ) */
+    if (u.rest16 && J46.isWater(ctx, f.x, f.y) && !J46.ownerWet(ctx)) u.rest16 = false;   /* c46: không đứng nghỉ giữa sông */
     if (u.rest16 || (hyp(f, p) < 30 && hyp(f, g) < 12)) { u.rest16 = !p.moving; if (f.clip !== 'idle') { f.clip = 'idle'; f.ct = 0; } face(f, p.x, p.y + 30); return; }   /* c16-dungyen: đứng yên tại chỗ */
     if (moveTo(ctx, u, g.x, g.y, hyp(f, p) > 80 ? sp * 1.5 : sp, dt, 4) && !p.moving) u.rest16 = true; return; }
-  const d = hyp(f, mo), mv = atkMove(u), rng = mv && mv.shape === 'can' ? 26 : 96;
+  const d = hyp(f, mo), mv = atkMove(u), rng = mv && DIG46[mv.id] ? 110 : mv && mv.shape === 'can' ? 26 : 96;   /* c46: chiêu chui đất tầm 110 */
   if (u.cd.skill <= 0 && mv && d <= rng && castSkill(ctx, u, mo)) return;
   if (d < 22 && u.atkT <= 0) { const clip = kit.has(f, 'atk') ? 'atk' : 'idle', Tc = Math.max(0.35, kit.clipT(f, clip)); face(f, mo.x, mo.y); f.clip = clip; f.ct = 0; D107.stop(u.f, 'act'); u.act = { kind: 'bite', mo, t: 0, T: Tc, imp: Math.min(Tc * 0.6, kit.impT(clip)), hit: false }; u.atkT = 1.0; return; }
   let gx, gy; const dpm = hyp(mo, p);
@@ -507,12 +539,12 @@ export const squad104 = {
   },
   drawGround(g, ctx, cx, cy) {
     if (duelOn(ctx)) return;
-    for (const u of ST.U.values()) { if (isEly(ctx, u) || !u.f || u.ko) continue; D107.ground(g, u.f, cx, cy); if (SHADOW.on) shadowFor(g, u.f.x, u.f.y, (globalThis.__R89||Math.round)(u.f.x - cx), (globalThis.__R89||Math.round)(u.f.y - cy) + 1, (globalThis.__fw110 ? globalThis.__fw110(u.f.sp, u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13) : u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13), u.f.b49 ? u.f.alt || 0 : 0); }
+    for (const u of ST.U.values()) { if (isEly(ctx, u) || !u.f || u.ko) continue; D107.ground(g, u.f, cx, cy); if (SHADOW.on && !dig46Under(u)) shadowFor(g, u.f.x, u.f.y, (globalThis.__R89||Math.round)(u.f.x - cx), (globalThis.__R89||Math.round)(u.f.y - cy) + 1, (globalThis.__fw110 ? globalThis.__fw110(u.f.sp, u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13) : u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13), u.f.b49 || u.f.j46 ? u.f.alt || 0 : 0); }   /* c46: bóng theo độ cao khi nhảy */
   },
   drawables(ctx, cx, cy) {
     if (duelOn(ctx) || !ctx.ldKit) return []; const out = [], g = ctx.g, p = ctx.S.player;
     for (const u of ST.U.values()) {
-      if (!isEly(ctx, u) && u.f && !u.ko) { const f = u.f; out.push({ y: f.y, f: () => D107.draw(f, g, cx, cy, (gg, a, c) => ctx.ldKit.draw(gg, f, a, c)) }); D107.drawables(out, f, g, cx, cy); }
+      if (!isEly(ctx, u) && u.f && !u.ko && !dig46Under(u)) { const f = u.f; out.push({ y: f.y, f: () => D107.draw(f, g, cx, cy, (gg, a, c) => ctx.ldKit.draw(gg, f, a, c)) }); D107.drawables(out, f, g, cx, cy); }
       if (u.blkT > 0 && u.onField()) { const P = u.pos(), im = img('blk'); out.push({ y: P.y + (u.bdy < 0 ? -0.5 : 0.5), f: () => { const x = (globalThis.__R89||Math.round)(P.x - cx + (u.bdx || 0) * 8), y = (globalThis.__R89||Math.round)(P.y - cy - 8 + (u.bdy || 0) * 3);   /* khiên đỡ TĨNH 0,4 s (PixelLab) */
         if (im) { const w = im.width / 2, h = im.height / 2; g.drawImage(im, 0, 0, im.width, im.height, x - w / 2, y - h / 2, w, h); } else { g.fillStyle = '#bff3e6'; g.fillRect(x - 1, y - 6, 2, 12); } } }); }
     }

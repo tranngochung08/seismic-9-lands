@@ -604,7 +604,7 @@ function monWrap(ctx) {   /* quái thường dưới nước bị đánh (cá, l
 }
 const EXT = [], EXS = new Set();
 function extraEnts(ctx) {   /* Chấn Thú đang ở ngoài map cho water.js (gợn mỗi bước, rẽ nước, tóe khi vào nước / đáp) */
-  EXT.length = 0; EXS.clear(); const add = f => { if (f && f.x != null && !f.dead && !f.hide && !EXS.has(f)) { EXS.add(f); EXT.push(f); } }, W0 = typeof window !== 'undefined' ? window : {};
+  EXT.length = 0; EXS.clear(); const add = f => { if (f && f.x != null && !f.dead && !f.hide && !((f.alt || 0) > 2) && !EXS.has(f)) {   /* c46: đang nhảy / bay thì không toé nước */ EXS.add(f); EXT.push(f); } }, W0 = typeof window !== 'undefined' ? window : {};
   try { if (W0.__c79 && W0.__c79.f) add(W0.__c79.f()); } catch (e) { }
   try { if (W0.__sq && W0.__sq.fighters) for (const u of W0.__sq.fighters()) add(u.f); } catch (e) { }
   try { if (ctx.elyz95 && ctx.elyz95.E) add(ctx.elyz95.E()); } catch (e) { }

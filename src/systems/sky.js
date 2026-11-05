@@ -181,7 +181,10 @@ function drawHover(g, ent) {
     g.save(); g.globalAlpha = 0.7; g.translate(x, py - 8); g.rotate(Math.atan2(vy, vx)); g.drawImage(trail.img, fi * trail.w * hi, 0, trail.w * hi, trail.h * hi, -trail.w + 6, -Math.round(trail.h / 2), trail.w, trail.h); g.restore(); }
   const pk = ctx.alt ? ctx.alt.pose() : 'hover', sk = Math.min(1, Math.max(0, (Math.abs(AL.v) - 110) / 140)); if (pk !== 'hover') drawSpeedFx(g, pk, x, py - 10, t, 0.35 + 0.65 * sk, 'back');   /* VFX tốc độ (flyposes.js) — chỉ khi đang lao nhanh */
   const sp = ent.kiSpin; if (sp) { g.save(); g.translate(x, py - 10); g.rotate(sp.ang || 0); g.translate(-x, -(py - 10)); }   /* ki.js lộn nhào né đòn: chỉ xoay NGƯỜI + chong chóng (Rocky không xoay) */
+  const t52 = B49.on ? tilt52(ent, ent.dir, ent.diag, !!ent.moving && !ent.action && !sp && pk === 'hover', t) : null, on52 = !!t52 && (Math.abs(t52.a) > 0.01 || t52.s < 0.995);   /* c52-tuthebay: nghiêng thân theo hướng bay */
+  if (on52) { g.save(); g.translate(x, py - 9); g.rotate(t52.a); g.scale(1, t52.s); g.translate(-x, -(py - 9)); }
   const hd = drawPlayer(g, ent, x, py, 'hover', t);
+  if (on52) g.restore();
   if (!B49.on) copterAt(g, hd, t, cut ? cut.fps || 18 : Math.abs(AL.v) > 110 ? 34 : 18);   /* c49-bay: bay bằng Ki — không đội chong chóng */   /* bay nhanh: chong chóng quay nhanh hơn */
   if (sp) g.restore();
   if (pk !== 'hover' && !B49.on) { drawCopterBlur(g, hd.hx, hd.hy - 9, t, 0.5 + 0.5 * sk); drawSpeedFx(g, pk, x, py - 10, t, 0.35 + 0.65 * sk, 'front'); }
@@ -1581,4 +1584,19 @@ function b49Tick(ctx, dt) {
   if (landZone(ctx) && ctx.S.mode === 'play' && (B49.spawnT -= dt) <= 0) { B49.spawnT = 20; b49Populate(ctx); }
   if (ctx.S.mode === 'play' && landZone(ctx)) { const s = sv(ctx); if (!s.b49hint && (B49.hintT = (B49.hintT || 0) + dt) > 4) { s.b49hint = 1; ctx.toast(b49L(ctx).hint); try { ctx.persist(); } catch (e) { } } }
 }
-
+/* ===== c52-tuthebay (anh 05/11): TƯ THẾ BAY theo hướng =====
+   Đang Bay + di chuyển: sang trái/phải → thân gần nằm ngang (xoay 72°, đầu về phía bay, như siêu nhân bay); lên/xuống → co dọc 20 % (lao ra xa / lao về phía người xem);
+   chéo → nội suy (góc theo thành phần ngang, co theo thành phần dọc). Đứng yên → thẳng người (bob ±1,5 px sẵn có của drawHover). Chuyển mượt hằng số thời gian 0,05 s (~0,15 s tới đích).
+   Xoay bằng canvas lúc vẽ quanh tâm thân (chân − 9 px); ảnh vẽ nearest (imageSmoothing tắt) nên pixel vẫn sắc. o.__t52 giữ trạng thái theo từng thực thể (mình / người khác). */
+const T52 = { ANG: 72 * Math.PI / 180, SQ: 0.2, TAU: 0.05 };
+function tilt52(o, dir, diag, moving, now) {
+  let vx = 0, vy = 0;
+  if (moving) { if (diag != null && diag >= 0) { vx = diag & 1 ? -1 : 1; vy = diag & 2 ? -1 : 1; } else { const d = dir & 3; vx = d === 2 ? 1 : d === 1 ? -1 : 0; vy = d === 0 ? 1 : d === 3 ? -1 : 0; } }
+  const n = Math.hypot(vx, vy) || 1; vx /= n; vy /= n;
+  const ta = vx * T52.ANG, ts = 1 - Math.abs(vy) * T52.SQ;
+  const st = o.__t52 || (o.__t52 = { a: ta, s: ts, t: now }); const dt = Math.max(0, Math.min(0.1, now - st.t)); st.t = now;
+  const k = 1 - Math.exp(-dt / T52.TAU); st.a += (ta - st.a) * k; st.s += (ts - st.s) * k;
+  if (Math.abs(st.a - ta) < 0.002) st.a = ta; if (Math.abs(st.s - ts) < 0.002) st.s = ts;
+  return st;
+}
+globalThis.__tilt52 = tilt52;   /* coop.js: người chơi khác đang bay cũng nghiêng theo tin st (d, g, m) */
