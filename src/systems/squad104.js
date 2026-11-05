@@ -86,6 +86,10 @@ const danger = ctx => now() - ST.pHitT < 1.5 || (() => { const h = heroHp(ctx); 
 
 /* ---------- mục tiêu ---------- */
 function monList(ctx) { let L0; try { L0 = ctx.monsters && ctx.monsters.list ? ctx.monsters.list() : []; } catch (e) { L0 = []; } const X = ctx.pkthu && ctx.pkthu.foes ? ctx.pkthu.foes() : null; return X && X.length ? L0.concat(X) : L0; }   /* c32-pkthu: + mục tiêu PK (Chấn Thú / người đối thủ khi cả 2 bật PK) */
+const FLY49 = { macuu: 1, hac: 1, hac2: 1, daibang: 1, daibang2: 1, vitbao: 1, rongdo: 1 };   /* c49-bay: Chấn Thú có cánh — bay theo chủ lên tầng cao */
+const air49 = (ctx, u) => !!(ctx && ctx.b49Air && ctx.b49Air()) && !!(u && FLY49[u.sp]);
+const tier49 = (ctx, u, mo) => air49(ctx, u) === !!(mo && mo.c && mo.c.b49);   /* thú dưới đất đánh quái dưới đất, thú đang bay đánh quái trên trời */
+function lift49(ctx, u, f, dt) { if (air49(ctx, u)) { f.b49 = true; f.alt = Math.min(24, (f.alt || 0) + dt * 50); } else if (f.b49) { f.alt = Math.max(0, (f.alt || 0) - dt * 50); if (f.alt <= 0) { f.alt = 0; f.b49 = false; } } }
 function alive(mo) { return !!mo && mo.hp > 0 && !mo.dead && mo.state !== 'dead' && !mo.hide && !mo.statue && !(mo.c && mo.c.spar); }
 function valid(mo) { return alive(mo) && !(mo.c && mo.c.boss) && !(mo.c && mo.c.fct && !mo.angry); }   /* Chũi / Cóc hoang hiền: để bắt; trùm: chỉ khi ra lệnh G */
 function focusOf(id) { const mo = ST.focus.get(id); if (mo && alive(mo) && monList(ST.ctx).includes(mo)) return mo; if (mo) ST.focus.delete(id); return null; }
@@ -103,7 +107,7 @@ function pickTarget(ctx, u) {
   const p = ctx.S.player, P = u.pos(); let best = null, bs = -1e9; const guardian = isGuardian(ctx, u);
   const taken = new Map(); for (const v of ST.U.values()) if (v !== u && v.tgt) taken.set(v.tgt, (taken.get(v.tgt) || 0) + 1);
   for (const mo of monList(ctx)) {
-    if (!valid(mo)) continue; const dp = hyp(mo, p), du = hyp(mo, P); let s;
+    if (!valid(mo) || !tier49(ctx, u, mo)) continue; const dp = hyp(mo, p), du = hyp(mo, P); let s;
     if (ST.rallyOn || guardian) { if (dp > (guardian ? 34 : CFG.rallyR)) continue; s = 10 - dp / 10; }
     else if (md === 'free') { if (dp > CFG.freeR && du > 120) continue; s = 5 - du / 40; }
     else {   /* Bảo vệ: con đang đánh / nhắm người chơi cao nhất */
@@ -137,7 +141,7 @@ function mkUnit(ctx, m) {
 }
 function ensureF(ctx, u) {   /* sprite trận tải lười */
   if (u.f || u.ko || isEly(ctx, u) || u.sp === 'ubam') return u.f;   /* c21-ubam: Ubam ngoài map = thú cưng pet.js (ubam121.js) */ const kit = ctx.ldKit; if (!kit) return null;
-  if (!kit.ready()) { if (!ST.loading) { ST.loading = true; kit.load().then(() => { ST.loading = false; }, () => { ST.loading = false; }); } return null; }
+  if (!kit.ready()) { if (!ST.loading) { ST.loading = true; kit.load().then(() => { ST.loading = false; try { if (kit.pre) for (const q of ST.U.values()) kit.pre(q.sp); } catch (e47) { } }, () => { ST.loading = false; }); } return null; }   /* c47-vaogame: tải trước ảnh thú trong đội */
   const p = ctx.S.player, q = kit.near(p.x - 14 + u.slot * 12, p.y + 8);
   try { const f = kit.mk(u.sp, u.lv, u.m, q.x, q.y); f.comp79 = true; f.clip = 'idle'; f.ct = 0; f.fx = 0.01; f.fy = 1; u.f = f; } catch (e) { console.error('squad104 mk', u.sp, e); return null; }
   u.max = Math.round(70 + (u.f.st && u.f.st.hp ? u.f.st.hp * 1.6 : 110)); if (!(u.hp > 0)) u.hp = u.max;
@@ -491,7 +495,7 @@ export const squad104 = {
     for (const u of ST.U.values()) {
       if (isEly(ctx, u)) { for (const k in u.cd) u.cd[k] -= dt; u.blkT -= dt; continue; }   /* Elyziuma: bộ não elyz95 tự chạy */
       if (u.ko) { u.koT -= dt; if (u.koT <= 0) { u.ko = false; u.hp = 0; u.pop = true; try { ctx.toast(L(ctx).rest(nameOf(ctx, u.m))); } catch (e) { } } continue; }
-      const f = ensureF(ctx, u); if (f) tickU(ctx, u, dt);
+      const f = ensureF(ctx, u); if (f) { tickU(ctx, u, dt); lift49(ctx, u, f, dt); }
       if (rkOn(u) && u.f && !u.ko) rkUpd(ctx, u, dt);   /* p104rk */
     }
   },
@@ -503,7 +507,7 @@ export const squad104 = {
   },
   drawGround(g, ctx, cx, cy) {
     if (duelOn(ctx)) return;
-    for (const u of ST.U.values()) { if (isEly(ctx, u) || !u.f || u.ko) continue; D107.ground(g, u.f, cx, cy); if (SHADOW.on) shadowFor(g, u.f.x, u.f.y, (globalThis.__R89||Math.round)(u.f.x - cx), (globalThis.__R89||Math.round)(u.f.y - cy) + 1, (globalThis.__fw110 ? globalThis.__fw110(u.f.sp, u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13) : u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13), 0); }
+    for (const u of ST.U.values()) { if (isEly(ctx, u) || !u.f || u.ko) continue; D107.ground(g, u.f, cx, cy); if (SHADOW.on) shadowFor(g, u.f.x, u.f.y, (globalThis.__R89||Math.round)(u.f.x - cx), (globalThis.__R89||Math.round)(u.f.y - cy) + 1, (globalThis.__fw110 ? globalThis.__fw110(u.f.sp, u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13) : u.sp === 'rocky' ? 22 : u.f.tier === 'l' ? 18 : u.f.tier === 's' ? 10 : 13), u.f.b49 ? u.f.alt || 0 : 0); }
   },
   drawables(ctx, cx, cy) {
     if (duelOn(ctx) || !ctx.ldKit) return []; const out = [], g = ctx.g, p = ctx.S.player;

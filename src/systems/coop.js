@@ -46,7 +46,7 @@ function onSt(ctx, m) {
   const P = C.peers.get(m.f) || mkPeer(ctx, m.f, 'Player', {}); P.seen = ctx.S.time;
   P.st = m;   /* c17-pk: giữ tin 'st' cuối (pk / lv / hp / hm) cho pk.js */
   if (typeof m.n === 'string') { const n29 = nm29(m.n); if (n29 && n29 !== P.name) P.name = n29; }   /* c29-vat: tên đi kèm tin 'st' → đổi tên trên đầu khi người kia đặt / đổi tên */
-  P.zone = m.z || null; P.ko = !!m.k; P.mov = !!m.m; P.dir = m.d | 0; P.diag = m.g == null ? null : m.g | 0;
+  P.zone = m.z || null; P.h49 = Math.max(0, Math.min(60, +m.h || 0)); P.ko = !!m.k;   /* c49-bay: độ cao người kia đang bay */ P.mov = !!m.m; P.dir = m.d | 0; P.diag = m.g == null ? null : m.g | 0;
   if (P.tx == null || Math.hypot(m.x - P.ent.x, m.y - P.ent.y) > CF.snap) { P.ent.x = m.x; P.ent.y = m.y; }
   P.tx = m.x; P.ty = m.y;
   const a = m.a || ''; if (a !== P.act) { P.act = a; if (a === 'knockdown' && m.k) P.ent.action = { name: a, t: 0, dur: 0.55, hold: true, walk: false, loop: false }; else if (a) P.ent.act(a, 0.4); else P.ent.endAct(); }   /* c27-chet: người khác chết → ngã rồi NẰM (giữ khung) tới khi hồi */
@@ -126,7 +126,7 @@ function stMsg(ctx) {
   const p = ctx.S.player, a = p.action && !p.action.walk ? p.action.name : '', units = [];
   const q = ctx.squad104 && ctx.squad104.units ? ctx.squad104 : null;
   if (q) { try { for (const u of q.units()) { if (!u.onField() || !u.f || units.length >= 3) continue; const f = u.f; units.push([f.sp || u.sp, Math.round(f.x), Math.round(f.y), f.clip || 'idle', Math.round((f.fx || 0) * 100) / 100, f.lv | 0, Math.max(0, Math.ceil(u.hp || 0)), u.max | 0, u.id]); } } catch (e) { } }   /* c32-pkthu: + máu / máu tối đa / id Chấn Thú */
-  return { t: 'st', x: Math.round(p.x * 2) / 2, y: Math.round(p.y * 2) / 2, d: p.dir | 0, m: p.moving ? 1 : 0, g: p.diag == null ? null : p.diag, a, k: ctx.hero && ctx.hero.fainted ? 1 : 0, z: ctx.S.zone ? ctx.S.zone.id : null, u: units, n: myNameC(ctx), ...(ctx.pk && ctx.pk.st ? ctx.pk.st() : {}) };   /* c29-vat: + n (tên) */   /* c17-pk: + pk, lv, hp, hm */
+  return { t: 'st', x: Math.round(p.x * 2) / 2, y: Math.round(p.y * 2) / 2, d: p.dir | 0, m: p.moving ? 1 : 0, g: p.diag == null ? null : p.diag, a, k: ctx.hero && ctx.hero.fainted ? 1 : 0, z: ctx.S.zone ? ctx.S.zone.id : null, u: units, n: myNameC(ctx), h: ctx.b49Lift ? ctx.b49Lift() : 0, ...(ctx.pk && ctx.pk.st ? ctx.pk.st() : {}) };   /* c29-vat: + n (tên) */   /* c17-pk: + pk, lv, hp, hm */
 }
 
 export const coop = {
@@ -191,7 +191,7 @@ export const coop = {
     if (!C.peers.size || !SHADOW.on || !inZone(ctx)) return;
     for (const P of C.peers.values()) {
       if (!peerHere(P, ctx)) continue; const e = P.ent;
-      shadowFor(g, e.x, e.y, (globalThis.__R89 || Math.round)(e.x - cx), (globalThis.__R89 || Math.round)(e.y - cy) + 1, 12, 0, P.ko ? 0.5 : 1);
+      shadowFor(g, e.x, e.y, (globalThis.__R89 || Math.round)(e.x - cx), (globalThis.__R89 || Math.round)(e.y - cy) + 1, 12, (P.hd || 0) * 0.8, P.ko ? 0.5 : 1);   /* c49-bay: bóng nhỏ + nhạt theo độ cao */
       for (const u of P.units.values()) shadowFor(g, u.e.x, u.e.y, (globalThis.__R89 || Math.round)(u.e.x - cx), (globalThis.__R89 || Math.round)(u.e.y - cy) + 1, globalThis.__fw110 ? globalThis.__fw110(u.e.sp, 13) : 13, 0);
     }
   },
@@ -199,7 +199,7 @@ export const coop = {
     if (!C.peers.size || !inZone(ctx)) return []; const g = ctx.g, out = [], VW = ctx.VW || 480, VH = ctx.VH || 270;
     for (const P of C.peers.values()) {
       if (!peerHere(P, ctx)) continue; const e = P.ent;
-      if (e.x > cx - 48 && e.x < cx + VW + 48 && e.y > cy - 16 && e.y < cy + VH + 72 && e.sheet) out.push({ y: e.y, f: () => { g.save(); g.translate(-cx, -cy); if (P.ko) g.globalAlpha = 0.5; try { e.draw(g); } catch (er) { } g.restore(); } });
+      if (e.x > cx - 48 && e.x < cx + VW + 48 && e.y > cy - 16 && e.y < cy + VH + 72 && e.sheet) out.push({ y: e.y + ((P.h49 || 0) > 0 ? 1e5 : 0), f: () => { P.hd = (P.hd || 0) + ((P.h49 || 0) - (P.hd || 0)) * 0.2; if (Math.abs(P.hd - (P.h49 || 0)) < 0.3) P.hd = P.h49 || 0; g.save(); g.translate(-cx, -cy - Math.round(P.hd)); if (P.ko) g.globalAlpha = 0.5; try { e.draw(g); } catch (er) { } g.restore(); } });
       if (ctx.ldKit) for (const u of P.units.values()) out.push({ y: u.e.y, f: () => { try { ctx.ldKit.draw(g, u.e, cx, cy); } catch (er) { } } });
     }
     return out;

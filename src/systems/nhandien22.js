@@ -44,8 +44,8 @@ function pets(ctx) {
   for (const u of Q.units()) {
     let ok = false; try { ok = u.onField(); } catch (e) { ok = false; } if (!ok) continue;
     const m = tm.find(q => q.id === u.id) || u.m;
-    if (u.sp === 'elyziuma' && ctx.elyz95) { const E = ctx.elyz95.E && ctx.elyz95.E(); if (!E || E.ko) continue; out.push({ u, m, ely: true, x: E.x, y: E.y, hp: E.hp, max: E.max, fw: 26, top: 32 });   /* ely.json idle ay 61 px ảnh = 30,5 logic */ continue; }
-    const f = u.f; if (!f || u.ko) continue;
+    if (u.sp === 'elyziuma' && ctx.elyz95) { const E = ctx.elyz95.E && ctx.elyz95.E(); if (!E || E.ko || (ctx.elyz95.shown47 && !ctx.elyz95.shown47())) continue; out.push({ u, m, ely: true, x: E.x, y: E.y, hp: E.hp, max: E.max, fw: 26, top: 32 });   /* ely.json idle ay 61 px ảnh = 30,5 logic */ continue; }
+    const f = u.f; if (!f || u.ko || (ctx.ldKit && ctx.ldKit.shown && !ctx.ldKit.shown(f))) continue;   /* c47-vaogame: ảnh thân chưa về → không vẽ nhãn / máu / vòng lơ lửng */
     const fw0 = u.sp === 'rocky' ? 22 : f.tier === 'l' ? 18 : f.tier === 's' ? 10 : 13, fw = globalThis.__fw110 ? globalThis.__fw110(f.sp, fw0) : fw0;
     out.push({ u, m, f, x: f.x, y: f.y - (f.alt || 0), gy: f.y, hp: u.hp, max: u.max, fw, top: heightOf(ctx, f) });
   }

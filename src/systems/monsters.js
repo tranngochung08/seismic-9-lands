@@ -62,7 +62,10 @@ UW.shade = { key: 'xshade', vi: 'Bóng Tối', en: 'Shadow', hp: 220, dmg: 26, a
 UW.xealistb = { key: 'xealistboss', vi: 'Xealist', en: 'Xealist', hp: 1800, dmg: 38, armor: 4, sp: 30, xp: 800, drop: 'seagem', w: 24, h: 41, c: ['#f2f2f2', '#24202e', '#ff7ad9'], shape: 'beast', ai: 'xealist', boss: true, leash: 420, engage: 430 };
 UW.babyoct = { key: 'babyoct', vi: 'Bạch Tuộc Con', en: 'Baby Octopus', hp: 240, dmg: 30, armor: 4, sp: 30, xp: 110, drop: 'pearl', w: 13, h: 14, c: ['#f2eef8', '#a898c8', '#7fe8ff'], shape: 'ghost', ai: 'squid', float: true };   /* plan-50 §D (anh duyệt): loài riêng của Hang Kraken — ảnh PixelLab monsters/babyoct.png, hành vi mượn Mực Ma (phun mực) */
 SP.kraken = { ...UW.babyoct, mix: [UW.babyoct, UW.babyoct, UW.sawshark, UW.seasnake], boss: UW.kraken, day: 4, night: 5 };
-SP.xfort = { ...UW.shade, mix: [UW.shade], boss: UW.xealistb, day: 0, night: 0, noDark: true };   /* phe Xealist: pháo đài là căn cứ an toàn (không quái) */
+SP.xfort = { ...UW.shade, mix: [UW.shade], boss: UW.xealistb, day: 0, night: 0, noDark: true };
+/* c48-lan (anh 05/11): Đáy Sông Làng — bãi farm quái nước theo tầng: hạ lưu Cá Nóc / Sứa (yếu) → giữa Lươn Điện → thượng nguồn Cá Kiếm / Cá Mập Răng Cưa (mạnh);
+   mỗi loài ở trại riêng (world map.camps), không trùm, hồi sinh nhanh (re48 s) để farm. */
+SP.uriver = { ...UW.puffer, mix: [UW.puffer, UW.puffer, UW.jelly, UW.jelly, UW.eel, UW.eel, UW.swordfish, UW.sawshark], day: 14, night: 16, re48: 6 };   /* phe Xealist: pháo đài là căn cứ an toàn (không quái) */
 /* plan-28: đường đèo — loài quái của VÙNG DƯỚI, máu / sức đánh / kinh nghiệm ×1,2 (đoạn 1) → ×1,5 (đoạn 9); không sinh ngẫu nhiên (day/night 0):
    đứng ở chỗ cố định (map.monSpots), chết thì hồi sinh tại chỗ sau 10 s (người chơi đứng gần thì chờ thêm). */
 ROADS.forEach((R, i) => { const b = SP[R.lower], k = 1.2 + 0.3 * i / 8; SP[R.id] = { ...b, hp: Math.round(b.hp * k), dmg: Math.round(b.dmg * k), xp: Math.round(b.xp * k), day: 0, night: 0, road: true, steal: null }; });
@@ -75,7 +78,7 @@ ROADS.forEach(R => { const b = SP[R.lower]; SMALL[R.id] = { ...b, vi: b.vi + ' C
 /* plan-74 đợt 0 (p74): Làng = Chấn Thú hoang (fieldct.js) — SAU khi dựng quái đèo (road1 vẫn là Nhầy Mầm như cũ tới đợt 4). LEGACY: preset / test cũ gọi spawnKind('slime') vẫn có Nhầy Mầm thật. */
 const LEGACY = { slime: SP.village };
 SP.village = FIELD_SP.village;
-const NEED_LV = { village: 1, m1: 2, sea: 2, u1: 3, m2: 3, m3: 5, m4: 7, u2: 8, m5: 9, m6: 11, u3: 12, m7: 13, m8: 15, u4: 16, m9: 17, kraken: 18, xfort: 19, road1: 2, road2: 3, road3: 4, road4: 6, road5: 8, road6: 10, road7: 12, road8: 14, road9: 16 };   /* cấp nhân vật dự kiến của vùng */
+const NEED_LV = { village: 1, m1: 2, sea: 2, u1: 3, uriver: 3, m2: 3, m3: 5, m4: 7, u2: 8, m5: 9, m6: 11, u3: 12, m7: 13, m8: 15, u4: 16, m9: 17, kraken: 18, xfort: 19, road1: 2, road2: 3, road3: 4, road4: 6, road5: 8, road6: 10, road7: 12, road8: 14, road9: 16 };   /* cấp nhân vật dự kiến của vùng */
 /* đi vùng khó khi cấp còn thấp → quái đánh đau hơn, tối đa gấp đôi (nhắc quay lại luyện cấp) */
 const hurtMul = ctx => { const need = NEED_LV[ctx.S.zone && ctx.S.zone.id] || 1, lv = ctx.hero ? ctx.hero.lv : need; return lv >= need ? 1 : Math.min(2, 1 + (need - lv) * 0.25); };
 const uwOn = ctx => !!(ctx.isUnderwater && ctx.isUnderwater());   /* dưới nước: người chơi vẽ dáng bơi (p.custom) nhưng vẫn đánh nhau bình thường */
@@ -243,7 +246,7 @@ function killMonster(ctx, mo, xpMul = 1) {
   if (ctx.wfx && ctx.wfx('kill', mo.x, mo.y + 1, { w: c.w || 16, h: c.h || 16, col: c.c })) { /* plan-69: quái ngã — khói pixel + mảnh màu thân + linh hồn bay lên */ }
   else if (ctx.vfx && !ctx.vfx('monster_poof', mo.x, mo.y + 4, 0, true)) ctx.vfx('dirt_puff', mo.x, mo.y + 2);
   if (mo.spot != null) (ST.rq ||= []).push({ spot: mo.spot, t: c.small ? SMALL_RESPAWN : ROAD_RESPAWN });   /* plan-28: hồi sinh tại chỗ sau 10 s */
-  const xp0 = Math.max(1, Math.round(c.xp * xpMul)), xp = xp0 - (ctx.xpTax ? Math.max(0, Math.min(xp0 - 1, ctx.xpTax(mo, xp0) | 0)) : 0); ST.killed++;   /* plan-57: Ở Dơ (odo.js) đứng gần xác → hút 20 % KN */ if (!c.boss) ST.respawnT = 20; if (ctx.hero) ctx.hero.gainXp(xp); (ctx.S.pops ||= []).push({ x: mo.x, y: mo.y - 26, text: `+${xp} XP`, color: '#9dff7a', t: 0 });   /* 2026-10-12 anh: thấy ngay hạ quái được bao nhiêu XP */ ctx.toast(t.kill(nm(ctx, c), xp)); ctx.sfx('coin');
+  const xp0 = Math.max(1, Math.round(c.xp * xpMul)), xp = xp0 - (ctx.xpTax ? Math.max(0, Math.min(xp0 - 1, ctx.xpTax(mo, xp0) | 0)) : 0); ST.killed++;   /* plan-57: Ở Dơ (odo.js) đứng gần xác → hút 20 % KN */ if (!c.boss) ST.respawnT = ST.cfg && ST.cfg.re48 ? ST.cfg.re48 : 20;   /* c48-lan: bãi farm sông hồi nhanh */ if (ctx.hero) ctx.hero.gainXp(xp); (ctx.S.pops ||= []).push({ x: mo.x, y: mo.y - 26, text: `+${xp} XP`, color: '#9dff7a', t: 0 });   /* 2026-10-12 anh: thấy ngay hạ quái được bao nhiêu XP */ ctx.toast(t.kill(nm(ctx, c), xp)); ctx.sfx('coin');
   if (ctx.villagers) ctx.villagers.rescued(mo);
   if (ctx.onMonsterDown) { try { ctx.onMonsterDown(mo, c.xp); } catch (e) { console.error('onMonsterDown', e); } }   /* plan-27: Rocky nhận kinh nghiệm khi cùng hạ quái (pet.js) */
   if (c.ai === 'kraken') krOnDeath(mo);   /* đầu Kraken chìm hẳn xuống khe vực */
@@ -733,7 +736,7 @@ export const monsters = {
       }
       if (canHit && (mo.angry || dp < AGGRO)) {   /* đánh người chơi */
         if (dp > 12) steer(ctx, mo, p.x, p.y, c.sp, dt);
-        else if (mo.cd <= 0 && ctx.playerAir && ctx.playerAir() && !c.fly) { mo.cd = 1.3; mo.airMiss = (mo.airMiss || 0) + 1; ST.airMiss = (ST.airMiss || 0) + 1; }   /* 2026-10-13 khuya: người đang bay tầng Trung — quái đất với không tới (quái bay vẫn đánh) */
+        else if (mo.cd <= 0 && ctx.playerAir && ctx.playerAir() && (!c.fly || (ctx.b49Air && ctx.b49Air()))) { mo.cd = 1.3; mo.airMiss = (mo.airMiss || 0) + 1; ST.airMiss = (ST.airMiss || 0) + 1; }   /* 2026-10-13 khuya: người đang bay tầng Trung — quái đất với không tới (quái bay vẫn đánh) */
         else if (mo.cd <= 0) { mo.cd = 1.3; if (ctx.hero) ctx.hero.hit(Math.round(c.dmg * hurtMul(ctx)));
           if (c.steal === 'carry' && getCarry(ctx).length && !mo.loot) { const it = removeCarry(ctx, getCarry(ctx).length - 1); grab(mo, { carry: it }, p.x, p.y - 22); mo.state = 'flee'; mo.t = 5; mo.angry = false; ctx.toast(t.stole(nm(ctx, c))); } }
         if (dp > 200) mo.angry = false; continue;
@@ -775,7 +778,7 @@ export const monsters = {
       if (heldWeapon(ctx)) return { label: `🎯 ${label}`, x: tg.x, y: tg.y - 4 + (c.promptDy || 0), limit: 999, priority: 3.9, cursor: 'tool', mouse: false, isLock: true, data: { mo, seg: -1, tent, lock: true } };
       return { label: `${ctx.needHold(bestWeapon(ctx))} → ${ctx.target.nameOf(lk)}`, x: tg.x, y: tg.y - 4, limit: 999, priority: 3.9, need: true, urgent: true, needId: bestWeapon(ctx), cursor: 'tool', mouse: false, isLock: true, data: { need: true } };
     }
-    for (const mo of ST.list) {
+    for (const mo of ST.list) { if (ctx.b49Tier && !ctx.b49Tier(mo)) continue;   /* c49-bay: chỉ nhắm quái CÙNG TẦNG */
       const c = mo.c; let seg = -1, d = dist(mo, p) - (c.boss ? 8 : 0), tx = mo.x, ty = mo.y;
       if (mo.segs) mo.segs.forEach((sg, i) => { const ds = dist(sg, p); if (ds < d) { d = ds; seg = i; tx = sg.x; ty = sg.y; } });   /* rắn khổng lồ: đốt thân gần hơn đầu → nhắm vào thân */
       const under = mt && Math.abs(mt.wx - mo.x) < c.w * 0.7 + 3 && mt.wy > mo.y - c.h - 8 && mt.wy < mo.y + 5;

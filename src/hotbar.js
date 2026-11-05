@@ -21,10 +21,11 @@ const QON = () => !!(deps && deps.CTX.quyen && deps.CTX.quyen.on());   /* c13-qu
    Mã ô (data-sk) giữ nguyên: 0 Đánh · 5 Chưởng · 2 Lướt Ki · 1 Rocky-ha · 4 Hợp Thể/Rồng Thần · 3 Gọi linh thú · 6 Lộn (mới, phím Shift).
    Ô chưa mở (chưa có Rocky / Rocky chưa học Rocky-ha / chưa có linh thú / chưa có Hợp Thể–Rồng) = ẨN, mở khoá thì tự hiện.
    Phím 1–5 = ô thứ 1–5 ĐANG HIỆN (nhãn trên ô = phím); ô thứ 6 trở đi dùng phím chữ riêng (linh thú U); Lộn luôn là Shift (⇧); L vẫn = Chưởng. */
-const ORDER26 = [0, 5, 2, 1, 4, 3, 6];   /* c33-bohopthe (anh 04/11): ô 1 Rocky-ha (người chơi bấm) + Hợp Thể bỏ hẳn — Ubam là Chấn Thú như mọi con, tự dùng chiêu; ô 4 chỉ còn Rồng Thần (không phụ thuộc Rocky). Nút lệnh Rocky (.hb-rk, phím /) bỏ. */
+const ORDER26 = [0, 5, 7, 1, 4, 3];   /* c49-bay (anh 05/11): bỏ ô 2 Lướt Ki + ô 6 Lộn → ô 7 BAY (phím Shift) */   /* c33-bohopthe (anh 04/11): ô 1 Rocky-ha (người chơi bấm) + Hợp Thể bỏ hẳn — Ubam là Chấn Thú như mọi con, tự dùng chiêu; ô 4 chỉ còn Rồng Thần (không phụ thuộc Rocky). Nút lệnh Rocky (.hb-rk, phím /) bỏ. */
 function shown26(i) {
   const C = deps.CTX;
   if (i === 0) return true;
+  if (i === 7) return !!C.bay49;   /* c49-bay */
   if (i === 5) return QON();
   if (i === 2) return !!(C.ki && C.ki.dash);
   if (i === 6) return !!(C.ki && C.ki.roll) && !mobile();   /* điện thoại đã có nút Lộn riêng (ki.js) */
@@ -34,10 +35,10 @@ function shown26(i) {
   return false;
 }
 const VIS26 = () => ORDER26.filter(i => !(mobile() && i === 5) && shown26(i));   /* điện thoại: Chưởng có nút riêng (quyen.js) */
-const DIG26 = () => VIS26().filter(i => i !== 6).slice(0, 5);   /* ô được phím số 1–5 */
+const DIG26 = () => VIS26().filter(i => i !== 6 && i !== 7).slice(0, 5);   /* ô được phím số 1–5 */
 function key26(i) {   /* nhãn phím của ô i trên thanh */
   if (htOn()) return i === 5 ? 'L' : String(i + 1);
-  if (i === 6) return '⇧';
+  if (i === 6 || i === 7) return '⇧';
   const n = DIG26().indexOf(i); if (n >= 0) return String(n + 1);
   return i === 5 ? 'L' : i === 3 ? 'U' : '';
 }
@@ -189,11 +190,13 @@ const DO = { open: false };
 const PH91 = typeof location !== 'undefined' && /[?&]hud91m/.test(location.search);   /* đợt D (điện thoại) HOÃN theo anh 02/11 — bản nháp chỉ bật bằng ?hud91m; mặc định điện thoại giữ HUD cũ */   /* điện thoại: hàng đồ 6–0 đang mở */
 const hud91 = k => { const m = deps.ART && deps.ART.man, u = m && m.ui && m.ui.hud91; return 'assets/px/' + ((u && u[k]) || `ui/hud91/${k}.png`); };
 const T = () => (deps.CTX.lang() === 'vi' ? {
+  fly: 'Bay', tipFly: 'Bay lên tầng cao — chỉ đánh quái + Chấn Thú trên trời; bay tốn Ki, bấm lại để hạ (phím Shift)', tipFlyOn: 'Đang bay — bấm để hạ xuống (Shift)',
   atk: 'Đánh', rk: 'Rocky-ha', dash: 'Lướt Ki', roll: 'Lộn', tipRoll: 'Lộn né đòn — 2 Ki (phím Shift)', call: 'Gọi linh thú', back: 'Thu linh thú', fuse: 'Hợp Thể', dragon: 'Rồng Thần Giáng',
   noRk: 'Chưa có Rocky', noHa: 'Rocky chưa học Rocky-ha', rkBusy: 'Rocky đang bận / đang nghỉ', cd: 'Đang hồi chiêu', noLt: 'Chưa có linh thú — bắt ở ổ linh thú các vùng', lowKi: 'Chưa đủ Ki',
   lock5: 'Mở khi có Rồng Thần', tipAtk: 'Ô 1 · Đánh — cầm vũ khí; E / chuột trái để chém mục tiêu', hp: 'Máu', ki: 'Ki', xp: 'Kinh nghiệm', lv: 'Cấp',
   doBtn: 'Đồ', bag: 'Túi đồ (B)', rkCmd: 'Ra lệnh cho Rocky (phím /)', items: 'Ô 6–0: đồ', skills: 'Ô kỹ năng (phím số theo nhãn trên ô)', ht: 'Hợp Thể', eat: 'R: ăn nhanh',
 } : {
+  fly: 'Fly', tipFly: 'Fly up to the high tier — only sky monsters + beasts can be hit; drains Ki, press again to land (Shift key)', tipFlyOn: 'Flying — press to land (Shift)',
   atk: 'Attack', rk: 'Rocky-ha', dash: 'Ki Dash', roll: 'Roll', tipRoll: 'Dodge roll — 2 Ki (Shift key)', call: 'Call spirit beasts', back: 'Recall spirit beasts', fuse: 'Fusion', dragon: 'Dragon Dive',
   noRk: 'No Rocky yet', noHa: "Rocky hasn't learned Rocky-ha", rkBusy: 'Rocky is busy / resting', cd: 'Cooling down', noLt: 'No spirit beasts yet — catch them at the beast dens', lowKi: 'Not enough Ki',
   lock5: 'Unlocks with the Dragon', tipAtk: 'Slot 1 · Attack — hold your weapon; E / left-click to strike the target', hp: 'HP', ki: 'Ki', xp: 'EXP', lv: 'Lv',
@@ -212,6 +215,7 @@ const HT_SLOTS = [   /* = hopthe.js SLOTS (ảnh + tên); trạng thái / hồi 
 function skillInfo(i) {   /* → { icon, name, lock, cd (giây), cdMax, dim, cls, extra } */
   const t = T(), C = deps.CTX;
   if (i === 5) return QON() ? C.quyen.palmSlot() : { icon: hud91('kioff'), name: C.lang() === 'vi' ? 'Chưởng' : 'Ki Palm', lock: true };   /* c13-quyen: ô 6 Chưởng */
+  if (i === 7) { const B = deps.CTX.bay49, up = !!(B && B.air()), k = kiState(), low = !up && k ? k.ki < 2 : false; return { icon: 'assets/px/ui/ki/fly.png', name: t.fly, on: up, dim: low, tip: low ? t.lowKi + ' (2)' : up ? t.tipFlyOn : t.tipFly }; }   /* c49-bay */
   if (i === 6) { const k = kiState(), cd = k ? k.cd.roll : 0, low = k ? k.ki < 2 : false; return { icon: 'assets/px/ui/ki/roll.png', name: t.roll, cd, cdMax: 1.2, dim: low, tip: low ? t.lowKi : t.tipRoll }; }   /* c26-coban: Lộn né (2 Ki) */
   if (htOn()) {
     const sl = HT_SLOTS[i], st = window.__hopthe ? window.__hopthe.state() : { cds: {} }, sys = sv().sys || {};
@@ -240,6 +244,7 @@ function aimHa() {   /* ô 2: Rocky-ha nhắm con đang khoá → con gần nh�
 let KB120 = false;   /* p120: skill() đang được gọi từ phím (không phải chuột) */
 export function skill(i) {
   const C = deps.CTX, t = T(); if (deps.S.mode !== 'play') return false;
+  if (i === 7) { const ok = C.bay49 ? C.bay49.toggle() : false; render(true); return ok; }   /* c49-bay: ô Bay */
   if (i === 6) { const ok = C.ki && C.ki.roll ? C.ki.roll() : false; render(true); return ok; }   /* c26-coban: ô Lộn */
   if (i === 5) { const ok = QON() ? C.quyen.press() : false; render(true); return ok; }   /* c13-quyen: ô 6 / phím L = Chưởng (cả lúc Hợp Thể không có ô này) */
   if (htOn()) { if (window.__hopthe) window.__hopthe.use(i); render(true); return true; }   /* ô 5 = tuyệt chiêu Hợp Thể (trước: R) */
@@ -375,7 +380,7 @@ function topHTML(lg) {
 }
 const cdTxt = c => (c >= 10 ? Math.ceil(c) + 's' : c.toFixed(1) + 's');
 function skillHTML(i) {
-  const s = skillInfo(i), lockImg = 'assets/px/hopthe/icons/lock.png', col = ['#c9c9c9', '#ff9a3a', '#5ad1ff', '#7bd04a', '#c58bff', '#8fd3ff', '#9fe0a0'][i], k26 = key26(i), tp0 = String(s.tip || '').replace(/^(Ô|Slot) \d+( \([A-Z]\))? · /, '').replace(/\s*\([^()]*\)\s*$/, ''), tp26 = tp0.indexOf(s.name + ' — ') === 0 ? tp0.slice(s.name.length + 3) : tp0;
+  const s = skillInfo(i), lockImg = 'assets/px/hopthe/icons/lock.png', col = ['#c9c9c9', '#ff9a3a', '#5ad1ff', '#7bd04a', '#c58bff', '#8fd3ff', '#9fe0a0', '#bfe8ff'][i], k26 = key26(i), tp0 = String(s.tip || '').replace(/^(Ô|Slot) \d+( \([A-Z]\))? · /, '').replace(/\s*\([^()]*\)\s*$/, ''), tp26 = tp0.indexOf(s.name + ' — ') === 0 ? tp0.slice(s.name.length + 3) : tp0;
   const lt = i === 3 && s.lt && !htOn() ? ' hb-lt' : '';
   return `<div class="hb-slot sk${s.on ? ' on' : ''}${s.lock ? ' lock' : ''}${s.dim ? ' dim' : ''}${lt}" data-sk="${i}" title="${esc(s.name + (tp26 && tp26 !== s.name ? ' — ' + tp26 : '') + (k26 ? ' [' + (k26 === '⇧' ? 'Shift' : k26) + ']' : ''))}">`
     + `<i class="hb-k">${k26}</i>${s.icon ? `<img src="${s.icon}" alt="">` : ''}${s.pet ? `<img class="pe" src="${s.pet}" alt="">` : ''}${s.lock ? `<img class="lk" src="${lockImg}" alt="">` : ''}`

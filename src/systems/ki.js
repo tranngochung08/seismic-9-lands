@@ -29,12 +29,12 @@ const ROLL_T = 0.32, ROLL_MIN = 30, ROLL_MAX = 56, ROLL_FREE = 46, JINK_T = 0.22
 const DASH_MIN = 46, DASH_MAX = 116, DASH_SP = 430, DASH_STOP = 20, DASH_FREE = 56, STRIKE_MUL = 1.3, PR = 6;
 const STR = {
   vi: { auto: 'Ki: Tự động (tự lộn né + tự lướt)', manual: 'Ki: Tự bấm (Shift lộn · K / chuột phải lướt)', low: 'Chưa đủ Ki', cd: 'Đang hồi chiêu', tip: 'Ki — Nhào lộn né (2 nấc) · Lướt tới đánh (1 nấc)',
-    perfect: 'Né hoàn hảo!', roll: 'Lộn', dash: 'Lướt',
+    perfect: 'Né hoàn hảo!', roll: 'Lộn', dash: 'Lướt', fly: 'Bay',
     tutPc: 'Ki (7 ngọc xanh cạnh chân dung, giữa dưới): Shift = nhào lộn né (2 nấc) · K hoặc chuột phải = lướt tới đánh (1 nấc). Lộn đúng lúc đòn sắp chạm = Né hoàn hảo!',
     tutAuto: 'Ki (7 ngọc xanh cạnh chân dung): đủ Ki là TỰ nhào lộn né đòn sắp trúng (2 nấc) và TỰ lướt tới chém khi đánh mục tiêu ở xa (1 nấc). Muốn tự bấm: ⚙ → Ki.',
     tutTouch: 'Ki (7 ngọc xanh cạnh chân dung): nút Lộn = nhào lộn né (2 nấc) · nút Lướt = lướt tới đánh (1 nấc). Lộn đúng lúc đòn sắp chạm = Né hoàn hảo!' },
   en: { auto: 'Ki: Auto (auto dodge + dash)', manual: 'Ki: Manual (Shift roll · K / right-click dash)', low: 'Not enough Ki', cd: 'Cooling down', tip: 'Ki — Dodge roll (2) · Dash strike (1)',
-    perfect: 'Perfect dodge!', roll: 'Roll', dash: 'Dash',
+    perfect: 'Perfect dodge!', roll: 'Roll', dash: 'Dash', fly: 'Fly',
     tutPc: 'Ki (7 green orbs by your portrait, bottom centre): Shift = dodge roll (2) · K or right-click = dash strike (1). Roll right before a hit lands = Perfect dodge!',
     tutAuto: 'Ki (7 green orbs by your portrait): with enough Ki you AUTO-roll away from incoming hits (2) and AUTO-dash in when attacking a far target (1). Manual mode: ⚙ → Ki.',
     tutTouch: 'Ki (7 green orbs by your portrait): Roll button = dodge roll (2) · Dash button = dash strike (1). Roll right before a hit lands = Perfect dodge!' },
@@ -320,18 +320,18 @@ function kiButtons(ctx) {
   if (!ST.btns) {
     const mk = (id, img, fn) => { const b = document.createElement('button'); b.id = id; b.className = 'kib'; b.hidden = true; b.innerHTML = `<img src="assets/px/ui/ki/${img}.png" alt=""><i></i><s></s>`;
       b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ST.ctx && ST.ctx.S.mode === 'play') fn(ST.ctx); }); host.appendChild(b); return b; };
-    ST.btns = { roll: mk('btn-roll', 'roll', c => dodge(c, null, true)), dash: mk('btn-dash', 'dash', c => dash(c, true)) };
+    ST.btns = { roll: mk('btn-roll', 'fly', c => { if (c.bay49) c.bay49.toggle(); }), dash: mk('btn-dash', 'dash', c => dash(c, true)) };   /* c49-bay: nút tròn Lộn → nút BAY; Lướt bỏ */
   }
-  const show = ctx.S.mode === 'play' && touchUI() && !isAuto(ctx), B = ST.btns;   /* 2026-10-15 anh: 'Bỏ nút lướt và lộn' — chế độ Tự động (mặc định) không hiện nút; chọn Tự bấm trong ⚙ thì nút trở lại */
-  for (const b of [B.roll, B.dash]) if (b.hidden === show) b.hidden = !show;
+  const show = ctx.S.mode === 'play' && touchUI() && !!(ctx.bay49 && ctx.bay49.can()), B = ST.btns;   /* c49-bay: nút Bay hiện ở vùng bay được (mọi chế độ Ki) */   /* 2026-10-15 anh: 'Bỏ nút lướt và lộn' — chế độ Tự động (mặc định) không hiện nút; chọn Tự bấm trong ⚙ thì nút trở lại */
+  if (B.roll.hidden === show) B.roll.hidden = !show; if (!B.dash.hidden) B.dash.hidden = true;
   if (!show) return;
-  const lab = L(ctx); if (B.roll.querySelector('i').textContent !== lab.roll) { B.roll.querySelector('i').textContent = lab.roll; B.dash.querySelector('i').textContent = lab.dash; }
+  const lab = L(ctx); if (B.roll.querySelector('i').textContent !== lab.fly) { B.roll.querySelector('i').textContent = lab.fly; B.dash.querySelector('i').textContent = lab.dash; }
   const set = (b, cd, cdMax, cost) => { const f = cd > 0 ? cd / cdMax : 0, low = ST.ki + 1e-6 < cost; b.style.setProperty('--cd', f.toFixed(3)); b.classList.toggle('low', low); b.classList.toggle('cool', f > 0); };
-  set(B.roll, ST.cd.roll, ROLL_CD, ROLL_COST); set(B.dash, ST.cd.dash, DASH_CD, DASH_COST);
+  { const up49 = !!(ctx.b49Air && ctx.b49Air()); set(B.roll, 0, 1, up49 ? 0 : 2); B.roll.classList.toggle('on', up49); }   /* c49-bay: mờ khi chưa đủ 2 Ki · sáng khi đang bay */
   if ((ST.layT = (ST.layT || 0) - 1) > 0) return; ST.layT = 20;   /* đặt lại ~3 lần/giây */
   const a = document.getElementById('btn-a'), r = a && a.getBoundingClientRect(); if (!r || !r.width) return;
   const taken = skySlots(r);
-  for (const e of document.querySelectorAll('#touch button, .sky-btn, #btn-copter, #mslots > *, #joy, .dpad, #altw, #herobar, #hotbar, #px-clock, #px-status, #px-money, #btn-chat')) {
+  for (const e of document.querySelectorAll('#touch button, .sky-btn, #btn-copter, #mslots > *, #joy, .dpad, #altw, #herobar, #hotbar, #px-clock, #px-status, #px-money, #btn-chat, .c79-btn')) {   /* c49-bay: + nút Ấn Thu / Thả (c10 / c79) */
     if (e.classList.contains('kib') || e.hidden || e.closest('[hidden]') || getComputedStyle(e).display === 'none' || getComputedStyle(e).visibility === 'hidden') continue;
     const q = e.getBoundingClientRect(); if (q.width && q.height) taken.push(q); }
   const free = (x, y) => x >= 4 && y >= 4 && x + KW <= innerWidth - 4 && y + KW <= innerHeight - 4 && !taken.some(q => !(x + KW <= q.left - 3 || x >= q.right + 3 || y + KW <= q.top - 3 || y >= q.bottom + 3));
@@ -354,21 +354,21 @@ if (typeof window !== 'undefined') {
   addEventListener('keydown', e => {
     if (e.key === 'Shift') {
       if (e.repeat || !ok()) return;
-      if (flying(ST.ctx)) { ST.shiftDown = performance.now(); ST.shiftDirty = false; return; }   /* đang bay: Shift còn là phím phụ (Shift+X hạ cánh, Shift+lăn chuột) → lộn khi THẢ nhanh */
+      if (true) { /* c49-bay: Shift thả nhanh = Bay (mọi lúc) */ ST.shiftDown = performance.now(); ST.shiftDirty = false; return; }   /* đang bay: Shift còn là phím phụ (Shift+X hạ cánh, Shift+lăn chuột) → lộn khi THẢ nhanh */
       dodge(ST.ctx, null, true); return;
     }
     if (ST.shiftDown) ST.shiftDirty = true;
-    if (e.code === 'KeyK' && !e.repeat && ok() && !e.ctrlKey && !e.metaKey && !e.altKey) { const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return; dash(ST.ctx, true); }
+    if (e.code === 'KeyK' && !e.repeat && ok() && !e.ctrlKey && !e.metaKey && !e.altKey) { const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return; /* c49-bay: K không còn Lướt */ }
   });
   addEventListener('keyup', e => {
     if (e.key !== 'Shift' || !ST.shiftDown) return; const quick = performance.now() - ST.shiftDown < 350 && !ST.shiftDirty; ST.shiftDown = 0;
-    if (quick && ok()) dodge(ST.ctx, null, true);
+    if (quick && ok() && ST.ctx.bay49) ST.ctx.bay49.toggle();   /* c49-bay: Shift = Bay (trước: Lộn) */
   });
   addEventListener('blur', () => { ST.shiftDown = 0; });
   addEventListener('pointerdown', e => {   /* chuột phải trên màn chơi = lướt (cầm viên hồi máu dưới nước thì để underwater.js dùng) */
     if (e.button !== 2 || !ok() || !e.target || e.target.id !== 'c') return; const C = ST.ctx;
     if (C.held && /pill/.test(String(C.held() || ''))) return;
-    e.preventDefault(); dash(C, true);
+    void C;   /* c49-bay: chuột phải không còn Lướt */
   });
   addEventListener('contextmenu', e => { if (ok() && e.target && e.target.id === 'c' && !(ST.ctx.held && /pill/.test(String(ST.ctx.held() || '')))) e.preventDefault(); });
 }
@@ -384,13 +384,14 @@ export const ki = {
     ctx.threat = { add: o => addThreat(ctx, o), remove: id => ST.thr.delete(id), clear: () => ST.thr.clear(), list: () => [...ST.thr.values()] };
     ctx.kiStrikeMul = () => { if (now(ctx) < ST.bonusUntil) { ST.bonusUntil = 0; log(ctx, 'dash_hit'); return STRIKE_MUL; } return 1; };
     ctx.kiMount = host => { const bars = host && host.querySelector('.hb-bars'); if (!bars) return; const el = kiEl(ctx); if (el.parentNode !== bars) bars.insertBefore(el, bars.firstChild); ST.sig = ''; renderBar(ctx); };
-    ctx.kiDash = () => (ST.inStrike ? false : dash(ctx, false));
+    ctx.kiDash = () => (ST.inStrike || (ctx.b49Air && ctx.b49Air()) ? false : dash(ctx, false));   /* c49-bay: đang bay không tự lướt */
     ctx.kiAbort = () => { if (ST.mv) endMove(ctx, true); };   /* knock.js gọi khi bắt đầu hất người chơi */
     ctx.ki = {
       get: () => ST.ki, max: MAX, auto: () => isAuto(ctx),
       toggleAuto: () => { const s = sv(ctx); s.auto = !isAuto(ctx); ctx.persist(); ctx.toast(s.auto ? L(ctx).auto : L(ctx).manual); return s.auto; },
       menuLabel: () => (isAuto(ctx) ? L(ctx).auto : L(ctx).manual),
       busy: () => !!ST.mv, iframes: () => ST.ifr > 0, roll: () => dodge(ctx, null, true), dash: () => dash(ctx, true),
+      spend: n => spend(ctx, n), drain: n => { ST.ki = Math.max(0, ST.ki - n); return ST.ki; },   /* c49-bay: Bay tốn Ki (drain: hao dần, không loé thanh) */
     };
     if (typeof window !== 'undefined') window.__ki = {
       state: () => ({ ki: +ST.ki.toFixed(3), auto: isAuto(ctx), fight: !!ST.fight, stillT: +ST.stillT.toFixed(2), dealtT: +ST.dealtT.toFixed(2), cd: { roll: +ST.cd.roll.toFixed(2), dash: +ST.cd.dash.toFixed(2) }, ifr: +ST.ifr.toFixed(2),
@@ -440,12 +441,12 @@ export const ki = {
     if (!fight && ctx.monsters && ctx.monsters.list) for (const mo of ctx.monsters.list()) { if (!(mo.hp > 0) || mo.statue || (mo.c && mo.c.spar && !(ctx.sparFoe && ctx.sparFoe() === mo))) continue; const d = Math.hypot(mo.x - p.x, mo.y - p.y); if ((mo.c && mo.c.boss && d < 320) || (mo.angry && d < 150)) { fight = true; break; } }
     ST.fight = fight;
     const still = !p.moving && !p.action && !ST.mv; ST.stillT = still ? ST.stillT + dt : 0;
-    if (!fight) gain(ctx, dt / 1.5 * lvMul(ctx));
+    if (ctx.b49Air && ctx.b49Air()) { /* c49-bay: đang bay không hồi Ki (vẫn +Ki khi đánh trúng) */ } else if (!fight) gain(ctx, dt / 1.5 * lvMul(ctx));
     else if (ST.stillT >= 2 && now(ctx) - ST.dealtT >= 2) gain(ctx, dt / 6 * lvMul(ctx));
     /* đòn có báo trước */
     for (const [id, t] of ST.thr) {
       if (expired(ctx, t)) { ST.thr.delete(id); continue; }
-      if (t.done || ST.mv || !isAuto(ctx)) continue;
+      if (t.done || ST.mv || !isAuto(ctx) || (ctx.b49Air && ctx.b49Air())) continue;   /* c49-bay: tự né chỉ khi ở mặt đất */
       const at = impactAt(t, p), left = at - now(ctx);
       if (left > LEAD || now(ctx) > at + t.dur + 0.05) continue;
       if (!hits(t, p.x, p.y - PR)) continue;

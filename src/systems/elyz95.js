@@ -71,9 +71,13 @@ function keyOf(E) { const m = ST.meta; if (!m) return null; return m[E.clip] ? E
 function clipOf(E) { const k = keyOf(E); return k ? ST.meta[k] : null; }
 const FPS = { idle: 3, walk: 11, atk: 13, cast: 12, dash: 14 };
 function drawEly(g, E, cx, cy) { if (!((E.alt || 0) > 1) && WATER105.depth && WATER105.depth(E.x, E.y)) { waterDraw105(g, E.x, E.y, (globalThis.__R89||Math.round)(E.x - cx), (globalThis.__R89||Math.round)(E.y - cy), () => drawEly0(g, E, cx, cy)); return; } drawEly0(g, E, cx, cy); }   /* p105w */
+function im47(k) {   /* c47-vaogame: ảnh Elyziuma nằm trong gói c6 nhóm s1 → gói chưa về thì tải lẻ ngay đúng file đang cần (mã hoá 1 ký tự tên để c6 không giữ chờ gói) */
+  const im = ST.img[k]; if (im && im.complete && im.naturalWidth) return im; const C6 = typeof window !== 'undefined' && window.__c6; if (!C6 || !C6.MAP || !ST.meta || !ST.meta[k] || !ST.meta[k].file) return null;
+  const src = 'assets/px/' + ST.meta[k].file; let m = null; try { const U = new URL(src, location.href); m = C6.MAP[U.origin + U.pathname]; } catch (e) { m = null; } const b = m && C6.B[m.b]; if (!b || b.d || b.bad) return null;
+  const D = im47.c || (im47.c = {}); let d = D[k]; if (!d) { const j = src.lastIndexOf('.'); d = new Image(); d.src = j > 1 ? src.slice(0, j - 1) + '%' + src.charCodeAt(j - 1).toString(16).toUpperCase() + src.slice(j) : src; D[k] = d; } return d.complete && d.naturalWidth ? d : null; }
 function drawEly0(g, E, cx, cy) {
   const c = clipOf(E); if (!c) { g.fillStyle = '#12636e'; g.fillRect((globalThis.__R89||Math.round)(E.x - cx) - 6, (globalThis.__R89||Math.round)(E.y - cy) - 13, 12, 13); return; }
-  const key = keyOf(E), im = ST.img[key]; if (!im || !im.complete || !im.naturalWidth) return;
+  const key = keyOf(E), im = im47(key); if (!im || !im.complete || !im.naturalWidth) return;   /* c47-vaogame */
   const [r, flip] = ROWS[dirOf(E.fx, E.fy)], loop = E.clip === 'idle' || E.clip === 'walk' || E.clip === 'dash';
   let fr = Math.floor(E.ct * (FPS[E.clip] || 10)); fr = loop ? fr % c.n : Math.min(c.n - 1, fr);
   const sw = c.cw, sh = c.ch, w = sw / 2, h = sh / 2, ax = c.ax / 2, ay = (Array.isArray(c.ay) ? c.ay[r] : c.ay) / 2;
@@ -433,7 +437,7 @@ export const elyz95 = {
   onZoneEnter(ctx) {
     ST.ctx = ctx; ST.fx = []; ST.foes = []; if (ST.E) { const p = ctx.S.player; ST.E.x = p.x - 14; ST.E.y = p.y + 4; ST.E.act = null; }
     loadArt();
-    ctx.elyz95 = { E: () => ST.E, on: () => active(ctx) && !(ST.koT > 0),   /* p106 */ pop: () => { if (active(ctx) || team0(ctx)) { ST.E = null; ST.popNext = true; } }, recall: () => { if (ST.E) FX.sink(ST.E.x, ST.E.y, SKIN, FX.power(0.3)); ST.E = null; }, pos: () => ST.E && { x: ST.E.x, y: ST.E.y },
+    ctx.elyz95 = { shown47: () => { const E = ST.E; return !!(E && im47(keyOf(E))); },   /* c47-vaogame */ E: () => ST.E, on: () => active(ctx) && !(ST.koT > 0),   /* p106 */ pop: () => { if (active(ctx) || team0(ctx)) { ST.E = null; ST.popNext = true; } }, recall: () => { if (ST.E) FX.sink(ST.E.x, ST.E.y, SKIN, FX.power(0.3)); ST.E = null; }, pos: () => ST.E && { x: ST.E.x, y: ST.E.y },
       E: () => ST.E, koT: () => ST.koT, hurt: d => { const E = ST.E; if (E && !E.ko) { E.hp -= d; E.flash = 0.12; ST.n.foeHitE++; if (E.hp <= 0) koE(ctx, E); } },   /* p104: squad104 đỡ đòn / bị đánh thay */
       cast: id => { const E = ST.E; if (!E || E.ko) return false; const k = id || ['fire', 'flare', 'stamp', 'meet', 'ult'].find(q => E.cd[q] <= 0); if (!k) return false; E.cd[k] = 0; ST.force = k; return k; },
       drawAt: (g, x, y) => ST.meta && drawEly(g, { x, y, fx: 0.01, fy: 1, clip: (ST.meta && ST.meta.idle_s) ? 'idle_s' : 'idle', ct: 0, hp: 1, max: 1, flash: 0, glint: 0, shk: 0 }, 0, 0) };

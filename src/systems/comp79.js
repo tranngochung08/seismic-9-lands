@@ -107,17 +107,30 @@ function btnTick(ctx) {
   const out = !!sv(ctx).out, sig = out + ':' + vi(ctx); if (ST.btnSig !== sig) { ST.btnSig = sig; b.className = 'c79-btn' + (out ? ' out' : ''); b.querySelector('i').textContent = out ? L(ctx).lblOut : L(ctx).lblIn; }
   const lt = document.getElementById('lt-orb'), r = lt && lt.style.display !== 'none' ? lt.getBoundingClientRect() : null;
   const x = r && r.width ? r.left - 62 : innerWidth - 215, y = r && r.width ? r.top + (r.height - 52) / 2 : innerHeight - 262;   /* không có nút Ấn Linh: chỗ trống trên-phải cần điều khiển, không đè Túi đồ / nút A (soát ảnh 390×844) */
-  if (b.style.display === 'none') b.style.display = ''; b.style.left = Math.round(Math.max(8, x)) + 'px'; b.style.top = Math.round(Math.max(8, y)) + 'px';
-  ballBtn(ctx, { x: Math.max(8, x), y: Math.max(8, y) - 76 });   /* c10: ngay trên nút Thả (bên trái có ô sóng âm thanh / cần điều khiển) */
+  if (b.style.display === 'none') b.style.display = ''; const P47 = place47(b, Math.max(8, x), Math.max(8, y), '#c10-ball', 0); b.style.left = P47[0] + 'px'; b.style.top = P47[1] + 'px';   /* c47-vaogame */
+  ballBtn(ctx, { x: P47[0], y: P47[1] - 76, bx: P47[0], by: P47[1] });   /* c10: ngay trên nút Thả (bên trái có ô sóng âm thanh / cần điều khiển) */
 }
 /* c10 (anh 04/11): nút NÉM ẤN THU trên điện thoại — ảnh quả cầu PixelLab orb_icon, số Ấn Thu dưới nút; chỉ hiện ở bãi farm (ctx.ballInfo của farm106), mờ khi không có con ngất trong tầm */
+/* c47-vaogame: nút Thả / Ấn Thu tự né mọi nút cố định (dọc lẫn xoay ngang); #btn-palm (quyen.js) và #pk17b (pk.js) tự né 2 nút này nên không tính chúng (tránh giằng co) */
+const NE47 = '#touch button, #mslots > *, #joy, .dpad, #altw, #herobar, #hotbar, #btn-chat, .sky-btn, #btn-copter, #px-clock, #px-status, #px-money, #btn-menu, #btn-photo, #touch-skills, #c10-ball, .c79-btn, #minimap, #mini-map';
+const OFS0_47 = [[0, 0], [0, -76], [-62, 0], [-62, -76], [0, 76], [-62, 76], [-124, 0], [-124, -76], [0, -152], [-124, 76], [-62, -152], [-186, 0], [-186, -76], [62, 0], [62, -76], [62, 76]];
+const OFSB47 = [[-62, 0], [-62, -76], [0, -76], [-62, 76], [0, 76], [-124, 0], [-124, -76], [-124, 76], [0, -152], [-62, -152], [-186, 0], [62, 0], [62, -76], [62, 76]];   /* Ấn Thu: bên trái nút Thả trước (dọc: trên Thả là chỗ người chơi đứng) */
+function place47(el, bx, by, skip, from, L0) {
+  const OFS47 = L0 || OFS0_47;
+  const now = performance.now(), key = Math.round(bx) + ':' + Math.round(by) + ':' + innerWidth + 'x' + innerHeight; if (el.__p47 && el.__p47.k === key && now - el.__p47.t < 300) return el.__p47.at;
+  const T = []; for (const e of document.querySelectorAll(NE47)) { if (e === el || e.id === 'btn-palm' || e.id === 'pk17b' || (skip && e.matches(skip)) || e.hidden || e.closest('[hidden]')) continue; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue; const q = e.getBoundingClientRect(); if (q.width && q.height) T.push(q); }
+  const S = 52, HB = 68, free = (x, y) => x >= 6 && y >= 6 && x + S <= innerWidth - 6 && y + HB <= innerHeight - 4 && !T.some(q => !(x + S <= q.left - 4 || x >= q.right + 4 || y + HB <= q.top - 4 || y >= q.bottom + 4));
+  let at = null; for (let i = from || 0; i < OFS47.length && !at; i++) { const x = Math.round(bx + OFS47[i][0]), y = Math.round(by + OFS47[i][1]); if (free(x, y)) at = [x, y]; }
+  if (!at) at = [Math.round(Math.max(8, bx + OFS47[from || 0][0])), Math.round(Math.max(8, by + OFS47[from || 0][1]))];
+  el.__p47 = { k: key, t: now, at }; return at;
+}
 function ballBtn(ctx, at) {
   if (typeof document === 'undefined') return; const inf = at && ctx.ballInfo ? ctx.ballInfo() : null;
   if (!inf || !inf.on) { if (ST.bb && ST.bb.style.display !== 'none') ST.bb.style.display = 'none'; return; }
   if (!ST.bb) { const b = document.createElement('div'); b.setAttribute('role', 'button'); b.id = 'c10-ball'; b.className = 'c79-btn c10-ball'; b.innerHTML = '<img src="assets/px/duel/anthu/anthu_icon.png" alt=""><i></i>'; b.style.display = 'none';
     b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); const C = ST.ctx; if (C && C.ballThrow) C.ballThrow(); }); document.body.appendChild(b); ST.bb = b; }
   const b = ST.bb, sig = inf.n + ':' + inf.near + ':' + vi(ctx); if (ST.bbSig !== sig) { ST.bbSig = sig; b.querySelector('i').textContent = (vi(ctx) ? 'Ấn Thu ' : 'Orb ') + inf.n; b.style.opacity = inf.near ? '1' : '0.55'; b.style.background = inf.near ? '#ffe9a0' : ''; }
-  if (b.style.display === 'none') b.style.display = ''; b.style.left = Math.round(Math.max(8, at.x)) + 'px'; b.style.top = Math.round(at.y) + 'px';
+  if (b.style.display === 'none') b.style.display = ''; const A47 = at.bx != null ? place47(b, at.bx, at.by, null, 0, OFSB47) : [Math.round(Math.max(8, at.x)), Math.round(at.y)]; b.style.left = A47[0] + 'px'; b.style.top = A47[1] + 'px';   /* c47-vaogame: né Thả + 📷 / ☰ / PK… */
 }
 
 export const comp79 = {

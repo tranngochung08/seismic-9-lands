@@ -34,7 +34,7 @@ function depthAt(ctx, x, y) {   /* 'none' | 'wade' | 'swim' */
   const tx = tileOf(x), ty = tileOf(y - 4), g0 = ctx.getG(ctx.S.map, tx, ty);   /* 2026-10-11 anh: đứng trên bờ (chân chạm mép ô nước) đã bị vẽ như đang lội → xét điểm cao hơn chân 4 px: phải bước hẳn vào nước mới lội */
   if (ctx.envfx && ctx.envfx.inFlood && ctx.envfx.inFlood(x, y - 4)) return 'wade';   /* p105: ngập = nước nông lội được, không bao giờ bơi / đuối */
   if (isDeep(ctx, g0)) return 'swim';
-  if (isShallow(ctx, g0) || g0 === ctx.T.REEF) return nearLand(ctx, tx, ty) ? 'wade' : 'swim';
+  if (isShallow(ctx, g0) || g0 === ctx.T.REEF) return nearLand(ctx, tx, ty, ctx.S.zone && ctx.S.zone.id === 'village' ? 1 : 2) ? 'wade' : 'swim';   /* c48-lan (anh 05/11): sông Làng là nước sâu — chỉ ô sát bờ mới lội, giữa sông bơi */
   return 'none';
 }
 const busy = ctx => { const s = ctx.S.sea; return !!(s && (s.riding || s.diving)) || (ctx.S.player.custom && ctx.S.player.custom !== st.ownCustom) || ctx.S.player.pilot === 'rocky'; };
@@ -42,6 +42,7 @@ const busy = ctx => { const s = ctx.S.sea; return !!(s && (s.riding || s.diving)
 // ---------------------------------------------------------------- vẽ người chơi dưới nước
 function ripple(ctx, x, y, r = 6) { st.fx.push({ x, y, r, t: 0 }); }
 function drawInWater(g, ent, depth) {   // depth: 6 (lội) | 11 (bơi) hàng px dưới bị nước che
+  if (depth > 8 && drawSurfSwim48(g, ent)) return;   /* c48-lan: bơi = clip PixelLab 'swim' nhô đầu + vai */
   const x = Math.round(ent.x), y = Math.round(ent.y), t = performance.now() / 1000, bob = depth > 8 ? Math.round(Math.sin(t * 3) * 1) : 0;
   const h = 20 - depth;
   g.fillStyle = 'rgba(20,80,120,.28)'; g.beginPath(); g.ellipse(x, y - 18 + h + bob + 1, 9, 3.5, 0, 0, Math.PI * 2); g.fill();   /* bóng ngay dưới mép nước */
@@ -49,6 +50,21 @@ function drawInWater(g, ent, depth) {   // depth: 6 (lội) | 11 (bơi) hàng px
   g.fillStyle = 'rgba(230,246,255,.8)';
   for (let i = -7; i <= 7; i += 3) { const w = Math.sin(t * 4 + i) * 1; g.fillRect(x + i, y - 18 + h + bob + Math.round(w), 2, 1); }   // mép nước lượn
   if (depth > 8 && ent.moving) { const k = Math.floor(t * 8) % 2; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(x - 10 + k * 2, y - 12 + bob, 3, 1); g.fillRect(x + 8 - k * 2, y - 11 + bob, 3, 1); }   // tay quạt nước
+}
+/* c48-lan (anh 05/11: 'tư thế người chơi là bơi chứ không phải lội'): bơi mặt nước dùng clip PixelLab 'swim' (cùng clip dưới đáy biển),
+   chỉ vẽ phần trên mép nước (đầu, vai, hai tay quạt); đứng yên thì đạp nước chậm. Không có clip → trả false (vẽ kiểu cũ). */
+const SURF_LOOP48 = [1, 2, 3, 4, 5, 6, 5, 4, 3, 2], SURF_IDLE48 = [2, 3, 4, 3], SURF_VIS48 = 13;
+function drawSurfSwim48(g, ent) {
+  const sw = ent.sheet && ent.sheet.actions && ent.sheet.actions.swim; if (!sw || !(sw.n >= 7) || !sw.img) return false;
+  const a = ent.action; if (a && a.name && a.name !== 'swim' && ent.sheet.actions[a.name]) return false;
+  const x = Math.round(ent.x), y = Math.round(ent.y), t = performance.now() / 1000, mv = !!ent.moving, bob = Math.round(Math.sin(t * (mv ? 4 : 2.4)) * 1);
+  const seq = mv ? SURF_LOOP48 : SURF_IDLE48, f = seq[Math.floor(t * (mv ? 9 : 3)) % seq.length], cw = sw.cw || 32, ch = sw.ch || 24, wl = y - 8 + bob;
+  const top = 2, vis = SURF_VIS48;   /* hàng 2..14 của khung 24 px: mũ / đầu / vai / tay */
+  g.fillStyle = 'rgba(20,80,120,.28)'; g.beginPath(); g.ellipse(x, wl + 1, 10, 3.5, 0, 0, Math.PI * 2); g.fill();
+  g.drawImage(sw.img, f * cw, (ent.dir & 3) * ch + top, cw, vis, x - (cw >> 1), wl - vis, cw, vis);
+  g.fillStyle = 'rgba(230,246,255,.85)'; for (let i = -9; i <= 9; i += 3) g.fillRect(x + i, wl + Math.round(Math.sin(t * 4 + i) * 1), 2, 1);
+  if (mv) { const k = Math.floor(t * 8) % 2; g.fillStyle = 'rgba(255,255,255,.9)'; g.fillRect(x - 11 + k * 2, wl - 1, 3, 1); g.fillRect(x + 9 - k * 2, wl, 3, 1); }
+  return true;
 }
 function drawDrowned(g, ent) {   // nổi ngửa: sheet hướng nam, xoay 90°, nhấp nhô
   const x = Math.round(ent.x), y = Math.round(ent.y), t = performance.now() / 1000, bob = Math.sin(t * 2.2) * 1.2;

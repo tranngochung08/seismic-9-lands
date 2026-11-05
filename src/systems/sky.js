@@ -82,13 +82,14 @@ const STR = {
 const L = ctx => STR[ctx.lang() === 'vi' ? 'vi' : 'en'];
 const ST = { landImg: {}, landMap: {}, reach: {}, tgt: null, scout: [], falls: [], dropCd: 0, craters: [], ctx: null, fly: null, pending: null, cut: null, marks: [], shots: [], threat: new Map(), punchCd: 0, haCd: 0, throwCd: 0, lunge: null, rk: null,
   btns: null, spawnT: 0, log: [], mini: null, holes: null, tints: {}, monCfg: {} };
+const B49 = { on: false, req: false, H: 40, LIFT: 26, COST: 1, NEED: 2, DRAIN: 0.2, mons: [], spawnT: 3, msgT: -9, blocked: 0, stats: { up: 0, down: 0, noKi: 0, out: 0, spawn: 0 }, log: [] };   /* c49-bay: chiêu BAY (độ cao cố định 40 m, không cần chong chóng, tốn Ki) */
 const sv = ctx => (ctx.S.save.sys.sky ||= {});
 const petOf = ctx => ctx.S.save.sys && ctx.S.save.sys.pet && ctx.S.save.sys.pet.pet;
 const inSky = ctx => !!(ctx.S.map && ctx.S.map.sky);
 const zid = ctx => (ctx.S.zone && ctx.S.zone.id) || '';
 const copters = ctx => (ctx.S.save.inv && ctx.S.save.inv.copter) || 0;
 const altNow = () => (ST.fly ? (ST.fly.z >= 0.5 ? 1 : 0) : 0);
-const liftNow = () => (ST.fly ? (ST.fly.mid ? Math.min(30, 4 + AL.h * 0.22) : LIFT[0] + (LIFT[1] - LIFT[0]) * Math.max(0, Math.min(1, (AL.h - 700) / 500))) : 0);   /* 2026-10-14: theo ĐỘ CAO liền mạch */
+const liftNow = () => (ST.fly ? (ST.fly.mid ? (B49.on ? Math.min(B49.LIFT, AL.h * 0.65) : Math.min(30, 4 + AL.h * 0.22)) : LIFT[0] + (LIFT[1] - LIFT[0]) * Math.max(0, Math.min(1, (AL.h - 700) / 500))) : 0);   /* 2026-10-14: theo ĐỘ CAO liền mạch */
 const isMid = () => !!(ST.fly && ST.fly.mid);
 const log = s => { ST.log.push(s); if (ST.log.length > 40) ST.log.shift(); };
 const zname = (ctx, z) => { const Z = ZONES[z]; return Z ? (ctx.lang() === 'vi' ? Z.name.vi : Z.name.en) : z; };
@@ -167,7 +168,7 @@ function drawRocky(g, ctx, x, y, dir, clip, t, cop, copFps, copA = 1) {   /* x, 
 
 /* ---------------- trạng thái bay (trên trời) ---------------- */
 /* bóng theo ĐỘ CAO: nhỏ + mờ dần, lệch theo hướng nắng (trên-trái → bóng xuống-phải), mất hẳn trên 150 m */
-function altShadow(g, x, y, k0) { const h = AL.h; if (h > 150 || inSky(ST.ctx)) return; const u = h / 150, k = k0 * (1 - u * 0.85); if (k <= 0.05) return; const dx = Math.round(h * 0.07), dy = Math.round(h * 0.035); g.save(); g.globalAlpha = 1 - u * 0.9; shadow(g, x + dx, y + dy, k); g.restore(); }
+function altShadow(g, x, y, k0) { const h = AL.h; if (h > 150 || inSky(ST.ctx) || B49.on) return;   /* c49-bay: bóng Bay do shadow.js vẽ (drawHover.shadowW) */ const u = h / 150, k = k0 * (1 - u * 0.85); if (k <= 0.05) return; const dx = Math.round(h * 0.07), dy = Math.round(h * 0.035); g.save(); g.globalAlpha = 1 - u * 0.9; shadow(g, x + dx, y + dy, k); g.restore(); }
 function drawHover(g, ent) {
   const ctx = ST.ctx, f = ST.fly; if (!ctx || !f) return;
   const t = ctx.S.time, x = Math.round(ent.x), y = Math.round(ent.y), lift = Math.round(liftNow()), bob = Math.round(Math.sin(t * 3) * 1.5), cut = ST.cut, zc = cut && cut.z ? cut.z : 0;
@@ -181,9 +182,9 @@ function drawHover(g, ent) {
   const pk = ctx.alt ? ctx.alt.pose() : 'hover', sk = Math.min(1, Math.max(0, (Math.abs(AL.v) - 110) / 140)); if (pk !== 'hover') drawSpeedFx(g, pk, x, py - 10, t, 0.35 + 0.65 * sk, 'back');   /* VFX tốc độ (flyposes.js) — chỉ khi đang lao nhanh */
   const sp = ent.kiSpin; if (sp) { g.save(); g.translate(x, py - 10); g.rotate(sp.ang || 0); g.translate(-x, -(py - 10)); }   /* ki.js lộn nhào né đòn: chỉ xoay NGƯỜI + chong chóng (Rocky không xoay) */
   const hd = drawPlayer(g, ent, x, py, 'hover', t);
-  copterAt(g, hd, t, cut ? cut.fps || 18 : Math.abs(AL.v) > 110 ? 34 : 18);   /* bay nhanh: chong chóng quay nhanh hơn */
+  if (!B49.on) copterAt(g, hd, t, cut ? cut.fps || 18 : Math.abs(AL.v) > 110 ? 34 : 18);   /* c49-bay: bay bằng Ki — không đội chong chóng */   /* bay nhanh: chong chóng quay nhanh hơn */
   if (sp) g.restore();
-  if (pk !== 'hover') { drawCopterBlur(g, hd.hx, hd.hy - 9, t, 0.5 + 0.5 * sk); drawSpeedFx(g, pk, x, py - 10, t, 0.35 + 0.65 * sk, 'front'); }
+  if (pk !== 'hover' && !B49.on) { drawCopterBlur(g, hd.hx, hd.hy - 9, t, 0.5 + 0.5 * sk); drawSpeedFx(g, pk, x, py - 10, t, 0.35 + 0.65 * sk, 'front'); }
   if (rk && rk.with && rk.y > y) drawRkHover(g, ctx, t);
   ent.labelUp = Math.max(0, lift + 14 - zc);   /* tên ở trên chong chóng */
 }
@@ -392,7 +393,8 @@ function fall(ctx, why) {
 /* ---------------- đòn theo tầng (dùng chung cho 5 quái) ---------------- */
 function hitPlayer(ctx, mo, mul, tier, kind) {
   const p = ctx.S.player; if (!ctx.hero || ctx.hero.fainted || ST.cut || ctx.S.mode !== 'play' || ctx.S.time < (ST.graceT || 0)) return false;   /* vừa lên trời: 5 s ân hạn */
-  if (tier !== altNow()) { (ctx.S.pops ||= []).push({ x: p.x, y: p.y - 30, text: L(ctx).dodge, color: '#bfe8ff', t: 0 }); ST.dodges = (ST.dodges || 0) + 1; return false; }
+  if (!inSky(ctx) && mo && mo.c && mo.c.b49 && !B49.on) return false;   /* c49-bay: quái trời không với tới người dưới đất */
+  if (tier !== altNow() && !(B49.on && !inSky(ctx))) { (ctx.S.pops ||= []).push({ x: p.x, y: p.y - 30, text: L(ctx).dodge, color: '#bfe8ff', t: 0 }); ST.dodges = (ST.dodges || 0) + 1; return false; }
   ctx.hero.hit(Math.round(mo.c.dmg * mul)); ST.threat.set(mo, ctx.S.time); ST.hits = (ST.hits || 0) + 1;
   if (kind === 'knockoff' && ST.fly) fall(ctx, 'knock');
   return true;
@@ -672,7 +674,7 @@ function btns(ctx) {
 }
 function placeBtns(ctx) {
   const B = btns(ctx); if (!B) return; const play = ctx.S.mode === 'play' || ctx.S.mode === 'copter', AIRON = !!(ctx.air && ctx.air.on()), show = play && (inSky(ctx) || isMid() || copters(ctx) > 0 || AIRON), why = flyWhy(ctx), t = L(ctx);
-  if (B.desk) { B.desk.hidden = !show; B.desk.classList.toggle('off', !!why && !ST.cut); B.desk.title = why.trim(); B.desk.querySelector('b').textContent = ST.cut ? t.skip : (flyingNow(ctx) && AL.tgt > 0) ? t.useDown : flyingNow(ctx) ? t.useUp : isMid() ? `${t.btnMid} · X ${t.btnUp} / ⇧X ${t.btnDown}` : t.useUp;
+  if (B.desk) { B.desk.hidden = !show || B49.on;   /* c49-bay: đang Bay → không hiện nút chong chóng (hạ bằng Shift / ô Bay) */ B.desk.classList.toggle('off', !!why && !ST.cut); B.desk.title = why.trim(); B.desk.querySelector('b').textContent = ST.cut ? t.skip : (flyingNow(ctx) && AL.tgt > 0) ? t.useDown : flyingNow(ctx) ? t.useUp : isMid() ? `${t.btnMid} · X ${t.btnUp} / ⇧X ${t.btnDown}` : t.useUp;
     const hb = document.getElementById('hotbar'), r = hb && hb.getBoundingClientRect(), bw = B.desk.offsetWidth || 150, bh = B.desk.offsetHeight || 44;
     if (r && r.width) {   /* 2026-10-15: thanh công cụ thêm ô Ấn Linh (rộng hơn) → thử bên phải thanh, bên trái, rồi ngay TRÊN mép phải / trái thanh; chọn chỗ đầu tiên không đè thanh máu (+ số máu), máy đo địa chấn, chip trạng thái */
       const vis = e => !e.hidden && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden';
@@ -682,7 +684,7 @@ function placeBtns(ctx) {
       B.desk.style.left = Math.round(at[0]) + 'px'; B.desk.style.top = Math.round(at[1]) + 'px'; }
     else { B.desk.style.left = (window.innerWidth - bw - 90) + 'px'; B.desk.style.top = (window.innerHeight - bh - 16) + 'px'; } }
   if (!B.fly) return;
-  B.fly.hidden = !show; B.fly.classList.toggle('off', !!why && !ST.cut); B.thr.hidden = !(ctx.S.mode === 'play' && (inSky(ctx) || isMid()) && !ST.cut); B.alt.hidden = B.thr.hidden || !binoc(ctx) || !inSky(ctx);   /* plan-32 A: 🔭 ghim (có ống nhòm) · 🪨 thả đá */
+  B.fly.hidden = !show; B.fly.classList.toggle('off', !!why && !ST.cut); B.thr.hidden = !(ctx.S.mode === 'play' && (inSky(ctx) || isMid()) && !ST.cut && !B49.on); B.alt.hidden = B.thr.hidden || !binoc(ctx) || !inSky(ctx);   /* plan-32 A: 🔭 ghim (có ống nhòm) · 🪨 thả đá */
   const a = document.getElementById('btn-a'), r = a && a.getBoundingClientRect(); if (!r || !r.width) return;
   const vis = id => { const e = document.getElementById(id), q = e && e.getBoundingClientRect(); return q && q.width && getComputedStyle(e).display !== 'none' ? q : null; };
   const others = ['joy', 'btn-tgt', 'herobar', 'btn-menu', 'btn-photo', 'btn-chat', 'px-clock', 'px-status', 'px-money', 'hotbar'].map(vis).filter(Boolean)
@@ -1087,13 +1089,13 @@ const AT = ctx => ALTS[ctx.lang() === 'vi' ? 'vi' : 'en'];
 const flyingNow = ctx => !!ST.fly || !!(ctx.air && ctx.air.on());
 const landZone = ctx => !inSky(ctx) && !(ctx.air && ctx.air.on()) && LAND.test(zid(ctx));
 const allPass = (m, tx, ty) => tx >= 1 && ty >= 0 && tx < m.w - 1 && ty < m.h;   /* 2026-10-15 (anh: 'không bay qua được map'): bay được vào hàng ô MÉP Bắc / Nam (trước cấm → kẹt cách mép 16 px: lối Nam 1 hàng + landEdgeTick H − 14 không bao giờ chạm) */
-function takeoffWhy(ctx) { const t = L(ctx), p = ctx.S.player; if (!copters(ctx)) return t.noCopter; if (!landZone(ctx)) return t.notHere; if ((p.custom && p.custom !== drawHover) || ctx.S.swimming) return t.busy; return ''; }
+function takeoffWhy(ctx) { const t = L(ctx), p = ctx.S.player; if (!copters(ctx) && !B49.req) return t.noCopter; if (!landZone(ctx)) return t.notHere; if ((p.custom && p.custom !== drawHover) || ctx.S.swimming) return t.busy; return ''; }
 function takeoff(ctx) {
-  const rc = rkCanCome(ctx), e = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent(); if (!rc.ok && rc.why) ctx.toast(rc.why);
+  const rc = B49.req ? { ok: false } : rkCanCome(ctx), e = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent(); if (!rc.ok && rc.why) ctx.toast(rc.why);
   ST.rk = rc.ok && e ? { with: true, x: e.x, y: e.y, dir: 0, cheer: 0.5 } : null; ST.cut = null; startMid(ctx); AL.h = 0.6; AL.v = 8; AL.stats.climbs++;
   const p = ctx.S.player; if (ctx.vfx) { ctx.vfx('dirt_puff', p.x - 5, p.y + 2); ctx.vfx('dirt_puff', p.x + 5, p.y + 2); } ctx.sfx('whoosh'); alog('takeoff ' + zid(ctx));
 }
-function landNow(ctx) {
+function landNow(ctx) { if (B49.on) b49log('landed'); B49.on = false;
   const p = ctx.S.player, rk = ST.rk && ST.rk.with ? ST.rk : null; stopFly(ctx); p.custom = null; p.labelUp = 0; AL.h = 0; AL.v = 0; AL.tgt = 0; AL.drift = null; AL.stats.lands++;
   if (rk) { const e = ctx.rocky && ctx.rocky.ent && ctx.rocky.ent(); if (e) { e.x = rk.x; e.y = rk.y; e.hop = 0.45; } } ST.rk = null;
   ctx.sfx('build'); if (ctx.vfx) { ctx.vfx('dirt_puff', p.x - 5, p.y + 2); ctx.vfx('dirt_puff', p.x + 5, p.y + 2); } alog('land ' + Math.round(p.x) + ',' + Math.round(p.y));
@@ -1101,7 +1103,7 @@ function landNow(ctx) {
 /* dáng bay theo vận tốc đứng: bổ nhào (dive) · vút lên (climb) · lơ lửng (hover) */
 export function altPose(ctx) { if (!flyingNow(ctx) || AL.fall) return 'hover'; return AL.v < -110 ? 'dive' : AL.v > 110 ? 'climb' : 'hover'; }
 export function setAltTarget(ctx, v, src = '') {
-  v = Math.max(0, Math.min(ALT.MAX, Math.round(v))); if (ctx.S.mode !== 'play' && ctx.S.mode !== 'faint') return false;
+  v = Math.max(0, Math.min(ALT.MAX, Math.round(v))); if (ctx.S.mode !== 'play' && ctx.S.mode !== 'faint') return false; if (B49.on && v > 0) v = B49.H;   /* c49-bay: độ cao cố định */
   if (!flyingNow(ctx)) { if (v <= 0) { AL.tgt = 0; return false; } const why = takeoffWhy(ctx); if (why) { ctx.toast(why); ctx.sfx('fail'); return false; } takeoff(ctx); }
   /* 2026-10-14 anh: TỐC ĐỘ lên/xuống theo tốc độ KÉO cần (lăn chuột): vuốt nhanh → bổ nhào / vút lên tới 250 m/s; kéo chậm → trôi nhẹ */
   if (src === 'lever' || src === 'wheel') { const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000, dtI = Math.max(0.016, now - (AL.inT || 0)), dv = Math.abs(v - AL.tgt), rate = dv / dtI;
@@ -1134,7 +1136,7 @@ function altTick(ctx, dt) {
   for (const q of AL.pops) q.t -= dt; AL.pops = AL.pops.filter(q => q.t > 0);
   if (AL.wob > 0) { AL.wob -= dt; AL.flashT = AL.wob < 0.3 && AL.wob > 0.12 ? 1 : 0; }
   if (arena && AL.h < 1) { AL.h = 850; AL.tgt = 850; }   /* vào sân trời Cổng Trời = giữa tầng trời */
-  if (!flyingNow(ctx)) { AL.h = 0; AL.v = 0; AL.fall = null; return; }
+  if (!flyingNow(ctx)) { AL.h = 0; AL.v = 0; AL.fall = null; B49.on = false; return; }
   if (ST.cut || ctx.S.mode !== 'play' && ctx.S.mode !== 'faint') return;
   /* chuyển động đứng: tiến về mục tiêu (nhanh dần khi giữ lâu, chậm lại gần đích) — hoặc RƠI khi bị đập */
   if (AL.fall) { AL.v = Math.max(-430, AL.v - 700 * dt); }
@@ -1172,6 +1174,7 @@ export function knockV(ctx, dm, o = {}) {
   const slam = !!o.slam || (dm < 0 && AL.h + dm <= 0);
   if (slam && !(ctx.air && ctx.air.on())) { AL.fall = { from: AL.h, t: 0 }; AL.v = Math.min(AL.v, -120); AL.stats.slams++; ctx.sfx('knock_whoosh'); alog('SLAM from ' + Math.round(AL.h)); }
   else { AL.h = Math.max(1, Math.min(ALT.MAX, AL.h + dm)); AL.tgt = AL.h; AL.v = dm > 0 ? 30 : -30; }
+  if (B49.on && !slam) AL.tgt = B49.H;   /* c49-bay: bị hất vẫn về đúng tầng */
   AL.wob = 0.6; AL.pops.push({ txt: (dm >= 0 ? '+' : '−') + Math.abs(Math.round(slam ? AL.h : dm)) + ' m', t: 1.4, up: dm >= 0 }); return true;
 }
 function perfectRecovery(ctx) { if (!(AL.wob > 0 && AL.flashT)) return false; AL.wob = 0; AL.flashT = 0; AL.iT = 0.8; if (AL.fall) { AL.fall = null; AL.v = 0; AL.tgt = AL.h; } if (ctx.hero && ctx.hero.iframes) ctx.hero.iframes(0.8); AL.stats.perfect++; ctx.toast(AT(ctx).perfect); ctx.sfx('pickup'); alog('PERFECT'); return true; }
@@ -1280,7 +1283,7 @@ function altWidget(ctx) {
 }
 const PWG = { t: 0 };
 function placeWidget(ctx) {
-  const el = altWidget(ctx); if (!el) return; const play = ctx.S.mode === 'play' || ctx.S.mode === 'faint', show = play && (flyingNow(ctx) || (copters(ctx) > 0 && landZone(ctx)));
+  const el = altWidget(ctx); if (!el) return; const play = ctx.S.mode === 'play' || ctx.S.mode === 'faint', show = play && !B49.on && (flyingNow(ctx) || (copters(ctx) > 0 && landZone(ctx)));
   if (PWG.on !== show) { PWG.on = show; document.body.classList.toggle('altw-on', show); PWG.t = 0; }   /* 2026-10-15 v2: điện thoại ngang dời cụm máu/Ki sang trái nhường chỗ cần độ cao (style.css body.altw-on) */
   if (el.hidden !== !show) el.hidden = !show; if (!show) { PWG.t = 0; return; }
   const now = performance.now(), VHp = window.innerHeight; let coarse, top, hgt, left, side;
@@ -1317,7 +1320,7 @@ function placeWidget(ctx) {
   el.classList.toggle('quiet', coarse ? !(AL.dragging || performance.now() - (AL.dragEnd || -1e9) < 900) : !(AL.leverT > ctx.S.time - 1.8));   /* điện thoại: tên dải CHỈ hiện lúc đang kéo cần */   /* tên dải chỉ hiện khi đang kéo / vừa đổi mục tiêu */
 }
 if (typeof window !== 'undefined') {
-  window.__altWheel = () => !!(ST.ctx && flyingNow(ST.ctx) && ST.ctx.S.mode === 'play');   /* hotbar.js: đang bay thì lăn chuột = độ cao */
+  window.__altWheel = () => !!(ST.ctx && flyingNow(ST.ctx) && ST.ctx.S.mode === 'play' && !B49.on);   /* hotbar.js: đang bay thì lăn chuột = độ cao */
   addEventListener('wheel', e => { const c = ST.ctx; if (!c || !window.__altWheel() || (e.target && e.target.closest && e.target.closest('#altw'))) return; const cv = document.getElementById('c'), uc = document.getElementById('ui'); if (e.target !== cv && e.target !== uc && e.target !== document.body && !(e.target && e.target.id === 'hotbar')) return; setAltTarget(c, AL.tgt + (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 100 : 20), 'wheel'); }, { passive: true });
 }
 
@@ -1334,7 +1337,7 @@ export const sky = {
     ctx.skyRoster = zz => { if (ST.landing !== zz) return null; ST.landing = null; const r = (ctx.S.save.sys.skyRoster || {})[zz]; if (!r || (Date.now() - r.at) / 1000 > ROSTER_LIFE) return null; log('roster use ' + zz + ' ' + r.list.length); return r.list; };
     ctx.skyFly = { read: () => ({ ok: false, why: L(ctx).conv }), learned: () => copters(ctx) > 0, use: () => useCopter(ctx) };
     ctx.playerAir = () => isMid() && !inSky(ctx) && AL.h > 2;   /* monsters.js: quái đất không cận chiến trúng người đang bay tầng Trung */
-    ctx.skyMelee = mo => { if (isMid() && AL.h > ALT.MELEE && mo && mo.c && !mo.c.sky && !mo.c.fly) { if (ctx.S.time - (ST.slashT || -9) > 2) { ST.slashT = ctx.S.time; ctx.toast(L(ctx).midSlash); } ST.slashBlocked = (ST.slashBlocked || 0) + 1; return false; } if (!mo || !mo.c || !mo.c.sky) return true; if ((mo.alt ?? 0) === altNow()) return true; if (ctx.S.time - (ST.diffT || -9) > 2) { ST.diffT = ctx.S.time; ctx.toast(L(ctx).diff(L(ctx).alt[mo.alt ?? 0])); } return false; };
+    b49Enter(ctx); ctx.skyMelee = mo => { const r49 = b49Melee(ctx, mo); if (r49 !== null) return r49; if (isMid() && AL.h > ALT.MELEE && mo && mo.c && !mo.c.sky && !mo.c.fly) { if (ctx.S.time - (ST.slashT || -9) > 2) { ST.slashT = ctx.S.time; ctx.toast(L(ctx).midSlash); } ST.slashBlocked = (ST.slashBlocked || 0) + 1; return false; } if (!mo || !mo.c || !mo.c.sky) return true; if ((mo.alt ?? 0) === altNow()) return true; if (ctx.S.time - (ST.diffT || -9) > 2) { ST.diffT = ctx.S.time; ctx.toast(L(ctx).diff(L(ctx).alt[mo.alt ?? 0])); } return false; };
     { const prev = ctx.onMonsterDown; ctx.onMonsterDown = (mo, xp) => { if (prev) prev(mo, xp); const ex = mo && mo.c && mo.c.sky && EXTRA[mo.c.key.split('@')[0]];
       if (ex) for (const [id, n] of ex) ctx.give(id, n, mo.x + (Math.random() - 0.5) * 12, mo.y); if (mo && mo.c && mo.c.sky) { ST.kills = (ST.kills || 0) + 1; log('kill ' + mo.c.key); } }; }
     migrate(ctx);
@@ -1384,7 +1387,7 @@ export const sky = {
     const p = ctx.S.player; if (!p || !ctx.S.map) return;
     if (ST.leaving) return;
     ST.btnT = (ST.btnT || 0) - dt; if (ST.btnT <= 0) { ST.btnT = 0.5; placeBtns(ctx); }
-    altTick(ctx, dt); placeWidget(ctx); if (ST.leaving) return;
+    altTick(ctx, dt); placeWidget(ctx); if (ST.leaving) return; b49Tick(ctx, dt);
     batTick(ctx, dt); ST.postT = (ST.postT || 0) - dt; if (ST.postT <= 0) { ST.postT = 1; postTick(ctx); }
     if (ST.cut) {
       const C = ST.cut;
@@ -1412,8 +1415,8 @@ export const sky = {
     if (ctx.S.mode === 'copter') { if (code === 'KeyE' || code === 'Space' || code === 'Enter' || code === 'KeyX') { skipCut(ctx); return true; } return false; }
     if (ctx.S.mode !== 'play') return false;
     if (code === 'KeyX' && (copters(ctx) > 0 || inSky(ctx) || isMid() || (ctx.air && ctx.air.on()))) { if (perfectRecovery(ctx)) return true; if (SHIFT) setAltTarget(ctx, 0, 'X'); else toggleFly(ctx); return true; }
-    if (isMid() && !ST.cut && code === 'KeyZ') { midThrow(ctx); return true; }
-    if (isMid() && !ST.cut && (code === 'KeyE' || code === 'Space') && ctx.monsters && ctx.monsters.list().some(mo => !mo.c.sky && !mo.c.fly && mo.hp > 0 && Math.hypot(mo.x - ctx.S.player.x, mo.y - ctx.S.player.y) < 40)) { if (ctx.S.time - (ST.slashT || -9) > 1.5) { ST.slashT = ctx.S.time; ctx.toast(L(ctx).midSlash); } ST.slashBlocked = (ST.slashBlocked || 0) + 1; return true; }   /* chém không với tới quái dưới đất */
+    if (isMid() && !B49.on && !ST.cut && code === 'KeyZ') { midThrow(ctx); return true; }
+    if (isMid() && !B49.on && !ST.cut && (code === 'KeyE' || code === 'Space') && ctx.monsters && ctx.monsters.list().some(mo => !mo.c.sky && !mo.c.fly && mo.hp > 0 && Math.hypot(mo.x - ctx.S.player.x, mo.y - ctx.S.player.y) < 40)) { if (ctx.S.time - (ST.slashT || -9) > 1.5) { ST.slashT = ctx.S.time; ctx.toast(L(ctx).midSlash); } ST.slashBlocked = (ST.slashBlocked || 0) + 1; return true; }   /* chém không với tới quái dưới đất */
     if (inSky(ctx) && !ST.cut) { if (code === 'KeyL') { pressPin(ctx); return true; } if (code === 'KeyZ') { pressDrop(ctx); return true; } }
     return false;
   },
@@ -1433,8 +1436,8 @@ export const sky = {
   drawGround(g, ctx, cx, cy) {
     if (inSky(ctx)) { drawSkyGround(g, ctx, cx, cy); drawScout(g, ctx, cx, cy); drawFalls(g, ctx, cx, cy); }
     else { if (landZone(ctx) && ST.fly && AL.h >= 30) { const p0 = ctx.S.player; altShadow(g, Math.round(p0.x - cx), Math.round(p0.y - cy), 1); if (ST.rk && ST.rk.with) altShadow(g, Math.round(ST.rk.x - cx), Math.round(ST.rk.y - cy), 0.8); }   /* bóng người + Rocky bay cao: ở lớp nền, dưới cây / nhà */
-      if (landZone(ctx) && ST.fly && AL.h >= 30 && AL.h < 60) { g.save(); g.globalAlpha = Math.min(1, (AL.h - 30) / 30); farGround(g, ctx, cx, cy, zid(ctx), AL.h); g.restore(); }   /* 30–60 m: đất nét → đất xa (cùng đường vẽ dải cao) hoà dần, không nhảy ở 60 m */
-      if (ST.craters.length) drawCraters(g, ctx, cx, cy); if (isMid() && !ST.cut && ctx.S.mode === 'play' && AL.h < 40) drawMidAim(g, ctx, cx, cy);
+      if (landZone(ctx) && ST.fly && AL.h >= 30 && AL.h < 60 && !B49.on) { g.save(); g.globalAlpha = Math.min(1, (AL.h - 30) / 30); farGround(g, ctx, cx, cy, zid(ctx), AL.h); g.restore(); }   /* 30–60 m: đất nét → đất xa (cùng đường vẽ dải cao) hoà dần, không nhảy ở 60 m */
+      if (ST.craters.length) drawCraters(g, ctx, cx, cy); if (isMid() && !B49.on && !ST.cut && ctx.S.mode === 'play' && AL.h < 40) drawMidAim(g, ctx, cx, cy);
       if (isMid() && AL.tgt === 0 && AL.h < 150 && AL.h > 1) { const p = ctx.S.player, ok2 = walkHere(ctx), x = Math.round(p.x - cx), y = Math.round(p.y - cy) + 1; g.strokeStyle = ok2 ? 'rgba(110,255,140,.9)' : 'rgba(255,80,70,.9)'; g.lineWidth = 1; g.beginPath(); g.ellipse(x + 0.5, y + 0.5, 6, 3, 0, 0, TAU); g.stroke(); } }   /* vòng đáp nhỏ chỉ khi đang hạ */
     for (const k of ST.marks) {
       const col = k.tier ? '90,170,255' : '255,70,60', a = 0.35 + 0.45 * Math.min(1, 1 - Math.max(0, k.t) / (k.dur || 1));
@@ -1481,3 +1484,101 @@ export const sky = {
 };
 let STONE = null;
 function stoneIcon() { if (STONE) return STONE.naturalWidth ? STONE : null; const it = ART.man && ART.man.ui && ART.man.ui.items; if (!it || !it.stone) return null; STONE = new Image(); STONE.src = 'assets/px/' + it.stone; return null; }
+
+/* ================= c49-bay (anh 05/11): CHIÊU BAY — thay ô Lướt Ki + Lộn =================
+   · Shift (thả nhanh) / ô Bay trên thanh kỹ năng / nút tròn Bay (điện thoại) → bay lên TẦNG CAO cố định 40 m (lơ lửng 26 px, bóng dưới đất nhỏ + nhạt),
+     bấm lại → hạ xuống. Dùng lõi độ cao liền mạch sẵn có (ST.fly.mid + AL) nhưng KHÔNG cần chong chóng, không cần độ cao, không lăn chuột đổi độ cao.
+   · Chỉ bay ở vùng ngoài trời (Làng, Biển, M1–M9, Đèo); không bay khi đang bơi / lặn / trong trận / bị hất / ngất. Cần ≥ 2 Ki, cất cánh tốn 1 Ki,
+     bay hao 0,2 Ki/giây, không hồi Ki khi bay (đánh trúng vẫn +⅓ Ki) → hết Ki tự hạ.
+   · Tầng: trên cao CHỈ đánh / bị đánh bởi quái trời (c.b49: Chim Sấm, Sứa Trời, Diều Hâu Đá yếu theo vùng + Chấn Thú bay Làng của farm106);
+     dưới đất không đánh được chúng và chúng không với tới. Rocky (không cánh) ở lại mặt đất. */
+const B49T = {
+  vi: { up: 'Bay lên tầng cao — chỉ đánh được quái trên trời · bấm Bay (Shift) lần nữa để hạ', noKi: 'Chưa đủ Ki để bay (cần 2 Ki)', out: 'Hết Ki — hạ xuống', here: 'Chỉ bay được ở vùng ngoài trời', busy: 'Đang bận — chưa bay được', fight: 'Đang trong trận — không bay được', sky: 'Quái này đang bay trên trời — bấm Bay (Shift) để lên đánh', ground: 'Đang bay — chỉ đánh được quái trên trời; hạ xuống để đánh quái dưới đất', hint: 'Mới: chiêu BAY (Shift · ô Bay) — bay lên tầng cao đánh quái + bắt Chấn Thú trên trời, bay tốn Ki' },
+  en: { up: 'Flying high — only sky monsters can be hit · press Fly (Shift) again to land', noKi: 'Not enough Ki to fly (needs 2 Ki)', out: 'Out of Ki — landing', here: 'You can only fly outdoors', busy: "Busy — can't fly right now", fight: "In a battle — can't fly", sky: 'That monster is up in the sky — press Fly (Shift) to go up', ground: 'Flying — only sky monsters can be hit; land to fight ground monsters', hint: 'New: FLY (Shift · Fly slot) — fly up to fight sky monsters and catch sky beasts; flying drains Ki' },
+};
+const b49L = ctx => B49T[ctx.lang() === 'vi' ? 'vi' : 'en'];
+function b49log(s) { B49.log.push(s); if (B49.log.length > 40) B49.log.shift(); }
+const b49Air = ctx => B49.on && !inSky(ctx) && AL.h > 2;
+const isSky49 = mo => !!(mo && mo.c && mo.c.b49);
+function b49Melee(ctx, mo) {   /* null = để luật cũ quyết · true / false = theo tầng Bay */
+  if (inSky(ctx) || !mo || !mo.c) return null;
+  const air = b49Air(ctx), sky = isSky49(mo);
+  if (air === sky) return air ? true : null;
+  if (ctx.S.time - B49.msgT > 2) { B49.msgT = ctx.S.time; ctx.toast(sky ? b49L(ctx).sky : b49L(ctx).ground); } B49.blocked++; return false;
+}
+function b49Why(ctx) {
+  const t = b49L(ctx), p = ctx.S.player;
+  if (!landZone(ctx) || (ctx.isUnderwater && ctx.isUnderwater())) return t.here;
+  if ((ctx.duel && ctx.duel.active && ctx.duel.active()) || (ctx.knocked && ctx.knocked()) || (ctx.hero && ctx.hero.fainted)) return t.fight;
+  if (ctx.S.swimming || (p.custom && p.custom !== drawHover) || ST.cut || ctx.S.mode !== 'play') return t.busy;
+  if ((ctx.ki ? ctx.ki.get() : 0) + 1e-6 < B49.NEED) return t.noKi;
+  return '';
+}
+export function b49Toggle(ctx) {
+  ctx = ctx || ST.ctx; if (!ctx || ctx.S.mode !== 'play') return false; const t = b49L(ctx);
+  if (flyingNow(ctx) && !inSky(ctx) && !(ctx.air && ctx.air.on())) { setAltTarget(ctx, 0, 'bay'); B49.stats.down++; b49log('down ' + Math.round(AL.h)); return true; }   /* đang bay (Bay hoặc chong chóng) → hạ */
+  const why = b49Why(ctx); if (why) { ctx.toast(why); ctx.sfx('fail'); if (why === t.noKi) B49.stats.noKi++; b49log('why ' + why.slice(0, 20)); return false; }
+  B49.req = true; let ok = false; try { ok = setAltTarget(ctx, B49.H, 'bay'); } finally { B49.req = false; }
+  if (!ok) return false;
+  B49.on = true; ST.rk = null; AL.tgt = B49.H; if (ctx.ki && ctx.ki.spend) ctx.ki.spend(B49.COST);
+  B49.stats.up++; b49log('up ' + zid(ctx)); ctx.toast(t.up); b49Populate(ctx); return true;
+}
+/* ---- quái trời trên vùng đất (yếu theo vùng; AI gốc skymon.js chỉ chạy khi người chơi đang bay) ---- */
+const K49 = { village: 0.12, sea: 0.2 };
+const k49 = z => K49[z] ?? (/^m\d$/.test(z) ? 0.12 + 0.06 * +z.slice(1) : /^road\d$/.test(z) ? 0.15 + 0.06 * +z.slice(4) : 0.2);
+const POP49 = [['thunder', 2], ['jelly', 2]];   /* Diều Hâu Đá không dùng: lời báo 'tầng thấp / cao' của nó thuộc luật trời cũ */
+Object.defineProperty(drawHover, 'shadowW', { get: () => (B49.on ? 14 : 0) }); drawHover.shadowZ = () => liftNow() * 0.8;   /* shadow.js: bóng tại chân, nhỏ + nhạt theo độ cao (luật bóng anh 30/10) */
+function b49Idle(ctx, mo, dt) {   /* người chơi dưới đất: lượn vòng quanh chỗ ở, không đánh */
+  mo.moving = false; mo.st2 = null; mo.hook = null; mo.trail = null; mo.open = false;
+  mo.orb = (mo.orb || mo.id) + dt * 0.35; const h = mo.home || mo, tx = h.x + Math.cos(mo.orb) * 46, ty = h.y + Math.sin(mo.orb) * 28, dx = tx - mo.x, dy = ty - mo.y, d = Math.hypot(dx, dy);
+  if (d > 1) { const s = Math.min(d, (mo.c.sp || 30) * 0.5 * dt); mo.x += dx / d * s; mo.y += dy / d * s; mo.fa = Math.atan2(dy, dx); mo.moving = true; }
+}
+function b49Cfg(ctx, key) {
+  const z = zid(ctx), id = 'b49:' + z + ':' + key; if (ST.monCfg && ST.monCfg[id]) return ST.monCfg[id];
+  const c = SKYMON[key]; if (!c) return null; const k = k49(z), ai0 = c.aiFn, dr0 = c.drawFn;
+  const cfg = { ...c, b49: true, aiKey49: key, hp: Math.max(40, Math.round(c.hp * k)), dmg: Math.max(4, Math.round(c.dmg * (0.2 + 0.6 * k))), xp: Math.max(8, Math.round(c.xp * k)), armor: Math.round((c.armor || 0) * k),
+    aiFn: (cx2, mo, dt, p, dp, ch) => { if (b49Air(cx2)) { ai0(cx2, mo, dt, p, dp, ch); mo.alt = 0; return; } b49Idle(cx2, mo, dt); },
+    drawFn: (g, mo, x, y) => { const a = mo.alt; mo.alt = 1; try { dr0(g, mo, x, y); } finally { mo.alt = a; } } };
+  if (ST.monCfg) ST.monCfg[id] = cfg; return cfg;
+}
+function b49Spot(ctx) {
+  const m = ctx.S.map, p = ctx.S.player;
+  for (let i = 0; i < 40; i++) { const a = Math.random() * TAU, r = 170 + Math.random() * 260, x = p.x + Math.cos(a) * r, y = p.y + Math.sin(a) * r * 0.7;
+    if (x < 40 || y < 40 || x > m.w * TS - 40 || y > m.h * TS - 40) continue; if (B49.mons.some(o => Math.hypot(o.x - x, o.y - y) < 60)) continue; return { x, y }; }
+  return null;
+}
+function b49Populate(ctx) {
+  if (!landZone(ctx) || !ctx.monsters || !ctx.monsters.add || !ctx.S.map) return 0;
+  const L0 = ctx.monsters.list(); B49.mons = B49.mons.filter(o => L0.includes(o) && o.hp > 0); let n = 0;
+  for (const [key, want] of POP49) { let have = B49.mons.filter(o => o.c.aiKey49 === key).length;
+    while (have < want) { const c = b49Cfg(ctx, key), s = b49Spot(ctx); if (!c || !s) break; const mo = ctx.monsters.add(c, s.x, s.y); mo.hp = mo.max = easyHp(mo.max); mo.alt = 0; mo.home = { x: s.x, y: s.y }; B49.mons.push(mo); have++; n++; B49.stats.spawn++; } }
+  if (n) b49log('spawn ' + n + ' ' + zid(ctx)); return n;
+}
+function b49Wrap(ctx) {   /* người chơi dưới đất: không gì gây sát thương lên quái trời (Rocky, Chấn Thú dưới đất, đạn…) */
+  const M = ctx.monsters; if (!M || !M.damage || M.damage.__b49) return;
+  const o = M.damage, w = function (mo, ...r) { if (isSky49(mo) && !b49Air(ctx) && !inSky(ctx)) { B49.dmgBlocked = (B49.dmgBlocked || 0) + 1; return false; } return o.call(this, mo, ...r); };
+  w.__b49 = true; for (const k of Object.keys(o)) if (!(k in w)) w[k] = o[k]; M.damage = w;
+}
+function b49Enter(ctx) {
+  B49.mons = []; B49.spawnT = 2.5; B49.msgT = -9;
+  ctx.b49Air = () => b49Air(ctx); ctx.b49Lift = () => (b49Air(ctx) ? Math.round(liftNow()) : 0);
+  ctx.b49Tier = mo => (inSky(ctx) ? true : b49Air(ctx) === isSky49(mo));
+  ctx.bay49 = { toggle: () => b49Toggle(ctx), air: () => b49Air(ctx), on: () => B49.on, can: () => landZone(ctx), why: () => b49Why(ctx) };
+  b49Wrap(ctx);
+  try { const k = ctx.S.save.sys && ctx.S.save.sys.ki; if (k && !k.tut) k.tut = 1; } catch (e) { }   /* lời chỉ dẫn Ki cũ (Shift = lộn) không còn đúng → thay bằng lời Bay */
+  if (typeof window !== 'undefined') window.__bay49 = {
+    toggle: () => b49Toggle(ctx), state: () => ({ on: B49.on, air: b49Air(ctx), h: +AL.h.toFixed(1), tgt: AL.tgt, lift: Math.round(liftNow()), ki: ctx.ki ? +ctx.ki.get().toFixed(2) : null, zone: zid(ctx), mons: B49.mons.filter(o => o.hp > 0).map(o => ({ id: o.id, key: o.c.aiKey49, x: Math.round(o.x), y: Math.round(o.y), hp: Math.round(o.hp), max: o.max })), blocked: B49.blocked, dmgBlocked: B49.dmgBlocked || 0, stats: { ...B49.stats }, log: B49.log.slice(-12) }),
+    populate: () => b49Populate(ctx), cfg: k => b49Cfg(ctx, k), set: o => Object.assign(B49, o),
+  };
+}
+function b49Tick(ctx, dt) {
+  if (B49.on && !flyingNow(ctx)) B49.on = false;
+  b49Wrap(ctx);
+  if (B49.on && ctx.S.mode === 'play' && AL.tgt > 0) {
+    if (ctx.ki && ctx.ki.drain && ctx.ki.drain(B49.DRAIN * dt) <= 0.001) { setAltTarget(ctx, 0, 'bay'); ctx.toast(b49L(ctx).out); B49.stats.out++; b49log('noki'); }
+    if (ctx.duel && ctx.duel.active && ctx.duel.active()) setAltTarget(ctx, 0, 'bay');
+  }
+  if (landZone(ctx) && ctx.S.mode === 'play' && (B49.spawnT -= dt) <= 0) { B49.spawnT = 20; b49Populate(ctx); }
+  if (ctx.S.mode === 'play' && landZone(ctx)) { const s = sv(ctx); if (!s.b49hint && (B49.hintT = (B49.hintT || 0) + dt) > 4) { s.b49hint = 1; ctx.toast(b49L(ctx).hint); try { ctx.persist(); } catch (e) { } } }
+}
+

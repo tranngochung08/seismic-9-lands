@@ -35,7 +35,7 @@ const ZR = {   /* vùng → cấp quái thường + thủ lĩnh (loài có sprit
   plateau: { lv: [8, 10], lead: { sp: 'daibang', lv: 14, lead: true }, cts: [{ sp: 'cuoitho', lv: 9 }, { sp: 'hoahung', lv: 10 }], mins: ['crow', 'crow', 'gull', 'crow', 'gull', 'wolf'] },
   north: { lv: [9, 11], lead: { sp: 'loiho', lv: 15, lead: true }, cts: [{ sp: 'nguuson', lv: 11 }, { sp: 'thanhong', lv: 10 }], mins: ['wolf', 'wolf', 'scorpion', 'wolf', 'scorpion', 'crow'] },
 };
-const AQUA = { cachep: 1, bachkinh: 1, puffer: 1, eel: 1 }, WADE = { coc: 1, coc2: 1 }, AMPH = { crab: 1 }, FLY = { daibang: 1, hac: 1, crow: 1, gull: 1 };
+const AQUA = { cachep: 1, bachkinh: 1, puffer: 1, eel: 1 }, WADE = { coc: 1, coc2: 1 }, AMPH = { crab: 1 }, FLY = { daibang: 1, hac: 1, crow: 1, gull: 1, macuu: 1 };
 const SHOT_CLIPS = ['cast', 'spit', 'zap', 'spout', 'flap', 'beam', 'shine', 'shout', 'blow', 'gaze', 'tongue', 'pulse', 'wave', 'throw'];
 const HGT = { xs: 15, s: 18, m: 24, l: 30 };
 const CF = { aggroR: 28, aggroT: 0.7, packR: 80, packN: 2, bite: 20, near: 16, shotMin: 30, shotMax: 90, shotV: 105, leashOut: 56, leashHome: 300, tauntT: 5, respawn: 30, respawnLead: 120, sleepR: 520, floorP: 0.35, floorC: 0.25, fleeT: 5, roam: 72, sepR: 18, respawnCt: 60, ctXp: 1.5, gcd: [1.6, 2.6], leadXp: 2.5 };
@@ -116,7 +116,7 @@ const isComp = who => who !== 'pl';
 /* ---------- sinh / hồi sinh ---------- */
 function leadCfg(sp, rid) {
   const s = SPECIES[sp], he = heOf(sp);
-  return { key: 'f106_' + sp, fct: sp, f106: rid, sky: true, vi: s ? s.name : sp, en: SPECIES_EN[sp] || (s ? s.name : sp), hp: 60, dmg: 0, armor: 0, sp: FLY[sp] ? 46 : AQUA[sp] ? 34 : 42, xp: 0, drop: 'stone',
+  return { key: 'f106_' + sp, fct: sp, f106: rid, sky: true, b49: rid === 'sky49', vi: s ? s.name : sp, en: SPECIES_EN[sp] || (s ? s.name : sp), hp: 60, dmg: 0, armor: 0, sp: FLY[sp] ? 46 : AQUA[sp] ? 34 : 42, xp: 0, drop: 'stone',
     w: 16, h: HGT[(s && s.size) || 's'] || 18, c: [TYPE_COLOR[he] || '#9a6c48', '#352022', '#fff6c8'], aqua: !!(AQUA[sp] || WADE[sp]), fly: !!FLY[sp], shortHit: true,
     aiFn: aiF, drawFn: drawLead, onFall: onFallF, promptDy: 16 };
 }
@@ -129,7 +129,7 @@ function minCfg0(ctx, key) {   /* cấu hình gốc của quái thường lấy 
   return { ...c0, ai: undefined, aiFn: aiF, drawFn: undefined, onFall: onFallF, steal: null, lurk: false, float: false, swim: false, boss: false, fct: key, f106m: true, sky: true, shortHit: true, aqua: !!(AQUA[key] || WADE[key]), fly: !!FLY[key] };
 }
 function hpOf(spec, lv, c) { if (spec.sp) { const s = SPECIES[spec.sp], b = s && s.base ? s.base[0] : 60; return Math.round((b * 0.6 + 12) * (1 + 0.12 * lv) * (spec.lead ? 1.6 : 1.15)); } return Math.round(Math.max(30, Math.min(110, (c.hp || 40) * 0.7)) * (1 + 0.06 * lv)); }
-function spawnOne(ctx, rid, spec, avoidP) {
+function spawnOne(ctx, rid, spec, avoidP) { if (rid === 'sky49') return spawnSky49(ctx, spec, avoidP);   /* c49-bay */
   const Z = ZR[rid], ct = !!spec.sp, lead = !!spec.lead, k = kindOf(spec.sp || spec.key), p = ctx.S.player; if (!ctx.monsters || !ctx.monsters.add) return null;
   const L0 = tileList(rid, k === 'aqua' ? 'aqua' : k === 'amph' ? 'amph' : 'land'); if (!L0.length) return null;
   const near = lead ? (t => nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_R)) : ct ? (t => !nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_AVOID)) : (t => !nearLair(rid, t[0] * TS + 8, t[1] * TS + 12, LAIR_AVOID) && inFront(rid, t[0] * TS + 8, t[1] * TS + 12));   /* p121: hang thủ lĩnh cuối bãi; quái thường ở đầu bãi */
@@ -146,9 +146,9 @@ function spawnOne(ctx, rid, spec, avoidP) {
   ST.mons.push(mo); ST.n.spawn++; log({ ev: 'spawn', id: mo.id, sp: spec.sp || spec.key, lead, rid, lv, x: Math.round(q.x), y: Math.round(q.y) });
   return mo;
 }
-function spawnAll(ctx) { for (const [rid, Z] of Object.entries(ZR)) { spawnOne(ctx, rid, Z.lead, false); for (const s of Z.cts || []) spawnOne(ctx, rid, s, false); for (const key of Z.mins) spawnOne(ctx, rid, { key }, false); } }
+function spawnAll(ctx) { for (const s of SKY49) spawnOne(ctx, 'sky49', s, false); for (const [rid, Z] of Object.entries(ZR)) { spawnOne(ctx, rid, Z.lead, false); for (const s of Z.cts || []) spawnOne(ctx, rid, s, false); for (const key of Z.mins) spawnOne(ctx, rid, { key }, false); } }
 function clearVanilla(ctx) {   /* Chũi / Cóc hoang cũ của fieldct + quái thường tự sinh của monsters.js trên Làng mới → thay bằng bầy theo vùng */
-  if (!ctx.monsters) return; for (const o of ctx.monsters.list().slice()) if (o && o.c && !o.c.f106 && !o.c.f106m && !o.c.spar && !o.c.boss && !o.c.gang95 && !o.farm103 && !o.f6) { try { ctx.monsters.remove(o); } catch (e) { } }
+  if (!ctx.monsters) return; for (const o of ctx.monsters.list().slice()) if (o && o.c && !o.c.f106 && !o.c.f106m && !o.c.b49 && !o.c.spar && !o.c.boss && !o.c.gang95 && !o.farm103 && !o.f6) { try { ctx.monsters.remove(o); } catch (e) { } }
 }
 
 /* ---------- ghi công sát thương (bọc ctx.monsters.damage; elyz95 / comp79 đặt mo.__by trước khi gọi — vá p106) ---------- */
@@ -213,7 +213,7 @@ function step(ctx, mo, tx, ty, sp, dt) {
   if (!F.act) setClip(F, mv > 0.05 ? (F.kind === 'fly' && hasClip(ST.ctx, F, 'flymove') ? 'flymove' : 'run') : idleClip(F));
   return mv;
 }
-function wander(ctx, mo, dt) {
+function wander(ctx, mo, dt) { if (mo.f6 && mo.f6.rid === 'sky49') { wander49(ctx, mo, dt); return; }
   const F = mo.f6; if (F.wait > 0) { F.wait -= dt; setClip(F, idleClip(F)); return; }
   if (!F.goal) {
     const L0 = tileList(F.rid, F.kind === 'aqua' || F.kind === 'amph' ? F.kind : 'land'), ld = null, c = F.lead ? (lairOf(F.rid) || mo) : (F.home || mo), rr = F.lead ? LAIR_R : 96;   /* p121: thủ lĩnh ở hang; quái thường không lang thang quanh thủ lĩnh */   /* quái thường lang thang quanh thủ lĩnh */
@@ -230,7 +230,7 @@ function hurtTarget(ctx, mo, who, d) {
   d = Math.max(1, d);
   if (isR(who)) { if (NET.hurt) NET.hurt(who.slice(2), Math.round(d), mo); ST.n.hitR = (ST.n.hitR || 0) + 1; return true; }   /* c10-coop */
   if (who === 'pl') {
-    const h = ctx.hero; if (!h || h.fainted) return false;
+    const h = ctx.hero; if (!h || h.fainted) return false; if (mo && !tier49(ctx, mo)) return false;   /* c49-bay: khác tầng không trúng */
     if (legendOut(ctx)) { const max = h.max || 100, hp = h.hp == null ? max : h.hp, fl = Math.ceil(max * CF.floorP); const d2 = Math.min(d, Math.max(0, hp - fl)); if (d2 < d) ST.n.floor++; d = d2; }
     if (d >= 1) { try { h.hit(Math.round(d)); } catch (e) { } } ST.n.hitP++; return true;
   }
@@ -284,7 +284,7 @@ function fight(ctx, mo, dt, canHit) {
   if (isR(F.tg)) { const q = objOf(ctx, F.tg); if (q && hyp(q, mo) < 220) F.tgT = Math.max(F.tgT || 0, now() + 1); }   /* c10-coop */
   if (F.tg !== 'pl' && !(F.tgT > now() && objOf(ctx, F.tg))) F.tg = 'pl';
   const who = F.tg, T = objOf(ctx, who);
-  if (!T || (who === 'pl' && !canHit)) { F.calmT += dt; if (F.calmT > 2) calm(mo, 'notarget'); else setClip(F, idleClip(F)); return; }
+  if (!T || (who === 'pl' && (!canHit || !tier49(ctx, mo)))) { F.calmT += dt; if (F.calmT > 2) calm(mo, 'notarget'); else setClip(F, idleClip(F)); return; }
   const od = outDist(mo), dh = hyp(mo, F.home), d = hyp(mo, T);
   if (od > CF.leashOut || dh > CF.leashHome) { calm(mo, od > CF.leashOut ? 'out' : 'far'); return; }
   if (d > 220) { F.calmT += dt; if (F.calmT > 3) { calm(mo, 'lost'); return; } } else F.calmT = 0;
@@ -431,7 +431,7 @@ function ai0(ctx, mo, dt, p, dp, canHit) {
   if (F.mode === 'angry') { fight(ctx, mo, dt, canHit); return; }
   if (F.mode === 'return') { goHome(ctx, mo, dt); return; }
   if (q10 && q10.d < CF.aggroR && !(canHit && dp < q10.d)) { F.nearR = (F.nearR || 0) + dt; if (F.nearR > CF.aggroT) { F.nearR = 0; provoke(ctx, mo, 'r:' + q10.id, true); return; } } else F.nearR = 0;   /* c10-coop */
-  if (canHit && dp < CF.aggroR) { F.nearT += dt; if (F.nearT > CF.aggroT) { provoke(ctx, mo, 'pl', true); F.nearT = 0; return; } } else F.nearT = Math.max(0, F.nearT - dt);
+  if (canHit && dp < CF.aggroR && tier49(ctx, mo)) { F.nearT += dt; if (F.nearT > CF.aggroT) { provoke(ctx, mo, 'pl', true); F.nearT = 0; return; } } else F.nearT = Math.max(0, F.nearT - dt);
   wander(ctx, mo, dt);
 }
 
@@ -903,3 +903,28 @@ function ballDraw(ctx, g, b, cx, cy) {   /* Ấn Thu như trận đấu: bay = a
   antDraw(g, 'anthu_shake', fr, sx, sy - H);
 }
 if (typeof window !== 'undefined') window.__f106c = { list: () => (ST.fz || []).map(z => ({ key: z.key, sp: z.sp, lv: z.lv, mine: z.mine, busy: z.busy, x: Math.round(z.x), y: Math.round(z.y), left: +(z.T - z.t).toFixed(1) })), throwKey: key => { const z = (ST.fz || []).find(q => q.key === key); return ballThrow(ST.ctx, z || null); }, rate: o => Object.assign(RATE, o || {}), rates: () => ({ ...RATE }), near: () => { const c = ST.ctx && faintNear(ST.ctx); return c ? c.label : null; }, balls: () => (ST.balls || []).length, ballSt: () => (ST.balls || []).map(b => ({ ph: b.ph, t: +b.t.toFixed(2), shakes: b.shakes, done: b.done, res: b.res })), ant: () => Object.fromEntries(Object.entries(ANT).map(([k, m]) => [k, !!(m.im && m.im.naturalWidth)])) };
+
+/* ===== c49-bay (anh 05/11): CHẤN THÚ BAY TRÊN TRỜI Làng — bầy 'sky49' (Bồ Câu Mật Mã + Hạc Sấm, 1 chiêu, ngất → ném Ấn Thu như Chấn Thú hoang c23).
+   Lượn ở tầng cao (lơ lửng 24 px) khắp Làng; chỉ nổi giận / đánh / bị đánh khi người chơi CÙNG TẦNG (đang Bay — sky.js ctx.b49Air). Ngất thì rơi nằm dưới đất chờ bắt. ===== */
+const SKY49 = [{ sp: 'macuu', lv: 7 }, { sp: 'hac', lv: 9 }, { sp: 'macuu', lv: 8 }, { sp: 'hac', lv: 10 }], ALT49 = 24;
+function tier49(ctx, mo) { const air = !!(ctx && ctx.b49Air && ctx.b49Air()); return air === !!(mo && mo.c && mo.c.b49); }
+function spawnSky49(ctx, spec, avoidP) {
+  const m = ctx.S.map, p = ctx.S.player; if (!ctx.monsters || !ctx.monsters.add || !m || !spec || !spec.sp) return null;
+  let q = null; for (let i = 0; i < 60 && !q; i++) { const x = (5 + Math.random() * (m.w - 10)) * TS, y = (5 + Math.random() * (m.h - 10)) * TS; if (avoidP && Math.hypot(x - p.x, y - p.y) < 160) continue; if (ST.mons.some(o => Math.hypot(o.x - x, o.y - y) < 48)) continue; q = { x, y }; }
+  if (!q) return null;
+  const c = leadCfg(spec.sp, 'sky49'); c.fly = true; c.b49 = true; c.aqua = false;
+  const lv = spec.lv, mo = ctx.monsters.add(c, q.x, q.y), max = hpOf(spec, lv, c);
+  mo.max = max; mo.hp = max; mo.fx = Math.random() < 0.5 ? -1 : 1; mo.angry = false;
+  mo.f6 = { rid: 'sky49', sp: spec.sp, key: null, lead: false, ct: true, lv, kind: 'fly', he: heOf(spec.sp), mvs: movesOf(spec.sp).slice(0, 1), mcd: {}, gcd: R(1, 2.5), tel: null, home: { x: q.x, y: q.y }, rect: null, mode: 'calm', goal: null, wait: R(0.3, 2.5), cd: { bite: 0, shot: R(1, 3) }, act: null, tg: 'pl', tgT: 0,
+    prevHp: max, acc: 0, cr: {}, last: null, nearT: 0, stuck: 0, calmT: 0, backT: 0, fleeT: 0, fx: mo.fx, fy: 0.4, alt: ALT49, e: null, shotClip: null, ct0: Math.random() * 2, regen: 0 };
+  ST.mons.push(mo); ST.n.spawn++; ST.n.sky49 = (ST.n.sky49 || 0) + 1; log({ ev: 'spawn', id: mo.id, sp: spec.sp, rid: 'sky49', lv, x: Math.round(q.x), y: Math.round(q.y) });
+  return mo;
+}
+function wander49(ctx, mo, dt) {
+  const F = mo.f6; if (F.wait > 0) { F.wait -= dt; setClip(F, idleClip(F)); return; }
+  if (!F.goal) { const a = Math.random() * Math.PI * 2, r = R(20, 90), m = ctx.S.map; F.goal = { x: Math.max(48, Math.min(m.w * TS - 48, F.home.x + Math.cos(a) * r)), y: Math.max(48, Math.min(m.h * TS - 48, F.home.y + Math.sin(a) * r * 0.6)) }; }
+  const mv = step(ctx, mo, F.goal.x, F.goal.y, mo.c.sp * 0.45, dt);
+  if (hyp(mo, F.goal) < 2 || mv < 0.01) { F.goal = null; F.wait = R(1.2, 3.6); setClip(F, idleClip(F)); }
+}
+if (typeof window !== 'undefined') window.__f49 = { list: () => ST.mons.filter(m => m.f6 && m.f6.rid === 'sky49' && m.hp > 0).map(m => ({ id: m.id, sp: m.f6.sp, lv: m.f6.lv, x: Math.round(m.x), y: Math.round(m.y), hp: Math.round(m.hp), max: m.max, mode: m.f6.mode, alt: m.f6.alt })), fz: () => (ST.fz || []).map(z => ({ sp: z.sp, lv: z.lv, x: Math.round(z.x), y: Math.round(z.y), mine: z.mine })), n: () => ({ ...ST.n }) };
+
