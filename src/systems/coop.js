@@ -117,7 +117,7 @@ function onMsg(ctx, m) {
     case 'claimed': { const Q = C.claims.get(m.n); if (Q) { C.claims.delete(m.n); Q.cb(!!m.ok); } return; }
     case 'pvu': case 'pvuok': if (ctx.pkthu && ctx.pkthu.onMsg) ctx.pkthu.onMsg(m); return;   /* c32-pkthu: đòn lên Chấn Thú */
     case 'pvp': case 'pvpok': if (ctx.pk && ctx.pk.onMsg) ctx.pk.onMsg(m); return;   /* c17-pk: đòn PvP gửi riêng (to) — máy nhận tự kiểm */
-    case 'wb': case 'wbhit': case 'wbend': if (ctx.wb44 && ctx.wb44.onMsg) ctx.wb44.onMsg(m, m.f === C.host); return;   /* c44-boss: boss the gioi (khach chi nhan wb / wbend tu chu phong) */
+    case 'wb': case 'wbhit': case 'wbend': case 'wbn': if (ctx.wb44 && ctx.wb44.onMsg) ctx.wb44.onMsg(m, m.f === C.host); return;   /* c44-boss: boss the gioi (khach chi nhan wb / wbend tu chu phong) */
     case 'full': toast(ctx, vi(ctx) ? 'Phòng chơi chung đã đầy' : 'Co-op room is full'); return;
   }
 }

@@ -1,5 +1,5 @@
 /* worldboss44.js — c44-boss (anh duyệt 05/11): BOSS THẾ GIỚI — Nữ Hoàng Gương hiện ở Quảng Trường Làng cho cả phòng chơi chung hợp sức đánh.
-   · LỊCH: theo giờ thật chung (Date.now + lệch giờ máy chủ của đồng hồ c38) — mỗi 20 phút (phút :00 / :20 / :40), báo trước 30 s, ở tối đa 5 phút rồi rút vào gương.
+   · LỊCH: theo giờ thật chung (Date.now + lệch giờ máy chủ của đồng hồ c38) — mỗi 30 phút (phút :00 / :30; anh đổi 05/11), báo trước 30 s, ở tối đa 5 phút rồi rút vào gương.
      Chơi MỘT MÌNH vẫn có boss (máu 1 người) để người chơi lẻ cũng đánh được. Mỗi đợt chỉ 1 lần (save.sys.wb44.done).
    · MÁU theo số người trong Làng: max = gốc × (1 + 0,8 × (n − 1)); người vào thêm giữa trận → máu tối đa tăng theo tỉ lệ (máu hiện có giữ % cũ).
    · QUYỀN: chủ phòng (NET.role 'host') hoặc máy chơi một mình chạy AI + máu thật, phát gói 'wb' 10 lần/giây (≈ 300 byte). Khách vẽ theo gói (nội suy),
@@ -15,7 +15,7 @@ import { SHADOW, shadowFor } from './shadow.js';
 import { lastBossBar } from './bosscam.js';
 
 const TS = 16, ZONE = 'village';
-const CF = { period: 20 * 60, warn: 30, life: 300, snapHz: 10, hitHz: 5, lerp: 12, snap: 64, leash: 300, hpK: 0.8, capFrac: 0.05, capMin: 900 };
+const CF = { period: 30 * 60, warn: 30, life: 300, snapHz: 10, hitHz: 5, lerp: 12, snap: 64, leash: 300, hpK: 0.8, capFrac: 0.05, capMin: 900 };
 const STR = {
   vi: { name: 'Nữ Hoàng Gương · Boss Thế Giới', soon: s => `⚠ Boss thế giới Nữ Hoàng Gương sắp xuất hiện ở Quảng Trường Làng (${s} s)`, up: '✦ BOSS THẾ GIỚI: Nữ Hoàng Gương xuất hiện ở Quảng Trường Làng — cùng hợp sức đánh!',
     here: '✦ Nữ Hoàng Gương đang ở Quảng Trường Làng', down: 'Nữ Hoàng Gương vỡ tan!', flee: 'Nữ Hoàng Gương rút vào gương… (hết giờ)', pin: 'Boss thế giới: Nữ Hoàng Gương', pinSoon: s => `Boss thế giới sắp tới (${s} s)`,
@@ -75,7 +75,8 @@ function nowMs(ctx) {   /* giờ thật chung (lệch giờ máy chủ của c38
   const t = Date.now(); if (t - ST.srvT > 5000) { ST.srvT = t; try { const w = ctx.clock && ctx.clock.world ? ctx.clock.world() : null; ST.srvOff = (w && +w.srvOffsetMs) || 0; } catch (e) { ST.srvOff = 0; } }
   return t + ST.srvOff;
 }
-function slotInfo(ctx) { const t = nowMs(ctx) / 1000, P = CF.period, k = Math.floor(t / P), ph = t - k * P; return { k, ph, id: 'S' + k, toNext: P - ph }; }
+function nxOf(ctx) { const w = sv(ctx); if (!(w.nx > 0)) { const P = CF.period * 1000; w.nx = Math.ceil(nowMs(ctx) / P) * P; } return w.nx; }   /* anh 05/11: boss hiện lại 30 phút SAU khi kết thúc (hạ / rút); chủ phòng phát mốc 'wbn' cho cả phòng */
+function slotInfo(ctx) { const nx = nxOf(ctx), now = nowMs(ctx); return { k: nx, ph: (now - nx) / 1000, id: 'N' + nx, toNext: (nx - now) / 1000 }; }
 
 /* ---------- vị trí ---------- */
 const solid = (ctx, x, y) => { const m = ctx.S.map; return ctx.isSolid(m, Math.floor(x / TS), Math.floor(y / TS)); };
@@ -221,12 +222,12 @@ function spawn(ctx, id, tl) {
 }
 function finish(ctx, win, fromNet) {   /* chủ phòng / một mình: kết thúc → phát 'wbend' + thưởng ở máy mình */
   const B = ST.B; if (!B) return; const g = Object.entries(B.dmg).map(([k, v]) => [k, Math.round(v)]);
-  if (auth() && !fromNet) { const me = myId(); send({ t: 'wbend', id: B.id, win: win ? 1 : 0, g, last: B.last, mx: Math.round(B.mx) }); end(ctx, { id: B.id, win, g, last: B.last }, me); }
+  if (auth() && !fromNet) { const me = myId(); const nx = Math.round(nowMs(ctx) + CF.period * 1000); send({ t: 'wbend', id: B.id, win: win ? 1 : 0, g, last: B.last, mx: Math.round(B.mx), nx }); end(ctx, { id: B.id, win, g, last: B.last, nx }, me); }
 }
 function end(ctx, E, me) {
   const B = ST.B; ST.n.ends++;
   if (B) { if (B.mo) { try { ctx.monsters.remove(B.mo); } catch (e) { } } ST.corpse = { x: B.x, y: B.y, t: 0, win: !!E.win, dir: B.q.dir }; if (E.win) { fx('gm_shatter', B.x, B.y - 20); sfx(ctx, 'smash'); if (ctx.quake) ctx.quake(0.25); } }
-  ST.B = null; ST.tele = []; const w = sv(ctx); if (!w.done.includes(E.id)) { w.done.push(E.id); if (w.done.length > 8) w.done.shift(); }
+  ST.B = null; ST.tele = []; const w = sv(ctx); w.nx = E.nx > 0 ? E.nx : Math.round(nowMs(ctx) + CF.period * 1000); if (!w.done.includes(E.id)) { w.done.push(E.id); if (w.done.length > 8) w.done.shift(); }
   try { ctx.toast(E.win ? L(ctx).down : L(ctx).flee); } catch (e) { }
   lg({ ev: 'end', id: E.id, win: !!E.win, g: E.g, last: E.last });
   if (E.win) reward(ctx, E, me);
@@ -303,7 +304,7 @@ export const worldboss44 = {
   always: true,
   onZoneEnter(ctx) {
     ST.ctx = ctx; loadQM();
-    ctx.wb44 = { onMsg: (m, fromHost) => { try { if (m.t === 'wb') { if (fromHost && NET.role === 'guest') onSnap(ctx, m); } else if (m.t === 'wbhit') onHit(ctx, m); else if (m.t === 'wbend' && fromHost && ST.B && ST.B.id === m.id) { ST.B.dmg = Object.fromEntries(m.g || []); end(ctx, { id: m.id, win: !!m.win, g: m.g, last: m.last }, myId()); } } catch (e) { console.error('wb44 msg', e); } } };
+    ctx.wb44 = { onMsg: (m, fromHost) => { try { if (m.t === 'wb') { if (fromHost && NET.role === 'guest') onSnap(ctx, m); } else if (m.t === 'wbhit') onHit(ctx, m); else if (m.t === 'wbn') { if (fromHost && NET.role === 'guest' && m.nx > 0 && !ST.B) sv(ctx).nx = m.nx; } else if (m.t === 'wbend' && fromHost && ST.B && ST.B.id === m.id) { ST.B.dmg = Object.fromEntries(m.g || []); end(ctx, { id: m.id, win: !!m.win, g: m.g, last: m.last, nx: m.nx }, myId()); } } catch (e) { console.error('wb44 msg', e); } } };
     if (ctx.chanthu && ctx.chanthu.pins && !ctx.chanthu.pins.__wb44) {   /* ghim bản đồ M + bản đồ nhỏ c23 */
       const o = ctx.chanthu.pins, w = () => { const out = o(); try { const q = pins(ctx); if (q) out.push(q); } catch (e) { } return out; }; w.__wb44 = true; ctx.chanthu.pins = w;
     }
@@ -329,11 +330,12 @@ export const worldboss44 = {
     const S = slotInfo(ctx), w = sv(ctx), t = L(ctx);
     if (ST.fakeWarn > 0) { ST.fakeWarn -= dt; }
     /* báo trước 30 s (mọi máy, 1 lần / đợt) */
-    const nextId = 'S' + (S.k + 1);
+    const nextId = S.id;
     if (live && (S.toNext <= CF.warn || ST.fakeWarn > 0) && ST.warned !== nextId && !w.done.includes(nextId)) { ST.warned = nextId; try { ctx.toast(t.soon(Math.ceil(ST.fakeWarn > 0 ? CF.warn : S.toNext))); } catch (e) { } lg({ ev: 'warn', id: nextId }); }
     const B = ST.B;
     if (!B) {
-      if (live && auth() && !ST.noAuto && S.ph < CF.life && !w.done.includes(S.id) && !(ctx.S.mode !== 'play')) spawn(ctx, S.id, CF.life - S.ph);
+      if (live && auth() && !ST.noAuto && S.ph >= 0 && !w.done.includes(S.id) && !(ctx.S.mode !== 'play')) spawn(ctx, S.id, CF.life);
+      if (auth() && online() && (ST.nxT = (ST.nxT || 0) - dt) <= 0) { ST.nxT = 5; send({ t: 'wbn', nx: nxOf(ctx) }); }
       return;
     }
     if (!B.mo || !ctx.monsters.list().some(o => o === B.mo || o.id === B.mo.id)) { if (B.mo && B.mo.state === 'dead') return; mkMo(ctx, B); }
