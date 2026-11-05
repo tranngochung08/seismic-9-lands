@@ -406,7 +406,7 @@ function shove(ctx, ux, uy, d) {
   const p = ctx.S.player, l = Math.hypot(ux, uy) || 1, n = Math.ceil(d / 3), m = ctx.S.map;
   for (let i = 0; i < n; i++) { const nx = p.x + ux / l * d / n, ny = p.y + uy / l * d / n; if (nx > 8 && ny > 8 && nx < m.w * TS - 8 && ny < m.h * TS - 8) { p.x = nx; p.y = ny; } }
 }
-const API = { L, hitPlayer, shove, tier: () => altNow(), flying: () => !!ST.fly, mark: m => { ST.marks.push(m); }, log, setHook: t => { if (ST.fly) { ST.fly.alt = 0; ST.fly.sw = Math.max(ST.fly.sw, 0.15); ST.fly.hook = t; } } };
+const API = { L, hitPlayer, shove, tier: () => altNow(), flying: () => !!ST.fly, mark: m => { ST.marks.push(m); }, land53: () => !!(ST.ctx && !inSky(ST.ctx)), trail53: (g, mo, ox, oy) => !!(ST.ctx && !inSky(ST.ctx)) && sky53Trail(g, mo, ox, oy),   /* c53-troinuoc */ log, setHook: t => { if (ST.fly) { ST.fly.alt = 0; ST.fly.sw = Math.max(ST.fly.sw, 0.15); ST.fly.hook = t; } } };
 skyMonInit(API);
 
 /* ---------------- Rocky bay cạnh người chơi + tự đánh (lệnh Bảo vệ / Tấn công) ---------------- */
@@ -1390,7 +1390,7 @@ export const sky = {
     const p = ctx.S.player; if (!p || !ctx.S.map) return;
     if (ST.leaving) return;
     ST.btnT = (ST.btnT || 0) - dt; if (ST.btnT <= 0) { ST.btnT = 0.5; placeBtns(ctx); }
-    altTick(ctx, dt); placeWidget(ctx); if (ST.leaving) return; b49Tick(ctx, dt);
+    altTick(ctx, dt); placeWidget(ctx); if (ST.leaving) return; b49Tick(ctx, dt); sky53Tick(ctx, dt);   /* c53-troinuoc: khung báo + VFX quái trời vùng đất tự hết */
     batTick(ctx, dt); ST.postT = (ST.postT || 0) - dt; if (ST.postT <= 0) { ST.postT = 1; postTick(ctx); }
     if (ST.cut) {
       const C = ST.cut;
@@ -1442,7 +1442,7 @@ export const sky = {
       if (landZone(ctx) && ST.fly && AL.h >= 30 && AL.h < 60 && !B49.on) { g.save(); g.globalAlpha = Math.min(1, (AL.h - 30) / 30); farGround(g, ctx, cx, cy, zid(ctx), AL.h); g.restore(); }   /* 30–60 m: đất nét → đất xa (cùng đường vẽ dải cao) hoà dần, không nhảy ở 60 m */
       if (ST.craters.length) drawCraters(g, ctx, cx, cy); if (isMid() && !B49.on && !ST.cut && ctx.S.mode === 'play' && AL.h < 40) drawMidAim(g, ctx, cx, cy);
       if (isMid() && AL.tgt === 0 && AL.h < 150 && AL.h > 1) { const p = ctx.S.player, ok2 = walkHere(ctx), x = Math.round(p.x - cx), y = Math.round(p.y - cy) + 1; g.strokeStyle = ok2 ? 'rgba(110,255,140,.9)' : 'rgba(255,80,70,.9)'; g.lineWidth = 1; g.beginPath(); g.ellipse(x + 0.5, y + 0.5, 6, 3, 0, 0, TAU); g.stroke(); } }   /* vòng đáp nhỏ chỉ khi đang hạ */
-    for (const k of ST.marks) {
+    for (const k of (inSky(ctx) ? ST.marks : [])) {   /* c53-troinuoc: vùng đất → sky53Draw (pixel, tầng Bay) */
       const col = k.tier ? '90,170,255' : '255,70,60', a = 0.35 + 0.45 * Math.min(1, 1 - Math.max(0, k.t) / (k.dur || 1));
       g.save(); g.strokeStyle = `rgba(${col},${a.toFixed(2)})`; g.fillStyle = `rgba(${col},${(a * 0.25).toFixed(2)})`; g.lineWidth = 2;
       if (k.kind === 'ring') { g.beginPath(); g.ellipse(Math.round(k.x - cx), Math.round(k.y - cy), k.r, k.r * 0.6, 0, 0, TAU); g.fill(); g.stroke(); }
@@ -1473,6 +1473,7 @@ export const sky = {
     }
     if (!inSky(ctx) && !ST.cut) drawPinGround(g, ctx, cx, cy);
     if (inSky(ctx)) evDraw(g, ctx, cx, cy);
+    if (!inSky(ctx)) sky53Draw(g, ctx, cx, cy);   /* c53-troinuoc */
     drawAltFog(g, ctx, cx, cy);
     if (inSky(ctx)) skyEdgeFog(g, ctx, cx, cy);
     if (ST.cut) drawCutOverlay(g, ctx, cx, cy);
@@ -1600,3 +1601,98 @@ function tilt52(o, dir, diag, moving, now) {
   return st;
 }
 globalThis.__tilt52 = tilt52;   /* coop.js: người chơi khác đang bay cũng nghiêng theo tin st (d, g, m) */
+
+/* ================= c53-troinuoc (anh 05/11): VFX chiêu quái TRÊN TRỜI ở vùng đất — vẽ code pixel, bật ngắn rồi HẾT =================
+   Lỗi cũ: ST.marks (khung báo của Chim Sấm / Sứa Trời) chỉ được trừ thời gian khi ở Quần Đảo Mây → ở Làng / M1–M9 (quái trời c49)
+   khung đỏ hình chữ nhật / elip tích luỹ mãi quanh người chơi. Nay ở vùng đất:
+   · báo trước = dải / vòng dither cam-đỏ (Bayer 4×4, màu đặc — không trong suốt) LẤP DẦN theo thời gian gồng, vẽ ở tầng Bay (nâng 26 px);
+   · hết giờ gồng → khung BIẾN MẤT, nổ đòn: sét lao dọc dải (lõi trắng, quầng xanh, nhánh rẽ, tia lửa có trọng lực) / vòng điện toả ra (sứa) — 0,38–0,42 s rồi tự hết;
+   · vệt sét Chim Sấm để lại (1 s, cùng tầng chạm là giật) vẽ pixel nhấp nháy, mờ dần bằng dither. Không có gì lặp. Quần Đảo Mây giữ nguyên cách cũ. */
+const S53 = { fx: [], n: { telFrames: 0, fx: 0, gone: 0 }, err: 0 };
+const W53 = ['#ffd0a0', '#ff8a4a', '#e84a3a', '#7a1c16'];
+const E53 = ['#ffffff', '#f4fbff', '#c8ecff', '#8fd3ff', '#5aa8ff', '#3a6ad8', '#24308a', '#120e3a'];   /* điện: 8 bậc sáng → tối */
+const B53 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+function bay53(X, Y) { return (B53[(Y & 3) * 4 + (X & 3)] + 0.5) / 16; }
+function dot53(g, X, Y, c) { g.fillStyle = c; g.fillRect(X / 2, Y / 2, 0.5, 0.5); }
+function rnd53(s) { let x = (s | 0) || 1; return () => { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) % 10000) / 10000; }; }
+function sky53Tick(ctx, dt) {
+  if (inSky(ctx)) { if (S53.fx.length) S53.fx = []; return; }
+  if (ST.marks.length) {
+    for (const k of ST.marks) { const t0 = k.t; k.t -= dt; if (t0 > 0 && k.t <= 0 && !k.f53) { k.f53 = 1; sky53Hit(k); } }
+    const n0 = ST.marks.length; ST.marks = ST.marks.filter(k => k.t > 0); S53.n.gone += n0 - ST.marks.length;
+    if (ST.marks.length > 24) ST.marks.splice(0, ST.marks.length - 24);
+  }
+  if (S53.fx.length) { for (const f of S53.fx) f.t += dt; S53.fx = S53.fx.filter(f => f.t < f.T); }
+}
+function sky53Hit(k) {
+  const seed = ((Math.random() * 1e6) | 0) + 1; S53.n.fx++;
+  if (k.kind === 'ring') S53.fx.push({ k: 'ring', t: 0, T: 0.42, x: k.x, y: k.y, r: k.r || 30, seed, ns: 12, an: 0, spread: Math.PI });
+  else S53.fx.push({ k: 'bolt', t: 0, T: 0.38, x: k.x, y: k.y, x2: k.x2, y2: k.y2, seed, ns: 9, an: Math.atan2(k.y2 - k.y, k.x2 - k.x), spread: 1.1 });
+  if (S53.fx.length > 12) S53.fx.shift();
+}
+function tel53(g, k, cx, cy, L) {   /* báo trước: viền nét đứt + ruột lấp dần (mép đang lấp sáng hơn) */
+  const kk = Math.max(0, Math.min(1, 1 - k.t / (k.dur || 1)));
+  if (k.kind === 'ring') {
+    const X = Math.round((k.x - cx) * 2), Y = Math.round((k.y - L - cy) * 2), R = Math.max(6, Math.round((k.r || 20) * 2)), Ry = Math.round(R * 0.6);
+    for (let j = -Ry - 1; j <= Ry + 1; j++) for (let i = -R - 1; i <= R + 1; i++) { const e = Math.hypot(i / R, j / Ry); if (e > 1.02) continue; const X2 = X + i, Y2 = Y + j;
+      if (e > 0.93) { if (((X2 + Y2) & 3) < 3) dot53(g, X2, Y2, (X2 + Y2) & 1 ? W53[2] : W53[3]); }
+      else if (e < kk && bay53(X2, Y2) < (e > kk - 0.1 ? 0.6 : 0.2)) dot53(g, X2, Y2, e > kk - 0.1 ? W53[1] : W53[2]); }
+    return;
+  }
+  const L0 = Math.hypot(k.x2 - k.x, k.y2 - k.y) || 1, ux = (k.x2 - k.x) / L0, uy = (k.y2 - k.y) / L0, nx = -uy, ny = ux, Wd = Math.max(4, Math.round((k.w || 6) * 1.4)), ox = (k.x - cx) * 2, oy = (k.y - L - cy) * 2, Sn = Math.round(L0 * 2);
+  for (let s = 0; s <= Sn; s++) for (let w = -Wd; w <= Wd; w++) { const X2 = Math.round(ox + ux * s + nx * w), Y2 = Math.round(oy + uy * s + ny * w), f = s / Sn;
+    if (Math.abs(w) >= Wd - 0.5) { if ((s & 3) < 2) dot53(g, X2, Y2, W53[2]); }
+    else if (f < kk && bay53(X2, Y2) < (f > kk - 0.08 ? 0.6 : 0.22)) dot53(g, X2, Y2, f > kk - 0.08 ? W53[1] : W53[2]); }
+  const tx = ox + ux * Sn, ty = oy + uy * Sn; for (let i = 0; i < 8; i++) for (const sg of [-1, 1]) dot53(g, Math.round(tx - ux * i + nx * sg * i * 0.8), Math.round(ty - uy * i + ny * sg * i * 0.8), W53[2]);   /* mũi tên đầu dải */
+}
+function jag53(x0, y0, x1, y1, seg, amp, r) {   /* đường gấp khúc của tia sét (toạ độ nửa pixel) */
+  const out = [[x0, y0]], dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
+  for (let i = 1; i < seg; i++) { const f = i / seg, o = (r() * 2 - 1) * amp * Math.sin(Math.PI * f); out.push([x0 + dx * f + nx * o, y0 + dy * f + ny * o]); }
+  out.push([x1, y1]); return out;
+}
+function line53(g, pts, a, frac, thick) {   /* lõi trắng · quầng xanh nhạt · viền xanh; mờ bằng dither theo a */
+  let tot = 0; for (let i = 1; i < pts.length; i++) tot += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  const lim = tot * frac; let acc = 0;
+  for (let i = 1; i < pts.length; i++) { const ax = pts[i - 1][0], ay = pts[i - 1][1], bx = pts[i][0], by = pts[i][1], l = Math.hypot(bx - ax, by - ay) || 1, n = Math.ceil(l), vert = Math.abs(by - ay) > Math.abs(bx - ax);
+    for (let s = 0; s <= n; s++) { if (acc + s > lim) return; const X = Math.round(ax + (bx - ax) * s / n), Y = Math.round(ay + (by - ay) * s / n);
+      for (let w = -thick; w <= thick; w++) { const aw = Math.abs(w), X2 = X + (vert ? w : 0), Y2 = Y + (vert ? 0 : w);
+        if (a * (aw === 0 ? 1.6 : aw === 1 ? 1.1 : 0.8) < bay53(X2, Y2)) continue; dot53(g, X2, Y2, aw === 0 ? E53[0] : aw === 1 ? E53[2] : E53[4]); } }
+    acc += l; }
+}
+function flash53(g, X, Y, R) { for (let j = -R; j <= R; j++) for (let i = -R; i <= R; i++) { const e = Math.hypot(i, j) / R; if (e > 1) continue; if (e > 0.6 && bay53(X + i, Y + j) > 0.5) continue; dot53(g, X + i, Y + j, e < 0.45 ? E53[0] : E53[2]); } }
+function sparks53(g, f, X0, Y0, t) {   /* tia lửa điện: bay ra rồi rơi (trọng lực), đổi màu sáng → tối theo tuổi */
+  const r = rnd53(f.seed * 7 + 3);
+  for (let i = 0; i < f.ns; i++) { const an = f.an + (r() * 2 - 1) * f.spread, v = 60 + r() * 120, life = 0.18 + r() * 0.25; if (t > life) continue;
+    const X = Math.round(X0 + Math.cos(an) * v * t * 2), Y = Math.round(Y0 + (Math.sin(an) * v * t + 90 * t * t) * 2);
+    dot53(g, X, Y, t < life * 0.4 ? E53[0] : t < life * 0.7 ? E53[2] : E53[4]); if (t < life * 0.5) dot53(g, X - Math.round(Math.cos(an) * 2), Y - Math.round(Math.sin(an) * 2), E53[3]); }
+}
+function fx53(g, f, cx, cy, L) {
+  const t = f.t, a = 1 - t / f.T, r = rnd53(f.seed + Math.floor(t / 0.07) * 101);   /* hình sét đổi mỗi 0,07 s (nhấp nháy tự nhiên, chỉ trong 0,4 s) */
+  if (f.k === 'bolt') {
+    const X0 = (f.x - cx) * 2, Y0 = (f.y - L - cy) * 2, X1 = (f.x2 - cx) * 2, Y1 = (f.y2 - L - cy) * 2, l = Math.hypot(X1 - X0, Y1 - Y0);
+    const pts = jag53(X0, Y0, X1, Y1, Math.max(4, Math.round(l / 18)), Math.min(14, 4 + l * 0.06), r); line53(g, pts, a, Math.min(1, t / 0.06), 2);
+    if (t < 0.22 && pts.length > 2) for (let i = 0; i < 2; i++) { const p0 = pts[1 + Math.floor(r() * (pts.length - 2))], an = Math.atan2(Y1 - Y0, X1 - X0) + (r() < 0.5 ? -1 : 1) * (0.5 + r() * 0.6), bl = 10 + r() * 16; line53(g, jag53(p0[0], p0[1], p0[0] + Math.cos(an) * bl, p0[1] + Math.sin(an) * bl, 3, 3, r), a * 0.8, 1, 1); }
+    if (t < 0.05) flash53(g, Math.round(X0), Math.round(Y0), 6); if (t > 0.05 && t < 0.11) flash53(g, Math.round(X1), Math.round(Y1), 7);
+    sparks53(g, f, X1, Y1, t); return;
+  }
+  const X = Math.round((f.x - cx) * 2), Y = Math.round((f.y - L - cy) * 2), R = f.r * 2 * (0.35 + 0.7 * Math.min(1, t / 0.12)), Ry = R * 0.6, N = Math.max(24, Math.round(R * 1.6));
+  for (let i = 0; i < N; i++) { const an = i / N * TAU, X2 = Math.round(X + Math.cos(an) * R), Y2 = Math.round(Y + Math.sin(an) * Ry); for (let w = 0; w < 2; w++) { if (a * (w ? 1 : 1.5) < bay53(X2, Y2 + w)) continue; dot53(g, X2, Y2 + w, w ? E53[4] : E53[1]); } }
+  if (t < 0.26) for (let i = 0; i < 7; i++) { const an = (i + r() * 0.6) / 7 * TAU; line53(g, jag53(X, Y, X + Math.cos(an) * R, Y + Math.sin(an) * Ry, 4, 3, r), a, Math.min(1, t / 0.05), 1); }
+  if (t < 0.06) flash53(g, X, Y, 7);
+  sparks53(g, f, X, Y, t);
+}
+function sky53Draw(g, ctx, cx, cy) {   /* lớp draw (trên mọi thứ mặt đất) — tầng Bay nâng B49.LIFT px; chỉ có khi đang có khung / đòn */
+  if (inSky(ctx)) return; const L = B49.LIFT, ft = globalThis.__f53tel;
+  if (!ST.marks.length && !S53.fx.length && !ft) return;
+  g.save(); g.globalAlpha = 1;
+  try { for (const k of ST.marks) if (k.t > 0) { tel53(g, k, cx, cy, L); S53.n.telFrames++; } if (ft) ft(g, cx, cy + L); for (const f of S53.fx) fx53(g, f, cx, cy, L); }
+  catch (e) { if (!S53.err++) console.error('sky53', e); }
+  g.restore();
+}
+function sky53Trail(g, mo, ox, oy) {   /* vệt sét Chim Sấm (mo.trail, 1 s): đoạn gấp khúc pixel, mờ dần theo s.t */
+  const tr = mo.trail; if (!tr || !tr.length) return true; const L = 28, r = rnd53((mo.id | 0) * 13 + Math.floor((ST.ctx ? ST.ctx.S.time : 0) / 0.08) + 1);
+  for (let i = 1; i < tr.length; i++) { const A = tr[i - 1], B = tr[i], a = Math.min(1, B.t * 1.3), j = (r() * 2 - 1) * 2, ax = (A.x + ox) * 2, ay = (A.y + oy - L) * 2, bx = (B.x + ox) * 2, by = (B.y + oy - L) * 2;
+    line53(g, [[ax, ay], [(ax + bx) / 2 + j, (ay + by) / 2 - j], [bx, by]], a * 0.9, 1, 1); }
+  return true;
+}
+if (typeof window !== 'undefined') window.__sky53 = { state: () => ({ marks: ST.marks.length, markT: ST.marks.map(k => +k.t.toFixed(2)), fx: S53.fx.length, n: { ...S53.n }, err: S53.err }), mark: m => { ST.marks.push(m); }, fx: () => S53.fx.map(f => ({ k: f.k, t: +f.t.toFixed(2) })) };

@@ -45,7 +45,7 @@ function aiJelly(ctx, mo, dt, p, dp) {
   mo.alt = 0; mo.moving = false;
   if (mo.zap > 0) mo.zap -= dt;
   if (mo.st2 === 'charge') { mo.t2 -= dt; if (mo.t2 <= 0) { mo.st2 = null; mo.cd = 3.2; mo.zap = 0.4; ctx.sfx('zap');
-    if (ctx.vfx) for (let i = 0; i < 6; i++) ctx.vfx('u_shock', mo.x + Math.cos(i * TAU / 6) * 26, mo.y + Math.sin(i * TAU / 6) * 15 + 4, 0, true);
+    if (ctx.vfx && !(API.land53 && API.land53())) for (let i = 0; i < 6; i++) ctx.vfx('u_shock', mo.x + Math.cos(i * TAU / 6) * 26, mo.y + Math.sin(i * TAU / 6) * 15 + 4, 0, true);
     if (okTo(ctx) && dist(mo, p) < 36) API.hitPlayer(ctx, mo, 1, 0, 'zap'); } return; }
   if (okTo(ctx) && dp < 12 && (mo.cd2 = (mo.cd2 || 0) - dt) <= 0) { mo.cd2 = 1.5; API.hitPlayer(ctx, mo, 0.4, 0, 'touch'); }
   if (mo.angry || dp < 210) { moveTo(ctx, mo, p.x + Math.sin(ctx.S.time * 0.7 + mo.id) * 14, p.y - 2, mo.c.sp, dt);
@@ -116,7 +116,8 @@ function drawSky(g, mo, x, y) {
   mo.lift = (mo.lift ?? tl) + Math.sign(tl - (mo.lift ?? tl)) * Math.min(Math.abs(tl - (mo.lift ?? tl)), 2);
   const ft = mo.ft || 0, bob = c.big ? Math.round(Math.sin(ft * 1.2) * 2) : Math.round(Math.sin(ft * 3) * 1.5), lift = Math.round(mo.lift) + bob, k = 1 - (mo.lift - MLIFT[0]) / 60;
   g.fillStyle = `rgba(0,0,0,${(0.28 * k).toFixed(3)})`; g.beginPath(); g.ellipse(x, y + 1, c.w * 0.42 * k + 2, (c.big ? 7 : 3) * k + 1, 0, 0, TAU); g.fill();
-  if (mo.trail && mo.trail.length) {   /* vệt sét Chim Sấm: tia PixelLab u_shock dọc vệt + đường màu theo tầng */
+  if (mo.trail && mo.trail.length && API && API.trail53 && API.trail53(g, mo, x - mo.x, y - mo.y)) { /* c53-troinuoc: vùng đất → vệt sét pixel code (sky.js) */ }
+  else if (mo.trail && mo.trail.length) {   /* vệt sét Chim Sấm: tia PixelLab u_shock dọc vệt + đường màu theo tầng */
     const us = ART.vfx && ART.vfx.u_shock, cam = { x: x - mo.x, y: y - mo.y };
     g.save(); g.strokeStyle = (mo.trTier ?? mo.alt) ? 'rgba(120,190,255,.7)' : 'rgba(255,120,80,.7)'; g.lineWidth = 2; g.beginPath(); mo.trail.forEach((s, i) => { const sx = s.x + cam.x, sy = s.y + cam.y - MLIFT[mo.trTier ?? 0]; if (i) g.lineTo(sx, sy); else g.moveTo(sx, sy); }); g.stroke(); g.restore();
     if (us && us.img) { const hi = us.img.__hi ? 1 : 2; mo.trail.forEach((s, i) => { if (i % 3) return; const fi = (Math.floor(ft * 14) + i) % us.n; g.globalAlpha = Math.min(1, s.t * 1.5); g.drawImage(us.img, fi * us.w * hi, 0, us.w * hi, us.h * hi, Math.round(s.x + cam.x - us.w / 2), Math.round(s.y + cam.y - MLIFT[mo.trTier ?? 0] - us.h / 2), us.w, us.h); }); g.globalAlpha = 1; }

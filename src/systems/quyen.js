@@ -100,7 +100,7 @@ function punchFx(ctx, x, y, o) {
 /* ---------- Chưởng ---------- */
 const DIRV = [[0, 1], [-1, 0], [1, 0], [0, -1]];   /* p.dir: 0 S · 1 W · 2 E · 3 N (như hotbar aimHa) */
 function pickTarget(ctx, p) {
-  const ok = mo => mo && mo.hp > 0 && !mo.statue && !(mo.c && mo.c.spar && !(ctx.sparFoe && ctx.sparFoe() === mo));
+  const ok = mo => mo && mo.hp > 0 && !mo.statue && !(ctx.b49Tier && !ctx.b49Tier(mo) && !(ctx.b49Air && ctx.b49Air())) && !(mo.c && mo.c.spar && !(ctx.sparFoe && ctx.sparFoe() === mo));
   const lk = ctx.target && ctx.target.get && ctx.target.get();
   if (lk && (lk.kind === 'mon' || lk.kind === 'tent')) { const r = lk.mo || lk.ref; if (r && Math.hypot(r.x - p.x, r.y - p.y) < SK.palm.range * 1.8) return r; }
   let best = null, bd = SK.palm.range * 1.5;
@@ -109,28 +109,54 @@ function pickTarget(ctx, p) {
   return best;
 }
 function spendKi(ctx, n) { try { if (ctx.ki && ctx.ki.spend) return ctx.ki.spend(n); if (typeof window !== 'undefined' && window.__ki && window.__ki.set) window.__ki.set(ctx.ki.get() - n); } catch (e) { } }
+/* c56-chuongxuong: đang Bay + khoá / click quái MẶT ĐẤT → bay tới trên đầu nó rồi chưởng xuống (lặp mỗi lần hết hồi) */
+const PC56 = { mo: null, path: null, n: 0, t: 0, casts: 0 };
+const air56 = ctx => !!(ctx.b49Air && ctx.b49Air());
+const ground56 = (ctx, mo) => !!(mo && !mo.__pk && ctx.b49Tier && !ctx.b49Tier(mo));
+function pcIn(ctx, mo) { const p = ctx.S.player; return !!(p && air56(ctx) && ground56(ctx, mo) && mo.hp > 0 && Math.hypot(mo.x - p.x, mo.y - p.y) < SK.palm.range * 1.8); }
+function pcStop(p) { if (PC56.path && p && p.autoPath === PC56.path) p.autoPath = null; PC56.mo = null; PC56.path = null; PC56.n = 0; }
+function pcStart(ctx, mo) {
+  const p = ctx.S.player; if (!p || !air56(ctx) || !mo || mo.hp <= 0 || !ctx.monsters || !ctx.monsters.list().includes(mo)) return false;
+  if (ctx.ki && ctx.ki.get() < SK.palm.ki) { ctx.toast(T(ctx).noKi); ctx.sfx('fail'); return false; }
+  pcStop(p); PC56.mo = mo; PC56.t = 0; return true;
+}
+function pcTick(ctx, dt) {
+  const mo = PC56.mo; if (!mo) return; const p = ctx.S.player;
+  const steer = !!(PC56.path && p && p.autoPath && p.autoPath !== PC56.path) && (PC56.n = PC56.n + 1) > 3;   /* bấm đi / click chỗ khác → thôi */
+  if (!p || ctx.S.mode !== 'play' || !air56(ctx) || mo.hp <= 0 || !ctx.monsters.list().includes(mo) || steer || (PC56.t += dt) > 25) { pcStop(p); return; }
+  const d = Math.hypot(mo.x - p.x, mo.y - p.y);
+  if (d <= 34) {   /* đã ở trên đầu quái */
+    if (PC56.path && p.autoPath === PC56.path) p.autoPath = null; PC56.path = null; PC56.n = 0;
+    if (!ST.cast && ST.cd.palm <= 0 && !(ctx.ki && ctx.ki.busy && ctx.ki.busy())) {
+      if (ctx.ki && ctx.ki.get() < SK.palm.ki) { ctx.toast(T(ctx).noKi); ctx.sfx('fail'); pcStop(p); return; }
+      if (ctx.target && ctx.target.lock) { try { ctx.target.lock({ kind: 'mon', ref: mo }); } catch (e) { } }
+      if (palm(ctx)) PC56.casts++;
+    }
+  } else if (!p.autoPath || (PC56.rt = (PC56.rt || 0) - dt) <= 0) { PC56.rt = 0.3; if (!PC56.path || p.autoPath === PC56.path || !p.autoPath) { p.autoPath = PC56.path = [{ x: mo.x, y: mo.y + 2 }]; } }
+}
 function palm(ctx) {
   const p = ctx.S.player, t = T(ctx), q = sq(ctx); if (ctx.S.mode !== 'play' || !p) return false;
   if (ST.cast) return false;
   if (ST.cd.palm > 0) { ctx.toast(t.cd); ctx.sfx('fail'); return false; }
   if (ctx.ki && ctx.ki.get() < SK.palm.ki) { ctx.toast(t.noKi); ctx.sfx('fail'); return false; }
   if (ctx.ki && ctx.ki.busy && ctx.ki.busy()) return false;
-  if (p.custom) return false;   /* đang bơi / bay / dáng riêng: không chưởng */
+  if (p.custom && !(ctx.b49Air && ctx.b49Air()) && !(ctx.isUnderwater && ctx.isUnderwater())) return false;   /* dáng riêng (thuyền, bè…): không chưởng — c53-troinuoc: đang Bay / dưới nước chưởng như mặt đất */
   spendKi(ctx, SK.palm.ki); ST.cd.palm = SK.palm.cd * cdMulOf(q.lv); ST.stats.palmCast++; ST.fightT = ctx.S.time;
-  const tg = pickTarget(ctx, p);
-  let ang; if (tg) { ang = Math.atan2(tg.y - 6 - (p.y - 10), tg.x - p.x); if (p.faceTo) p.faceTo(tg.x, tg.y); } else { const D = DIRV[p.dir || 0]; ang = Math.atan2(D[1], D[0]); }
+  const tg = pickTarget(ctx, p), L56 = (ctx.b49Air && ctx.b49Air() && ctx.b49Lift) ? (ctx.b49Lift() || 0) : 0, mL56 = mo => (L56 && !ground56(ctx, mo)) ? L56 : 0;   /* c56-chuongxuong: đang Bay — quái trời ở tầng cao (nâng L56), quái mặt đất ở đất → tia chéo xuống */
+  let ang; if (tg) { ang = Math.atan2(tg.y - 6 - mL56(tg) - (p.y - 10 - L56), tg.x - p.x); if (p.faceTo) p.faceTo(tg.x, tg.y); } else { const D = DIRV[p.dir || 0]; ang = Math.atan2(D[1], D[0]); }
   const ca0 = Math.cos(ang), sa0 = Math.sin(ang), dir = p.dir || 0;
   const HAND = [[0, -9], [-8, -11], [8, -11], [0, -13]];   /* lòng bàn tay theo hướng nhìn (khung đẩy tay) */
-  const org = () => { const H = HAND[dir]; return { x: p.x + H[0] + ca0 * 2, y: p.y + H[1] + sa0 * 2 }; };
-  let last = tg ? { x: tg.x, y: tg.y - 8 } : { x: p.x + ca0 * SK.palm.range, y: p.y - 10 + sa0 * SK.palm.range };
-  const aim = () => { if (tg && (tg.__pk ? tg.live() : tg.hp > 0 && ctx.monsters.list().includes(tg))) last = { x: tg.x, y: tg.y - 8 }; return last; };
+  const L53 = (ctx.b49Air && ctx.b49Air() && ctx.b49Lift) ? (ctx.b49Lift() || 0) : 0;   /* c53-troinuoc: đang Bay → chưởng ra từ tay ở tầng cao */
+  const org = () => { const H = HAND[dir]; return { x: p.x + H[0] + ca0 * 2, y: p.y - L53 + H[1] + sa0 * 2 }; };
+  let last = tg ? { x: tg.x, y: tg.y - 8 - mL56(tg) } : { x: p.x + ca0 * SK.palm.range, y: p.y - 10 - L53 + sa0 * SK.palm.range };
+  const aim = () => { if (tg && (tg.__pk ? tg.live() : tg.hp > 0 && ctx.monsters.list().includes(tg))) last = { x: tg.x, y: tg.y - 8 - mL56(tg) }; return last; };
   const hitN = new Set(), sum = new Map(), pw = () => (ctx.hero ? ctx.hero.atk + bonusOf(sq(ctx).lv) : 10) * (ctx.atkMul ? ctx.atkMul() : 1);
   const onHit = h => {
     const o = org(), a = aim(), A = Math.atan2(a.y - o.y, a.x - o.x), ca = Math.cos(A), sa = Math.sin(A), tier = tierOf(sq(ctx).lv);
     for (const mo of ctx.monsters.list().slice()) {
-      if (mo.hp <= 0 || (mo.c.spar && !(ctx.sparFoe && ctx.sparFoe() === mo))) continue;
-      const dx = mo.x - o.x, dy = mo.y - 6 - o.y, al = dx * ca + dy * sa, pe = Math.abs(-dx * sa + dy * ca), boss = !!mo.c.boss;
-      const hit = h.k === 'tick' ? (al > -2 && al < SK.palm.range + 8 && pe < 7 + al * 0.35 + (boss ? 10 : 0)) : Math.hypot(mo.x - a.x, mo.y - 8 - a.y) < 18 + (boss ? 12 : 0);
+      if (mo.hp <= 0 || (mo.c.spar && !(ctx.sparFoe && ctx.sparFoe() === mo)) || (ctx.b49Tier && !ctx.b49Tier(mo) && !(ctx.b49Air && ctx.b49Air()))) continue;   /* c56-chuongxuong: đang Bay trúng cả quái MẶT ĐẤT */   /* c53-troinuoc: chỉ trúng quái CÙNG TẦNG */
+      const dx = mo.x - o.x, dy = mo.y - 6 - mL56(mo) - o.y, al = dx * ca + dy * sa, pe = Math.abs(-dx * sa + dy * ca), boss = !!mo.c.boss;
+      const hit = h.k === 'tick' ? (al > -2 && al < SK.palm.range + 8 && pe < 7 + al * 0.35 + (boss ? 10 : 0)) : Math.hypot(mo.x - a.x, mo.y - 8 - mL56(mo) - a.y) < 18 + (boss ? 12 : 0);
       if (!hit) continue;
       let dmg = Math.max(1, Math.round(pw() * (h.k === 'tick' ? SK.palm.tick : SK.palm.boom))); if (tier < (mo.c.armor || 0)) dmg = 1;
       const pop0 = ctx.pop; ctx.pop = null; try { ctx.monsters.damage(mo, dmg, o, 1, h.push * 1.4, true); } finally { ctx.pop = pop0; }   /* số sát thương: gộp cả luồng, hiện 1 số / con lúc nổ */
@@ -201,14 +227,14 @@ export const quyen = {
       palmSlot: () => { const t = T(ctx), k = ctx.ki ? ctx.ki.get() : 7; return { icon: ICON.palm, name: t.palm, cd: ST.cd.palm, cdMax: SK.palm.cd * cdMulOf(sq(ctx).lv), dim: k < SK.palm.ki, tip: t.tipPalm(sq(ctx).lv) }; },
       press: () => palm(ctx),
     };
-    hook(ctx); sq(ctx);
+    hook(ctx); sq(ctx); PC56.mo = null; PC56.path = null; ctx.palm56 = mo => pcStart(ctx, mo); ctx.palm56In = mo => pcIn(ctx, mo); ctx.palm56Ground = mo => air56(ctx) && ground56(ctx, mo);   /* c56-chuongxuong */
     if (typeof window !== 'undefined') window.__quyen = { state: () => ({ ...sq(ctx), tier: tierOf(sq(ctx).lv), bonus: bonusOf(sq(ctx).lv), cdMul: +cdMulOf(sq(ctx).lv).toFixed(3), need: needOf(sq(ctx).lv), cd: { palm: +ST.cd.palm.toFixed(2) }, fx: ST.fx.length, cast: !!ST.cast, stats: { ...ST.stats } }),
-      set: L => { const q = sq(ctx); q.lv = Math.max(1, Math.min(MAXQ, L | 0)); q.xp = 0; return q.lv; }, palm: () => palm(ctx), addQ: n => addQ(ctx, n) };
+      set: L => { const q = sq(ctx); q.lv = Math.max(1, Math.min(MAXQ, L | 0)); q.xp = 0; return q.lv; }, palm: () => palm(ctx), pc56: () => ({ on: !!PC56.mo, casts: PC56.casts, hp: PC56.mo ? PC56.mo.hp : null }), addQ: n => addQ(ctx, n) };
   },
   update(dt, ctx) {
     if (OFF || !ctx.quyen) return; hook(ctx);
     const p = ctx.S.player; if (p && !p.custom) clips(p);
-    if (ST.cd.palm > 0) ST.cd.palm = Math.max(0, ST.cd.palm - dt);
+    if (ST.cd.palm > 0) ST.cd.palm = Math.max(0, ST.cd.palm - dt); pcTick(ctx, dt);   /* c56-chuongxuong */
     if (ST.cast) {   /* giữ khung đẩy tay suốt lúc phun */
       const c = ST.cast; c.t += dt; const a = p && p.action;
       if (a && a.name === 'palm') { const f = (p.sheet.actions.palm && p.sheet.actions.palm.fps) || 10; a.t = c.t < SK.palm.wind ? Math.min(c.t / SK.palm.wind * 2, 1.9) / f : c.t < SK.palm.wind + SK.palm.fire ? 3.5 / f : Math.max(a.t, 4.6 / f); }

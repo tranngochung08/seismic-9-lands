@@ -270,7 +270,7 @@ export function swingNow() {
     const d = Math.hypot(c.x - p.x, c.y - p.y), lim = c.limit == null ? 30 : c.limit; if (d > lim) continue;
     const pr = typeof c.priority === 'number' ? c.priority : c.priority ? 1 : 0, sc = pr * 1000 + (c.isLock ? 500 : 0) - d; if (sc > bs) { bs = sc; best = { sy, c }; } }
   if (best) { try { best.sy.interact(C, best.c); } catch (e) { console.error(best.sy.id, e); } SW12.n++; SW12.last = { sys: best.sy.id, label: best.c.label, t: S.time }; return true; }
-  if (!p.custom && !p.action && p.hasAct && p.hasAct('attack')) { p.act('attack', 0); SW12.air++; SW12.last = { sys: null, t: S.time }; }
+  if ((!p.custom || p.airBody || (C.playerAir && C.playerAir()) || (C.b49Air && C.b49Air())) && !p.action && p.hasAct && p.hasAct('attack')) { p.act('attack', 0); SW12.air++;   /* c56-chuongxuong: đang Bay cũng vung tay không */ SW12.last = { sys: null, t: S.time }; }
   return false;
 }
 export const skillState = () => [0, 1, 2, 3, 4].map(i => { const s = skillInfo(i); return { name: s.name, lock: !!s.lock, cd: +(s.cd || 0).toFixed(1), dim: !!s.dim, ht: s.cls === 'ht' }; });

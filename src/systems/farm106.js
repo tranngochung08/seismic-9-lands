@@ -240,11 +240,11 @@ function hurtTarget(ctx, mo, who, d) {
   const o = objOf(ctx, who); if (!o) return false; const max = o.max || o.hp || 100;
   o.hp = Math.max(Math.round(max * CF.floorC), (o.hp == null ? max : o.hp) - Math.round(d * 1.5)); o.flash = 0.12; ST.n.hitC++; return true;
 }
-function startAct(mo, id, T0, imp, extra) { const F = mo.f6; F.act = { id, t: 0, T: T0, imp, done: false, ...extra }; if (NET.fx) NET.fx(mo, F.act); }
+function startAct(mo, id, T0, imp, extra) { const F = mo.f6; F.act = { id, t: 0, lt: now(), T: T0, imp, done: false, ...extra }; if (NET.fx) NET.fx(mo, F.act); }
 function shotClip(ctx, F) { if (!F.sp) return null; if (F.shotClip !== null) return F.shotClip; if (!ctx.ldKit || !ctx.ldKit.ready() || !F.e) return null; F.shotClip = SHOT_CLIPS.find(c => ctx.ldKit.has(F.e, c)) || (ctx.ldKit.has(F.e, 'atk') ? 'atk' : 'idle'); return F.shotClip; }
 function skin(F) { return FX.skinOf(F.sp || 'utchan', F.he); }
 function updAct(ctx, mo, dt) {
-  const F = mo.f6, A = F.act, T = objOf(ctx, A.who); A.t += dt;
+  const F = mo.f6, A = F.act, T = objOf(ctx, A.who); A.t += dt; A.lt = now();   /* c53-troinuoc: dấu AI còn cập nhật */
   if (T && !(A.id === 'mv' && A.P)) face(F, T.x, T.y, mo); else if (A.P && !A.dash) face(F, A.P.x, A.P.y, mo);
   if (!A.done && A.t >= A.imp) {
     A.done = true;
@@ -352,7 +352,7 @@ function tryCast(ctx, mo, T, who, d) {
   F[lk] = id; F.mcd[id] = mvCd(id); F.gcd = R(CF.gcd[0], CF.gcd[1]) * (F.lead ? 0.85 : 1) * (wet ? 0.8 : 1) * (mn ? 1.6 : 1);
   const tel = bigMv ? 1.1 : TEL[s] * (F.lead ? 0.9 : mn ? 0.85 : 1), dx = P.x - mo.x, dy = P.y - mo.y, dd = Math.hypot(dx, dy) || 1;
   const M0 = mvOf(id), A = { id: 'mv', mv: id, shape: s, who: pref.who, P, ux: dx / dd, uy: dy / dd, t: 0, imp: tel, T: tel + (s === 'lao' ? 0.45 : 0.35), done: false, len: s === 'tia' ? 128 : s === 'lao' ? Math.min(M0.len || 110, dd + 16) : 0, r: bigMv ? 38 : M0.r || (s === 'vung' ? 24 : s === 'quanh' ? 38 : s === 'hu' ? 20 : 0), big: bigMv, wet, mn, slow: !!M0.slow };
-  F.act = A; F.tel = A; if (NET.fx) NET.fx(mo, A); setClip(F, s === 'lao' ? (hasClip(ctx, F, 'atk') ? 'atk' : 'run') : (shotClip(ctx, F) || 'idle')); if (F.e) F.e.ct = 0; face(F, P.x, P.y, mo);
+  A.lt = now(); F.act = A; F.tel = A; if (NET.fx) NET.fx(mo, A); setClip(F, s === 'lao' ? (hasClip(ctx, F, 'atk') ? 'atk' : 'run') : (shotClip(ctx, F) || 'idle')); if (F.e) F.e.ct = 0; face(F, P.x, P.y, mo);
   const nm = MM[id] ? (vi(ctx) ? MM[id].vi : MM[id].en) : vi(ctx) ? (MOVES[id].name || id) : (MOVE_NAME_EN[id] || MOVES[id].name || id);
   if ((F.shoutT || 0) < now()) { F.shoutT = now() + 3.5; try { FX.shout(mo.x, mo.y - hOf(mo) - 10, mn ? nm : nm.toUpperCase(), F.lead ? '#ffe9a0' : mn ? '#f0e0d0' : '#ffd0b0', mn ? 0.6 : 0.75, mn ? 0.6 : 0.75); } catch (e) { } }   /* quái thường: tên chiêu nhỏ hơn */
   try { S108.at(ctx, F.he + '_cast', mo.x, mo.y, { vol: mn ? 0.45 : 0.7 }); } catch (e) { }
@@ -420,6 +420,7 @@ function fighter(ctx, mo) {
 }
 function ai0(ctx, mo, dt, p, dp, canHit) {
   const F = mo.f6; if (!F || duelOn(ctx)) return;
+  if (!canHit && mo.c && mo.c.b49 && ctx.b49Air && ctx.b49Air() && !(ctx.hero && ctx.hero.fainted)) canHit = true;   /* c53-troinuoc: người đang Bay (p.custom = dáng bay) vẫn là mục tiêu của Chấn Thú trời */
   const e = fighter(ctx, mo); if (e) e.ct += dt;
   for (const k in F.cd) if (F.cd[k] > 0) F.cd[k] -= dt; for (const k in F.mcd) if (F.mcd[k] > 0) F.mcd[k] -= dt; if (F.gcd > 0) F.gcd -= dt;
   if (residual(mo)) provoke(ctx, mo, 'pl', true);
@@ -623,7 +624,7 @@ export const farm106 = {
     for (const d of ST.dying) out.push({ y: d.y, f: () => { const e = d.e; e.x = d.x; e.y = d.y; e.alt = d.alt; e.fx = d.fx; e.fy = d.fy; e.flash = 0; if (d.t > 0.55) { g.save(); g.globalAlpha = Math.max(0, 1 - (d.t - 0.55) / 0.35); ctx.ldKit.draw(g, e, cx, cy); g.restore(); } else ctx.ldKit.draw(g, e, cx, cy); } });
     return out;
   },
-  drawGround(g, ctx, cx, cy) { if (!ST.on || duelOn(ctx)) return; for (const mo of ST.mons) { const A = mo.f6 && mo.f6.act; if (A && A.id === 'mv' && !A.done) drawTel(g, mo, A, cx, cy); } },
+  drawGround(g, ctx, cx, cy) { if (!ST.on || duelOn(ctx)) return; for (const mo of ST.mons) { const A = mo.f6 && mo.f6.act; if (A && A.id === 'mv' && !A.done && !(mo.c && mo.c.b49) && !(A.lt != null && now() - A.lt > 0.4)) drawTel(g, mo, A, cx, cy); else if (A && A.lt != null && now() - A.lt > 1.5) mo.f6.act = null; }   /* c53-troinuoc: AI không còn cập nhật (bị hệ khác giữ) → không vẽ báo trước tồn đọng; Chấn Thú trời vẽ ở tầng Bay (sky.js) */ },
   drawUI(ug, ctx, cx, cy, scale) { if (ST.on) drawUI(ug, ctx, cx, cy, scale); },
 };
 
@@ -751,11 +752,11 @@ function visShot(ctx, mo, T) {
 }
 export function netAct(nid, a) {   /* khách: chủ phòng báo quái bắt đầu động tác → báo trước trên đất / đạn / tia (chỉ để nhìn; sát thương do chủ phòng tính) */
   const mo = NETM.get(nid); if (!mo || !mo.f6 || !a) return; const F = mo.f6;
-  F.act = { ...a, t: 0, done: false, net: 1, who: 'vis', P: a.P || null }; if (a.id === 'mv') F.tel = F.act;
+  F.act = { ...a, t: 0, lt: now(), done: false, net: 1, who: 'vis', P: a.P || null }; if (a.id === 'mv') F.tel = F.act;
   if (a.id === 'mv' && a.mv && (F.shoutT || 0) < now()) { F.shoutT = now() + 3.5; const ctx = ST.ctx, nm = MM[a.mv] ? (vi(ctx) ? MM[a.mv].vi : MM[a.mv].en) : MOVES[a.mv] ? (vi(ctx) ? (MOVES[a.mv].name || a.mv) : (MOVE_NAME_EN[a.mv] || MOVES[a.mv].name || a.mv)) : null; if (nm) { try { FX.shout(mo.x, mo.y - hOf(mo) - 10, a.mn ? nm : nm.toUpperCase(), F.lead ? '#ffe9a0' : a.mn ? '#f0e0d0' : '#ffd0b0', a.mn ? 0.6 : 0.75, a.mn ? 0.6 : 0.75); } catch (e) { } } }
 }
 function pupAct(ctx, mo, dt) {
-  const F = mo.f6, A = F.act; A.t += dt;
+  const F = mo.f6, A = F.act; A.t += dt; A.lt = now();
   if (!A.done && A.t >= A.imp) {
     A.done = true; const sk = skin(F), T = A.tx != null ? { x: A.tx, y: A.ty } : null;
     try {
@@ -930,3 +931,5 @@ function wander49(ctx, mo, dt) {
 }
 if (typeof window !== 'undefined') window.__f49 = { list: () => ST.mons.filter(m => m.f6 && m.f6.rid === 'sky49' && m.hp > 0).map(m => ({ id: m.id, sp: m.f6.sp, lv: m.f6.lv, x: Math.round(m.x), y: Math.round(m.y), hp: Math.round(m.hp), max: m.max, mode: m.f6.mode, alt: m.f6.alt })), fz: () => (ST.fz || []).map(z => ({ sp: z.sp, lv: z.lv, x: Math.round(z.x), y: Math.round(z.y), mine: z.mine })), n: () => ({ ...ST.n }) };
 
+/* c53-troinuoc: báo trước chiêu của Chấn Thú TRỜI (bầy sky49) — sky.js gọi trong lớp draw, nâng lên tầng Bay (không bị cây che); act không còn được AI cập nhật (> 0,4 s) thì không vẽ */
+globalThis.__f53tel = (g, cx, cy) => { if (!ST.on || !ST.ctx || duelOn(ST.ctx)) return; for (const mo of ST.mons) { const A = mo.f6 && mo.f6.act; if (A && A.id === 'mv' && !A.done && mo.c && mo.c.b49 && !(A.lt != null && now() - A.lt > 0.4)) drawTel(g, mo, A, cx, cy); } };

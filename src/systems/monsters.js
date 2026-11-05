@@ -673,7 +673,8 @@ const AI = { eel: aiEel, swordfish: aiSwordfish, momeel: aiMomEel, squid: aiSqui
 export const monsters = {
   id: 'monsters',
   onZoneEnter(ctx) {
-    ST.ctx = ctx; ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = ctx.noMonsters ? null : SP[ctx.S.zone.id] || null; if (ST.cfg && ST.cfg.noDark && ((ctx.story && ctx.story()) || {}).path === 'xealist') ST.cfg = null; ST.spawnT = 1.5; ST.respawnT = 0; ST.wasNight = night(ctx); ST.lastHit = null; ST.krDead = null; ST.chaseTent = null;
+    ST.ctx = ctx; ST.list = []; ST.chase = null; ST.hitQ = []; ST.cfg = ctx.noMonsters ? null : SP[ctx.S.zone.id] || null; if (ST.cfg && ST.cfg.noDark && ((ctx.story && ctx.story()) || {}).path === 'xealist') ST.cfg = null; ST.spawnT = 1.5; ST.respawnT = 0; ST.wasNight = night(ctx); ST.lastHit = null; ST.krDead = null; ST.chaseTent = null; ST.chaseP = null;
+    ctx.chase53 = mo => { if (!mo || !ST.list.includes(mo) || mo.hp <= 0 || mo.statue) return false; if (ctx.b49Tier && !ctx.b49Tier(mo)) return false; ST.chase = mo; ST.chaseTent = null; ST.chaseP = null; ST.st53 = 0; ST.chaseT = 0; ST.n53 = (ST.n53 || 0) + 1; if (ctx.hold && switchW(ctx)) ctx.hold(bestWeapon(ctx)); return true; };   /* c53-troinuoc: target.js gọi khi click quái lúc đang Bay / dưới nước (main.chaseTick bỏ qua p.custom) */
     if (ST.cfg && ctx.S.zone.id === 'sea' && !(((ctx.story && ctx.story()) || {}).path)) ST.cfg = null;   /* plan-43 H4 (anh duyệt 2026-10-16): Biển lúc mở đầu (chưa chọn phe: dạy chơi bè, lên bến, gặp Noxx / Xealist) không có Mòng Biển Cướp — chọn phe xong, vào lại Biển mới có */
     ST.rq = [];
     const rost = ST.cfg && ctx.skyRoster ? ctx.skyRoster(ctx.S.zone.id) : null;   /* plan-32: hạ cánh từ trời → đúng bảng quái đã thấy từ trên cao */
@@ -714,9 +715,10 @@ export const monsters = {
     ST.spawnT -= dt; if (ST.spawnT <= 0 && !(ST.respawnT > 0)) { ST.spawnT = 4; if (ST.list.length < Math.min(MAX_ON, want(ctx))) spawnOne(ctx); }
     for (let i = ST.hitQ.length - 1; i >= 0; i--) { const h = ST.hitQ[i]; h.t -= dt; if (h.t <= 0) { ST.hitQ.splice(i, 1); strike(ctx, h.mo, h.seg ?? -1, h.tent || null, !!h.fin); } }
     if (ST.chase) {   /* đuổi theo quái đã click */
-      const mo = ST.chase, ct = ST.chaseTent, tg = ct || mo; if (!ST.list.includes(mo) || (ctx.S.player.custom && !uw) || (ct && ct.st !== 'stuck')) { ST.chase = null; ST.chaseTent = null; }
-      else if (dist(tg, p) <= REACH + (mo.c.boss && !ct ? 8 : 0)) { p.autoPath = null; if (ST.cd <= 0) { if (ctx.hold && switchW(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ attack(ctx, mo, -1, ct); } }
-      else if (!p.autoPath || (ST.chaseT = (ST.chaseT || 0) - dt) <= 0) { ST.chaseT = 0.3; p.autoPath = [{ x: tg.x, y: tg.y }]; }
+      const mo = ST.chase, ct = ST.chaseTent, tg = ct || mo; const air53 = !!(ctx.b49Air && ctx.b49Air()), steer53 = !!(ST.chaseP && ST.chaseP.length && p.autoPath !== ST.chaseP) && (ST.st53 = (ST.st53 || 0) + 1) > 3;   /* c53-troinuoc: đang Bay cũng đuổi được; bấm đi / click chỗ khác (autoPath bị thay) → thôi */
+      if (!ST.list.includes(mo) || mo.hp <= 0 || (ctx.S.player.custom && !uw && !air53) || (ct && ct.st !== 'stuck') || (ctx.b49Tier && !ctx.b49Tier(mo)) || steer53) { if (ST.chaseP && p.autoPath === ST.chaseP) p.autoPath = null; ST.chase = null; ST.chaseTent = null; ST.chaseP = null; }
+      else if (dist(tg, p) <= REACH + (mo.c.boss && !ct ? 8 : 0)) { p.autoPath = null; ST.chaseP = null; ST.st53 = 0; if (ST.cd <= 0) { if (ctx.hold && switchW(ctx)) ctx.hold(bestWeapon(ctx));   /* luôn dùng vũ khí tốt nhất */ attack(ctx, mo, -1, ct); } }
+      else if (!p.autoPath || (ST.chaseT = (ST.chaseT || 0) - dt) <= 0) { ST.chaseT = 0.3; if (!ST.chaseP || p.autoPath === ST.chaseP || !p.autoPath) { p.autoPath = ST.chaseP = [{ x: tg.x, y: tg.y }]; } }
     }
     const canHit = !(ctx.hero && ctx.hero.fainted) && (!p.custom || uw) && !(ctx.isDarkRevealed && ctx.isDarkRevealed());   /* plan-25 B4: lộ mặt → quái là 'người của ta'; plan-26: đang bơi dưới nước vẫn bị đánh */
     for (const mo of ST.list.slice()) {

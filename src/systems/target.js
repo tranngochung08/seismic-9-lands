@@ -136,7 +136,7 @@ export function pickAt(mt) {
   for (const mo of monList()) if (mo.c.ai === 'kraken') { const k = krNearTent(mo, S.player, mt); if (k && k.under) return { kind: 'tent', ref: k.s, mo }; }
   let best = null, bd = 1e9;
   const take = (t, d) => { if (d < bd) { bd = d; best = t; } };
-  for (const mo of monList()) { if (mo.statue || mo.state === 'dead') continue; if (Math.abs(mt.wx - mo.x) < mo.c.w * 0.7 + 3 && mt.wy > mo.y - mo.c.h - 8 && mt.wy < mo.y + 5) take({ kind: 'mon', ref: mo }, Math.hypot(mt.wx - mo.x, mt.wy - (mo.y - mo.c.h / 2))); }
+  for (const mo of monList()) { if (mo.statue || mo.state === 'dead') continue; if (D.CTX.b49Tier && !D.CTX.b49Tier(mo) && !(D.CTX.b49Air && D.CTX.b49Air())) continue;   /* c56-chuongxuong: đang Bay chọn được cả quái mặt đất (để chưởng xuống) */   /* c53-troinuoc: chỉ chọn quái CÙNG TẦNG */ if (Math.abs(mt.wx - mo.x) < mo.c.w * 0.7 + 3 && mt.wy > mo.y - mo.c.h - 8 && mt.wy < mo.y + 5) take({ kind: 'mon', ref: mo }, Math.hypot(mt.wx - mo.x, mt.wy - (mo.y - mo.c.h / 2))); }
   if (best) return best;
   for (const n of npcPool()) if (Math.abs(mt.wx - n.x) < 9 && mt.wy > n.y - 22 && mt.wy < n.y + 4) take({ kind: 'npc', ref: n }, Math.hypot(mt.wx - n.x, mt.wy - (n.y - 9)));
   for (const a of aniList()) if (!a.stoneT && Math.abs(mt.wx - a.x) < 9 && mt.wy > a.y - 14 && mt.wy < a.y + 4) take({ kind: 'ani', ref: a }, Math.hypot(mt.wx - a.x, mt.wy - (a.y - 6)) + 2);
@@ -174,6 +174,7 @@ export function cycle(dir = 1) {
 /* ---------- khóa mà ở xa: E KHÔNG tự đi tới — nhãn báo xa quá ---------- */
 export function tooFar(near) {
   const t = active(); if (!t) return false;
+  if (t.kind === 'mon' && D.CTX.palm56In && D.CTX.palm56In(t.mo || t.ref)) return false;   /* c56-chuongxuong: đang Bay, quái mặt đất trong tầm Chưởng → không báo xa */
   if (near && near.isLock) return false;   /* hệ đã nhận đúng mục tiêu (trong tầm) */
   if (mode() === 'gun') return false;      /* petgun.js tự báo (bị chắn / ngoài tầm) */
   /* 2026-10-11 anh: khóa người ở xa mà đứng cạnh cây muốn chặt lại bị báo 'xa quá' → khóa CHỈ giữ đòn nhắm vào sinh vật
@@ -183,7 +184,7 @@ export function tooFar(near) {
   return near.kind === 'npc' || !!(d.mo || d.animal || d.talk || d.pet || d.gift || d.fire || d.grab);
 }
 export function farLabel() { const t = active(); return t ? TXT().far(nameOf(t)) : null; }
-export function sayFar() { const t = active(); if (!t) return; if (D.CTX.kiDash && D.CTX.kiDash()) return;   /* plan-34: đủ Ki + mục tiêu cách 3–7 ô → lướt tới chém (ki.js) thay vì báo xa quá */ if (D.S.time - ST.farT > 1) { ST.farT = D.S.time; D.CTX.toast(TXT().far(nameOf(t))); D.CTX.sfx('fail'); } }
+export function sayFar() { const t = active(); if (!t) return; if (t.kind === 'mon' && D.CTX.palm56Ground && D.CTX.palm56Ground(t.mo || t.ref)) { D.CTX.palm56(t.mo || t.ref); return; }   /* c56-chuongxuong: đang Bay + quái mặt đất → bay tới chưởng xuống */ if (D.CTX.kiDash && D.CTX.kiDash()) return;   /* plan-34: đủ Ki + mục tiêu cách 3–7 ô → lướt tới chém (ki.js) thay vì báo xa quá */ if (D.S.time - ST.farT > 1) { ST.farT = D.S.time; D.CTX.toast(TXT().far(nameOf(t))); D.CTX.sfx('fail'); } }
 
 /* ---------- plan-43 K1 (anh duyệt 2026-10-16): phím E ưu tiên NGƯỜI trước mặt ----------
    Đứng sát NPC (≤ 22 px) mà NPC ở phía mặt nhìn (hoặc sát rạt ≤ 10 px) → E = nói chuyện, thắng vuốt Rocky / chặt cây / biển gỗ / phá đồ trong đất mình.
@@ -331,6 +332,8 @@ export function clickVerdict(mt, hoverFn) {   /* main.onClick gọi đầu tiên
     const r = rule(ent, hc);
     if (r.act === 'no') { if (D.S.time - ST.noT > 0.8) { ST.noT = D.S.time; D.CTX.toast(NOMSG(nameOf(ent))); D.CTX.sfx('fail'); } return { stop: true, why: 'no' }; }
     lock(ent);
+    if (ent.kind === 'mon' && D.CTX.palm56Ground && D.CTX.palm56Ground(ent.ref)) { D.CTX.palm56(ent.ref); return { stop: true, why: 'palm56' }; }   /* c56-chuongxuong: đang Bay click quái mặt đất → bay tới trên đầu rồi chưởng xuống (thiếu Ki: báo ngắn) */
+    if (ent.kind === 'mon' && (hc === 'weapon' || armed()) && D.S.player && D.S.player.custom && D.CTX.chase53 && D.CTX.chase53(ent.ref)) return { stop: true, why: 'chase53' };   /* c53-troinuoc: đang Bay / dưới nước (main.chaseTick bỏ qua p.custom) → monsters.js tự tới đánh */
     if ((ent.kind === 'mon' || ent.kind === 'tent') && (hc === 'weapon' || armed())) return { chase: ent };   /* c13-quyen: tay không click quái = tự đi tới đấm */   /* p120 2026-11-04 anh: cầm vũ khí (ô 1) + click quái = khóa + TỰ ĐI TỚI rồi đánh luôn (main.chaseTick) */
     if (r.act === 'talk') return ent.kind === 'npc' && hc === 'item' && dist(ent) <= 33 ? {} : { talk: ent.ref };   /* c42-npc-dem (anh 04/11): click NPC = main.talkGo42 tự đi tới rồi nói chuyện / mở quầy (mọi món cầm trừ súng); cầm đồ (đá tặng) đứng trong tầm: các hệ xử lý như cũ */   /* trong tầm: nói chuyện / tặng đá như cũ; xa: chỉ khóa */
     return { stop: true, why: 'lock' };   /* click = CHỈ KHÓA (không tự đi, không tự đánh / bắn) */
