@@ -867,6 +867,790 @@
       "ch": 24
      }
     }
+   },
+   "m9_892697675709972482": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_892697675709972482.png",
+    "note": "c58-mag9: Mag 9 cloudtechvn từ pfp (PixelLab 46eefc10-d504-4b0a-b068-689627888781)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_892697675709972482_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_892697675709972482_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_892697675709972482_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1231547085795364915": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1231547085795364915.png",
+    "note": "c58-mag9: Mag 9 xiaoqingling_98 từ pfp (PixelLab 2f479906-47c4-4012-a569-3d46f7c09bc3)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1231547085795364915_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1231547085795364915_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1231547085795364915_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_724131390773526550": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_724131390773526550.png",
+    "note": "c58-mag9: Mag 9 .cuongquoc từ pfp (PixelLab d1eb1317-91b2-4074-91dc-78affd2c7110)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_724131390773526550_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_724131390773526550_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_724131390773526550_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1032253552510386226": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1032253552510386226.png",
+    "note": "c58-mag9: Mag 9 dosunets từ pfp (PixelLab ab541b91-7b8d-4cb3-99cb-a3548b7749f0)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1032253552510386226_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1032253552510386226_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1032253552510386226_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_835960531364872252": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_835960531364872252.png",
+    "note": "c58-mag9: Mag 9 hieunguyen1989.eth từ pfp (PixelLab dfc1bfce-04cd-48f4-9b5e-9c483e8eded9)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_835960531364872252_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_835960531364872252_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_835960531364872252_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1337051142252658689": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1337051142252658689.png",
+    "note": "c58-mag9: Mag 9 raufpv_ từ pfp (PixelLab b29fe673-3d0b-4e1f-8249-9f347cce0c88)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1337051142252658689_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1337051142252658689_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1337051142252658689_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_959844528079142924": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_959844528079142924.png",
+    "note": "c58-mag9: Mag 9 inkaxyz từ pfp (PixelLab 36ec1eed-3239-4bb3-9061-e49e5de5097a)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_959844528079142924_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_959844528079142924_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_959844528079142924_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_519569547846746127": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_519569547846746127.png",
+    "note": "c58-mag9: Mag 9 bademenn từ pfp (PixelLab 2d7ea1e7-1c39-466d-9067-e9c29a9e3f32)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_519569547846746127_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_519569547846746127_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_519569547846746127_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_737219707438104666": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_737219707438104666.png",
+    "note": "c58-mag9: Mag 9 wikodo từ pfp (PixelLab ef8971e5-9f39-484c-89df-3e5dfa21c91e)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_737219707438104666_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_737219707438104666_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_737219707438104666_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_982714258473230398": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_982714258473230398.png",
+    "note": "c58-mag9: Mag 9 nightvillain_. từ pfp (PixelLab 89d6554c-a17a-456e-afa3-b02881dcac85)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_982714258473230398_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_982714258473230398_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_982714258473230398_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1139795458722627685": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1139795458722627685.png",
+    "note": "c58-mag9: Mag 9 saltcaramel2203 từ pfp (PixelLab 4f8a5381-d3bd-4d3f-9e74-b7c21ab50f8b)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1139795458722627685_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1139795458722627685_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1139795458722627685_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_515946667980357632": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_515946667980357632.png",
+    "note": "c58-mag9: Mag 9 cryptobase từ pfp (PixelLab 9ccc23a5-877e-48f9-9290-61dc47be7731)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_515946667980357632_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_515946667980357632_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_515946667980357632_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_583283093570322475": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_583283093570322475.png",
+    "note": "c58-mag9: Mag 9 dzyg từ pfp (PixelLab b8e368b2-e415-40f6-b808-3085f0be86eb)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_583283093570322475_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_583283093570322475_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_583283093570322475_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_408499196740763659": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_408499196740763659.png",
+    "note": "c58-mag9: Mag 9 leo8x từ pfp (PixelLab 17587079-8d8e-407f-a867-bee5e9499100)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_408499196740763659_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_408499196740763659_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_408499196740763659_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_718112706917564466": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_718112706917564466.png",
+    "note": "c58-mag9: Mag 9 prateek_9 từ pfp (PixelLab dd4dc06d-2157-4225-ac2e-b73b2e729b4e)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_718112706917564466_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_718112706917564466_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_718112706917564466_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1285692686367457331": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1285692686367457331.png",
+    "note": "c58-mag9: Mag 9 vanthanh35 từ pfp (PixelLab d7d3431a-a7b2-4080-b8a6-3259604f8b5e)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1285692686367457331_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1285692686367457331_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1285692686367457331_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_546085748647133205": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_546085748647133205.png",
+    "note": "c58-mag9: Mag 9 0xdiren từ pfp (PixelLab 83f7d9a7-1114-44d6-a71c-e277b4fc0c5e)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_546085748647133205_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_546085748647133205_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_546085748647133205_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1302939974655545384": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1302939974655545384.png",
+    "note": "c58-mag9: Mag 9 mclaire_web3 từ pfp (PixelLab 30430417-1dca-44eb-9bad-bf2d9f79e7ec)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1302939974655545384_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1302939974655545384_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1302939974655545384_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1152723656661803129": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1152723656661803129.png",
+    "note": "c58-mag9: Mag 9 mhajhorgg từ pfp (PixelLab 99a48a29-9321-422f-b688-02411879ea55)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1152723656661803129_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1152723656661803129_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1152723656661803129_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1199424382515302520": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1199424382515302520.png",
+    "note": "c58-mag9: Mag 9 t_webninja từ pfp (PixelLab 88ec6dd6-54af-4792-851e-503e4e4d5475)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1199424382515302520_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1199424382515302520_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1199424382515302520_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_430310387460603905": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_430310387460603905.png",
+    "note": "c58-mag9: Mag 9 kittz76 từ pfp (PixelLab 40bb4d8b-6d7e-4bf2-be73-059461121900)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_430310387460603905_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_430310387460603905_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_430310387460603905_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1031736618635247666": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1031736618635247666.png",
+    "note": "c58-mag9: Mag 9 clairr69 từ pfp (PixelLab 8ae3dac1-fda0-4594-83a3-b765e9232be2)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1031736618635247666_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1031736618635247666_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1031736618635247666_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_269818121190244352": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_269818121190244352.png",
+    "note": "c58-mag9: Mag 9 budekk từ pfp (PixelLab 55ab21ea-827c-4f4b-803b-5c0a6b6157e9)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_269818121190244352_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_269818121190244352_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_269818121190244352_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1193246996211974297": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1193246996211974297.png",
+    "note": "c58-mag9: Mag 9 karaa94 từ pfp (PixelLab d5175e9e-5e84-4029-80d3-0d606b97d8ce)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1193246996211974297_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1193246996211974297_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1193246996211974297_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1316740756349648980": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1316740756349648980.png",
+    "note": "c58-mag9: Mag 9 ade_whale từ pfp (PixelLab 798619c8-c598-4e89-bf63-813e9d8ac1ff)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1316740756349648980_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1316740756349648980_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1316740756349648980_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_863068313898319902": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_863068313898319902.png",
+    "note": "c58-mag9: Mag 9 amakusa6030 từ pfp (PixelLab dc373d88-fc64-414a-9b4f-d5c49275a665)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_863068313898319902_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_863068313898319902_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_863068313898319902_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_1257081304873177142": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_1257081304873177142.png",
+    "note": "c58-mag9: Mag 9 tvarjebana từ pfp (PixelLab dba5531b-7cf8-47ec-934f-e5378dc04aa6)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_1257081304873177142_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_1257081304873177142_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_1257081304873177142_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
+   },
+   "m9_920927710358958100": {
+    "skin": "hero",
+    "hair": "hero",
+    "shirt": "hero",
+    "file": "chars/m9_920927710358958100.png",
+    "note": "c58-mag9: Mag 9 mynz.112 từ pfp (PixelLab 3bb55f50-7731-450c-ba83-a97cb29d60ef)",
+    "actions": {
+     "walk": {
+      "file": "chars/m9_920927710358958100_act_walk.png",
+      "n": 8,
+      "cw": 24,
+      "ch": 22,
+      "fps": 10
+     },
+     "idle": {
+      "file": "chars/m9_920927710358958100_act_idle.png",
+      "n": 4,
+      "cw": 24,
+      "ch": 22
+     },
+     "throw": {
+      "file": "chars/m9_920927710358958100_act_throw.png",
+      "n": 7,
+      "cw": 32,
+      "ch": 24
+     }
+    }
    }
   },
   "shirtHue": [
