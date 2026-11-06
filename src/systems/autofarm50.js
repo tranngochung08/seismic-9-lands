@@ -12,15 +12,21 @@
      lấy quãng người chơi vừa tự đi trong khung (chỉ khi p.moving, không đang lộn / lướt Ki, không bị hất) rồi cho đi thêm 0,5 lần quãng đó
      bằng p.tryMove (đúng luật va chạm). Không lưu-rồi-trả bất kỳ thuộc tính nào → không thể kẹt tốc độ sau khi tắt.
    · Thời gian lưu ở save.sys.af50.left (giây); chỉ trừ khi game đang chạy (tắt game thì dừng đếm).
-   · Móc test: window.__af50. */
+   · Móc test: window.__af50.
+   · c60-tudong (anh 06/11): tự farm chạy cả DƯỚI NƯỚC và TRÊN TRỜI.
+       - Đáy Sông Làng (uriver, c48): tự bơi tới + đánh quái nước (ctx.chase53 của c53, Chưởng dưới nước); hơi < 20 s → tự nổi rồi lặn lại (hơi sông 120 s mới);
+       - Đang bơi trên sông Làng: đường đi được qua nước (không còn kẹt giữa sông);
+       - Quái trời (Chim Sấm / Sứa Trời c49 + Chấn Thú bay sky49): đủ Ki (≥ 4) thì tự BAY lên (ctx.bay49.toggle), bay tới + chém (chase53) + Chưởng;
+         Ki < 0,8 hoặc hết quái trời quanh đây → tự hạ, đánh tiếp quái đất; đang chờ đủ Ki để bay thì không tiêu Ki vào Chưởng. */
 import { ART } from '../art.js';
 import { ITEMS } from '../items.js';
+import { ZONES } from '../world.js';
 
 const TS = 16, ID = 'auto_ticket', PRICE = 10, DUR = 15 * 60, SPD = 1.5, PAUSE = 5, NEAR = 110, HC_KEY = 'heathcliff';
 const CF = { lead: false, scan: 0.5, path: 1.0, click: 0.5, exitR: 4, maxD: 900 };
 ITEMS[ID] = { icon: '🎫', name: { en: 'Auto-Training Ticket', vi: 'Phiếu Tập Luyện Tự Động' }, w: 0.05, tags: ['ticket'],
-  desc: { vi: 'Phiếu của Heathcliff (Quảng Trường Làng, 10 đá). Dùng → 15 phút tự farm ở Làng: tự thả đội Chấn Thú, tự tìm và đánh quái / Chấn Thú hoang, đi nhanh ×1,5. Dùng thêm để cộng dồn giờ.',
-    en: "Heathcliff's ticket (Village Square, 10 stone). Use it for 15 minutes of auto-farming in the Village: releases your Seismic Beasts, hunts monsters and wild beasts for you, ×1.5 move speed. Stacks." } };
+  desc: { vi: 'Phiếu của Heathcliff (Quảng Trường Làng, 10 đá). Dùng → 15 phút tự farm ở Làng / Đáy Sông Làng: tự thả đội Chấn Thú, tự tìm và đánh quái / Chấn Thú hoang (cả dưới nước), đủ Ki tự bay lên đánh quái trời, đi nhanh ×1,5. Dùng thêm để cộng dồn giờ.',
+    en: "Heathcliff's ticket (Village Square, 10 stone). Use it for 15 minutes of auto-farming in the Village / Village Riverbed: releases your Seismic Beasts, hunts monsters and wild beasts for you (underwater too), flies up to fight sky monsters when Ki allows, ×1.5 move speed. Stacks." } };
 
 const vi = ctx => !ctx.lang || ctx.lang() !== 'en';
 const L = ctx => (vi(ctx) ? {
@@ -29,26 +35,37 @@ const L = ctx => (vi(ctx) ? {
   again: ['Lại cần phiếu à? Bãi quái Làng hồi sinh nhanh lắm.', 'Quái hồi sinh chỉ sau ~15 giây — cứ luyện thoải mái.'],
   buy: 'Mua', use: 'Dùng ngay', close: 'Đóng', poor: 'Không đủ đá Seismic (cần 10)', bought: 'Đã mua Phiếu Tập Luyện Tự Động', have: n => `Đang có ×${n}`,
   on: m => `Tự farm bật · ${m} phút`, add: m => `+${m} phút tự farm`, end: 'Hết giờ tự farm', off: 'Đã tắt tự farm (giữ thời gian còn lại)', resume: 'Tiếp tục tự farm',
-  run: 'Tự farm', wait: 'Tạm dừng', hand: 'Dừng tay', away: 'Chỉ chạy ở Làng', faint: 'Đang ngất', noneT: 'Không còn phiếu — mua ở Heathcliff (Quảng Trường Làng)',
-  useBtn: n => `Dùng phiếu ×${n}`, contBtn: 'Tiếp tục', tipP: 'Dừng / tiếp', tipX: 'Tắt (giữ giờ còn lại)', desc: '15 phút tự farm ở Làng · đi nhanh ×1,5 · cộng dồn',
+  run: 'Tự farm', wait: 'Tạm dừng', hand: 'Dừng tay', away: 'Chỉ chạy ở Làng / Đáy Sông', faint: 'Đang ngất', noneT: 'Không còn phiếu — mua ở Heathcliff (Quảng Trường Làng)',
+  useBtn: n => `Dùng phiếu ×${n}`, contBtn: 'Tiếp tục', tipP: 'Dừng / tiếp', tipX: 'Tắt (giữ giờ còn lại)', desc: '15 phút tự farm ở Làng + Đáy Sông · tự bay đánh quái trời · đi nhanh ×1,5 · cộng dồn',
 } : {
   talk: '💬 Heathcliff', title: 'Heathcliff · Training tickets', lead: 'Busy but still want to grow? One ticket = 15 minutes of auto-training at the Village hunting grounds.',
   first: ["Hi! I'm Heathcliff — Seismic's CM. Today I've opened a stall in the Village.", 'Auto-Training Ticket: for 15 minutes you and your beasts hunt around the Village on your own, and you move faster. Only 10 Seismic stone!'],
   again: ['Need another ticket? The Village grounds respawn fast.', 'Monsters come back in ~15 seconds — train all you like.'],
   buy: 'Buy', use: 'Use now', close: 'Close', poor: 'Not enough Seismic stone (need 10)', bought: 'Bought an Auto-Training Ticket', have: n => `You have ×${n}`,
   on: m => `Auto-farm on · ${m} min`, add: m => `+${m} min auto-farm`, end: 'Auto-farm time is up', off: 'Auto-farm off (time kept)', resume: 'Auto-farm resumed',
-  run: 'Auto-farm', wait: 'Paused', hand: 'On hold', away: 'Village only', faint: 'Fainted', noneT: 'No tickets — buy from Heathcliff (Village Square)',
-  useBtn: n => `Use ticket ×${n}`, contBtn: 'Resume', tipP: 'Hold / resume', tipX: 'Turn off (keeps time)', desc: '15 min auto-farm in the Village · ×1.5 speed · stacks',
+  run: 'Auto-farm', wait: 'Paused', hand: 'On hold', away: 'Village / Riverbed only', faint: 'Fainted', noneT: 'No tickets — buy from Heathcliff (Village Square)',
+  useBtn: n => `Use ticket ×${n}`, contBtn: 'Resume', tipP: 'Hold / resume', tipX: 'Turn off (keeps time)', desc: '15 min auto-farm in the Village + Riverbed · flies up for sky monsters · ×1.5 speed · stacks',
 });
 
 const ST = { ctx: null, hc: null, placed: false, shopEl: null, hud: null, sig: '', hudT: 0, tg: null, scanT: 0, pathT: 0, clickT: 0, skip: new Map(), pauseT: 0,
-  lp: null, lastNow: 0, ours: null, log: [], n: { kill: 0, tg: 0, click: 0, palm: 0, path: 0, nopath: 0, pause: 0, boost: 0, boostPx: 0, buy: 0, use: 0, release: 0 }, tried: new Set(), relT: 0, exits: null, exitZ: null };
+  lp: null, lastNow: 0, ours: null, log: [], n: { kill: 0, tg: 0, click: 0, palm: 0, path: 0, nopath: 0, pause: 0, boost: 0, boostPx: 0, buy: 0, use: 0, release: 0, fly: 0, land: 0, rise: 0, dive: 0, chase: 0 }, tried: new Set(), relT: 0, exits: null, exitZ: null };
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 const log = o => { ST.log.push({ t: Math.round(now() / 100) / 10, ...o }); if (ST.log.length > 300) ST.log.shift(); };
 const sv = ctx => { const s = ctx.S.save; s.sys = s.sys || {}; const a = s.sys.af50 || (s.sys.af50 = { left: 0, on: false, hand: false, mode0: null, met: false, talks: 0 }); return a; };
 const inv = ctx => ctx.S.save.inv || (ctx.S.save.inv = {});
 const count = ctx => (ctx.bag && ctx.bag.count ? ctx.bag.count(ID) : (inv(ctx)[ID] || 0));
 const inVillage = ctx => ctx.S.zone && ctx.S.zone.id === 'village';
+/* c60-tudong: Đáy Sông Làng cũng là bãi tự farm; tầng hiện tại: 'uw' dưới nước, 'air' đang Bay, 'gnd' mặt đất */
+const inRiver = ctx => ctx.S.zone && ctx.S.zone.id === 'uriver';
+const inFarm = ctx => inVillage(ctx) || inRiver(ctx);
+const air = ctx => !!(ctx.b49Air && ctx.b49Air());
+const isSky = o => !!(o && o.c && o.c.b49);
+const up = ctx => air(ctx) || !!(ctx.bay49 && ctx.bay49.on && ctx.bay49.on() && !(ctx.S.zone && ctx.S.zone.id === 'sky'));   /* đã bấm Bay (cả lúc đang lên / đang hạ) */
+const kiNow = ctx => (ctx.ki && ctx.ki.get ? ctx.ki.get() : 0);
+/* Đáy Sông (lan48) chỉ chạy các hệ trong ZONES.uriver.systems → thêm hệ này vào (gọi lúc nạp module, sau 0 s, và lúc setup) */
+function riverSys() { try { const z = ZONES.uriver; if (z && Array.isArray(z.systems) && !z.systems.includes('autofarm50')) z.systems.push('autofarm50'); } catch (e) { } }
+riverSys(); if (typeof setTimeout !== 'undefined') setTimeout(riverSys, 0);
+const F60 = { FLY_KI: 4, LAND_KI: 0.8, BREATH_LOW: 20, REDIVE: 1.5, CHASE: 1.2, flyCd: 0, diveT: 0, redive: false };
 /* icon: TẠM dùng ảnh PixelLab sẵn có 'trenchmap' (cuộn giấy) — máy chưa có token PixelLab. Có token: chạy _gen/px-ticket.py gen → pick <seed>
    rồi đổi ICON thành 'ui/items/auto_ticket.png' (không dò file lúc chạy — dò 404 là lỗi trang). */
 const ICON = 'ui/items/trenchmap.png';
@@ -126,7 +143,7 @@ function start(ctx) {
   log({ ev: 'start', left: Math.round(a.left) });
 }
 function stop(ctx, why) {
-  const a = sv(ctx), t = L(ctx); a.on = false; a.hand = false; dropTarget(ctx);
+  const a = sv(ctx), t = L(ctx); a.on = false; a.hand = false; dropTarget(ctx); F60.redive = false; F60.landing = false;
   if (a.mode0 != null) { try { if (window.__sq) window.__sq.mode(a.mode0); } catch (e) { } a.mode0 = null; }
   if (why === 'end') { a.left = 0; ctx.toast(t.end); try { ctx.sfx('pickup'); } catch (e) { } } else if (why === 'off') ctx.toast(t.off);
   log({ ev: 'stop', why, left: Math.round(a.left) }); ctx.persist(); ST.sig = '';
@@ -144,18 +161,46 @@ function exitsOf(ctx) {
   ST.exits = out; ST.exitZ = m; return out;
 }
 const nearExit = (ctx, tx, ty, r) => exitsOf(ctx).some(e => Math.abs(e.x - tx) <= r && Math.abs(e.y - ty) <= r);
-function solid(ctx) { return (m, x, y) => ctx.isSolid(m, x, y) || isWater(ctx, x, y) || nearExit(ctx, x, y, CF.exitR); }
+function solid(ctx) {   /* c60-tudong: người chơi đang ở ô nước (bơi / lội) → đường đi được qua nước để bơi vào bờ / sang bờ kia */
+  const p = P(ctx), wet = isWater(ctx, Math.floor(p.x / TS), Math.floor(p.y / TS));
+  return (m, x, y) => ctx.isSolid(m, x, y) || (!wet && isWater(ctx, x, y)) || nearExit(ctx, x, y, CF.exitR);
+}
 const alive = o => o && o.hp > 0 && !o.dead && !o.__dying;
-function pickTarget(ctx) {
-  const p = P(ctx), L0 = (ctx.monsters && ctx.monsters.list ? ctx.monsters.list() : []), tnow = now(); let best = null, bd = 1e9;
+function pickTargets(ctx) {   /* c60-tudong: { gnd, sky } — quái đất / dưới nước gần nhất và quái trời gần nhất */
+  const p = P(ctx), L0 = (ctx.monsters && ctx.monsters.list ? ctx.monsters.list() : []), tnow = now(), riv = inRiver(ctx); let gnd = null, gd = 1e9, sky = null, sd = 1e9;
   for (const o of L0) {
-    const F = o.f6; if (!F || !alive(o)) continue; if (F.lead && !CF.lead) continue; if (F.rid === 'sky49') continue;   /* c49: quái trên trời — người chơi dưới đất không đánh tới */
-    if ((ST.skip.get(o) || 0) > tnow) continue; const tx = Math.floor(o.x / TS), ty = Math.floor(o.y / TS);
-    if (isWater(ctx, tx, ty) || nearExit(ctx, tx, ty, CF.exitR + 1)) continue;
-    const d = Math.hypot(o.x - p.x, o.y - p.y) + (F.mode === 'angry' ? -60 : 0) + (F.ct ? -10 : 0); if (d > CF.maxD) continue;
-    if (d < bd) { bd = d; best = o; }
+    if (!alive(o) || !o.c || o.c.boss || o.c.spar || o.statue || o.loot || o.state === 'flee') continue;
+    if ((ST.skip.get(o) || 0) > tnow) continue;
+    const F = o.f6, s = isSky(o);
+    if (riv) { if (s) continue; }   /* Đáy Sông: mọi quái nước thường (không có trùm) */
+    else {
+      if (!F && !s) continue; if (F && F.lead && !CF.lead) continue;
+      const tx = Math.floor(o.x / TS), ty = Math.floor(o.y / TS);
+      if (nearExit(ctx, tx, ty, CF.exitR + 1)) continue;
+      if (!s && isWater(ctx, tx, ty)) continue;
+    }
+    const d = Math.hypot(o.x - p.x, o.y - p.y) + (F && F.mode === 'angry' ? -60 : 0) + (F && F.ct ? -10 : 0); if (d > CF.maxD) continue;
+    if (s) { if (d < sd) { sd = d; sky = o; } } else if (d < gd) { gd = d; gnd = o; }
   }
-  return best;
+  return { gnd, sky };
+}
+function pickTarget(ctx) {   /* chọn theo tầng: đang Bay → quái trời (hết Ki / hết quái trời → hạ); mặt đất → quái trời nếu đủ Ki bay, không thì quái đất */
+  const { gnd, sky } = pickTargets(ctx), k = kiNow(ctx); F60.wantSky = !!sky && !inRiver(ctx);
+  if (inRiver(ctx)) return gnd;
+  if (F60.landing) { if (up(ctx)) return null; F60.landing = false; }   /* đang hạ cánh → chờ chạm đất */
+  if (up(ctx)) { if (sky && k > F60.LAND_KI) return sky; land(ctx, 'tier'); return null; }
+  if (sky && k >= F60.FLY_KI && F60.flyCd <= 0 && ctx.bay49 && ctx.bay49.can && ctx.bay49.can()) return sky;
+  return gnd;
+}
+function fly(ctx) { if (air(ctx) || F60.flyCd > 0 || !ctx.bay49) return false; F60.flyCd = 3; let ok = false; try { ok = !(ctx.bay49.why && ctx.bay49.why()) && ctx.bay49.toggle(); } catch (e) { } if (ok) { ST.n.fly++; log({ ev: 'fly', ki: +kiNow(ctx).toFixed(1) }); } return ok; }
+function land(ctx, why) { if (!up(ctx) || !ctx.bay49 || F60.landing) return false; F60.flyCd = 4; F60.landing = true; dropTarget(ctx); try { ctx.bay49.toggle(); } catch (e) { } ST.n.land++; log({ ev: 'land', why, ki: +kiNow(ctx).toFixed(1) }); return true; }
+function breathTick(ctx, dt, run) {   /* Đáy Sông: hơi sắp hết → nổi lên rồi lặn lại (lặn từ sông = hơi 120 s mới, c48) */
+  const L4 = typeof window !== 'undefined' && window.__lan48; if (!L4) return;
+  if (inRiver(ctx)) { if (F60.redive) return; const u = ctx.S.save.sys && ctx.S.save.sys.underwater, b = u && typeof u.breath === 'number' ? u.breath : 999;
+    if (b < F60.BREATH_LOW && ctx.S.mode === 'play' && !(ctx.hero && ctx.hero.fainted)) { try { if (L4.rise()) { F60.redive = true; F60.diveTry = 0; F60.diveT = F60.REDIVE; ST.n.rise++; log({ ev: 'rise', b: Math.round(b) }); dropTarget(ctx); } } catch (e) { } } return; }
+  if (F60.redive && inVillage(ctx) && run) { if ((F60.diveT -= dt) > 0) return; F60.diveT = 0.5;
+    F60.diveTry = (F60.diveTry || 0) + 1;
+    try { const s = L4.state(); if (s.canDive) { if (L4.dive()) { F60.redive = false; F60.diveTry = 0; ST.n.dive++; log({ ev: 'dive' }); } } else if (F60.diveTry > 16) { F60.redive = false; F60.diveTry = 0; log({ ev: 'nodive' }); } } catch (e) { F60.redive = false; } }   /* chờ tới 8 s (vừa nổi lên, hệ bơi chưa kịp nhận là đang bơi) */
 }
 function walkTo(ctx, o) {
   const p = P(ctx), path = ctx.pathTo(Math.floor(p.x / TS), Math.floor(p.y / TS), Math.floor(o.x / TS), Math.floor(o.y / TS), 16, solid(ctx));
@@ -167,15 +212,31 @@ function monSys(ctx) { return ctx.S.sys.find(s => s.id === 'monsters'); }
 function farmTick(ctx, dt) {
   const p = P(ctx); ST.scanT -= dt; ST.pathT -= dt; ST.clickT -= dt; ST.relT -= dt;
   if (ST.relT <= 0) { ST.relT = 3; release(ctx); }
-  if (ST.tg && !alive(ST.tg)) { ST.n.kill++; log({ ev: 'kill', id: ST.tg.id, sp: ST.tg.f6 && (ST.tg.f6.sp || ST.tg.f6.key) }); ST.tg = null; ST.scanT = 0; }
+  if (ST.tg && !alive(ST.tg)) { ST.n.kill++; log({ ev: 'kill', id: ST.tg.id, sky: isSky(ST.tg) ? 1 : 0, z: ctx.S.zone.id, sp: ST.tg.f6 && (ST.tg.f6.sp || ST.tg.f6.key) }); ST.tg = null; ST.scanT = 0; }
   if (ST.tg && ctx.monsters.list && !ctx.monsters.list().includes(ST.tg)) { ST.tg = null; ST.scanT = 0; }
-  if (!ST.tg && ST.scanT <= 0) { ST.scanT = CF.scan; const o = pickTarget(ctx); if (o) { ST.tg = o; ST.n.tg++; ST.pathT = 0; ST.clickT = 0; log({ ev: 'tg', id: o.id, sp: o.f6.sp || o.f6.key, lv: o.f6.lv, d: Math.round(Math.hypot(o.x - p.x, o.y - p.y)) }); try { if (window.__sq) window.__sq.lock(o); } catch (e) { } } }
-  const o = ST.tg; if (!o) return;
+  if (!ST.tg && ST.scanT <= 0) { ST.scanT = CF.scan; const o = pickTarget(ctx); if (o) { ST.tg = o; ST.n.tg++; ST.pathT = 0; ST.clickT = 0; log({ ev: 'tg', id: o.id, sky: isSky(o) ? 1 : 0, sp: o.f6 ? (o.f6.sp || o.f6.key) : o.c.key, lv: o.f6 ? o.f6.lv : 0, d: Math.round(Math.hypot(o.x - p.x, o.y - p.y)) }); try { if (window.__sq) window.__sq.lock(o); } catch (e) { } } }
+  if (F60.flyCd > 0) F60.flyCd -= dt;
+  const o = ST.tg; if (!o) { if (air(ctx) && ST.scanT <= 0 && !pickTargets(ctx).sky) land(ctx, 'none'); return; }
   const d = Math.hypot(o.x - p.x, o.y - p.y);
+  /* c60-tudong: quái trời → bay lên (đủ Ki) / hạ khi hết Ki; quái đất mà đang Bay → hạ */
+  if (isSky(o) && !air(ctx)) {
+    if (up(ctx)) return;   /* đang cất cánh */
+    if (kiNow(ctx) >= F60.FLY_KI && fly(ctx)) return;
+    ST.skip.set(o, now() + 8000); ST.tg = null; ST.scanT = 0.3; return;
+  }
+  if (up(ctx) && (!isSky(o) || kiNow(ctx) <= F60.LAND_KI)) { land(ctx, isSky(o) ? 'ki' : 'gnd'); return; }
+  if (air(ctx) || inRiver(ctx)) {   /* Bay / dưới nước: dùng vòng đuổi của monsters.js (c53 chase53: tự bay / bơi tới + chém liên tục) */
+    if (ST.clickT <= 0) { ST.clickT = F60.CHASE; try { if (ctx.chase53 && ctx.chase53(o)) ST.n.chase++; else { ST.skip.set(o, now() + 10000); ST.tg = null; ST.scanT = 0.3; return; } } catch (e) { console.error('af60 chase', e); } }
+    if (!o.__af60) o.__af60 = now(); else if (now() - o.__af60 > 25000 && d > 40) { ST.skip.set(o, now() + 20000); ST.tg = null; o.__af60 = 0; log({ ev: 'giveup', id: o.id }); return; }   /* 25 s không tới được → bỏ con này */
+    if (d < 72 && ctx.quyen && ctx.quyen.on && ctx.quyen.on() && ctx.quyen.palmSlot && (!air(ctx) || kiNow(ctx) > 2)) {
+      try { const s = ctx.quyen.palmSlot(); if (s && s.cd <= 0 && !s.dim) { try { p.faceTo(o.x, o.y); } catch (e) { } ctx.quyen.press(); ST.n.palm++; log({ ev: 'palm', id: o.id, t: air(ctx) ? 'air' : 'uw' }); } } catch (e) { }
+    }
+    return;
+  }
   if (d > NEAR) { if (ST.pathT <= 0 || !p.autoPath) { ST.pathT = CF.path; walkTo(ctx, o); } return; }
   if (ST.ours && p.autoPath === ST.ours) { p.autoPath = null; ST.ours = null; }
   if (ST.clickT <= 0) { ST.clickT = CF.click; const ms = monSys(ctx); try { if (ms && ms.onClick && ms.onClick(ctx, { wx: o.x, wy: o.y - 4, tx: Math.floor(o.x / TS), ty: Math.floor(o.y / TS) })) ST.n.click++; } catch (e) { console.error('af50 click', e); } }
-  if (d < 72 && ctx.quyen && ctx.quyen.on && ctx.quyen.on() && ctx.quyen.palmSlot) {
+  if (d < 72 && ctx.quyen && ctx.quyen.on && ctx.quyen.on() && ctx.quyen.palmSlot && !(F60.wantSky && kiNow(ctx) < F60.FLY_KI + 1)) {   /* c60: có quái trời đang chờ → để dành Ki bay */
     try { const s = ctx.quyen.palmSlot(); if (s && s.cd <= 0 && !s.dim) { try { p.faceTo(o.x, o.y); } catch (e) { } try { if (window.__sq) window.__sq.lock(o); } catch (e) { } ctx.quyen.press(); ST.n.palm++; log({ ev: 'palm', id: o.id }); } } catch (e) { }
   }
 }
@@ -234,10 +295,10 @@ function place() {
   if (push !== afPush) { afPush = push; nt.style.marginTop = push ? push + 'px' : ''; }
 }
 function status(ctx) {
-  const a = sv(ctx); if (!a.on) return null; if (!inVillage(ctx)) return 'away'; if (ctx.hero && ctx.hero.fainted) return 'faint'; if (a.hand) return 'hand'; if (ST.pauseT > 0 || ctx.S.mode !== 'play') return 'wait'; return 'run';
+  const a = sv(ctx); if (!a.on) return null; if (!inFarm(ctx)) return 'away'; if (ctx.hero && ctx.hero.fainted) return 'faint'; if (a.hand) return 'hand'; if (ST.pauseT > 0 || ctx.S.mode !== 'play') return 'wait'; return 'run';
 }
 function renderHud(ctx) {
-  const el = hudEl(ctx), a = sv(ctx), t = L(ctx), n = count(ctx), show = ctx.S.mode !== 'title' && ctx.S.mode !== 'menu' && (a.on || (inVillage(ctx) && (n > 0 || a.left > 0)));
+  const el = hudEl(ctx), a = sv(ctx), t = L(ctx), n = count(ctx), show = ctx.S.mode !== 'title' && ctx.S.mode !== 'menu' && (a.on || (inFarm(ctx) && (n > 0 || a.left > 0)));
   const stt = status(ctx), sig = [show, a.on, Math.ceil(a.left), stt, n, vi(ctx)].join('|'); if (sig === ST.sig) return; ST.sig = sig;
   if (!show) { el.hidden = true; return; }
   const img = `<img src="${iconSrc()}" alt="">`;
@@ -259,17 +320,17 @@ function listen() {
 export const autofarm50 = {
   id: 'autofarm50',
   setup(ctx) {   /* API hệ không có hook init → gọi từ onZoneEnter / update (một lần) */
-    if (ST.ready) return; ST.ready = true; ST.ctx = ctx; listen(); regIcon();
+    if (ST.ready) return; ST.ready = true; ST.ctx = ctx; listen(); regIcon(); riverSys();
     ctx.autofarm50 = { on: () => sv(ctx).on, left: () => sv(ctx).left, use: () => useTicket(ctx) };
     if (typeof window !== 'undefined') window.__af50 = {
-      state: () => { const a = sv(ctx), p = P(ctx); return { on: a.on, left: +a.left.toFixed(1), hand: a.hand, mode0: a.mode0, stt: status(ctx), n: { ...ST.n }, tickets: count(ctx), stone: inv(ctx).stone || 0, pauseT: +ST.pauseT.toFixed(2), tg: ST.tg ? { id: ST.tg.id, sp: ST.tg.f6 && (ST.tg.f6.sp || ST.tg.f6.key), hp: Math.round(ST.tg.hp), d: Math.round(Math.hypot(ST.tg.x - p.x, ST.tg.y - p.y)) } : null, hc: ST.hc ? { x: Math.round(ST.hc.x), y: Math.round(ST.hc.y), inStaff: (ctx.S.staff || []).includes(ST.hc) } : null, p: { x: Math.round(p.x), y: Math.round(p.y), speedMul: p.speedMul }, squad: squadMode(ctx), exits: exitsOf(ctx).length }; },
+      state: () => { const a = sv(ctx), p = P(ctx); return { on: a.on, left: +a.left.toFixed(1), hand: a.hand, mode0: a.mode0, stt: status(ctx), n: { ...ST.n }, tickets: count(ctx), stone: inv(ctx).stone || 0, pauseT: +ST.pauseT.toFixed(2), tg: ST.tg ? { id: ST.tg.id, sp: ST.tg.f6 ? (ST.tg.f6.sp || ST.tg.f6.key) : ST.tg.c && ST.tg.c.key, sky: isSky(ST.tg), hp: Math.round(ST.tg.hp), d: Math.round(Math.hypot(ST.tg.x - p.x, ST.tg.y - p.y)) } : null, air: air(ctx), up: up(ctx), ki: +kiNow(ctx).toFixed(2), zone: ctx.S.zone.id, f60: { ...F60 }, hc: ST.hc ? { x: Math.round(ST.hc.x), y: Math.round(ST.hc.y), inStaff: (ctx.S.staff || []).includes(ST.hc) } : null, p: { x: Math.round(p.x), y: Math.round(p.y), speedMul: p.speedMul }, squad: squadMode(ctx), exits: exitsOf(ctx).length }; },
       log: () => ST.log.slice(), buy: () => buy(ctx), use: () => useTicket(ctx), setLeft: s => { sv(ctx).left = s; ST.sig = ''; return s; }, off: () => stop(ctx, 'off'), resume: () => resume(ctx),
       talk: () => talkHc(ctx), shop: () => openShop(ctx), shopHtml: () => (ST.shopEl && !ST.shopEl.hidden ? ST.shopEl.innerHTML : ''), cfg: CF, reset: () => { for (const k in ST.n) ST.n[k] = 0; ST.log = []; }, hud: () => (ST.hud ? { hidden: ST.hud.hidden, html: ST.hud.innerHTML } : null),
       input: () => userInput(), hand: () => act(ctx, 'hand'),
     };
   },
   onZoneEnter(ctx) { autofarm50.setup(ctx); ST.ctx = ctx; ST.placed = false; ST.hc = null; ST.tg = null; ST.ours = null; ST.lp = null; ST.skip.clear(); ST.exitZ = null; ST.sig = ''; if (ctx.S.mode === 'af50shop') ctx.setMode('play'); },
-  onZoneLeave(ctx) { if (ctx.S.mode === 'af50shop') closeShop(ctx); ST.hc = null; ST.tg = null; ST.ours = null; },
+  onZoneLeave(ctx) { if (ctx.S.mode === 'af50shop') closeShop(ctx); ST.hc = null; ST.tg = null; ST.ours = null; try { const p = P(ctx); if (p) p.autoPath = null; } catch (e) { } },   /* c60: đường đi (vd đường đuổi quái dưới đáy sông) là toạ độ của map cũ → bỏ khi rời vùng, không thì lên bờ tự đi lệch */
   update(dt, ctx) {
     if (!ST.ready) autofarm50.setup(ctx); ST.ctx = ctx; regIcon(); const a = sv(ctx);
     if (!ST.placed && ctx.S.map) { ST.placed = true; try { placeHc(ctx); } catch (e) { console.error('af50 hc', e); } }
@@ -279,8 +340,9 @@ export const autofarm50 = {
       a.left -= rdt; if (a.left <= 0) { stop(ctx, 'end'); }
       else {
         boost(ctx);
+        try { breathTick(ctx, rdt, status(ctx) === 'run'); } catch (e) { console.error('af60 breath', e); }
         if (ST.pauseT > 0) ST.pauseT -= rdt;
-        if (status(ctx) === 'run') { try { farmTick(ctx, dt); } catch (e) { console.error('af50 farm', e); } }
+        if (status(ctx) === 'run' && !F60.redive) { try { farmTick(ctx, dt); } catch (e) { console.error('af50 farm', e); } }
         if ((a.saveT = (a.saveT || 0) + rdt) > 10) { a.saveT = 0; ctx.persist(); }
       }
     } else ST.lp = null;
