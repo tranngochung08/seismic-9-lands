@@ -167,7 +167,7 @@ export const target91 = {
     if (M && M.lastHitT) {   /* đánh khi chưa khoá → khoá (lặng) con vừa trúng đòn gần người chơi nhất */
       const lt = M.lastHitT(); if (lt !== ST.hitSeen) { ST.hitSeen = lt;
         if (lt > 0 && ctx.S.time - lt < 0.5 && !TGT.get()) { const p = ctx.S.player; let best = null, bd = 48;
-          for (const mo of M.list()) { if (!(mo.flash > 0) || mo.hp <= 0 || mo.statue) continue; const d = Math.hypot(mo.x - p.x, mo.y - p.y); if (d < bd) { bd = d; best = mo; } }
+          for (const mo of M.list()) { if (!(mo.flash > 0) || mo.hp <= 0 || mo.statue || (ctx.b49Tier && !ctx.b49Tier(mo) && !(ctx.b49Air && ctx.b49Air()))) continue;   /* c70-detho: không tự khoá quái khác tầng */ const d = Math.hypot(mo.x - p.x, mo.y - p.y); if (d < bd) { bd = d; best = mo; } }
           if (best) TGT.lock({ kind: 'mon', ref: best }, true); } }
     }
     renderFrame(ctx);

@@ -13,6 +13,7 @@ import { NET } from './farm106.js';
 import { ART } from '../art.js';
 import { SHADOW, shadowFor } from './shadow.js';
 import { lastBossBar } from './bosscam.js';
+import { newbieNow } from './detho121.js';   /* c70-detho (plan-121 A4): người đang Nhập môn KHÔNG gặp boss thế giới */
 
 const TS = 16, ZONE = 'village';
 const CF = { period: 30 * 60, warn: 30, life: 300, snapHz: 10, hitHz: 5, lerp: 12, snap: 64, leash: 300, hpK: 0.8, capFrac: 0.05, capMin: 900 };
@@ -25,6 +26,9 @@ const STR = {
     you: 'You', share: (p, n) => `Dealt ${p}% · ${n} players`, reward: (p, a) => `Boss reward (${p}% dealt): ${a}`, last: 'Final blow!', stone: 'stones', soul: 'souls', ball: 'Seal Orb', tn: 'Light Potential', xp: 'XP', none: 'You dealt no damage — no reward' },
 };
 const L = ctx => STR[ctx.lang && ctx.lang() === 'en' ? 'en' : 'vi'];
+/* c70-detho: NB = máy này là người mới → boss ẩn HẲN ở máy này (không vẽ, không tiếng, không trúng đòn, không báo, không ghim, không bị nhắm).
+   Một mình / khách: không sinh / bỏ qua gói 'wb'. Chủ phòng chơi chung: vẫn chạy boss 'bóng' (AI + máu + gói 'wb' + nhận 'wbhit') cho người khác, chỉ không có quái trong ctx.monsters ở máy mình. */
+const NB = ctx => !!(ctx && ctx.S && newbieNow(ctx.S));
 const KINDS = ['sweep', 'bolt', 'lance', 'warp', 'dodge'];
 const CLIPS = ['idle', 'walk', 'control', 'cast', 'vanish', 'stun', 'shatter'];
 const DMG = { sweep: 0.10, bolt: 0.07, lance: 0.06, warp: 0.10 };   /* × máu tối đa nạn nhân */
@@ -95,8 +99,8 @@ function moveB(ctx, B, dx, dy, sp, dt) {   /* lướt có va chạm; kẹt > 0,6
 /* ---------- mục tiêu (chủ phòng): mình, người khác, Chấn Thú của mình + của người khác ---------- */
 function targets(ctx) {
   const B = ST.B, out = [], p = ctx.S.player, H = B.home, inL = o => Math.hypot(o.x - H.x, o.y - H.y) < CF.leash;
-  if (!(ctx.hero && ctx.hero.fainted) && inL(p)) out.push({ k: 'pl', id: 'me', o: p });
-  const q = ctx.squad104; if (q && q.units) { try { for (const u of q.units()) { if (!u.onField || !u.onField() || u.ko) continue; const o = u.pos && u.pos(); if (o && inL(o)) out.push({ k: 'u', id: 'u' + u.id, o }); } } catch (e) { } }
+  const nb = NB(ctx); if (!nb && !(ctx.hero && ctx.hero.fainted) && inL(p)) out.push({ k: 'pl', id: 'me', o: p });
+  const q = ctx.squad104; if (!nb && q && q.units) { try { for (const u of q.units()) { if (!u.onField || !u.onField() || u.ko) continue; const o = u.pos && u.pos(); if (o && inL(o)) out.push({ k: 'u', id: 'u' + u.id, o }); } } catch (e) { } }
   const A = api(); if (A && online() && A.peers) { for (const P of A.peers()) { if (!P.ko && P.ent && inL(P.ent)) out.push({ k: 'pp', id: 'p' + P.id, o: P.ent }); if (P.units) for (const [k, u] of P.units) if (u.e && inL(u.e)) out.push({ k: 'pu', id: 'pu' + P.id + k, o: u.e }); } }
   return out;
 }
@@ -122,7 +126,7 @@ function beginAct(ctx, B, A) {   /* mọi máy: vạch báo + clip */
   else if (A.k === 'warp') { play('vanish'); tele({ type: 'ring', x: A.wx, y: A.wy, r: R_WARP, T: A.T - A.t, col: '#d6c2ff' }); fx('gm_glint', B.x, B.y - 30); sfx(ctx, 'whoosh_big'); }
   else if (A.k === 'dodge') { play('walk'); fx('gm_glint', B.x, B.y - 20); }
 }
-function sfx(ctx, n) { try { ctx.sfx(n); } catch (e) { } }
+function sfx(ctx, n) { if (NB(ctx)) return; try { ctx.sfx(n); } catch (e) { } }
 function segD(px, py, x0, y0, x1, y1) { const dx = x1 - x0, dy = y1 - y0, l2 = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / l2)); return Math.hypot(px - x0 - dx * u, py - y0 - dy * u); }
 const inEll = (o, x, y, r) => Math.hypot(o.x - x, (o.y - y) / 0.7) < r;   /* vùng tròn trên mặt đất (vẽ elip ry = 0,7 r) */
 function boltRays(ctx, A) {   /* 7 tia phổ từ tay Nữ Hoàng — dừng ở vật cứng (mọi máy tính giống nhau) */
@@ -130,6 +134,7 @@ function boltRays(ctx, A) {   /* 7 tia phổ từ tay Nữ Hoàng — dừng ở
 }
 /* đòn trúng — MỖI MÁY tính cho người chơi + Chấn Thú của CHÍNH MÌNH */
 function hitMine(ctx, A, test, frac, react, from, power = 1) {
+  if (NB(ctx)) return 0;   /* c70-detho */
   const p = ctx.S.player, h = ctx.hero; let n = 0;
   if (h && !h.fainted && test(p)) { const ok = h.hit(Math.max(1, Math.round(h.max * frac))); if (!ok) lg({ ev: 'blocked', k: A.k, knocked: !!(ctx.knocked && ctx.knocked()), ki: typeof window !== 'undefined' && window.__ki ? (s => ({ ifr: s.ifr, mv: s.mv && s.mv.kind, auto: s.auto }))(window.__ki.state()) : null }); if (ok) { n++; ST.n.hitsMe[A.k] = (ST.n.hitsMe[A.k] || 0) + 1; lg({ ev: 'hitMe', k: A.k, react }); if (ctx.knockPlayer && react) { const d = Math.hypot(p.x - from.x, p.y - from.y) || 1; ctx.knockPlayer({ type: react, power, dir: { x: (p.x - from.x) / d, y: (p.y - from.y) / d }, src: from }); } } }
   const q = ctx.squad104; if (q && q.units && q.hurt) { try { for (const u of q.units()) { if (!u.onField || !u.onField() || u.ko) continue; const o = u.pos && u.pos(); if (o && test(o)) { q.hurt(u, Math.max(1, Math.round((u.max || 100) * frac * 1.1)), from); n++; ST.n.hitsU++; } } } catch (e) { } }
@@ -140,8 +145,8 @@ function impact(ctx, B, A) {
   else if (A.k === 'bolt') { const R = boltRays(ctx, A); for (const r of R) ST.rays.push({ ...r, t: 0, life: 0.45, by: B.y }); fx('gm_glint', A.x, A.y - 4); sfx(ctx, 'hit'); let done = false;
     hitMine(ctx, A, o => { if (done && o === ctx.S.player) return false; const ok = R.some(r => segD(o.x, o.y - 6, r.x0, r.y0, r.x1, r.y1) < 8); return ok; }, DMG.bolt, 'stagger', { x: A.x, y: A.y }, 0.9); }
   else if (A.k === 'lance') { for (const [x, y] of A.pts) fx('gm_shatter', x, y - 6); sfx(ctx, 'smash'); hitMine(ctx, A, o => A.pts.some(([x, y]) => inEll(o, x, y, R_LANCE)), DMG.lance, 'stagger', { x: A.pts[0][0], y: A.pts[0][1] - 20 }, 0.8);
-    if (ctx.quake) ctx.quake(0.12); }
-  else if (A.k === 'warp') { fx('gm_arrive', A.wx, A.wy); fx('gm_ripple', A.wx, A.wy, false); sfx(ctx, 'smash'); hitMine(ctx, A, o => inEll(o, A.wx, A.wy, R_WARP), DMG.warp, 'fly', { x: A.wx, y: A.wy }, 1.1); if (ctx.quake) ctx.quake(0.18); }
+    if (ctx.quake && !NB(ctx)) ctx.quake(0.12); }
+  else if (A.k === 'warp') { fx('gm_arrive', A.wx, A.wy); fx('gm_ripple', A.wx, A.wy, false); sfx(ctx, 'smash'); hitMine(ctx, A, o => inEll(o, A.wx, A.wy, R_WARP), DMG.warp, 'fly', { x: A.wx, y: A.wy }, 1.1); if (ctx.quake && !NB(ctx)) ctx.quake(0.18); }
 }
 function actTick(ctx, B, A, dt) {   /* mọi máy chạy (khách theo đồng hồ riêng từ lúc nhận) */
   const t0 = A.t; A.t += dt; const Q = B.q;
@@ -216,8 +221,8 @@ function onDown(ctx, mo) { const B = ST.B; if (!B || B.mo !== mo) return; B.mo =
 function spawn(ctx, id, tl) {
   loadQM(); const P = spawnPoint(ctx), B = B0(), h = ctx.hero, per = h ? (h.atk || 10) + (h.weaponBonus ? h.weaponBonus(h.swordTier) || 0 : 0) : 20;
   B.id = id; B.home = { x: P.x, y: P.y }; B.x = P.x; B.y = P.y; B.base = Math.max(2400, Math.round(per * 60)); B.n = players(ctx); B.mx = Math.round(B.base * (1 + CF.hpK * (B.n - 1))); B.hp = B.mx; B.end = nowMs(ctx) + tl * 1000;
-  ST.B = B; mkMo(ctx, B); fx('gm_arrive', B.x, B.y); fx('gm_ripple', B.x, B.y, false); B.q.clip = 'cast'; B.q.t = 0; sfx(ctx, 'roar_big');
-  if (ST.upSaid !== id) { ST.upSaid = id; try { ctx.toast(L(ctx).up); } catch (e) { } }
+  ST.B = B; if (!NB(ctx)) mkMo(ctx, B); fx('gm_arrive', B.x, B.y); fx('gm_ripple', B.x, B.y, false); B.q.clip = 'cast'; B.q.t = 0; sfx(ctx, 'roar_big');
+  if (ST.upSaid !== id && !NB(ctx)) { ST.upSaid = id; try { ctx.toast(L(ctx).up); } catch (e) { } }
   lg({ ev: 'spawn', id, mx: B.mx, n: B.n, tl }); return B;
 }
 function finish(ctx, win, fromNet) {   /* chủ phòng / một mình: kết thúc → phát 'wbend' + thưởng ở máy mình */
@@ -226,11 +231,11 @@ function finish(ctx, win, fromNet) {   /* chủ phòng / một mình: kết thú
 }
 function end(ctx, E, me) {
   const B = ST.B; ST.n.ends++;
-  if (B) { if (B.mo) { try { ctx.monsters.remove(B.mo); } catch (e) { } } ST.corpse = { x: B.x, y: B.y, t: 0, win: !!E.win, dir: B.q.dir }; if (E.win) { fx('gm_shatter', B.x, B.y - 20); sfx(ctx, 'smash'); if (ctx.quake) ctx.quake(0.25); } }
+  if (B) { if (B.mo) { try { ctx.monsters.remove(B.mo); } catch (e) { } } ST.corpse = { x: B.x, y: B.y, t: 0, win: !!E.win, dir: B.q.dir }; if (E.win) { fx('gm_shatter', B.x, B.y - 20); sfx(ctx, 'smash'); if (ctx.quake && !NB(ctx)) ctx.quake(0.25); } }
   ST.B = null; ST.tele = []; const w = sv(ctx); w.nx = E.nx > 0 ? E.nx : Math.round(nowMs(ctx) + CF.period * 1000); if (!w.done.includes(E.id)) { w.done.push(E.id); if (w.done.length > 8) w.done.shift(); }
-  try { ctx.toast(E.win ? L(ctx).down : L(ctx).flee); } catch (e) { }
+  if (!NB(ctx)) { try { ctx.toast(E.win ? L(ctx).down : L(ctx).flee); } catch (e) { } }
   lg({ ev: 'end', id: E.id, win: !!E.win, g: E.g, last: E.last });
-  if (E.win) reward(ctx, E, me);
+  if (E.win && !NB(ctx)) reward(ctx, E, me);
 }
 function reward(ctx, E, me) {   /* chia theo tỉ lệ góp: phần đều = 1/n người góp; tỉ lệ = góp / phần đều (0,3–2); ai góp ≥ 3 % luôn có ít nhất 1 phần */
   const w = sv(ctx); if (w.rew === E.id) return; const G = new Map(E.g || []), tot = [...G.values()].reduce((a, b) => a + b, 0), mine = G.get(me) || (me !== 'me' ? G.get('me') || 0 : 0);
@@ -254,7 +259,7 @@ function snapMsg(B) {
   return { t: 'wb', id: B.id, x: Math.round(B.x), y: Math.round(B.y), hp: Math.round(B.hp), mx: Math.round(B.mx), b: B.base, n: B.n, d: B.q.dir | 0, c: CLIPS.indexOf(B.q.clip), tl: Math.max(0, Math.round((B.end - nowMs(ST.ctx)) / 100) / 10), e: B.enr ? 1 : 0, a, g: Object.entries(B.dmg).map(([k, v]) => [k, Math.round(v)]), l: B.last, hx: Math.round(B.home.x), hy: Math.round(B.home.y) };
 }
 function onSnap(ctx, m) {
-  if (!inZone(ctx)) return; ST.n.rx++;
+  if (!inZone(ctx) || NB(ctx)) return; ST.n.rx++;   /* c70-detho: khách là người mới → không dựng boss */
   if (sv(ctx).done.includes(m.id) && !(ST.B && ST.B.id === m.id)) return;
   let B = ST.B; if (!B || B.id !== m.id) { if (B && B.mo) { try { ctx.monsters.remove(B.mo); } catch (e) { } } B = B0(); B.id = m.id; B.x = m.x; B.y = m.y; ST.B = B; loadQM(); if (ST.upSaid !== m.id) { ST.upSaid = m.id; try { ctx.toast(L(ctx).here); } catch (e) { } } lg({ ev: 'join', id: m.id }); }
   B.tx = m.x; B.ty = m.y; B.hp = m.hp; B.mx = m.mx; B.base = m.b || B.base; B.n = m.n || 1; B.enr = !!m.e; B.end = nowMs(ctx) + (m.tl || 0) * 1000; B.home = { x: m.hx, y: m.hy }; B.lastSnap = ctx.S.time; B.last = m.l || null;
@@ -267,12 +272,12 @@ function onSnap(ctx, m) {
   if (!B.mo || !ctx.monsters.list().some(o => o.id === B.mo.id)) mkMo(ctx, B);
 }
 function onHit(ctx, m) {   /* chủ phòng: sát thương của khách — kiểm khoảng cách + trần mỗi giây (chống gian lận) */
-  const B = ST.B; if (!B || m.id !== B.id || !auth() || !B.mo) return; const A = api(), P = A && A.peers ? A.peers().find(q => q.id === m.f) : null;
+  const B = ST.B; if (!B || m.id !== B.id || !auth() || !(B.mo || NB(ctx))) return; const A = api(), P = A && A.peers ? A.peers().find(q => q.id === m.f) : null;
   if (!P || Math.hypot(P.ent.x - B.x, P.ent.y - B.y) > 200) { ST.n.rej++; return; }
   const now = ctx.S.time, cap = Math.max(CF.capMin, B.mx * CF.capFrac); let tk = ST.tok.get(m.f); if (!tk) { tk = { n: cap, t: now }; ST.tok.set(m.f, tk); } tk.n = Math.min(cap * 2, tk.n + (now - tk.t) * cap); tk.t = now;
   const d = Math.max(0, Math.min(+m.d || 0, tk.n)); if (!(d > 0)) { ST.n.rej++; return; } tk.n -= d; ST.n.hitRx++;
-  B.hp = Math.max(0, B.hp - d); credit(B, m.f, d); const mo = B.mo; mo.hp = Math.max(0, Math.round(B.hp)); B.shown = mo.hp; mo.flash = 0.12;
-  if (B.hp <= 0) { try { ctx.monsters.kill(mo); } catch (e) { } if (ST.B === B) { B.mo = null; finish(ctx, true); } }
+  B.hp = Math.max(0, B.hp - d); credit(B, m.f, d); const mo = B.mo; if (mo) { mo.hp = Math.max(0, Math.round(B.hp)); B.shown = mo.hp; mo.flash = 0.12; }
+  if (B.hp <= 0) { if (mo) { try { ctx.monsters.kill(mo); } catch (e) { } } if (ST.B === B) { B.mo = null; finish(ctx, true); } }
 }
 
 /* ---------- vẽ ---------- */
@@ -331,14 +336,17 @@ export const worldboss44 = {
     if (ST.fakeWarn > 0) { ST.fakeWarn -= dt; }
     /* báo trước 30 s (mọi máy, 1 lần / đợt) */
     const nextId = S.id;
-    if (live && (S.toNext <= CF.warn || ST.fakeWarn > 0) && ST.warned !== nextId && !w.done.includes(nextId)) { ST.warned = nextId; try { ctx.toast(t.soon(Math.ceil(ST.fakeWarn > 0 ? CF.warn : S.toNext))); } catch (e) { } lg({ ev: 'warn', id: nextId }); }
+    const nb = NB(ctx);
+    if (live && !nb && (S.toNext <= CF.warn || ST.fakeWarn > 0) && ST.warned !== nextId && !w.done.includes(nextId)) { ST.warned = nextId; try { ctx.toast(t.soon(Math.ceil(ST.fakeWarn > 0 ? CF.warn : S.toNext))); } catch (e) { } lg({ ev: 'warn', id: nextId }); }
     const B = ST.B;
     if (!B) {
+      if (nb && !(auth() && online())) { if (S.toNext <= CF.warn + 2) { const P = CF.period * 1000; w.nx = Math.ceil((nowMs(ctx) + (CF.warn + 3) * 1000) / P) * P; } return; }   /* c70-detho: người mới chơi một mình / khách → không sinh; đẩy mốc sang đợt sau (xong Nhập môn mới gặp, có báo trước 30 s) */
       if (live && auth() && !ST.noAuto && S.ph >= 0 && !w.done.includes(S.id) && !(ctx.S.mode !== 'play')) spawn(ctx, S.id, CF.life);
       if (auth() && online() && (ST.nxT = (ST.nxT || 0) - dt) <= 0) { ST.nxT = 5; send({ t: 'wbn', nx: nxOf(ctx) }); }
       return;
     }
-    if (!B.mo || !ctx.monsters.list().some(o => o === B.mo || o.id === B.mo.id)) { if (B.mo && B.mo.state === 'dead') return; mkMo(ctx, B); }
+    if (nb) { if (B.mo) { try { ctx.monsters.remove(B.mo); } catch (e) { } B.mo = null; } if (!auth()) { ST.B = null; ST.tele = []; ST.rays = []; return; } if (B.hp <= 0) { finish(ctx, true); return; } }   /* c70-detho: chủ phòng người mới chạy boss 'bóng' */
+    else if (!B.mo || !ctx.monsters.list().some(o => o === B.mo || o.id === B.mo.id)) { if (B.mo && B.mo.state === 'dead') return; mkMo(ctx, B); }
     B.q.t += dt;
     if (auth()) {
       if (B.tx != null) { B.tx = null; lg({ ev: 'takeover', hp: Math.round(B.hp), mx: Math.round(B.mx) }); if (B.pend > 0) { credit(B, myId(), B.pend); B.hp = Math.max(1, B.hp - B.pend); B.pend = 0; } if (B.dmg.me && myId() !== 'me') { credit(B, myId(), B.dmg.me); delete B.dmg.me; } if (!B.home) B.home = { x: B.x, y: B.y }; }
@@ -356,13 +364,13 @@ export const worldboss44 = {
     }
   },
   drawGround(g, ctx, cx, cy) {
-    if (!inZone(ctx)) return;
+    if (!inZone(ctx) || NB(ctx)) return;
     for (const T of ST.tele) drawTele(g, T, cx, cy);
     for (const f of ST.fx) if (!f.top) drawSheet(g, f.s, Math.min(f.s.n - 1, Math.floor(f.t * (f.s.fps || 12))), f.x - cx, f.y - cy);
     const B = ST.B; if (B && SHADOW.on && B.q.alpha > 0.1) shadowFor(g, B.x, B.y, Math.round(B.x - cx), Math.round(B.y - cy) + 1, 24, 0, B.q.alpha);
   },
   drawables(ctx, cx, cy) {
-    if (!inZone(ctx)) return []; const g = ctx.g, out = [], B = ST.B;
+    if (!inZone(ctx) || NB(ctx)) return []; const g = ctx.g, out = [], B = ST.B;
     for (const r of ST.rays) { const up = Math.sin(Math.atan2(r.y1 - r.y0, r.x1 - r.x0)) < 0; out.push({ y: (r.by || r.y0) + (up ? -0.5 : 0.5), f: () => drawRay(g, r, cx, cy) }); }   /* luật lớp vẽ chiêu 16/10 */
     for (const T of ST.tele) if (T.type === 'mark') out.push({ y: T.y + 0.4, f: () => drawLanceShard(g, T, cx, cy) });
     for (const f of ST.fx) if (f.top) out.push({ y: f.y + 30, f: () => drawSheet(g, f.s, Math.min(f.s.n - 1, Math.floor(f.t * (f.s.fps || 12))), f.x - cx, f.y - cy) });
@@ -370,8 +378,8 @@ export const worldboss44 = {
     void B; return out;
   },
   drawUI(ug, ctx, cx, cy, scale) {   /* 1 dòng nhỏ dưới thanh máu trùm sẵn có: % mình góp + số người — chỉ khi chỗ đó trống (không đè HUD) */
-    const B = ST.B; if (!B || !inZone(ctx) || ctx.S.mode !== 'play' || !B.mo || !B.mo.angry) return;
-    const LB = lastBossBar(); if (!LB || !LB.box || performance.now() - LB.t > 300) return; const bb = LB.box, fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3)), y = bb.y + bb.h + 2, h = fs + 4;
+    const B = ST.B; if (!B || !inZone(ctx) || NB(ctx) || ctx.S.mode !== 'play' || !B.mo || !B.mo.angry) return;
+    const LB = lastBossBar(); if (!LB || !LB.box || performance.now() - LB.t > 300) return; const bb = LB.box, fs = Math.max(11, Math.round((globalThis.__u89?globalThis.__u89((globalThis.__u89?globalThis.__u89(scale):scale)):(globalThis.__u89?globalThis.__u89(scale):scale)) * 3)), y = bb.y + bb.h + 2, h = fs + 4;
     const R = (typeof window !== 'undefined' && window.__bossBar && window.__bossBar.rects) || []; if (R.some(r => r.y0 < y + h && r.y1 > y && r.x0 < bb.x + bb.w && r.x1 > bb.x)) return;
     const tot = Object.values(B.dmg).reduce((a, b) => a + b, 0) + (auth() ? 0 : B.pend + Math.max(0, B.sent - B.ack)), mine = (B.dmg[myId()] || 0) + (B.dmg.me && myId() !== 'me' ? B.dmg.me : 0) + (auth() ? 0 : B.pend + Math.max(0, B.sent - B.ack));
     const pc = tot > 0 ? Math.round(mine / tot * 100) : 0, n = Math.max(B.n, Object.keys(B.dmg).length), txt = L(ctx).share(pc, n);
@@ -381,7 +389,7 @@ export const worldboss44 = {
   },
 };
 function pins(ctx) {   /* ghim 'rare' (tím) trên bản đồ M + bản đồ nhỏ: boss đang ở đâu / sắp tới */
-  if (!inZone(ctx)) return null; const B = ST.B, t = L(ctx);
+  if (!inZone(ctx) || NB(ctx)) return null; const B = ST.B, t = L(ctx);
   if (B) return { x: B.x, y: B.y - 10, kind: 'rare', label: t.pin };
   const S = slotInfo(ctx); if (S.toNext <= CF.warn) { const P = spawnPoint(ctx); return { x: P.x, y: P.y - 10, kind: 'rare', label: t.pinSoon(Math.ceil(S.toNext)) }; }
   return null;

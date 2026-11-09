@@ -317,8 +317,9 @@ function tnData(ctx) { const c = ctx.chanthu; if (!c || !c.ensure) return null; 
 function tnAdd(ctx, he, n, mo) {
   const d = tnData(ctx); if (!d || !n) return; d.tn[he] = (d.tn[he] | 0) + n; ctx.persist();
   if (mo) (ctx.S.pops ||= []).push({ x: mo.x, y: mo.y - 36, text: L(ctx).tn(n, heName(ctx, he)), color: TYPE_COLOR[he] || '#ffe08a', t: 0 });
-  ST.chipT = 8; chip(ctx); stat('tn_' + he);
+  ST.chipT = tnCanUp(ctx) ? 45 : 8; chip(ctx); stat('tn_' + he);   /* c70-detho (plan-121 A5): nút cũ tự ẩn sau 8 s nên bấm trễ là 'không có gì' → còn nâng được thì giữ 45 s */
 }
+function tnCanUp(ctx) { const d = tnData(ctx); if (!d) return false; return d.team.concat(d.box).some(m => { const s = m && SPECIES[m.sp]; return !!s && (m.lv | 0) < 100 && s.types.some(h => (d.tn[h] | 0) >= tnCost(m.lv | 0)); }); }   /* c70-detho */
 export const tnCost = lv => 2 + Math.floor(lv / 5);
 const unlocked = m => (SPECIES[m.sp] && SPECIES[m.sp].lt ? LT_UNLOCK(m.lv | 0) : (SPECIES[m.sp] ? SPECIES[m.sp].moves.length : 0));   /* linh thú: 2 chiêu khi bắt · chiêu 3 Lv10 · chiêu 4 Lv15 · tuyệt chiêu Lv20 */
 const MV_EN = { bot_op: 'Croak Bubbles', bung_phe: 'Belly Flop', kinh_den: 'Cool Shades', coc_lu: 'Bottomless Mug Flood', luoi_keo: 'Tongue Yank', vong_khoi: 'Pipe Rings',  don_tho: 'Drill Dig', mua_da_lo: 'Rockfall Rain', manh_pha_le: 'Shard Rain', nut_dat: 'Spike Rise', dai_dia_chan: 'Earth Dragon Rises', vong_du_chan: 'Aftershock Ring', luoi_dinh: 'Sticky Tongue', dap_vung: 'Puddle Slam', goi_mua: 'Rain Call', bong_giam: 'Bubble Jail', thuy_phao: 'Water Cannon' };
@@ -503,8 +504,8 @@ function openTN(ctx) {
 function closeTN(ctx) { const el = document.getElementById('tn-panel'); if (el) el.hidden = true; if (ST.panel && ctx.S.mode === 'ctpick') ctx.setMode('play'); ST.panel = false; }
 function chip(ctx) {
   if (typeof document === 'undefined') return; css(); let el = document.getElementById('tn-chip');
-  if (!el) { el = document.createElement('button'); el.id = 'tn-chip'; document.body.appendChild(el); el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ST.ctx) openTN(ST.ctx); }); }
-  el.textContent = L(ctx).chip + (vi(ctx) ? ' — chạm để nâng cấp' : ' — tap to level up'); el.hidden = false;
+  if (!el) { el = document.createElement('button'); el.id = 'tn-chip'; document.body.appendChild(el); el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ST.ctx && !openTN(ST.ctx)) chipHide(); }); el.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); }); }   /* c70-detho: nuốt cả click (không lọt xuống màn chơi) */
+  el.textContent = L(ctx).chip + (tnCanUp(ctx) ? (vi(ctx) ? ' — chạm để nâng cấp' : ' — tap to level up') : (vi(ctx) ? ' — chạm để xem' : ' — tap to view')); el.hidden = false;   /* c70-detho: chỉ ghi 'nâng cấp' khi thật sự nâng được */
 }
 function chipHide() { const el = document.getElementById('tn-chip'); if (el) el.hidden = true; ST.chipT = 0; }
 

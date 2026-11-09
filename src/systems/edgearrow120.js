@@ -7,7 +7,7 @@
    Vẽ ở drawUI: mục tiêu ngoài màn → mũi tên PixelLab (ui/hud/target_arrow.png) bám mép, xoay đúng hướng + nhãn khung giấy (ui/hud91/tframe.png) "tên · N bước"
    (1 bước = 1 ô 16 px). Trong màn → mũi tên nhỏ TĨNH chỉ xuống trên đầu mục tiêu (bỏ qua nghệ sĩ đã có dấu !/?/✓ của quests.js). Không nhấp nháy, không lặp.
    Không vẽ khi: không ở chế độ 'play', đang đánh trùm / đèo, Biển hồi 1, mục tiêu < 3 bước.
-   Móc test: window.__ea120 = { targets(), drawn(), off(bool) }. Dấu build: EA120_EDGE */
+   Móc test: window.__ea120 = { targets(), drawn(), off(bool) }. Dấu build: EA120_EDGE · c69-nhapmon: đường thật (BFS) + chỉ bước Nhập môn khi đang Nhập môn */
 import { ZONES, ROADS } from '../world.js';
 import { isLeader } from '../data.js';
 import { img, paper, sh, uiS, isVi } from './hud120lib.js';
@@ -121,6 +121,14 @@ function questTarget(ctx, t) {
 function compute(ctx) {
   const S = ctx.S, out = []; if (!S.save || !S.zone || !S.map || !S.player) return out;
   const t = TX[isVi(ctx) ? 'vi' : 'en'];
+  if (ctx.nhapmon121 && ctx.nhapmon121.active()) {   /* c69-nhapmon NM121_ARROW: đang Nhập môn → chỉ 1 mũi tên = bước Nhập môn hiện tại */
+    try {
+      const g = ctx.nhapmon121.target(); if (!g) return out;
+      if (g.gotoZone) { if (g.gotoZone !== S.zone.id) { const gp = gateToward(ctx, g.gotoZone); if (gp) out.push({ kind: 'gate', ref: 'gate:' + g.gotoZone, name: g.name || t.to(shortZ(g.gotoZone, t)), pos: () => gp }); } return out; }
+      if (g.pos) out.push(g);
+    } catch (e) { }
+    return out;
+  }
   try { const q = questTarget(ctx, t); if (q) out.push(q); } catch (e) { }
   try {
     const G = mainGoal(ctx);
@@ -134,6 +142,52 @@ function compute(ctx) {
   return out.slice(0, MAXN);
 }
 
+/* ---------- c69-nhapmon (plan-121 A3): ĐƯỜNG ĐI THẬT qua ô đi được (BFS trên S.map.solid) ----------
+   Tính lại ≤ 2 lần / giây mỗi mục tiêu, giới hạn PATH_CAP ô duyệt; mũi tên trỏ theo điểm cách ~LOOK ô phía trước trên đường,
+   số bước = độ dài đường. Không tìm được đường (quá xa / bị chặn) → giữ đường chim bay. Góc mũi tên xoay mượt (không giật khi đổi hướng). */
+const PATH_CAP = 30000, PATH_DT = 0.5, LOOK = 5;
+const PB = { prev: null, seen: null, gen: 0, q: null };
+function bfs(m, sx, sy, gx, gy) {
+  const W = m.w, H = m.h, sol = m.solid; if (!sol || !W || !H) return null;
+  const N = W * H; if (sx < 0 || sy < 0 || sx >= W || sy >= H) return null;
+  if (!PB.prev || PB.prev.length !== N) { PB.prev = new Int32Array(N); PB.seen = new Uint32Array(N); PB.q = new Int32Array(Math.min(N, PATH_CAP) + 8); PB.gen = 0; }
+  const gen = ++PB.gen, prev = PB.prev, seen = PB.seen, q = PB.q;
+  const s0 = sy * W + sx; let qh = 0, qt = 0, end = -1; q[qt++] = s0; seen[s0] = gen; prev[s0] = -1;
+  while (qh < qt) {
+    const c = q[qh++], cx = c % W, cy = (c - cx) / W;
+    if (Math.max(Math.abs(cx - gx), Math.abs(cy - gy)) <= 1) { end = c; break; }
+    for (let k = 0; k < 4; k++) {
+      const nx = cx + (k === 0 ? 1 : k === 1 ? -1 : 0), ny = cy + (k === 2 ? 1 : k === 3 ? -1 : 0);
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const n = ny * W + nx; if (seen[n] === gen || sol[n] === 1) continue;
+      if (qt >= q.length) return null;   /* quá giới hạn chi phí */
+      seen[n] = gen; prev[n] = c; q[qt++] = n;
+    }
+  }
+  if (end < 0) return null;
+  const path = []; for (let c = end; c >= 0; c = prev[c]) path.push(c); path.reverse();
+  return path;
+}
+const PATHS = new Map();   /* khoá mục tiêu → { t, path, W, map, ang } */
+function pathOf(ctx, tg, q, now) {
+  const m = ctx.S.map, p = ctx.S.player, key = tg.ref || tg.name; let e = PATHS.get(key);
+  if (!e || e.map !== m || now - e.t > PATH_DT) {
+    const sx = Math.floor(p.x / TS), sy = Math.floor((p.y - 2) / TS), gx = Math.floor(q.x / TS), gy = Math.floor((q.y - 2) / TS);
+    let path = null; try { path = bfs(m, sx, sy, gx, gy); } catch (er) { path = null; }
+    e = { t: now, path, W: m.w, map: m, ang: e && e.map === m ? e.ang : null }; PATHS.set(key, e);
+    if (PATHS.size > 16) PATHS.delete(PATHS.keys().next().value);
+  }
+  return e;
+}
+function pathDir(ctx, e) {   /* → { steps, x, y } điểm nhắm phía trước trên đường, hoặc null */
+  const P = e.path; if (!P || P.length < 2) return null;
+  const p = ctx.S.player, W = e.W, px = Math.floor(p.x / TS), py = Math.floor((p.y - 2) / TS);
+  let bi = 0, bd = Infinity; for (let i = 0; i < Math.min(P.length, 14); i++) { const x = P[i] % W, y = (P[i] - x) / W, d = Math.abs(x - px) + Math.abs(y - py); if (d < bd) { bd = d; bi = i; } }
+  const j = Math.min(P.length - 1, bi + LOOK), x = P[j] % W, y = (P[j] - x) / W;
+  return { steps: P.length - 1 - bi, x: x * TS + 8, y: y * TS + 10 };
+}
+const angLerp = (a, b, k) => { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return a + d * k; };
+
 /* ---------- vẽ ---------- */
 function arrowImg() { return img('ui/hud/target_arrow.png'); }
 function drawArrow(ug, x, y, ang, sz) {   /* ảnh mũi chỉ XUỐNG → xoay (ang - 90°) */
@@ -142,9 +196,10 @@ function drawArrow(ug, x, y, ang, sz) {   /* ảnh mũi chỉ XUỐNG → xoay (
   else { ug.fillStyle = '#ffd45e'; ug.strokeStyle = '#4a2430'; ug.lineWidth = 2; ug.beginPath(); ug.moveTo(-sz / 2, -sz / 4); ug.lineTo(sz / 2, -sz / 4); ug.lineTo(0, sz / 2); ug.closePath(); ug.fill(); ug.stroke(); }
   ug.restore();
 }
-function label(ug, txt, x, y, s, W, H, box) {
+function label(ug, txt, x, y, s, W, H, box, away) {
   const fs = Math.max(13, Math.round(s * 3.9)); ug.font = `${fs}px VT323, monospace`;
   const w = Math.ceil(ug.measureText(txt).width) + Math.round(12 * s / 2) * 2, h = fs + Math.round(5 * s);
+  if (away) { const c = Math.cos(away.ang), sn = Math.sin(away.ang), k = Math.abs(c) * w / 2 + Math.abs(sn) * h / 2 + away.r; x = away.x - c * k; y = away.y - sn * k; }   /* c69-nhapmon: nhãn lùi vào trong màn đủ xa, không che mũi tên ở mép */
   let lx = Math.round(x - w / 2), ly = Math.round(y - h / 2);
   lx = Math.max(box.x0, Math.min(box.x1 - w, lx)); ly = Math.max(box.y0, Math.min(box.y1 - h, ly));
   paper(ug, lx, ly, w, h, s * 0.6);
@@ -162,20 +217,22 @@ export const edgearrow120 = {
       drawn: () => ST.drawn.slice(), off: v => { if (v != null) ST.off = !!v; return ST.off; }, now: () => { ST.list = compute(ctx); return ST.list.length; },
     };
   },
-  onZoneLeave() { ST.list = []; },
+  onZoneLeave() { ST.list = []; PATHS.clear(); },
   update(dt, ctx) { ST.t -= dt; if (ST.t <= 0) { ST.t = 0.25; ST.list = compute(ctx); } },
   drawUI(ug, ctx, cx, cy, scale) {
     ST.drawn = [];
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000, fdt = Math.min(0.1, Math.max(0, now - (ST.lastT || now))); ST.lastT = now;
     if (ST.off || ctx.S.mode !== 'play' || !ST.list.length || ctx.S.bossFight) return;
     const W = ug.canvas.width, H = ug.canvas.height, s = uiS(ctx, scale), p = ctx.S.player;
     const bot = (globalThis.__h91bot ? globalThis.__h91bot(H) : 0) || Math.round(H * 0.12);
     const box = { x0: Math.round(8 * s), y0: Math.round(10 * s), x1: W - Math.round(8 * s), y1: H - bot - Math.round(6 * s) };
-    let ban = false; try { ban = !!((window.__zb120 && window.__zb120.state().ban) || (window.__qb120 && window.__qb120.state().cur)); } catch (e) { }   /* banner giữa trên đang hiện → tạm cất mũi tên mép (không chồng chữ) */
+    let ban = false; try { ban = !!((window.__zb120 && window.__zb120.state().ban) || (window.__qb120 && window.__qb120.state().cur) || (ctx.nhapmon121 && ctx.nhapmon121.banner())); } catch (e) { }   /* banner giữa trên đang hiện → tạm cất mũi tên mép (không chồng chữ) */
     const az = Math.max(18, Math.round(s * 7.5)), px = (p.x - cx) * scale, py = (p.y - 10 - cy) * scale;
     ug.save(); ug.imageSmoothingEnabled = false;
     for (const tg of ST.list) {
       const q = tg.pos(); if (!q) continue;
-      const steps = Math.round(Math.hypot(q.x - p.x, q.y - p.y) / TS); if (steps < NEAR_STEPS) continue;
+      const pe = pathOf(ctx, tg, q, now), pd = pathDir(ctx, pe);   /* c69-nhapmon: đường thật */
+      const steps = pd ? pd.steps : Math.round(Math.hypot(q.x - p.x, q.y - p.y) / TS); if (steps < NEAR_STEPS) continue;
       const sx = (q.x - cx) * scale, sy = (q.y - cy) * scale, ty = (q.top - cy) * scale;
       const inside = sx > 4 && sx < W - 4 && ty > 0 && sy < box.y1;   /* thấy được cả người (đầu chạm mép trên vẫn tính là trong màn) */
       if (inside) {   /* trong màn: mũi tên nhỏ tĩnh chỉ xuống trên đầu (người có dấu !/?/✓ của quests.js thì thôi) */
@@ -185,15 +242,17 @@ export const edgearrow120 = {
       }
       /* ngoài màn: tia từ người chơi tới mục tiêu cắt khung → mũi tên ở mép */
       if (ban) continue;
-      const dx = sx - px, dy = sy - py, ang = Math.atan2(dy, dx), m = az * 0.7;
+      const ang0 = pd ? Math.atan2(pd.y - (p.y - 10), pd.x - p.x) : Math.atan2(sy - py, sx - px);
+      pe.ang = pe.ang == null ? ang0 : angLerp(pe.ang, ang0, Math.min(1, fdt * 7));   /* xoay mượt, không giật */
+      const ang = pe.ang, dx = Math.cos(ang) * 1000, dy = Math.sin(ang) * 1000, m = az * 0.7;
       const bx0 = box.x0 + m, bx1 = box.x1 - m, by0 = box.y0 + m, by1 = box.y1 - m;
       const ox = Math.max(bx0, Math.min(bx1, px)), oy = Math.max(by0, Math.min(by1, py));
       let k = Infinity; if (dx > 0) k = Math.min(k, (bx1 - ox) / dx); if (dx < 0) k = Math.min(k, (bx0 - ox) / dx); if (dy > 0) k = Math.min(k, (by1 - oy) / dy); if (dy < 0) k = Math.min(k, (by0 - oy) / dy);
       if (!isFinite(k)) continue;
       const ax = ox + dx * k, ay = oy + dy * k;
       drawArrow(ug, ax, ay, ang, az);
-      const r = label(ug, `${tg.name} · ${TX[isVi(ctx) ? 'vi' : 'en'].steps(steps)}`, ax - Math.cos(ang) * az * 1.6, ay - Math.sin(ang) * az * 1.3, s, W, H, box);
-      ST.drawn.push({ name: tg.name, steps, inside: false, x: Math.round(ax), y: Math.round(ay), label: r });
+      const r = label(ug, `${tg.name} · ${TX[isVi(ctx) ? 'vi' : 'en'].steps(steps)}`, ax - Math.cos(ang) * az * 1.6, ay - Math.sin(ang) * az * 1.3, s, W, H, box, { ang, x: ax, y: ay, r: az * 0.75 });
+      ST.drawn.push({ name: tg.name, steps, inside: false, x: Math.round(ax), y: Math.round(ay), label: r, path: !!pd, ang: +ang.toFixed(2) });
     }
     ug.restore();
   },

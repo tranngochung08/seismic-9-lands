@@ -5,6 +5,7 @@
    · Bảng "Bạn là ai?" (nations) mở SAU hội thoại cuối (main.js bỏ qua lúc vào game khi p120new chưa xong).
    · Sau khi chọn: đánh dấu nhỏ kiểu Saiyan (4 góc + icon + tên nhỏ, TĨNH) tới bãi quái gần nhất (vùng 'south' Đồng Cỏ Bến Cảng, quái Lv2–4 của farm106)
      + ghim bản đồ (M). Tới nơi thì tắt dấu. XP Chấn Thú do farm106/petlv sẵn có (không viết hệ mới).
+   c69-nhapmon (plan-121 A2/A5): thoại 3 câu + 'theo nhiệm vụ góc màn', bảng chọn có hệ + 1 dòng mô tả, không hỏi tên lần 2, 1 dòng giải thích quốc gia.
    Móc test: window.__p120. */
 import { SPECIES, SPECIES_EN, TYPE_COLOR, TYPE_NAME, TYPE_EN } from './duel-data.js';
 import { regionAt } from '../village88.js';
@@ -14,38 +15,56 @@ const BASE = 'assets/px/';
 const START_LV = 1, GIFT = 3, TEAM_MAX = 6, FARM_RID = 'south';
 const STR = {
   vi: {
-    tut: [
-      'Chào bạn, mình là Noxx — CM của Seismic. Đây là Làng Xuất Phát. Trước khi lên đường, mình chỉ nhanh vài điều nhé.',
-      'ĐI: phím WASD / mũi tên, hoặc bấm chuột vào chỗ muốn tới. Điện thoại: cần gạt bên trái.',
-      'ĐÁNH: bấm chuột trái vào quái, hoặc E / Space khi đứng sát. Điện thoại: nút Ⓐ.',
-      'KI: thanh Ki đầy dần khi đánh. Shift = lộn né, K hoặc chuột phải = lướt Ki. Chấn Thú đủ sức sẽ tự tung chiêu.',
-      'CHẤN THÚ: J để thả ra / thu về (hoặc bấm ô chân dung). Thả ra nó đánh cùng bạn — hạ quái là nó nhận XP và lên cấp.',
-      'BẢN ĐỒ: M mở bản đồ vùng. Đường Lên Đèo phía Bắc dẫn tới chín vùng đất M1–M9.',
-      'Giờ chọn một Chấn Thú làm bạn đồng hành nhé! Con nào cũng được — Rocky là bạn thân của mình đấy.'],
+    tut: [   /* c69-nhapmon NM121_NOXX: bỏ 7 câu dạy phím dồn đầu game — phím dạy dần trong chuỗi Nhập môn (dòng nhiệm vụ góc trên) */
+      'Chào bạn, mình là Noxx — CM của Seismic. Chào mừng tới Làng Xuất Phát!',
+      'Mình không giảng dài đâu: cứ làm theo NHIỆM VỤ ở góc trên bên trái màn hình — mỗi bước một việc, có mũi tên dẫn đường.',
+      'Trước hết, chọn một Chấn Thú làm bạn đồng hành nhé! Rocky là bạn thân của mình đấy.'],
     again: 'Chọn Chấn Thú đồng hành chưa? Con nào cũng được.',
-    done: (n, r) => [`Tuyệt! ${n} đã vào đội của bạn. Mình tặng thêm 3 Ấn Thu để bắt thú hoang.`, `Bãi quái gần nhất là ${r} — ngay phía Nam quảng trường, mình đã đánh dấu trên đường và trên bản đồ (M).`, `Tới đó bấm J thả ${n} ra, cùng đánh quái để nó lên cấp. Trước khi đi, cho mình biết tên bạn nhé!`],
-    doneNoName: (n, r) => [`Tuyệt! ${n} đã vào đội của bạn. Mình tặng thêm 3 Ấn Thu để bắt thú hoang.`, `Bãi quái gần nhất là ${r} — ngay phía Nam quảng trường, mình đã đánh dấu trên đường và trên bản đồ (M).`, `Tới đó bấm J thả ${n} ra, cùng đánh quái để nó lên cấp. Đi thôi!`],
-    farmAgain: r => `Bãi quái ở ${r}, phía Nam quảng trường — theo dấu vàng nhé. Nhớ bấm J thả Chấn Thú ra.`,
+    done: (n, r) => [`Tuyệt! ${n} đã vào đội của bạn. Mình tặng thêm 3 Ấn Thu để bắt thú hoang.`, `Giờ cứ đi theo nhiệm vụ ở góc trên màn hình — bước đầu là xuống ${r} phía Nam. Trước khi đi, chọn quốc gia của bạn nhé!`],
+    doneNoName: (n, r) => [`Tuyệt! ${n} đã vào đội của bạn. Mình tặng thêm 3 Ấn Thu để bắt thú hoang.`, `Giờ cứ đi theo nhiệm vụ ở góc trên màn hình — bước đầu là xuống ${r} phía Nam. Đi thôi!`],
+    farmAgain: r => `Cứ làm theo nhiệm vụ ở góc trên màn hình nhé — mũi tên sẽ dẫn bạn tới ${r}.`,
     pickT: 'Chọn Chấn Thú đồng hành', pickLead: n => `${n} loài · chọn 1 con, đặt tên được (đổi lại sau ở bảng Đội)`, name: 'Tên', ok: '✓ Chọn', later: 'Để sau',
-    got: (n, k) => `${n} đã về đội! Nhận ${k} Ấn Thu · J để thả ra`, farm: 'Bãi farm', farmName: 'Đồng Cỏ Bến Cảng', arrive: 'Tới bãi quái — bấm J thả Chấn Thú, hạ quái để lên cấp!',
-    pinNoxx: 'Noxx — chọn Chấn Thú', pinFarm: 'Bãi farm (quái Lv2–4)', lv: 'Lv', size: { xs: 'Tí', s: 'Nhỏ', m: 'Vừa', l: 'To' } },
+    got: (n, k) => `${n} đã về đội! Nhận ${k} Ấn Thu`, farm: 'Bãi farm', farmName: 'Đồng Cỏ Bến Cảng', arrive: 'Tới bãi quái — bấm J thả Chấn Thú, hạ quái để lên cấp!',
+    pinNoxx: 'Noxx — chọn Chấn Thú', pinFarm: 'Bãi farm (quái Lv1–2)', lv: 'Lv', size: { xs: 'Tí', s: 'Nhỏ', m: 'Vừa', l: 'To' } },
   en: {
     tut: [
-      "Hi, I'm Noxx — community manager of Seismic. This is Harbor Village. Before you head out, a few quick tips.",
-      'MOVE: WASD / arrow keys, or click where you want to go. Phone: the stick on the left.',
-      'FIGHT: left-click a monster, or E / Space when you stand next to it. Phone: the Ⓐ button.',
-      'KI: your Ki bar fills as you fight. Shift = dodge roll, K or right-click = Ki dash. Your Quake Beast casts its moves on its own.',
-      'QUAKE BEASTS: J sends yours out / calls it back (or tap its portrait). Out in the field it fights with you — every monster you beat gives it XP.',
-      'MAP: M opens the area map. The Pass Road to the north leads to the nine lands, M1–M9.',
-      'Now pick a Quake Beast to travel with! Any one you like — Rocky is my best buddy, by the way.'],
+      "Hi, I'm Noxx — community manager of Seismic. Welcome to Harbor Village!",
+      "No long lectures: just follow the QUEST line at the top left of the screen — one thing per step, with an arrow to guide you.",
+      'First, pick a Quake Beast to travel with! Rocky is my best buddy, by the way.'],
     again: 'Ready to pick your partner? Any beast you like.',
-    done: (n, r) => [`Great! ${n} joined your team. Here are 3 Seal Stones for catching wild beasts.`, `The closest monster field is ${r} — just south of the square. I marked it on the ground and on your map (M).`, `Press J there to send ${n} out and fight together so it levels up. Oh — before you go, tell me your name!`],
-    doneNoName: (n, r) => [`Great! ${n} joined your team. Here are 3 Seal Stones for catching wild beasts.`, `The closest monster field is ${r} — just south of the square. I marked it on the ground and on your map (M).`, `Press J there to send ${n} out and fight together so it levels up. Off you go!`],
-    farmAgain: r => `The monster field is ${r}, south of the square — follow the yellow marker. Remember: J sends your beast out.`,
+    done: (n, r) => [`Great! ${n} joined your team. Here are 3 Seal Stones for catching wild beasts.`, `Now just follow the quest line at the top of the screen — first stop: ${r}, to the south. Before you go, pick your nation!`],
+    doneNoName: (n, r) => [`Great! ${n} joined your team. Here are 3 Seal Stones for catching wild beasts.`, `Now just follow the quest line at the top of the screen — first stop: ${r}, to the south. Off you go!`],
+    farmAgain: r => `Just follow the quest line at the top of the screen — the arrow will lead you to ${r}.`,
     pickT: 'Choose your partner', pickLead: n => `${n} species · pick one and name it (rename later in Team)`, name: 'Name', ok: '✓ Choose', later: 'Later',
-    got: (n, k) => `${n} joined your team! Got ${k} Seal Stones · J to send it out`, farm: 'Farm field', farmName: 'Harbor Meadow', arrive: 'Monster field reached — press J to send your beast out and level it up!',
-    pinNoxx: 'Noxx — pick a Quake Beast', pinFarm: 'Farm field (monsters Lv2–4)', lv: 'Lv', size: { xs: 'Tiny', s: 'Small', m: 'Medium', l: 'Large' } },
+    got: (n, k) => `${n} joined your team! Got ${k} Seal Stones`, farm: 'Farm field', farmName: 'Harbor Meadow', arrive: 'Monster field reached — press J to send your beast out and level it up!',
+    pinNoxx: 'Noxx — pick a Quake Beast', pinFarm: 'Farm field (monsters Lv1–2)', lv: 'Lv', size: { xs: 'Tiny', s: 'Small', m: 'Medium', l: 'Large' } },
 };
+/* c69-nhapmon: 1 dòng mô tả mỗi loài trong bảng chọn — tính từ chỉ số gốc (base = [máu, công, thủ, chiêu, kháng chiêu, tốc]) + hệ; vài loài viết tay */
+const FL = { vi: { chan: 'đất đá rung chấn', nham: 'lửa nham thạch', trieu: 'sóng nước', loi: 'sấm sét', phong: 'gió lốc', moc: 'cây cỏ', suong: 'băng sương', tinh: 'pha lê', ma: 'mã code', am: 'âm thanh', anh: 'bóng tối', quang: 'ánh sáng' },
+  en: { chan: 'quaking earth', nham: 'magma fire', trieu: 'tide water', loi: 'thunder', phong: 'whirlwind', moc: 'leaf and wood', suong: 'frost', tinh: 'crystal', ma: 'code', am: 'sound', anh: 'shadow', quang: 'light' } };
+const ROLE = { vi: ['bền bỉ, chịu đòn giỏi', 'đánh gần rất mạnh', 'giáp dày, thủ chắc', 'chiêu từ xa mạnh', 'kháng chiêu tốt', 'nhanh nhẹn, ra đòn trước'],
+  en: ['tough, soaks up hits', 'hard-hitting brawler', 'thick armour', 'strong ranged moves', 'shrugs off special moves', 'fast, strikes first'] };
+const HAND = { rocky: { vi: 'Golem đá, bạn thân của Noxx · đỡ đòn che cho bạn, đấm đá bay', en: "Noxx's stone golem buddy · shields you, throws rock punches" },
+  elyziuma: { vi: 'Huyền thoại · chiêu mã code + sóng nước, một mình chấp nhiều thú', en: 'Legendary · code + tide moves, can take on a whole pack' } };
+const NATION_WHY = { vi: 'Quốc gia = khu đất cắm cờ nước bạn trong mỗi vùng: chỉ ở đó (hoặc đất chung) bạn mới được trồng cây và bắt thú nuôi — vào khu nước khác làm vậy sẽ bị đuổi. Đổi sau ở bảng của mỗi nước.',
+  en: "Your nation = the flagged yard of your country in each land: only there (or on common ground) can you plant and catch animals — do it in another nation's yard and you get chased out. You can switch later at each nation's board." };
+function spDesc(ctx, sp) {
+  const lg = en(ctx) ? 'en' : 'vi', h = HAND[sp]; if (h) return h[lg];
+  const S0 = SPECIES[sp] || {}, b = S0.base || [], ty = (S0.types || ['chan'])[0];
+  const ord = [0, 1, 2, 3, 4, 5].filter(i => b[i] != null).sort((x, y) => b[y] - b[x]);
+  const fl = FL[lg][ty] || ''; const r = ord.slice(0, 2).map(i => ROLE[lg][i]);
+  return (lg === 'vi' ? `Điều khiển ${fl}` : `Wields ${fl}`) + (r.length ? ' · ' + r.join(' · ') : '');
+}
+function pickerTweak(ctx) {   /* bảng 'Bạn là ai?' (nations.js): đã có tên từ màn tiêu đề → không hỏi lại; thêm 1 dòng quốc gia để làm gì */
+  try {
+    const el = document.getElementById('npick'); if (!el) return; const sv = ctx.S.save, nm = String(sv.name || '').trim();
+    const inp = el.querySelector('#np-name'), lab = el.querySelector('label.nplab');
+    if (inp && nm.length >= 2) { inp.value = nm.slice(0, 16); inp.style.display = 'none'; if (lab) lab.style.display = 'none'; }
+    const lab2 = [...el.querySelectorAll('label.nplab')].pop();
+    if (lab2 && !el.querySelector('.nm121why')) { const p = document.createElement('p'); p.className = 'dim npnote nm121why'; p.style.margin = '0 0 4px'; p.textContent = NATION_WHY[en(ctx) ? 'en' : 'vi']; lab2.insertAdjacentElement('afterend', p); }
+  } catch (e) { }
+}
+const nmOn = ctx => !!(ctx.nhapmon121 && ctx.nhapmon121.active && ctx.nhapmon121.active());   /* chuỗi Nhập môn đang chạy → nó lo dòng nhiệm vụ + mũi tên */
 const ST = { ctx: null, greetT: -1, greeted: false, panel: false, spr: null, sprP: null, img: {}, thumbs: new Map(), log: [] };
 const L = ctx => STR[ctx.lang() === 'en' ? 'en' : 'vi'];
 const en = ctx => ctx.lang() === 'en';
@@ -109,6 +128,7 @@ function css() {
 #p120pick .ch{display:inline-flex;align-items:center;gap:2px;border-radius:5px;padding:0 4px;color:#1a1420;font-size:15px;line-height:16px;margin-top:1px}#p120pick .ch img{width:12px;height:12px;image-rendering:pixelated}
 #p120pick .ft{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-top:6px}
 #p120pick .sel{flex:1 1 100%;text-align:center;color:#ffe9b0;font-size:19px;line-height:1}
+#p120pick .ds{flex:1 1 100%;text-align:center;color:#cfc4b4;font-size:17px;line-height:1;margin-top:-3px}
 #p120pick input{font:20px VT323,monospace;width:150px;padding:1px 6px;border-radius:6px;border:2px solid #6a5a7c;background:#f3e6c6;color:#3b2412}
 #p120pick.px input{border:8px solid transparent;border-image:var(--np-input) 4 / 8px round;background-clip:padding-box;border-radius:0;padding:0 4px}
 #p120pick button.b{font:22px VT323,monospace;padding:2px 16px;border-radius:9px;border:2px solid #ffd45e;background:#e8913a;color:#3b1d08;cursor:pointer;touch-action:manipulation}
@@ -129,12 +149,12 @@ function openPick0(ctx) {
   const U = (ctx.ART && ctx.ART.on && ctx.ART.man && ctx.ART.man.ui) || {}, NP = U.npick || null;
   if (NP) { el.classList.add('px'); for (const k of ['panel', 'tile', 'tile_on', 'input', 'btn', 'banner']) if (NP[k]) el.style.setProperty('--np-' + k.replace('_', '-'), `url(${BASE}${NP[k]})`); }
   const sz = sp => t.size[SPECIES[sp].size || 'm'] || '';
-  el.innerHTML = `<div class="pk"><h3>${esc(t.pickT)}</h3><p class="ld">${esc(t.pickLead(list.length))}</p><div class="gr">${list.map(sp => `<button type="button" class="cd${sp === pick ? ' on' : ''}${sp === 'rocky' ? ' rk' : ''}" data-sp="${sp}"><canvas width="56" height="56"></canvas><b>${esc(spN(ctx, sp))}</b>${chip(ctx, sp)}</button>`).join('')}</div>
-    <div class="ft"><div class="sel" id="p120-sel"></div><label>${esc(t.name)}: <input id="p120-name" maxlength="14" autocomplete="off"></label><button type="button" class="b" data-a="ok">${esc(t.ok)}</button><button type="button" class="lt" data-a="no">${esc(t.later)}</button></div></div>`;
+  el.innerHTML = `<div class="pk"><h3>${esc(t.pickT)}</h3><p class="ld">${esc(t.pickLead(list.length))}</p><div class="gr">${list.map(sp => `<button type="button" class="cd${sp === pick ? ' on' : ''}${sp === 'rocky' ? ' rk' : ''}" data-sp="${sp}" title="${esc(spDesc(ctx, sp))}"><canvas width="56" height="56"></canvas><b>${esc(spN(ctx, sp))}</b>${chip(ctx, sp)}</button>`).join('')}</div>
+    <div class="ft"><div class="sel" id="p120-sel"></div><div class="ds" id="p120-ds"></div><label>${esc(t.name)}: <input id="p120-name" maxlength="14" autocomplete="off"></label><button type="button" class="b" data-a="ok">${esc(t.ok)}</button><button type="button" class="lt" data-a="no">${esc(t.later)}</button></div></div>`;
   document.body.appendChild(el); ST.panel = true;
   for (const b of el.querySelectorAll('.cd')) thumb(b.dataset.sp, b.querySelector('canvas'));
-  const inp = el.querySelector('#p120-name'), sel = el.querySelector('#p120-sel');
-  const show = () => { sel.textContent = `${spN(ctx, pick)} · ${(en(ctx) ? TYPE_EN : TYPE_NAME)[(SPECIES[pick].types || [])[0]] || ''} · ${sz(pick)} · ${t.lv}${START_LV}`; if (!typed) inp.value = spN(ctx, pick); };
+  const inp = el.querySelector('#p120-name'), sel = el.querySelector('#p120-sel'), ds = el.querySelector('#p120-ds');
+  const show = () => { sel.textContent = `${spN(ctx, pick)} · ${en(ctx) ? 'Type' : 'Hệ'} ${(en(ctx) ? TYPE_EN : TYPE_NAME)[(SPECIES[pick].types || [])[0]] || ''} · ${sz(pick)} · ${t.lv}${START_LV}`; if (ds) ds.textContent = spDesc(ctx, pick); if (!typed) inp.value = spN(ctx, pick); };
   show();
   inp.oninput = () => { typed = inp.value.trim() !== '' && inp.value.trim() !== spN(ctx, pick); };
   el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { choose(ctx, pick, inp.value); } if (e.key === 'Escape') closePick(ctx); });
@@ -160,7 +180,7 @@ function choose(ctx, sp, name) {
   ctx.S.talking = ctx.S.guide || null; ctx.setMode('dialog');
   ctx.openDialog({ guide: true, pages: (needName ? t.done : t.doneNoName)(nm, t.farmName), onClose: () => {
     ctx.S.talking = null; ctx.setMode('play'); ctx.persist();
-    if (needName) { ctx.setMode('pause'); ctx.openNationPicker(() => { ctx.setMode('play'); ctx.persist(); log('named'); }); }
+    if (needName) { ctx.setMode('pause'); ctx.openNationPicker(() => { ctx.setMode('play'); ctx.persist(); log('named'); }); pickerTweak(ctx); }
   } });
   return true;
 }
@@ -205,8 +225,9 @@ function farmTarget(ctx) {
 const inFarm = (ctx, x, y) => regionAt(Math.floor(x / 16), Math.floor(y / 16)).id === FARM_RID;
 
 /* ---------- vẽ: dấu kiểu Saiyan (4 góc + icon + tên nhỏ), TĨNH ---------- */
-function markTarget(ctx) {
+function markTarget(ctx, pin) {
   if (!isNew(ctx) || !ctx.S.zone || ctx.S.zone.id !== 'village') return null; const f = flags(ctx), t = L(ctx);
+  if (!pin && f.p120done && nmOn(ctx)) return null;
   if (!f.p120done) { const g = ctx.S.guide; return g ? { x: g.x, y: g.y - 30, label: 'Noxx', box: 0, noxx: true } : null; }
   if (f.p120arr || !f.p120farm) return null; return { x: f.p120farm.x, y: f.p120farm.y, label: t.farm, box: 1 };
 }
@@ -249,7 +270,7 @@ export const noxx120 = {
     ST.ctx = ctx; closePick(ctx); ST.greetT = -1;
     ctx.noxx120 = { talk: () => talk(ctx), fresh: fresh120 };
     if (ctx.chanthu && ctx.chanthu.pins && !ctx.chanthu.pins.__p120) {   /* ghim bản đồ (M): Noxx khi chưa chọn · bãi farm khi chưa tới */
-      const o = ctx.chanthu.pins, w = () => { const out = o(); try { const M = markTarget(ctx), t = L(ctx); if (M) out.push({ x: M.x, y: M.noxx ? M.y + 22 : M.y - 6, kind: 'quest', label: M.noxx ? t.pinNoxx : t.pinFarm }); } catch (e) { } return out; };
+      const o = ctx.chanthu.pins, w = () => { const out = o(); try { const M = markTarget(ctx, true), t = L(ctx); if (M) out.push({ x: M.x, y: M.noxx ? M.y + 22 : M.y - 6, kind: 'quest', label: M.noxx ? t.pinNoxx : t.pinFarm }); } catch (e) { } return out; };
       w.__p120 = true; ctx.chanthu.pins = w;
     }
     if (typeof window !== 'undefined') window.__p120 = {
@@ -266,7 +287,7 @@ export const noxx120 = {
   update(dt, ctx) {
     if (!isNew(ctx) || !ctx.S.zone || ctx.S.zone.id !== 'village') return;
     if (ST.greetT > 0 && ctx.S.mode === 'play') { ST.greetT -= dt; if (ST.greetT <= 0) { ST.greetT = -1; const g = ctx.S.guide, p = ctx.S.player; if (pending(ctx) && g && Math.hypot(g.x - p.x, g.y - p.y) < 70) talk(ctx); } }
-    const f = flags(ctx); if (f.p120done && !f.p120arr && f.p120farm) { const p = ctx.S.player; if (inFarm(ctx, p.x, p.y) && Math.hypot(p.x - f.p120farm.x, p.y - f.p120farm.y) < 120) { f.p120arr = 1; f.p120arrT = Date.now(); ctx.persist(); log('arrive'); try { ctx.toast(L(ctx).arrive); } catch (e) { } } }
+    const f = flags(ctx); if (f.p120done && !f.p120arr && f.p120farm) { const p = ctx.S.player; if (inFarm(ctx, p.x, p.y) && Math.hypot(p.x - f.p120farm.x, p.y - f.p120farm.y) < 120) { f.p120arr = 1; f.p120arrT = Date.now(); ctx.persist(); log('arrive'); if (!nmOn(ctx)) { try { ctx.toast(L(ctx).arrive); } catch (e) { } } } }
   },
   drawUI(ug, ctx, cx, cy, scale) { try { drawUI(ug, ctx, cx, cy, scale); } catch (e) { } },
 };

@@ -27,9 +27,11 @@ const ANI = { cow: ['Bò', 'Cow'], chicken: ['Gà', 'Chicken'], bird: ['Chim', '
 const OBJN = [[/^wreck/, 'Xác tàu', 'Shipwreck'], [/^coral/, 'San hô', 'Coral'], [/^caverock/, 'Đá hang', 'Cave rock'], [/^xwall/, 'Tường pháo đài', 'Fortress wall'], [/tree|palm|pine/, 'Cây', 'Tree'], [/rock|boulder/, 'Tảng đá', 'Rock'], [/fence/, 'Hàng rào', 'Fence'], [/bush/, 'Bụi cây', 'Bush'], [/crate/, 'Thùng gỗ', 'Crate'], [/statue/, 'Bức tượng', 'Statue'], [/house/, 'Nhà', 'House'], [/wall/, 'Tường', 'Wall']];
 export const TXT = () => (vi() ? {
   locked: n => `🎯 Khóa mục tiêu: ${n}`, hint: ' (Tab đổi mục tiêu)', hintTouch: ' (nút Đổi mục tiêu để đổi)', none: 'Không có mục tiêu nào gần',
+  skyDrop: n => `${n} đang bay trên trời — đã bỏ khoá (V để bay lên đánh)`,   /* c70-detho */
   far: n => `${n} ở xa quá — lại gần hơn`, blocked: 'Đường bắn bị chắn — đổi chỗ đứng', outRange: 'Mục tiêu ngoài tầm bắn (6 ô) — lại gần hơn', btn: '🎯 Đổi mục tiêu', obj: 'Vật thể', guide: 'Noxx',
 } : {
   locked: n => `🎯 Target locked: ${n}`, hint: ' (Tab: next target)', hintTouch: ' (Next target button to switch)', none: 'No targets nearby',
+  skyDrop: n => `${n} is up in the sky — target unlocked (V to fly up)`,   /* c70-detho */
   far: n => `${n} is too far — get closer`, blocked: 'Line of fire blocked — move to a clear spot', outRange: 'Target out of range (6 tiles) — get closer', btn: '🎯 Next target', obj: 'Object', guide: 'Noxx',
 });
 
@@ -58,6 +60,9 @@ export function nameOf(t) {
   return TXT().obj;
 }
 const same = (a, b) => !!a && !!b && a.kind === b.kind && a.ref === b.ref;
+/* c70-detho (plan-121 A5): quái KHÁC TẦNG khi mình đứng đất (quái trời c49 lúc chưa Bay) → không chọn được; đang Bay thì chọn được cả quái mặt đất (Chưởng xuống) nhưng xếp sau quái cùng tầng */
+const tierOk = mo => { const C = D.CTX; return !(C.b49Tier && !C.b49Tier(mo)); };
+const groundSkip = mo => !tierOk(mo) && !(D.CTX.b49Air && D.CTX.b49Air());
 function npcPool() { const S = D.S; return D.allNpcs().concat(S.staff || []).filter(n => n && n !== S.player); }
 function monList() { const m = D.CTX.monsters; return m && m.list ? m.list() : []; }
 function aniList() { const a = D.CTX.animals; return a && a.list ? a.list() : []; }
@@ -96,7 +101,7 @@ export function get() {
   if (ST.t && !alive(ST.t)) {   /* 2026-10-11 anh: hạ quái đang khóa → tự khóa con GẦN NHẤT còn sống (≤ 7 ô), khỏi bấm nhầm sang thứ khác */
     const was = ST.t; ST.t = null;
     if (was.kind === 'mon' && D.S && D.S.player) { const p = D.S.player; let best = null, bd = 112;
-      for (const mo of monList()) { if (mo.statue || mo.state === 'dead' || mo.hp <= 0 || (mo.c && mo.c.spar)) continue; const d = Math.hypot(mo.x - p.x, mo.y - p.y); if (d < bd) { bd = d; best = mo; } }
+      for (const mo of monList()) { if (mo.statue || mo.state === 'dead' || mo.hp <= 0 || (mo.c && mo.c.spar) || !tierOk(mo)) continue; const d = Math.hypot(mo.x - p.x, mo.y - p.y); if (d < bd) { bd = d; best = mo; } }   /* c70-detho: chỉ khoá lại con CÙNG TẦNG */
       if (best) lock({ kind: 'mon', ref: best }, true); }
   }
   return ST.t && alive(ST.t) ? ST.t : null;
@@ -153,15 +158,15 @@ export function pickAt(mt) {
 
 /* ---------- Tab: danh sách mục tiêu hợp lệ trong tầm ---------- */
 export function candidates(md = mode() || 'hand') {
-  const S = D.S, p = S.player, out = [], add = t => { const d = dist(t); if (d <= RANGE) out.push({ t, d }); };
+  const S = D.S, p = S.player, out = [], add = (t, k = 0) => { const d = dist(t); if (d <= RANGE) out.push({ t, d, k: d + k }); };
   if (!S.map || !p) return [];
-  for (const mo of monList()) { if (mo.statue || mo.state === 'dead') continue; add({ kind: 'mon', ref: mo }); if (md !== 'gun') for (const s of mo.slams || []) if (s.st === 'stuck') add({ kind: 'tent', ref: s, mo }); }
+  for (const mo of monList()) { if (mo.statue || mo.state === 'dead' || groundSkip(mo)) continue; add({ kind: 'mon', ref: mo }, tierOk(mo) ? 0 : 1e4);   /* c70-detho: đứng đất bỏ quái trời; cùng tầng xếp trước */ if (md !== 'gun') for (const s of mo.slams || []) if (s.st === 'stuck') add({ kind: 'tent', ref: s, mo }); }
   if (md === 'gun') { for (const n of npcPool()) if (!n.hurtSit) add({ kind: 'npc', ref: n }); for (const a of aniList()) if (!a.stoneT) add({ kind: 'ani', ref: a }); }
   else if (md === 'weapon') {
     if (D.CTX.isDarkPath && D.CTX.isDarkPath() && D.CTX.villagers) for (const n of D.CTX.villagers.alive().concat((S.staff || []).filter(x => x.chief))) if (!n.hurtSit && darkVillager(n)) add({ kind: 'npc', ref: n });
     for (const o of S.map.objects) if (Math.abs(o.x * 16 - p.x) < RANGE && Math.abs(o.y * 16 - p.y) < RANGE && breakable(o)) add({ kind: 'obj', ref: o });
   } else for (const n of npcPool()) if (!n.hurtSit && !(n.m && n.m.friend)) add({ kind: 'npc', ref: n });
-  out.sort((a, b) => a.d - b.d);
+  out.sort((a, b) => (a.k ?? a.d) - (b.k ?? b.d));
   return out.map(o => o.t);
 }
 export function cycle(dir = 1) {
@@ -184,7 +189,7 @@ export function tooFar(near) {
   return near.kind === 'npc' || !!(d.mo || d.animal || d.talk || d.pet || d.gift || d.fire || d.grab);
 }
 export function farLabel() { const t = active(); return t ? TXT().far(nameOf(t)) : null; }
-export function sayFar() { const t = active(); if (!t) return; if (t.kind === 'mon' && D.CTX.palm56Ground && D.CTX.palm56Ground(t.mo || t.ref)) { D.CTX.palm56(t.mo || t.ref); return; }   /* c56-chuongxuong: đang Bay + quái mặt đất → bay tới chưởng xuống */ if (D.CTX.kiDash && D.CTX.kiDash()) return;   /* plan-34: đủ Ki + mục tiêu cách 3–7 ô → lướt tới chém (ki.js) thay vì báo xa quá */ if (D.S.time - ST.farT > 1) { ST.farT = D.S.time; D.CTX.toast(TXT().far(nameOf(t))); D.CTX.sfx('fail'); } }
+export function sayFar() { const t = active(); if (!t) return; if (t.kind === 'mon' && D.CTX.palm56Ground && D.CTX.palm56Ground(t.mo || t.ref)) { D.CTX.palm56(t.mo || t.ref); return; }   /* c56-chuongxuong: đang Bay + quái mặt đất → bay tới chưởng xuống */ if (D.CTX.kiDash && D.CTX.kiDash()) return;   /* plan-34: đủ Ki + mục tiêu cách 3–7 ô → lướt tới chém (ki.js) thay vì báo xa quá */ if (D.S.time - ST.farT > 3) {   /* c70-detho: báo 'xa quá' tối đa 1 lần / 3 s */ ST.farT = D.S.time; D.CTX.toast(TXT().far(nameOf(t))); D.CTX.sfx('fail'); } }
 
 /* ---------- plan-43 K1 (anh duyệt 2026-10-16): phím E ưu tiên NGƯỜI trước mặt ----------
    Đứng sát NPC (≤ 22 px) mà NPC ở phía mặt nhìn (hoặc sát rạt ≤ 10 px) → E = nói chuyện, thắng vuốt Rocky / chặt cây / biển gỗ / phá đồ trong đất mình.
@@ -242,6 +247,8 @@ export function update(dt) {
   const S = D.S;
   try { wrapE(); } catch (e) { /* hệ chưa nạp */ }
   if (ST.t && !alive(ST.t)) get();   /* bị hạ / hóa đá / biến mất → get() bỏ khóa, quái thì tự khóa con gần nhất (KHÔNG theo khoảng cách) */
+  if (ST.t && ST.t.kind === 'mon' && groundSkip(ST.t.ref)) {   /* c70-detho (plan-121 A5): đang khoá quái trời mà mình đứng đất (hạ cánh / hết Ki) → BỎ KHOÁ (thay vì báo 'xa quá' mãi), báo 1 lần / 3 s */
+    const n = nameOf(ST.t); ST.t = null; if (S.time - (ST.dropT || -9) > 3) { ST.dropT = S.time; D.CTX.toast(TXT().skyDrop(n)); } }
   if ((ST.btnT -= dt) <= 0) {   /* nút 🎯 trên điện thoại: chỉ hiện khi có ≥ 2 mục tiêu */
     ST.btnT = 0.3; ST.nCand = S.mode === 'play' ? candidates().length : 0;
     const b = typeof document !== 'undefined' && document.getElementById('btn-tgt');
@@ -274,7 +281,7 @@ function tagAt(ug, txt, sx, sy, fs, color) {
 function hpText(t) { const r = t.mo || t.ref; if (t.kind === 'mon' || t.kind === 'tent') return `${Math.max(0, Math.ceil(r.hp))}/${r.max}`; if (t.kind === 'obj' && t.ref.hp != null && t.ref.hpMax) return `${t.ref.hp}/${t.ref.hpMax}`; return null; }
 export function drawUI(ug, cx, cy, scale) {
   if (D.S.mode !== 'play' || globalThis.__t91) return;
-  const fs = Math.max(10, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 2.8)), t = get(), hv = ST.hover;
+  const fs = Math.max(10, Math.round((globalThis.__u89?globalThis.__u89((globalThis.__u89?globalThis.__u89(scale):scale)):(globalThis.__u89?globalThis.__u89(scale):scale)) * 2.8)), t = get(), hv = ST.hover;
   if (!t) return;
   const hp = hpText(t); if (!hp) return;   /* số máu ngay trên mũi tên */
   const a = arrowTop(t); tagAt(ug, hp, Math.round((a.x - cx) * scale), Math.round((a.y - arrowSize(t) - 1 - cy) * scale), fs, '#ffd45e');

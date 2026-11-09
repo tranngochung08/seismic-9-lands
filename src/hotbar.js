@@ -38,7 +38,8 @@ const VIS26 = () => ORDER26.filter(i => !(mobile() && i === 5) && shown26(i));  
 const DIG26 = () => VIS26().filter(i => i !== 6 && i !== 7).slice(0, 5);   /* ô được phím số 1–5 */
 function key26(i) {   /* nhãn phím của ô i trên thanh */
   if (htOn()) return i === 5 ? 'L' : String(i + 1);
-  if (i === 6 || i === 7) return '⇧';
+  if (i === 6) return '⇧';
+  if (i === 7) return 'V';   /* c70-detho (anh chốt 09/11): Bay = V, Shift (⇧) chỉ còn Lộn */
   const n = DIG26().indexOf(i); if (n >= 0) return String(n + 1);
   return i === 5 ? 'L' : i === 3 ? 'U' : '';
 }
@@ -190,13 +191,13 @@ const DO = { open: false };
 const PH91 = typeof location !== 'undefined' && /[?&]hud91m/.test(location.search);   /* đợt D (điện thoại) HOÃN theo anh 02/11 — bản nháp chỉ bật bằng ?hud91m; mặc định điện thoại giữ HUD cũ */   /* điện thoại: hàng đồ 6–0 đang mở */
 const hud91 = k => { const m = deps.ART && deps.ART.man, u = m && m.ui && m.ui.hud91; return 'assets/px/' + ((u && u[k]) || `ui/hud91/${k}.png`); };
 const T = () => (deps.CTX.lang() === 'vi' ? {
-  fly: 'Bay', tipFly: 'Bay lên tầng cao — chỉ đánh quái + Chấn Thú trên trời; bay tốn Ki, bấm lại để hạ (phím Shift)', tipFlyOn: 'Đang bay — bấm để hạ xuống (Shift)',
+  fly: 'Bay', tipFly: 'Bay lên tầng cao — chỉ đánh quái + Chấn Thú trên trời; bay tốn Ki, bấm lại để hạ (phím V)', tipFlyOn: 'Đang bay — bấm để hạ xuống (V)',
   atk: 'Đánh', rk: 'Rocky-ha', dash: 'Lướt Ki', roll: 'Lộn', tipRoll: 'Lộn né đòn — 2 Ki (phím Shift)', call: 'Gọi linh thú', back: 'Thu linh thú', fuse: 'Hợp Thể', dragon: 'Rồng Thần Giáng',
   noRk: 'Chưa có Rocky', noHa: 'Rocky chưa học Rocky-ha', rkBusy: 'Rocky đang bận / đang nghỉ', cd: 'Đang hồi chiêu', noLt: 'Chưa có linh thú — bắt ở ổ linh thú các vùng', lowKi: 'Chưa đủ Ki',
   lock5: 'Mở khi có Rồng Thần', tipAtk: 'Ô 1 · Đánh — cầm vũ khí; E / chuột trái để chém mục tiêu', hp: 'Máu', ki: 'Ki', xp: 'Kinh nghiệm', lv: 'Cấp',
   doBtn: 'Đồ', bag: 'Túi đồ (B)', rkCmd: 'Ra lệnh cho Rocky (phím /)', items: 'Ô 6–0: đồ', skills: 'Ô kỹ năng (phím số theo nhãn trên ô)', ht: 'Hợp Thể', eat: 'R: ăn nhanh',
 } : {
-  fly: 'Fly', tipFly: 'Fly up to the high tier — only sky monsters + beasts can be hit; drains Ki, press again to land (Shift key)', tipFlyOn: 'Flying — press to land (Shift)',
+  fly: 'Fly', tipFly: 'Fly up to the high tier — only sky monsters + beasts can be hit; drains Ki, press again to land (V key)', tipFlyOn: 'Flying — press to land (V)',
   atk: 'Attack', rk: 'Rocky-ha', dash: 'Ki Dash', roll: 'Roll', tipRoll: 'Dodge roll — 2 Ki (Shift key)', call: 'Call spirit beasts', back: 'Recall spirit beasts', fuse: 'Fusion', dragon: 'Dragon Dive',
   noRk: 'No Rocky yet', noHa: "Rocky hasn't learned Rocky-ha", rkBusy: 'Rocky is busy / resting', cd: 'Cooling down', noLt: 'No spirit beasts yet — catch them at the beast dens', lowKi: 'Not enough Ki',
   lock5: 'Unlocks with the Dragon', tipAtk: 'Slot 1 · Attack — hold your weapon; E / left-click to strike the target', hp: 'HP', ki: 'Ki', xp: 'EXP', lv: 'Lv',

@@ -32,6 +32,7 @@ export function nextStep(S, CTX, lg) {
   const sv = S.save; if (!sv || !S.zone || !S.map) return null;
   const vi = lg === 'vi', st = sv.story || {}, zid = S.zone.id, badges = sv.badges || [], ach = sv.achievements || [];
   if (S.bossFight || (CTX.sparRoad && CTX.sparRoad.active && CTX.sparRoad.active())) return null;   /* đang đánh: không làm rối */
+  if (CTX.nhapmon121 && CTX.nhapmon121.active()) { const nm = CTX.nhapmon121.line(); return nm ? { main: nm, sub: null } : null; }   /* c69-nhapmon NM121_NEXT: đang Nhập môn → chỉ 1 việc (bước Nhập môn hiện tại) */
   if (st.act === 1 || !st.seaDone) return null;   /* Biển (hồi 1) có dòng mục tiêu riêng của Lyron */
   const ly = (sv.sys || {}).lyron || {}; if (ly.stage === 'meet') return null;   /* main.js storyText đã nói 'Về Làng — có ai đó đợi ở cầu tàu' */
   const road = (sv.sys || {}).road || {}, won = road.won || {}, maxZ = Math.max(road.maxZ || 0, ...badges, 0);

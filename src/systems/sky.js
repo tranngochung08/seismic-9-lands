@@ -1497,8 +1497,8 @@ function stoneIcon() { if (STONE) return STONE.naturalWidth ? STONE : null; cons
    · Tầng: trên cao CHỈ đánh / bị đánh bởi quái trời (c.b49: Chim Sấm, Sứa Trời, Diều Hâu Đá yếu theo vùng + Chấn Thú bay Làng của farm106);
      dưới đất không đánh được chúng và chúng không với tới. Rocky (không cánh) ở lại mặt đất. */
 const B49T = {
-  vi: { up: 'Bay lên tầng cao — chỉ đánh được quái trên trời · bấm Bay (Shift) lần nữa để hạ', noKi: 'Chưa đủ Ki để bay (cần 2 Ki)', out: 'Hết Ki — hạ xuống', here: 'Chỉ bay được ở vùng ngoài trời', busy: 'Đang bận — chưa bay được', fight: 'Đang trong trận — không bay được', sky: 'Quái này đang bay trên trời — bấm Bay (Shift) để lên đánh', ground: 'Đang bay — chỉ đánh được quái trên trời; hạ xuống để đánh quái dưới đất', hint: 'Mới: chiêu BAY (Shift · ô Bay) — bay lên tầng cao đánh quái + bắt Chấn Thú trên trời, bay tốn Ki' },
-  en: { up: 'Flying high — only sky monsters can be hit · press Fly (Shift) again to land', noKi: 'Not enough Ki to fly (needs 2 Ki)', out: 'Out of Ki — landing', here: 'You can only fly outdoors', busy: "Busy — can't fly right now", fight: "In a battle — can't fly", sky: 'That monster is up in the sky — press Fly (Shift) to go up', ground: 'Flying — only sky monsters can be hit; land to fight ground monsters', hint: 'New: FLY (Shift · Fly slot) — fly up to fight sky monsters and catch sky beasts; flying drains Ki' },
+  vi: { up: 'Bay lên tầng cao — chỉ đánh được quái trên trời · bấm Bay (V) lần nữa để hạ', noKi: 'Chưa đủ Ki để bay (cần 2 Ki)', out: 'Hết Ki — hạ xuống', here: 'Chỉ bay được ở vùng ngoài trời', busy: 'Đang bận — chưa bay được', fight: 'Đang trong trận — không bay được', sky: 'Quái này đang bay trên trời — bấm Bay (V) để lên đánh', ground: 'Đang bay — chỉ đánh được quái trên trời; hạ xuống để đánh quái dưới đất', hint: 'Mới: chiêu BAY (V · ô Bay) — bay lên tầng cao đánh quái + bắt Chấn Thú trên trời, bay tốn Ki' },   /* c70-detho: phím Bay = V (Shift = lộn né) */
+  en: { up: 'Flying high — only sky monsters can be hit · press Fly (V) again to land', noKi: 'Not enough Ki to fly (needs 2 Ki)', out: 'Out of Ki — landing', here: 'You can only fly outdoors', busy: "Busy — can't fly right now", fight: "In a battle — can't fly", sky: 'That monster is up in the sky — press Fly (V) to go up', ground: 'Flying — only sky monsters can be hit; land to fight ground monsters', hint: 'New: FLY (V · Fly slot) — fly up to fight sky monsters and catch sky beasts; flying drains Ki' },
 };
 const b49L = ctx => B49T[ctx.lang() === 'vi' ? 'vi' : 'en'];
 function b49log(s) { B49.log.push(s); if (B49.log.length > 40) B49.log.shift(); }
@@ -1508,7 +1508,7 @@ function b49Melee(ctx, mo) {   /* null = để luật cũ quyết · true / fals
   if (inSky(ctx) || !mo || !mo.c) return null;
   const air = b49Air(ctx), sky = isSky49(mo);
   if (air === sky) return air ? true : null;
-  if (ctx.S.time - B49.msgT > 2) { B49.msgT = ctx.S.time; ctx.toast(sky ? b49L(ctx).sky : b49L(ctx).ground); } B49.blocked++; return false;
+  if (ctx.S.time - B49.msgT > 3) { B49.msgT = ctx.S.time; ctx.toast(sky ? b49L(ctx).sky : b49L(ctx).ground); }   /* c70-detho: 1 lần / 3 s */ B49.blocked++; return false;
 }
 function b49Why(ctx) {
   const t = b49L(ctx), p = ctx.S.player;

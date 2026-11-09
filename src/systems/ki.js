@@ -349,6 +349,7 @@ function kiButtons(ctx) {
 }
 
 /* ---------------- phím: Shift = lộn · K = lướt · chuột phải = lướt ---------------- */
+/* c70-detho (plan-121 A5, anh chốt 09/11): V = BAY (bay lên / hạ xuống), Shift (thả nhanh) = NHÀO LỘN NÉ trở lại — tách phím Bay khỏi lộn né */
 if (typeof window !== 'undefined') {
   const ok = () => ST.ctx && ST.ctx.S && ST.ctx.S.mode === 'play' && ST.ctx.S.map;
   addEventListener('keydown', e => {
@@ -358,11 +359,12 @@ if (typeof window !== 'undefined') {
       dodge(ST.ctx, null, true); return;
     }
     if (ST.shiftDown) ST.shiftDirty = true;
+    if (e.code === 'KeyV' && !e.repeat && ok() && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) { const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return; if (ST.ctx.bay49) { e.preventDefault(); ST.ctx.bay49.toggle(); } return; }   /* c70-detho: V = Bay */
     if (e.code === 'KeyK' && !e.repeat && ok() && !e.ctrlKey && !e.metaKey && !e.altKey) { const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return; /* c49-bay: K không còn Lướt */ }
   });
   addEventListener('keyup', e => {
     if (e.key !== 'Shift' || !ST.shiftDown) return; const quick = performance.now() - ST.shiftDown < 350 && !ST.shiftDirty; ST.shiftDown = 0;
-    if (quick && ok() && ST.ctx.bay49) ST.ctx.bay49.toggle();   /* c49-bay: Shift = Bay (trước: Lộn) */
+    if (quick && ok()) dodge(ST.ctx, null, true);   /* c70-detho: Shift = Lộn né (Bay chuyển sang V) */
   });
   addEventListener('blur', () => { ST.shiftDown = 0; });
   addEventListener('pointerdown', e => {   /* chuột phải trên màn chơi = lướt (cầm viên hồi máu dưới nước thì để underwater.js dùng) */
@@ -482,7 +484,7 @@ export const ki = {
     if (!(ST.perfT > 0)) return; const p = p_(ctx), x = (p.x - cx) * scale, y = (p.y - 10 - cy) * scale, a = Math.min(1, Math.max(0, ST.perfT - 0.4) / 0.6), r = (14 + (1 - a) * 22) * scale;
     ug.save();
     if (a > 0 && !ST.perfW) { const gr = ug.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(220,255,230,${0.35 * a})`); gr.addColorStop(1, 'rgba(220,255,230,0)'); ug.fillStyle = gr; ug.beginPath(); ug.arc(x, y, r, 0, 7); ug.fill(); }
-    const fs = Math.max(12, Math.round((globalThis.__u89?globalThis.__u89(scale):scale) * 3.4)), ty = (p.y - 36 - (1 - ST.perfT) * 8 - cy) * scale, txt = ST.perfTxt || '';   /* chữ nhỏ bay lên trên đầu, mờ dần */
+    const fs = Math.max(12, Math.round((globalThis.__u89?globalThis.__u89((globalThis.__u89?globalThis.__u89(scale):scale)):(globalThis.__u89?globalThis.__u89(scale):scale)) * 3.4)), ty = (p.y - 36 - (1 - ST.perfT) * 8 - cy) * scale, txt = ST.perfTxt || '';   /* chữ nhỏ bay lên trên đầu, mờ dần */
     ug.globalAlpha = Math.min(1, ST.perfT * 2.5); ug.font = `bold ${fs}px VT323, monospace`; ug.textAlign = 'center'; ug.textBaseline = 'bottom'; const w = ug.measureText(txt).width + 8;
     ug.fillStyle = 'rgba(13,11,20,.6)'; ug.beginPath(); ug.roundRect(x - w / 2, ty - fs - 2, w, fs + 3, 3); ug.fill(); ug.fillStyle = '#b8ffc8'; ug.fillText(txt, x, ty); ug.restore();
   },

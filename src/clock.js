@@ -29,6 +29,11 @@ function adopt(c) {   /* save vừa nạp: save cũ (chưa có wd) hoặc ngày 
   const { D, m } = nowDM();
   if (typeof c.wd !== 'number' || absDayOf(c) >= D) writeWorld(c, D, m); else { setMin(c, m); syncW(c); }
 }
+/* c70-detho (plan-121 A4): SAVE MỚI TINH VÀO GAME BAN NGÀY — đồng hồ chung (WORLD_EPOCH) giữ nguyên cho mọi người, chỉ ĐỘ TỐI của người mới bị giữ:
+   save chưa từng có clock → save.clock.nb121 = 600 giây chơi (chỉ đếm khi đồng hồ chạy: đang chơi, tab hiện). 8 phút đầu: trời sáng hẳn (darkness 0, isNight false);
+   2 phút cuối: độ tối tăng mượt từ 0 về đúng độ tối chung; hết 600 s xoá nb121. Giờ / ngày / mùa hiển thị vẫn là giờ chung. */
+const NB_DAY = 600, NB_FADE = 120;
+const nbLeft = c => (c && c.nb121 > 0 ? c.nb121 : 0);
 const SEASON_NAME = {
   en: { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' },
   vi: { spring: 'Xuân', summer: 'Hè', autumn: 'Thu', winter: 'Đông' }
@@ -139,7 +144,7 @@ export function createClock(deps) {
     ms: () => clock.dayIndex * DAY_MIN * MS_PER_GAME_MIN + st().min * MS_PER_GAME_MIN,   // "ms game" tuyệt đối (600 ms / phút game)
     fromRealMs: t0 => clock.ms() - Math.max(0, Date.now() - t0),    // quy đổi mốc giây thật cũ (Date.now()) sang ms game, giữ nguyên thời gian đã trôi
     running: () => !!S.save && !!S.save.clock && S.mode === 'play' && document.visibilityState !== 'hidden' && pauses.size === 0 && !ending,
-    isNight: () => st().min >= 780,                                  // từ 19:00
+    isNight: () => st().min >= 780 && !(nbLeft(st()) > NB_FADE),      // từ 19:00 (c70-detho: người mới 8 phút đầu coi như ngày)
     pause: reason => { pauses.add(reason || 'x'); }, resume: reason => { pauses.delete(reason || 'x'); },
     onDayEnd: cb => { if (typeof cb === 'function' && !endCbs.includes(cb)) endCbs.push(cb); },
     onDayStart: cb => { if (typeof cb === 'function' && !startCbs.includes(cb)) startCbs.push(cb); },
@@ -159,14 +164,15 @@ export function createClock(deps) {
     // 0 ban ngày … tối đa 0,45 về khuya; đổi mượt theo phút, không nhấp nháy. 17:00 bắt đầu tối, 21:00 tối hẳn (mùa đông sớm hơn 1 giờ).
     darkness: () => {
       const c = st(); if (!c) return 0;
+      const nb = nbLeft(c), hold = nb > 0 ? Math.max(0, Math.min(1, 1 - nb / NB_FADE)) : 1;   /* c70-detho: người mới — 0 khi còn > 2 phút, rồi tăng mượt về 1 */
       const start = c.season === 'winter' ? 600 : 660, full = start + 240, m = c.min;
-      if (m <= start) return 0; if (m >= full) return 0.34;
-      const k = (m - start) / (full - start); return 0.34 * (k * k * (3 - 2 * k));   /* c35-demban: đêm bớt tối (0,45 → 0,34) */
+      if (m <= start) return 0; if (m >= full) return 0.34 * hold;
+      const k = (m - start) / (full - start); return 0.34 * (k * k * (3 - 2 * k)) * hold;   /* c35-demban: đêm bớt tối (0,45 → 0,34) */
     },
     dayT: () => { const h = 6 + st().min / 60; return (((h - 12) % 24) + 24) % 24 / 24; },   // tương thích cũ: 0 = trưa, 0,5 = nửa đêm
     world: () => ({ epoch: WORLD_EPOCH, srvOffsetMs: W.srv, testOffsetMin: W.off, dayIndex: nowDM().D, min: nowDM().m }),   /* c38-dongho: xem đồng hồ chung */
     worldReset: () => { W.off = 0; W.want = null; W.lockUrl = false; const c = W.obj; if (c) { const { D, m } = nowDM(); writeWorld(c, D, m); } },   /* c38-dongho: bỏ độ lệch test */
-    init: sv => { sv.clock = normalize(sv.clock); adopt(sv.clock); if (!sv.clock.today) { S.save = sv; snapshotToday(); } },
+    init: sv => { const fresh = (!sv.clock || typeof sv.clock !== 'object') && !(sv.hero && sv.hero.lv > 1); sv.clock = normalize(sv.clock); if (fresh) sv.clock.nb121 = NB_DAY; adopt(sv.clock);   /* c70-detho: save mới tinh → 10 phút đầu ban ngày */ if (!sv.clock.today) { S.save = sv; snapshotToday(); } },
     set: o => { const c = st(); if (!c) return; if (o.season && SEASONS.includes(o.season)) c.season = o.season; if (o.day) c.day = Math.min(DAYS_PER_SEASON, Math.max(1, o.day | 0)); if (o.year) c.year = Math.max(1, o.year | 0); if (typeof o.min === 'number') c.min = Math.max(0, Math.min(DAY_MIN - 1, o.min)); if (typeof o.hour === 'number') c.min = Math.max(0, Math.min(DAY_MIN - 1, ((o.hour + 24 - 6) % 24) * 60 + (o.minute | 0))); c.hour = Math.floor(6 + c.min / 60) % 24; c.minute = Math.floor(c.min % 60); },   // debug/test
     tick: (dt, ctx) => {
       ctxRef = ctx;
@@ -175,6 +181,7 @@ export function createClock(deps) {
       else if (c.min !== W.min || c.day !== W.day || c.season !== W.season || c.year !== W.year) { W.off += (absDayOf(c) * DAY_MIN + c.min) - worldMin(); syncW(c); }   /* ghi tay (test, preset, clock.set) → độ lệch TẠM, không lưu */
       const { D, m } = nowDM(), cur = absDayOf(c);
       if (D < cur) { writeWorld(c, D, m); return; }
+      if (c.nb121 > 0 && clock.running()) { c.nb121 = Math.max(0, c.nb121 - dt); if (!(c.nb121 > 0)) delete c.nb121; }   /* c70-detho: đếm 10 phút ban ngày của người mới (giây chơi thật) */
       if (D === cur) { setMin(c, m); c.wd = D; syncW(c); return; }
       if (!clock.running()) return;   /* sang ngày khi đang ở menu / hộp thoại → chờ về chơi mới chuyển ngày */
       worldNewDay(c, D, m);
@@ -202,5 +209,6 @@ export function createClock(deps) {
   window.addEventListener('pagehide', () => { if (S.save && S.save.clock) deps.persist(); });
   if (W.want != null) { const set0 = clock.set; clock.set = o => { if (W.want == null && W.lockUrl && o && (o.hour != null || o.min != null)) return; set0(o); }; W.lockUrl = true; }   /* c38-dongho: có ?clock= thì preset gọi clock.set({hour}) không đè giờ test (ghi tay __S.save.clock.min vẫn được) */
   try { window.__clock38 = clock; } catch (e) { }   /* c38-dongho: móc test */
+  try { window.__nbday121 = { left: () => nbLeft(st()), set: s => { const c = st(); if (c) { if (s > 0) c.nb121 = s; else delete c.nb121; } return nbLeft(st()); } }; } catch (e) { }   /* c70-detho: móc test ban ngày người mới */
   return clock;
 }

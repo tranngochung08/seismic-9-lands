@@ -7,7 +7,7 @@ import { notify as hudNotify, pxText } from './hud.js';   /* plan-22: thông bá
 export const STR = {
   en: {
     tagline: 'Journey through the 9 Lands of Magnitude', play: 'New game', cont: 'Continue', lang: 'Tiếng Việt', namePh: 'Your name (optional)',
-    controls: 'WASD / arrows: move · E / Space: interact · Shift: Ki roll · K / right-click: Ki dash · M: map · C: codex · Esc: menu · F: fullscreen', fs: '⛶ Fullscreen',
+    controls: 'WASD / arrows: move · Left-click / E: attack · 1–5: moves · L: Palm · J: release beast · V: fly · Shift: roll · M: map · I: bag · F1 / ?: all keys', fs: '⛶ Fullscreen',
     talk: 'Talk', sleep: 'Sleep (end the day)', read: 'Read', hall: 'Hall of Magnitude', shop: 'Market', light: 'Light the fire', mine: 'Mine', pull: 'Pull the lever', study: 'Study', pickup: 'Pick up',
     shards: 'shards', met: 'met', questMeet: (n, t) => `Meet ${n}/${t} artists`, questDone: 'Land complete — north gate is open',
     badge: lv => `Magnitude ${lv}.0 badge earned!`, locked: lv => `This road needs the Magnitude ${lv}.0 badge — finish the M${lv} land quest (press Q to see it).`,
@@ -52,7 +52,7 @@ export const STR = {
   },
   vi: {
     tagline: 'Hành trình qua 9 Vùng Đất Magnitude', play: 'Chơi mới', cont: 'Chơi tiếp', lang: 'English', namePh: 'Tên của bạn (không bắt buộc)',
-    controls: 'WASD / mũi tên: đi · E / Space: tương tác · Shift: Ki lộn · K / chuột phải: Ki lướt · M: bản đồ · C: sổ tay · Esc: menu · F: toàn màn hình', fs: '⛶ Toàn màn hình',
+    controls: 'WASD / mũi tên: đi · Chuột trái / E: đánh · 1–5: chiêu · L: Chưởng · J: thả Chấn Thú · V: bay · Shift: lộn · M: bản đồ · I: túi · F1 / ?: mọi phím', fs: '⛶ Toàn màn hình',
     talk: 'Nói chuyện', sleep: 'Ngủ (hết ngày)', read: 'Đọc', hall: 'Bia Vinh Danh', shop: 'Chợ', light: 'Đốt lửa', mine: 'Đào', pull: 'Gạt cần', study: 'Đọc sách', pickup: 'Nhặt',
     shards: 'mảnh', met: 'đã gặp', questMeet: (n, t) => `Gặp ${n}/${t} nghệ sĩ`, questDone: 'Xong vùng — cổng Bắc đã mở',
     badge: lv => `Nhận huy hiệu Magnitude ${lv}.0!`, locked: lv => `Lối này cần huy hiệu Magnitude ${lv}.0 — hoàn thành nhiệm vụ vùng M${lv} (bấm Q xem việc).`,
