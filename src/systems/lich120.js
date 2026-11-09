@@ -1,4 +1,4 @@
-/* lich120.js — c67-world (plan-120 #12): LỊCH TRONG GAME. Mở bằng phím L (ngoài Quần Đảo Mây, nơi L = ghim ống nhòm) hoặc bấm vào đồng hồ HUD (#h-clock).
+/* lich120.js — c67-world (plan-120 #12): LỊCH TRONG GAME. Mở bằng phím F2 (09/11: L trả lại cho Chưởng — hotbar SKEYS KeyL) hoặc bấm vào đồng hồ HUD (#h-clock).
    Bảng khung pixel (ui/frame.png + dlg_plate + title/btn, cùng kiểu bảng Tiềm Năng): mùa + ngày + năm, giờ game, dải 12 ngày của mùa, thanh ngày / đêm 6:00 → 2:00,
    mục "Sắp tới" đếm ngược theo GIỜ THẬT (cập nhật mỗi giây khi bảng mở): boss thế giới Nữ Hoàng Gương (worldboss44: save.sys.wb44.nx, 30 phút sau trận trước),
    trời tối / sáng, đổi mùa, sự kiện mùa (Halloween ở Làng 25/10 – 10/11 theo ngày máy, như halloween119). Ghi chú quy đổi giờ game ↔ giờ thật.
@@ -6,13 +6,13 @@
    Không đổi clock.js: chỉ đọc ctx.clock.world() (dayIndex, min, srvOffsetMs) + ctx.clock.RATE. Móc test: window.__lich120. */
 const STR = {
   vi: { title: 'Lịch', year: y => `Năm ${y}`, day: d => `Ngày ${d}`, season: { spring: 'Xuân', summer: 'Hè', autumn: 'Thu', winter: 'Đông' },
-    now: 'Bây giờ', daybar: 'Ngày · đêm', dayOf: 'Ngày trong mùa', next: 'Sắp tới', close: 'Đóng', hint: 'L / bấm đồng hồ để mở lịch',
+    now: 'Bây giờ', daybar: 'Ngày · đêm', dayOf: 'Ngày trong mùa', next: 'Sắp tới', close: 'Đóng', hint: 'F2 / bấm đồng hồ để mở lịch',
     boss: 'Boss thế giới: Nữ Hoàng Gương', bossLive: 'đang ở Quảng Trường Làng', bossReady: 'đã tới giờ — vào Quảng Trường Làng là xuất hiện',
     dusk: 'Trời tối (19:00)', dawn: 'Bình minh · ngày mới (6:00)', seasonTo: s => `Sang mùa ${s}`, hallo: 'Lễ hội Halloween ở Làng', halloEnd: 'Halloween kết thúc', on: 'đang diễn ra',
     at: t => `lúc ${t} giờ thật`, inT: t => `còn ${t}`, h: 'giờ', m: 'phút', s: 'giây', d: 'ngày',
     note: '1 ngày game (6:00 → 2:00) = 12 phút thật · 1 giờ game ≈ 36 giây thật · 1 mùa (12 ngày) = 2 giờ 24 phút thật. Mọi người chơi cùng một đồng hồ.' },
   en: { title: 'Calendar', year: y => `Year ${y}`, day: d => `Day ${d}`, season: { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' },
-    now: 'Now', daybar: 'Day · night', dayOf: 'Days of the season', next: 'Coming up', close: 'Close', hint: 'L / click the clock to open the calendar',
+    now: 'Now', daybar: 'Day · night', dayOf: 'Days of the season', next: 'Coming up', close: 'Close', hint: 'F2 / click the clock to open the calendar',
     boss: 'World boss: Mirror Queen', bossLive: 'in the Village Square now', bossReady: 'it is time — enter the Village Square to summon her',
     dusk: 'Nightfall (19:00)', dawn: 'Dawn · new day (6:00)', seasonTo: s => `${s} begins`, hallo: 'Halloween festival in the Village', halloEnd: 'Halloween ends', on: 'happening now',
     at: t => `at ${t} real time`, inT: t => `in ${t}`, h: 'h', m: 'm', s: 's', d: 'd',
@@ -130,7 +130,7 @@ export const lich120 = {
   },
   update(dt, ctx) { ST.ctx = ctx; if ((ST.bt = (ST.bt || 0) - dt) <= 0) { ST.bt = 1; bindHud(ctx); } if (ST.el && !ST.el.hidden && ctx.S.mode !== 'lich120') close(ctx); },
   key(code, ctx) {
-    if (code !== 'KeyL') return false; const tn = performance.now(); if (tn - (ST.kT || 0) < 250) return ctx.S.mode === 'lich120'; ST.kT = tn; if (ctx.S.map && (ctx.S.map.sky || ctx.S.map.air)) return false;   /* Quần Đảo Mây: L = ghim ống nhòm (sky.js) */
+    if (code !== 'F2') return false; const tn = performance.now(); if (tn - (ST.kT || 0) < 250) return ctx.S.mode === 'lich120'; ST.kT = tn; if (ctx.S.map && (ctx.S.map.sky || ctx.S.map.air)) return false;   /* Quần Đảo Mây: L = ghim ống nhòm (sky.js) */
     if (ctx.S.mode === 'lich120') { close(ctx); return true; } if (ctx.S.mode !== 'play') return false; open(ctx); return true;
   },
 };
