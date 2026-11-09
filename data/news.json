@@ -1,49 +1,34 @@
 {
-  "version": "2026-11-p120-c",
+  "version": "2026-11-p121-a",
   "title": {
     "vi": "Có gì mới",
     "en": "What's new"
   },
   "items": [
     {
-      "icon": "ui/hud/target_arrow.png",
-      "vi": "Mũi tên nhiệm vụ ở mép màn hình, kèm tên và số bước",
-      "en": "Quest arrows on the screen edge, with name and step count"
-    },
-    {
-      "icon": "ui/zmap/exit.png",
-      "vi": "Bảng tên vùng khi bước sang vùng mới: an toàn hay có quái, giờ trong game",
-      "en": "Zone banner when you enter a new land: safe or monsters, in-game time"
-    },
-    {
       "icon": "ui/st_check.png",
-      "vi": "Bảng \"Hoàn thành nhiệm vụ\" có liệt kê phần thưởng",
-      "en": "\"Quest complete\" banner listing your rewards"
+      "vi": "Người mới có chuỗi \"Nhập môn\" 10 bước: mỗi bước dạy một phím, có thưởng",
+      "en": "New players get a 10-step \"First steps\" quest: one control per step, with rewards"
     },
     {
-      "icon": "ui/items/stone.png",
-      "vi": "Tên đồ rơi hiện trên mặt đất, nhặt hết một lần",
-      "en": "Item names on dropped loot, pick everything up at once"
+      "icon": "ui/hud/target_arrow.png",
+      "vi": "Mũi tên nhiệm vụ đi theo đường thật, không đâm vào vách",
+      "en": "Quest arrows follow the real path instead of pointing into cliffs"
     },
     {
       "icon": "ui/tab_quest.png",
-      "vi": "Sổ quái theo loài, có mốc thưởng",
-      "en": "Bestiary by species, with milestone rewards"
-    },
-    {
-      "icon": "ui/port_noxx_0.png",
-      "vi": "Noxx nhớ số lần bạn ngất, hồi sinh ở điểm gần nhất đã mở",
-      "en": "Noxx remembers your faints; revive at the nearest unlocked point"
-    },
-    {
-      "icon": "ui/hud/btn_map.png",
-      "vi": "Bản đồ có mây che vùng chưa tới và bộ lọc ghim",
-      "en": "World map hides unexplored lands under clouds, with pin filters"
+      "vi": "F1 hoặc ? mở bảng phím; trang \"Cách chơi\" trong Sổ tay (C)",
+      "en": "F1 or ? opens all controls; \"How to play\" page in the Codex (C)"
     },
     {
       "icon": "ui/hud/clock_night.png",
-      "vi": "Ban đêm có ánh sáng quanh người chơi, thêm lịch trong game",
-      "en": "Night light around the player, plus an in-game calendar"
+      "vi": "Đổi phím: Bay = V, Shift = lộn né, Lịch = F2, L = Chưởng",
+      "en": "Key changes: Fly = V, Shift = roll, Calendar = F2, L = Palm"
+    },
+    {
+      "icon": "ui/port_noxx_0.png",
+      "vi": "Tab không còn khoá nhầm quái đang bay khi bạn đứng dưới đất",
+      "en": "Tab no longer locks onto flying monsters while you are on the ground"
     }
   ]
 }
