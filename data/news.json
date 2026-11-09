@@ -1,0 +1,49 @@
+{
+  "version": "2026-11-p120-c",
+  "title": {
+    "vi": "Có gì mới",
+    "en": "What's new"
+  },
+  "items": [
+    {
+      "icon": "ui/hud/target_arrow.png",
+      "vi": "Mũi tên nhiệm vụ ở mép màn hình, kèm tên và số bước",
+      "en": "Quest arrows on the screen edge, with name and step count"
+    },
+    {
+      "icon": "ui/zmap/exit.png",
+      "vi": "Bảng tên vùng khi bước sang vùng mới: an toàn hay có quái, giờ trong game",
+      "en": "Zone banner when you enter a new land: safe or monsters, in-game time"
+    },
+    {
+      "icon": "ui/st_check.png",
+      "vi": "Bảng \"Hoàn thành nhiệm vụ\" có liệt kê phần thưởng",
+      "en": "\"Quest complete\" banner listing your rewards"
+    },
+    {
+      "icon": "ui/items/stone.png",
+      "vi": "Tên đồ rơi hiện trên mặt đất, nhặt hết một lần",
+      "en": "Item names on dropped loot, pick everything up at once"
+    },
+    {
+      "icon": "ui/tab_quest.png",
+      "vi": "Sổ quái theo loài, có mốc thưởng",
+      "en": "Bestiary by species, with milestone rewards"
+    },
+    {
+      "icon": "ui/port_noxx_0.png",
+      "vi": "Noxx nhớ số lần bạn ngất, hồi sinh ở điểm gần nhất đã mở",
+      "en": "Noxx remembers your faints; revive at the nearest unlocked point"
+    },
+    {
+      "icon": "ui/hud/btn_map.png",
+      "vi": "Bản đồ có mây che vùng chưa tới và bộ lọc ghim",
+      "en": "World map hides unexplored lands under clouds, with pin filters"
+    },
+    {
+      "icon": "ui/hud/clock_night.png",
+      "vi": "Ban đêm có ánh sáng quanh người chơi, thêm lịch trong game",
+      "en": "Night light around the player, plus an in-game calendar"
+    }
+  ]
+}

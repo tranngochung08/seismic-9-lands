@@ -95,4 +95,13 @@ import { demban35 } from './demban35.js';
 import { autofarm50 } from './autofarm50.js';   /* c50-autofarm: Phiếu Tập Luyện Tự Động (Heathcliff ở Làng) */
 import { dauhoang37 } from './dauhoang37.js';   /* c37-dauhoang: dau Chan Thu hoang - tu ra thu, thu nga ra con khac, chuyen canh */   /* c35-demban: vật thấp (bụi quả, đá nhỏ) đi xuyên được */
 import { worldboss44 } from './worldboss44.js';   /* c44-boss: boss the gioi Nu Hoang Guong o Quang Truong Lang (choi chung hop suc) */
-export const SYSTEMS = [village88, aircombat, terrain, nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, pet, hopthe, rubble, storySea, storyLand, krstory, hero, underwater, fortress, villagers, petgun, linhthu, monsters, fieldct, odo, spar, road, arena, hacrocky, trongdong, guong, hoden, dongho, bakunawa, lyronFinale, knock, ki, wreck, drops, land, ponds, water, envfx105, halloween119, xealist, cloudshade, worldmosaic, rockycore, vfx, sky, stats, dragon, diff, chanthu, kho78, comp79, elyz95, farm106, ubam121, squad104, leaderarena, feed80, linhduel, shadow, nhandien22, pwoofer, target91, noprompt91, mouseesc91, coop, quyen, pk, pkthu32, chet27, demban35, dauhoang37, lan48, autofarm50, worldboss44].filter(Boolean);
+import { edgearrow120 } from './edgearrow120.js';   /* c65-hud plan-120 */
+import { zonebanner120 } from './zonebanner120.js';
+import { questbanner120 } from './questbanner120.js';
+import { news120 } from './news120.js';
+import { mapfog120 } from './mapfog120.js';   /* c67-world plan-120 */
+import { nightlight120 } from './nightlight120.js';
+import { lich120 } from './lich120.js';
+import { footprint120 } from './footprint120.js';
+import { bestiary120 } from './bestiary120.js';   /* c66-loot plan-120: so quai theo loai */
+export const SYSTEMS = [village88, aircombat, terrain, nations, seaRaft, swim, vehicles, animals, trees, market, rockyControl, districts, raidersLow, raidersMid, raidersHigh, crafting, gather, farm, pens, ecology, quests, seaDive, seaLife, raidersSea, photo, pet, hopthe, rubble, storySea, storyLand, krstory, hero, underwater, fortress, villagers, petgun, linhthu, monsters, fieldct, odo, spar, road, arena, hacrocky, trongdong, guong, hoden, dongho, bakunawa, lyronFinale, knock, ki, wreck, drops, land, ponds, water, envfx105, halloween119, xealist, cloudshade, worldmosaic, rockycore, vfx, sky, stats, dragon, diff, chanthu, kho78, comp79, elyz95, farm106, ubam121, squad104, leaderarena, feed80, linhduel, shadow, nhandien22, pwoofer, target91, noprompt91, mouseesc91, coop, quyen, pk, pkthu32, chet27, demban35, dauhoang37, lan48, autofarm50, worldboss44, edgearrow120, zonebanner120, questbanner120, news120, bestiary120, mapfog120, lich120, footprint120, nightlight120].filter(Boolean);

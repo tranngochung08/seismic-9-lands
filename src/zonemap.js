@@ -12,7 +12,7 @@ import { mapPins as f106Pins, NET as F106NET } from './systems/farm106.js';   /*
 const IMG = {};
 function icon(k) {
   if (IMG[k] !== undefined) return IMG[k] && IMG[k].complete && IMG[k].naturalWidth ? IMG[k] : null;
-  const f = k === 'rare' ? 'ui/zmap/rare.png' : k === 'fight' ? 'ui/hud91/act_fight.png' : ART.man && ART.man.ui && ((ART.man.ui.zmap || {})[k] || (k === 'crown' ? ART.man.ui.crown : null));   /* p52d: icon Chấn Thú hiếm (PixelLab, chưa vào manifest) */
+  const f = k === 'shop' ? 'ui/zmap/shop.png' : k === 'rare' ? 'ui/zmap/rare.png' : k === 'fight' ? 'ui/hud91/act_fight.png' : ART.man && ART.man.ui && ((ART.man.ui.zmap || {})[k] || (k === 'crown' ? ART.man.ui.crown : null));   /* p52d: icon Chấn Thú hiếm (PixelLab, chưa vào manifest) */
   IMG[k] = null; if (typeof f === 'string') { const im = new Image(); im.onload = () => { if (REDRAW) REDRAW(); }; im.src = 'assets/px/' + f; IMG[k] = im; }
   return null;
 }
@@ -81,12 +81,26 @@ export function zonePins(S, CTX, lg) {
   if (S.sea && S.sea.treasure) pins.push({ x: S.sea.treasure.x * TS + 8, y: S.sea.treasure.y * TS + 8, kind: 'treasure', label: `${L.zTreasure} (${S.sea.treasure.x}, ${S.sea.treasure.y})` });
   try { if (CTX && CTX.chanthu && CTX.chanthu.pins) for (const q of CTX.chanthu.pins()) pins.push(q); } catch (e) { }   /* p52d (plan-58 C.4): Chấn Thú hiếm đang xuất hiện */
   try { for (const q of f106Pins(lg)) pins.push(q); } catch (e) { }   /* c23-farmmap */
+  { const sh = []; for (const o of m.objects) if ((o.shop || o.trader) && !o.ruined) { const c = objC(o); if (!sh.some(q => Math.hypot(q.x - c.x, q.y - c.y) < 56)) sh.push(c); } for (const c of sh) pins.push({ ...c, kind: 'shop', label: ZF120[vi ? 'vi' : 'en'].shop }); }   /* c67-world: quầy hàng (o.shop chợ M2 / o.trader quầy market.js), gộp quầy sát nhau */
   pins.push({ x: S.player.x, y: S.player.y - 6, kind: 'you', label: L.zYou });
   return pins;
 }
 
-const COL = { you: '#ffd45e', quest: '#ffb02e', exit: '#7fd1ff', artist: '#f2ebe0', target: '#ff6bd0', leader: '#ffd45e', treasure: '#ff5a4a', whirl: '#5ab8ff', rare: '#b48cff', farm: '#ff7a4a', lead: '#ffd45e', wild: '#b48cff', mob: '#ff4a3a' };
-const ICO = { you: 'you', quest: 'quest', exit: 'exit', artist: 'artist', target: 'artist', leader: 'crown', treasure: 'treasure', whirl: 'whirl', rare: 'rare', farm: 'fight', lead: 'crown', wild: 'rare' };   /* c23-farmmap: farm / lead / wild (mob = chấm đỏ vẽ code) */
+/* c67-world (plan-120 #10): hàng nút LỌC ghim trên thẻ 'Vùng này' — nhớ trong save.sys.mapfog120.flt (persist). Ghim 'bạn' + nghệ sĩ luôn hiện. */
+const ZF120 = { vi: { quest: 'Nhiệm vụ', shop: 'Cửa hàng', boss: 'Trùm · quái', exit: 'Lối đi', tip: 'Bấm để ẩn / hiện loại ghim này' }, en: { quest: 'Quests', shop: 'Shops', boss: 'Bosses · mobs', exit: 'Exits', tip: 'Click to hide / show these pins' } };
+const ZF120_G = { quest: ['quest', 'leader', 'target', 'treasure', 'whirl'], shop: ['shop'], boss: ['rare', 'lead', 'wild', 'farm', 'mob'], exit: ['exit'] };
+const ZF120_IC = { quest: 'ui/zmap/quest.png', shop: 'ui/zmap/shop.png', boss: 'ui/hud/crown.png', exit: 'ui/zmap/exit.png' };
+function zf120(S) { const sys = (S.save.sys ||= {}), f = (sys.mapfog120 ||= {}); if (!f.flt || typeof f.flt !== 'object') f.flt = {}; return f.flt; }
+function zfKeep120(S) { const F = zf120(S); return p => { for (const k in ZF120_G) if (F[k] === false && ZF120_G[k].includes(p.kind)) return false; return true; }; }
+function zfBar120(cv, S, CTX, lg, redraw) {
+  const host = cv.parentElement; if (!host) return; let bar = host.querySelector('#m-zf120');
+  if (!bar) { bar = document.createElement('div'); bar.id = 'm-zf120'; bar.style.cssText = 'flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px;margin:0 0 2px'; host.insertBefore(bar, host.firstChild); }
+  const T = ZF120[lg === 'vi' ? 'vi' : 'en'], F = zf120(S);
+  bar.innerHTML = Object.keys(ZF120_G).map(k => { const on = F[k] !== false; return `<button type="button" data-k="${k}" title="${T.tip}" aria-pressed="${on}" style="display:inline-flex;align-items:center;gap:4px;font:17px VT323,monospace;line-height:16px;color:${on ? '#fff6c8' : '#9a8f86'};border:9px solid transparent;border-image:url(assets/px/ui/title/${on ? 'btn_hi' : 'btn'}.png) 9 / 9px round;border-radius:0;background:${on ? '#4d3421' : '#2a2018'};background-clip:padding-box;padding:0 4px;cursor:pointer;image-rendering:pixelated;text-shadow:1px 1px 0 #10241a"><img src="assets/px/${ZF120_IC[k]}" alt="" style="width:16px;height:16px;image-rendering:pixelated;${on ? '' : 'opacity:.35'}">${T[k]}</button>`; }).join('');
+  bar.onclick = e => { const b = e.target.closest && e.target.closest('button[data-k]'); if (!b) return; const k = b.dataset.k; F[k] = F[k] === false; try { CTX && CTX.persist && CTX.persist(); } catch (er) { } redraw(); };
+}
+const COL = { you: '#ffd45e', shop: '#ffd45e', quest: '#ffb02e', exit: '#7fd1ff', artist: '#f2ebe0', target: '#ff6bd0', leader: '#ffd45e', treasure: '#ff5a4a', whirl: '#5ab8ff', rare: '#b48cff', farm: '#ff7a4a', lead: '#ffd45e', wild: '#b48cff', mob: '#ff4a3a' };
+const ICO = { shop: 'shop', you: 'you', quest: 'quest', exit: 'exit', artist: 'artist', target: 'artist', leader: 'crown', treasure: 'treasure', whirl: 'whirl', rare: 'rare', farm: 'fight', lead: 'crown', wild: 'rare' };   /* c23-farmmap: farm / lead / wild (mob = chấm đỏ vẽ code) */
 const F23 = { vi: { farm: 'Khu quái', lead: 'Thủ lĩnh (ở hang)', wild: 'Chấn Thú hoang (bắt được)', mob: 'Quái đang sống', go: 'bấm để đi tới' },
               en: { farm: 'Monster area', lead: 'Leader (in its den)', wild: 'Wild Quake Beast (catchable)', mob: 'Monsters alive', go: 'click to walk there' } };
 
@@ -101,7 +115,8 @@ export function drawZoneMap(cv, legendEl, S, CTX, lg, Lstr, onWalk) {
   g.fillStyle = '#0d0b14'; g.fillRect(0, 0, cw, ch); g.drawImage(base, 0, 0, cw, ch);
   g.fillStyle = 'rgba(13,11,20,.38)'; g.fillRect(0, 0, cw, ch);   /* nền tối nhẹ để ghim nổi */
   g.imageSmoothingEnabled = false;
-  const pins = zonePins(S, CTX, lg), order = { mob: -1, artist: 0, exit: 1, farm: 1.5, whirl: 2, quest: 2, leader: 2, wild: 2.5, lead: 2.8, treasure: 3, rare: 3, target: 4, you: 5 };
+  zfBar120(cv, S, CTX, lg, () => drawZoneMap(cv, legendEl, S, CTX, lg, Lstr, onWalk));   /* c67-world */
+  const pins = zonePins(S, CTX, lg).filter(zfKeep120(S)), order = { shop: 1.2, mob: -1, artist: 0, exit: 1, farm: 1.5, whirl: 2, quest: 2, leader: 2, wild: 2.5, lead: 2.8, treasure: 3, rare: 3, target: 4, you: 5 };
   pins.sort((a, b) => (order[a.kind] || 0) - (order[b.kind] || 0));
   g.textAlign = 'center'; g.textBaseline = 'bottom'; g.font = 'bold 13px VT323, monospace';
   const TAG23 = [];   /* c23-farmmap: ô nhãn đã vẽ (lối ra + khu quái) */
@@ -125,7 +140,7 @@ export function drawZoneMap(cv, legendEl, S, CTX, lg, Lstr, onWalk) {
   /* chú thích: đếm theo loại + danh sách việc */
   if (legendEl) {
     const cnt = {}, quests = {}; for (const p of pins) { cnt[p.kind] = (cnt[p.kind] || 0) + 1; if (p.kind === 'quest' || p.kind === 'leader') quests[p.label] = (quests[p.label] || 0) + 1; }
-    const L = LL, row = (kind, text) => { const f = kind === 'rare' || kind === 'wild' ? 'ui/zmap/rare.png' : kind === 'farm' ? 'ui/hud91/act_fight.png' : ART.man && ART.man.ui && ((ART.man.ui.zmap || {})[ICO[kind]] || (ICO[kind] === 'crown' ? ART.man.ui.crown : null)); return `<div class="zl"><span class="zi">${f ? `<img src="assets/px/${f}" alt="">` : `<i style="background:${COL[kind]}"></i>`}</span>${text}</div>`; };
+    const L = LL, row = (kind, text) => { const f = kind === 'shop' ? 'ui/zmap/shop.png' : kind === 'rare' || kind === 'wild' ? 'ui/zmap/rare.png' : kind === 'farm' ? 'ui/hud91/act_fight.png' : ART.man && ART.man.ui && ((ART.man.ui.zmap || {})[ICO[kind]] || (ICO[kind] === 'crown' ? ART.man.ui.crown : null)); return `<div class="zl"><span class="zi">${f ? `<img src="assets/px/${f}" alt="">` : `<i style="background:${COL[kind]}"></i>`}</span>${text}</div>`; };
     let h = row('you', L.zYou);
     const qk = Object.keys(quests); if (qk.length) for (const q of qk) h += row(q === L.zLeader ? 'leader' : 'quest', `${q} × ${quests[q]}`); else if (S.zone.quest) h += `<div class="zl dim">${L.zNothing}</div>`;
     if (cnt.target) h += row('target', pins.find(p => p.kind === 'target').label);
@@ -139,6 +154,7 @@ export function drawZoneMap(cv, legendEl, S, CTX, lg, Lstr, onWalk) {
       if (cnt.wild) h += row('wild', `${T.wild} × ${cnt.wild}`);
       if (cnt.mob) h += `<div class="zl"><span class="zi"><b style="display:block;width:6px;height:6px;background:${COL.mob};outline:2px solid #1c1a24"></b></span>${T.mob} × ${cnt.mob}</div>`; }
     if (cnt.exit) h += row('exit', `${L.zExit} × ${cnt.exit}`);
+    if (cnt.shop) h += row('shop', `${ZF120[vi ? 'vi' : 'en'].shop} × ${cnt.shop}`);   /* c67-world */
     if (onWalk) h += `<div class="zl dim zwalk" id="m-zmsg">${zstr(lg).walkHint}</div>`;
     legendEl.innerHTML = h;
     legendEl.onclick = ev => { const r = ev.target.closest && ev.target.closest('.zgo'); if (r) pickWorld(+r.dataset.x, +r.dataset.y); };   /* c23-farmmap: bấm dòng khu quái -> tự đi tới */
@@ -216,7 +232,12 @@ function mm23Tick() {
       g.fillStyle = '#1c1a24'; g.beginPath(); g.arc(cx, cy, 9, 0, 7); g.fill(); g.fillStyle = '#ffd45e'; g.beginPath(); g.arc(cx, cy, 6, 0, 7); g.fill(); }
     g.font = 'bold 22px VT323, monospace'; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillStyle = '#1c1a24'; g.fillText(lg === 'vi' ? 'B' : 'N', W / 2 + 1, 5); g.fillStyle = '#fff3c8'; g.fillText(lg === 'vi' ? 'B' : 'N', W / 2, 4);   /* hướng Bắc ở trên */
     el.title = lg === 'vi' ? 'Bản đồ nhỏ — bấm để mở bản đồ (M)' : 'Mini-map — click to open the map (M)';
-    MM23.n++; window.__mm23 = { n: MM23.n, dots, buildMs: MM23.buildMs, pins: pins.length, ang: +MM23.ang.toFixed(2), shown: true };
+    { let under = false; const cam = C && C.cam, cvEl = document.getElementById('c');   /* c67-world (plan-120 #13): người chơi / ghim nhiệm vụ nằm ngay dưới ô mini-map trên màn → mini-map mờ đi (đổi 1 lần, không nhấp nháy) */
+      if (cam && cvEl && C.VW) { const r = cvEl.getBoundingClientRect(), k2 = r.width / C.VW, er = el.getBoundingClientRect(), pad = MM23.under ? 18 : 8;
+        const hit = (wx, wy) => { const sx = r.left + (wx - cam.cx) * k2, sy = r.top + (wy - cam.cy) * k2; return sx > er.left - pad && sx < er.right + pad && sy > er.top - pad && sy < er.bottom + pad; };
+        under = hit(p.x, p.y) || hit(p.x, p.y - 24) || pins.some(q => (q.kind === 'quest' || q.kind === 'target' || q.kind === 'leader' || q.kind === 'treasure') && hit(q.x, q.y)); }
+      const want = under ? '0.28' : ''; if (el.style.opacity !== want) { el.style.transition = 'opacity .3s'; el.style.opacity = want; } MM23.under = under; }
+    MM23.n++; window.__mm23 = { under: !!MM23.under, n: MM23.n, dots, buildMs: MM23.buildMs, pins: pins.length, ang: +MM23.ang.toFixed(2), shown: true };
   } catch (e) { MM23.err = (MM23.err || 0) + 1; if (MM23.err < 4) console.error('mm23', e); }
 }
 if (typeof window !== 'undefined' && typeof document !== 'undefined' && !window.__mm23iv) window.__mm23iv = setInterval(mm23Tick, 125);

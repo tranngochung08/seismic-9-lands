@@ -286,15 +286,28 @@ export function closeHall() { hideCard(); $('#hall').hidden = true; }
 
 // ---- world map (spiral) ----
 const PIN_IMG = typeof Image !== 'undefined' ? Object.assign(new Image(), { src: 'assets/px/zones/sky/scout/mk_pin.png' }) : {};   /* plan-32 A: ghim ống nhòm (PixelLab) */
+/* c67-world (plan-120 #10): vùng chưa từng tới (save.sys.mapfog120.seen, do systems/mapfog120.js ghi) bị mây PixelLab che, chỉ hiện 'Vùng chưa khám phá' + dải sức M-cấp. Chưa có danh sách (module chưa nạp) → không che gì. */
+const FOG120_IMG = typeof Image !== 'undefined' ? ['ui/title/cloud_2.png', 'ui/title/cloud_0.png'].map(f => Object.assign(new Image(), { src: 'assets/px/' + f })) : [];
+const FOG120_STR = { vi: { un: 'Vùng chưa khám phá', lv: l => l < 0 ? 'vùng an toàn' : `sức M${l}` }, en: { un: 'Unexplored region', lv: l => l < 0 ? 'safe area' : `power M${l}` } };
+function fogSeen120(save, currentId) { const f = save && save.sys && save.sys.mapfog120; if (!f || !Array.isArray(f.seen)) return null; const s = new Set(f.seen); s.add(currentId); return s; }
+function fogNode120(g, n) {
+  const im = FOG120_IMG[n.i % 2 ? 1 : 0], ok = im && im.complete && im.naturalWidth;
+  if (ok) { const w = im.naturalWidth, h = im.naturalHeight; g.imageSmoothingEnabled = false; g.drawImage(im, Math.round(n.x - w / 2), Math.round(n.y - h / 2 - 2), w, h); }
+  else { g.beginPath(); g.arc(n.x, n.y, 17, 0, 7); g.fillStyle = '#d8d0e8'; g.fill(); }
+  g.fillStyle = '#2e2448'; g.font = 'bold 12px VT323, monospace'; g.fillText(n.z.sea ? '~' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv, n.x, n.y + 1);
+}
+function fogRow120(n, lg) { const T = FOG120_STR[lg === 'vi' ? 'vi' : 'en']; return `<div class="mrow lk fog120" data-i="${n.i}"><span class="lvb" style="background:#d8d0e8;color:#5a4e78">${n.z.sea ? '~' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv}</span><span>☁ ${esc(T.un)} <span class="dim">· ${esc(T.lv(n.z.lv))}</span></span></div>`; }
 export function openMap(zoneList, save, currentId, onTravel, inSky = false, zoneView = null) {   /* plan-44 D4: zoneView = { draw(canvas, legendEl) } → thẻ 'Vùng này' */
   const lg = lang(), p = $('#map'); $('#m-title').textContent = L.map; $('#m-hint').textContent = L.mapHint; $('#m-close').textContent = L.close;
   const c = $('#m-cv'), g = c.getContext('2d'), W = c.width, H = c.height;
   const nodes = zoneList.map((z, i) => { const k = i - 1, a = -Math.PI / 2 + k * 0.95, r = 150 - k * 13.5; const prev = zoneList[i - 1]; /* k = -1 puts the sea on the outer rim, before the village */ return { z, i, x: W / 2 + r * Math.cos(a), y: H / 2 + r * Math.sin(a), unlocked: !prev || prev.lv < 1 || save.badges.includes(prev.lv) }; });
+  { const SEEN = fogSeen120(save, currentId); for (const n of nodes) n.fog = !!SEEN && !SEEN.has(n.z.id); }   /* c67-world */
   g.clearRect(0, 0, W, H);
   g.lineWidth = 5; g.strokeStyle = '#33294a'; g.beginPath(); nodes.forEach((n, i) => i ? g.lineTo(n.x, n.y) : g.moveTo(n.x, n.y)); g.stroke();
   g.lineWidth = 2; g.strokeStyle = '#ffd45e'; g.beginPath(); nodes.forEach((n, i) => { if (!n.unlocked) return; i ? g.lineTo(n.x, n.y) : g.moveTo(n.x, n.y); }); g.stroke();
   g.textAlign = 'center'; g.textBaseline = 'middle';
   for (const n of nodes) {
+    if (n.fog) { fogNode120(g, n); continue; }   /* c67-world: mây che vùng chưa tới */
     g.beginPath(); g.arc(n.x, n.y, 15, 0, 7); g.fillStyle = n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'; g.fill();
     if (n.z.id === currentId) { g.lineWidth = 3; g.strokeStyle = '#fff'; g.stroke(); }
     if (n.z.id === currentId && inSky) { g.fillStyle = '#fff'; g.font = '16px sans-serif'; g.fillText('☁', n.x, n.y - 24); }   /* plan-31: đang bay trên trời vùng này */
@@ -305,7 +318,7 @@ export function openMap(zoneList, save, currentId, onTravel, inSky = false, zone
   const hit = (mx, my) => nodes.find(n => Math.hypot(n.x - mx, n.y - my) < 18);
   const go = n => { if (!n) return; if (!n.unlocked) { toast(L.mapLocked(zoneList[n.i - 1].lv)); return; } if (n.z.id === currentId) { closeMap(); return; } closeMap(); onTravel(n.z.id); };
   c.onclick = e => { const r = c.getBoundingClientRect(); go(hit((e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height)); };
-  $('#m-list').innerHTML = nodes.map(n => `<div class="mrow${n.unlocked ? '' : ' lk'}${n.z.id === currentId ? ' cur' : ''}" data-i="${n.i}"><span class="lvb" style="background:${n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'};color:${n.unlocked ? '#140a02' : '#6f6585'}">${n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv}</span><span>${esc(n.z.name[lg])}${save.sys && save.sys.sky && save.sys.sky.pin && save.sys.sky.pin.zone === n.z.id ? ' <img src="assets/px/zones/sky/scout/mk_pin.png" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:middle"> ' + esc(save.sys.sky.pin.label || '') : ''}</span>${save.badges.includes(n.z.lv) ? '<span class="star">★</span>' : ''}</div>`).join('');
+  $('#m-list').innerHTML = nodes.map(n => n.fog ? fogRow120(n, lg) : `<div class="mrow${n.unlocked ? '' : ' lk'}${n.z.id === currentId ? ' cur' : ''}" data-i="${n.i}"><span class="lvb" style="background:${n.unlocked ? (LEVEL_COLORS[n.z.lv] || '#3f8fd6') : '#2b2440'};color:${n.unlocked ? '#140a02' : '#6f6585'}">${n.z.sea ? '🌊' : n.z.lv < 0 ? '⌂' : 'M' + n.z.lv}</span><span>${esc(n.z.name[lg])}${save.sys && save.sys.sky && save.sys.sky.pin && save.sys.sky.pin.zone === n.z.id ? ' <img src="assets/px/zones/sky/scout/mk_pin.png" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:middle"> ' + esc(save.sys.sky.pin.label || '') : ''}</span>${save.badges.includes(n.z.lv) ? '<span class="star">★</span>' : ''}</div>`).join('');
   $('#m-list').onclick = e => { const r = e.target.closest('.mrow'); if (r) go(nodes[+r.dataset.i]); };
   mapTabs(zoneView);
   p.hidden = false;
